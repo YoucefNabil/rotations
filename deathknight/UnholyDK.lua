@@ -591,7 +591,7 @@ unholy.rot = {
 	festeringstrikePVEnohuman = function()
 		local player = Object("player")
 		if player then
-			if (_A.blood >=1 or _A.frost >=1)
+			if (_A.blood >=1 and _A.frost >=1)
 				then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 				if lowestmelee then
@@ -608,7 +608,7 @@ unholy.rot = {
 	festeringstrike = function()
 		local player = Object("player")
 		if player then
-			if player:SpellCooldown("Festering Strike")<.3 then
+			if (_A.blood >=1 and _A.frost >=1) then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 				if lowestmelee 
 					and lowestmelee:exists() then
