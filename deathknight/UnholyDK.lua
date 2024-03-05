@@ -680,8 +680,8 @@ local inCombat = function()
 			unholy.rot.Empowerruneweapon()
 			-- PVP INTERRUPTS AND CC
 			unholy.rot.MindFreeze()
-			unholy.rot.strangulate()
-			-- unholy.rot.strangulatesnipe()
+			-- unholy.rot.strangulate()
+			unholy.rot.strangulatesnipe()
 			unholy.rot.darksimulacrum()
 			unholy.rot.root()
 			-- DEFS
