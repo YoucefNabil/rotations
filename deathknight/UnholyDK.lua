@@ -308,27 +308,7 @@ unholy.rot = {
 		if _A.dkenergy>=20 and player and player:SpellCooldown("Dark Simulacrum")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:SpellRange("Dark Simulacrum") then
-					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)]
-						then
-						if not obj:State("silence") 
-							and not obj:lostcontrol()
-							and _A.notimmune(obj)
-							and obj:infront() and obj:los() 
-							then
-							obj:Cast("Dark Simulacrum")
-						end
-					end
-				end
-			end
-		end
-	end,
-	
-	darksimulacrumArena = function()
-		local player = Object("player")
-		if _A.dkenergy>=20 and player and player:SpellCooldown("Dark Simulacrum")==0 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:SpellRange("Dark Simulacrum") then
-					if (darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)]) -- or (_A.pull_location == "arena" and darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)]) 
+					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)] or darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)] 
 						then
 						if not obj:State("silence") 
 							and not obj:lostcontrol()
@@ -581,19 +561,6 @@ unholy.rot = {
 		end
 	end,
 	
-	icytouchDispell = function()
-		local player = Object("player")
-		if player then
-			if (_A.frost>_A.blood and _A.frost>=1) then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
-				if lowestmelee and lowestmelee:exists() and lowestmelee:BuffType("Magic")
-					then
-					return lowestmelee:Cast("Icy Touch")
-				end
-			end
-		end
-	end,
-	
 	icytouch = function()
 		local player = Object("player")
 		if player then
@@ -714,9 +681,8 @@ local inCombat = function()
 			-- PVP INTERRUPTS AND CC
 			unholy.rot.MindFreeze()
 			unholy.rot.strangulate()
-			unholy.rot.strangulatesnipe()
+			-- unholy.rot.strangulatesnipe()
 			unholy.rot.darksimulacrum()
-			unholy.rot.darksimulacrumArena()
 			unholy.rot.root()
 			-- DEFS
 			unholy.rot.antimagicshell()
@@ -734,7 +700,6 @@ local inCombat = function()
 			unholy.rot.SoulReaper()
 			unholy.rot.NecroStrike()
 			unholy.rot.festeringstrikePVEnohuman()
-			unholy.rot.icytouchDispell()
 			unholy.rot.icytouch()
 			unholy.rot.bloodboilorphanblood()
 			unholy.rot.festeringstrike()
