@@ -356,13 +356,14 @@ unholy.rot = {
 			local player = Object("player")
 			local target = Object("target")
 			if player:SpellReady("Outbreak") then 
-				if target:exists()
+				if target and target:exists()
 					and target:enemy()
 					and target:SpellRange("Outbreak")
 					and _A.notimmune(target)
 					then
 					if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
 						if target:infront() and target:los() then
+							print("refreshing dot")
 							return target:Cast("Outbreak")
 						end
 					end
@@ -376,13 +377,14 @@ unholy.rot = {
 			local player = Object("player")
 			local target = Object("target")
 			if  player:SpellCooldown("Plague Strike")<.3 then 
-				if target:exists()
+				if target and target:exists()
 					and target:enemy()
 					and target:SpellRange("Plague Strike")
 					and _A.notimmune(target)
 					then
 					if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
 						if target:infront() and target:los() then
+							print("refreshing dot")
 							return target:Cast("Plague Strike")
 						end
 					end
