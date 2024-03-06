@@ -631,11 +631,11 @@ local inCombat = function()
 	player = player or Object("player")
 	if not player then return end
 	if _A.buttondelayfunc() then return end
-	if player:lostcontrol() return end
-	if player:isCastingAny() return end
+	if player:lostcontrol() then return end
+	if player:isCastingAny() then return end
 	unholy.rot.GrabGrab()
 	unholy.rot.GrabGrabHunter()
-	if player:Mounted() return end
+	if player:Mounted() then return end
 	-- utility
 	unholy.rot.caching()
 	unholy.rot.ClickthisPleasepvp()
