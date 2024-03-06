@@ -203,7 +203,6 @@ unholy.rot = {
 					and (obj:castsecond() < 0.4 or obj:chanpercent()<=90
 					)
 					and _A.notimmune(obj)
-					and obj:los()
 					then
 					obj:Cast("Mind Freeze", true)
 				end
