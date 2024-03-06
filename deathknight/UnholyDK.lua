@@ -560,27 +560,25 @@ unholy.rot = {
 			if ((_A.blood>_A.frost and _A.blood>=1))
 				then
 				local lowestmelee = Object("lowestEnemyInRangeNOTARNOFACE(9)")
-				if lowestmelee then
-					if lowestmelee:exists() then
-						return player:Cast("Blood Boil")
-					end
+				if lowestmelee and lowestmelee:exists() then
+					return player:Cast("Blood Boil")
 				end
 			end
 		end
 	end,
 	
 	festeringstrikePVEnohuman = function()
-	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		if player:SpellCooldown("Festering Strike")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if lowestmelee then
-				if lowestmelee:exists() then
-					if not lowestmelee.isplayer then
-						return lowestmelee:Cast("Festering Strike")
+		if _A.pull_location == "party" or _A.pull_location == "raid" then
+			if player:SpellCooldown("Festering Strike")<.3 then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+				if lowestmelee then
+					if lowestmelee:exists() then
+						if not lowestmelee.isplayer then
+							return lowestmelee:Cast("Festering Strike")
+						end
 					end
 				end
 			end
-		end
 		end
 	end,
 	
@@ -675,7 +673,7 @@ local inCombat = function()
 	unholy.rot.NecroStrike()
 	unholy.rot.icytouch()
 	unholy.rot.bloodboilorphanblood()
-	unholy.rot.festeringstrike()
+	-- unholy.rot.festeringstrike()
 	unholy.rot.Deathcoil()
 	----filler
 	unholy.rot.scourgestrike()
