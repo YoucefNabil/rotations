@@ -549,3 +549,74 @@ local function testkeys(self, key)
 	end
 end
 keyboardframe:SetScript("OnKeyDown", testkeys)
+
+function _A.myscore()
+	local base, posBuff, negBuff = UnitAttackPower("player");
+	local ap = base + posBuff + negBuff
+	local mastery = GetCombatRating(26)
+	local crit = GetCombatRating(9)
+	local haste = GetCombatRating(18)
+	return (ap + mastery + crit + haste)
+	--return (mastery + crit + haste)
+end
+
+
+-- dot snapshorring
+_A.enemyguidtab = {}
+ijustdidthatthing = false
+ijustdidthatthingtime = 0
+local snapsnap = CreateFrame("Frame")
+snapsnap:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+snapsnap:RegisterEvent("PLAYER_ENTERING_WORLD")
+snapsnap:RegisterEvent("PLAYER_REGEN_ENABLED")
+snapsnap:SetScript("OnEvent", function(self, event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+	if event == "PLAYER_ENTERING_WORLD"
+		or event == "PLAYER_REGEN_ENABLED"
+		then
+		if next(_A.enemyguidtab)~=nil then
+			for k in pairs(_A.enemyguidtab) do
+				_A.enemyguidtab[k]=nil
+				snapsnap:UnregisterEvent("PLAYER_ENTERING_WORLD")
+			end
+		end
+	end
+	if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT" 
+		then
+		if guidsrc == UnitGUID("player") then -- only filter by me
+			if subevent =="SPELL_CAST_SUCCESS" then
+				if idd==85948 then --festering strike, refreshes dot duration but not stats
+					ijustdidthatthing = true -- when true, means I just used FS
+					ijustdidthatthingtime = GetTime()
+				end
+			end
+			if (idd==45462) or (idd==77575) -- or (idd==50842) -- outbreak -- Plague Strike -- pestilence(doesnt work because it only works on the target, and not on everyone else)
+				or 
+				(idd==55078) or (idd==55095)  -- debuffs, I think
+				then 
+				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS" or (subevent=="SPELL_PERIODIC_DAMAGE" and _A.enemyguidtab[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
+				-- every spell aura refresh of dk refreshes both stats and duration, EXCEPT festering strike (only duration), that's what that check is for
+					then
+					_A.enemyguidtab[guiddest]=_A.myscore()
+				end
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					_A.enemyguidtab[guiddest]=nil
+				end
+			end	
+		end
+	end
+end)
+
+local timerframe = CreateFrame("Frame")
+local timerframeinterval = 0.05 -- default
+timerframe.TimeSinceLastUpdate2 = 0
+timerframe:SetScript("OnUpdate", function(self,elapsed)
+	self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 + elapsed;
+	if self.TimeSinceLastUpdate2 >= timerframeinterval then
+		if GetTime()-ijustdidthatthingtime>=.2 then
+			ijustdidthatthing=false
+		end
+		self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 - timerframeinterval
+	end
+end
+)

@@ -214,12 +214,13 @@ unholy.rot = {
 		local player = Object("player")
 		if player and player:SpellCooldown("Mind Freeze")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj:SpellRange("Death Strike")  and obj:isCastingAny() and obj.isplayer
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike")
 					and obj:caninterrupt() 
 					and not obj:State("silence") 
 					and (obj:castsecond() < 0.4 or obj:chanpercent()<=90
 					)
 					and _A.notimmune(obj)
+					and obj:infront() and obj:los()
 					then
 					obj:Cast("Mind Freeze")
 				end
@@ -233,7 +234,7 @@ unholy.rot = {
 		if player and player:SpellCooldown("Death Grip")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if (_A.pull_location ~= "arena") or (_A.pull_location == "arena" and not hunterspecs[_A.UnitSpec(obj.guid)]) then
-					if obj:SpellRange("Death Grip") and obj:isCastingAny() and obj.isplayer
+					if obj.isplayer and obj:isCastingAny() and obj:SpellRange("Death Grip")
 						and (player:SpellCooldown("Mind Freeze")>1.5 or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
 						and not obj:State("root")
 						and _A.notimmune(obj)
@@ -253,7 +254,7 @@ unholy.rot = {
 			if player and player:SpellCooldown("Death Grip")==0 then
 				if roster and roster:DebuffAny("Scatter Shot") then
 					for _, obj in pairs(_A.OM:Get('Enemy')) do
-						if 	hunterspecs[_A.UnitSpec(obj.guid)] and obj:SpellRange("Death Grip")
+						if 	obj.isplayer and hunterspecs[_A.UnitSpec(obj.guid)] and obj:SpellRange("Death Grip")
 							and not obj:State("root")
 							and _A.notimmune(obj)
 							and obj:infront() 
@@ -271,7 +272,7 @@ unholy.rot = {
 		if player and (_A.blood>=1 or _A.death>=1) and player:SpellCooldown("Strangulate")==0 then
 			if player:Glyph("Glyph of Strangulate") or _A.someoneislow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj:SpellRange("Strangulate") and obj:isCastingAny() and  obj.isplayer and _A.isthisahealer(obj)
+					if obj:isCastingAny()  and obj.isplayer and obj:SpellRange("Strangulate") and _A.isthisahealer(obj) 
 						then if ((player:SpellCooldown("Mind Freeze")>1.5 or not obj:SpellRange("Death Strike") or not obj:caninterrupt()) and (player:SpellCooldown("Death Grip")>1.5 or obj:State("root")))
 							and _A.someoneislow() -- default : or
 							then if not obj:State("silence")  and not obj:iscasting("Mana tea") and not obj:DebuffAny("Strangulate")
@@ -290,7 +291,8 @@ unholy.rot = {
 		if player then
 			if  (_A.blood>=1 or _A.death>=1) and player:SpellCooldown("Strangulate")==0 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj:SpellRange("Strangulate")  and obj.isplayer and _A.isthisahealer(obj)  and not obj:DebuffAny("Strangulate")
+					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
+						and not obj:DebuffAny("Strangulate")
 						and not obj:State("silence")
 						and _A.notimmune(obj)
 						and _A.someoneisuperlow()
@@ -307,10 +309,10 @@ unholy.rot = {
 		local player = Object("player")
 		if _A.dkenergy>=20 and player and player:SpellCooldown("Dark Simulacrum")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:SpellRange("Dark Simulacrum") then
+				if obj.isplayer then
 					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)] or darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)] 
 						then
-						if not obj:State("silence") 
+						if obj:SpellRange("Dark Simulacrum") and not obj:State("silence") 
 							and not obj:lostcontrol()
 							and _A.notimmune(obj)
 							and obj:infront() and obj:los() 
@@ -344,6 +346,46 @@ unholy.rot = {
 				then if target:los()
 					then 
 					return target:Cast("Chains of Ice") -- slow/root
+				end
+			end
+		end
+	end,
+	
+	dotsnapshotOutBreak = function()
+		if _A.pull_location == "party" or _A.pull_location == "raid" then
+			local player = Object("player")
+			local target = Object("target")
+			if player:SpellReady("Outbreak") then 
+				if target:exists()
+					and target:enemy()
+					and target:SpellRange("Outbreak")
+					and _A.notimmune(target)
+					then
+					if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
+						if target:infront() and target:los() then
+							return target:Cast("Outbreak")
+						end
+					end
+				end
+			end
+		end
+	end,
+	
+	dotsnapshotPS = function()
+		if _A.pull_location == "party" or _A.pull_location == "raid" then
+			local player = Object("player")
+			local target = Object("target")
+			if  player:SpellCooldown("Plague Strike")<.3 then 
+				if target:exists()
+					and target:enemy()
+					and target:SpellRange("Plague Strike")
+					and _A.notimmune(target)
+					then
+					if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
+						if target:infront() and target:los() then
+							return target:Cast("Plague Strike")
+						end
+					end
 				end
 			end
 		end
@@ -410,8 +452,8 @@ unholy.rot = {
 		local pestcheck = false
 		local player = Object("player")
 		if player then
-			if player:Talent("Roiling Blood") then
-				if _A.blood>=1 or _A.death>=1 then
+			if _A.blood>=1 or _A.death>=1 then
+				if player:Talent("Roiling Blood") then
 					for _, Obj in pairs(_A.OM:Get('Enemy')) do
 						if Obj:range()<=10 then
 							if (Obj:Debuff("Frost Fever") and Obj:Debuff("Blood Plague")) then
@@ -421,10 +463,10 @@ unholy.rot = {
 							end
 						end
 					end
-					if pestcheck == true or _A.modifier_shift() then
+					if pestcheck == true then
 						for _, Obj in pairs(_A.OM:Get('Enemy')) do
 							if Obj.isplayer and Obj:range()<10 then
-								if (not Obj:Debuff("Frost Fever") and not Obj:Debuff("Blood Plague")) or _A.modifier_shift()  then
+								if (not Obj:Debuff("Frost Fever") and not Obj:Debuff("Blood Plague")) then
 									if not _A.notimmune(Obj) then
 										return player:Cast("Blood Boil")
 									end
@@ -432,6 +474,10 @@ unholy.rot = {
 							end
 						end
 					end
+					
+				end
+				if _A.modifier_shift() then
+					return player:Cast("Blood Boil")
 				end
 			end
 		end
@@ -544,16 +590,18 @@ unholy.rot = {
 	end,
 	
 	NecroStrike = function()
-		local player = Object("player")
-		if player then
-			if  _A.death>=1
-				then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-				if lowestmelee then
-					if lowestmelee:exists() then
-						if lowestmelee.isplayer then
-							return lowestmelee:Cast("Necrotic Strike")
-							else return lowestmelee:Cast("Scourge Strike")
+		if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+			local player = Object("player")
+			if player then
+				if  _A.death>=1
+					then
+					local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+					if lowestmelee then
+						if lowestmelee:exists() then
+							if lowestmelee.isplayer then
+								return lowestmelee:Cast("Necrotic Strike")
+								else return lowestmelee:Cast("Scourge Strike")
+							end
 						end
 					end
 				end
@@ -562,26 +610,30 @@ unholy.rot = {
 	end,
 	
 	icytouch = function()
-		local player = Object("player")
-		if player then
-			if (_A.frost>_A.blood and _A.frost>=1) then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
-				if lowestmelee and lowestmelee:exists() then
-					return lowestmelee:Cast("Icy Touch")
+		if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+			local player = Object("player")
+			if player then
+				if (_A.frost>_A.blood and _A.frost>=1) then
+					local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
+					if lowestmelee and lowestmelee:exists() then
+						return lowestmelee:Cast("Icy Touch")
+					end
 				end
 			end
 		end
 	end,
 	
 	bloodboilorphanblood = function()
-		local player = Object("player")
-		if player then
-			if ((_A.blood>_A.frost and _A.blood>=1))
-				then
-				local lowestmelee = Object("lowestEnemyInRangeNOTARNOFACE(9)")
-				if lowestmelee then
-					if lowestmelee:exists() then
-						return player:Cast("Blood Boil")
+		if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+			local player = Object("player")
+			if player then
+				if ((_A.blood>_A.frost and _A.blood>=1))
+					then
+					local lowestmelee = Object("lowestEnemyInRangeNOTARNOFACE(9)")
+					if lowestmelee then
+						if lowestmelee:exists() then
+							return player:Cast("Blood Boil")
+						end
 					end
 				end
 			end
@@ -591,14 +643,11 @@ unholy.rot = {
 	festeringstrikePVEnohuman = function()
 		local player = Object("player")
 		if player then
-			if (_A.blood >=1 and _A.frost >=1)
-				then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-				if lowestmelee then
-					if lowestmelee:exists() then
-						if not lowestmelee.isplayer then
-							return lowestmelee:Cast("Festering Strike")
-						end
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					if not lowestmelee.isplayer then
+						return lowestmelee:Cast("Festering Strike")
 					end
 				end
 			end
@@ -698,12 +747,17 @@ local inCombat = function()
 			unholy.rot.BonusDeathStrike()
 			unholy.rot.DeathcoilHEAL()
 			unholy.rot.SoulReaper()
-			unholy.rot.NecroStrike()
+			----pve part
+			unholy.rot.dotsnapshotOutBreak()
+			unholy.rot.dotsnapshotPS()
 			unholy.rot.festeringstrikePVEnohuman()
+			----pvp part
+			unholy.rot.NecroStrike()
 			unholy.rot.icytouch()
 			unholy.rot.bloodboilorphanblood()
 			unholy.rot.festeringstrike()
 			unholy.rot.Deathcoil()
+			----filler
 			unholy.rot.scourgestrike()
 			unholy.rot.Buffbuff()
 			unholy.rot.blank()
