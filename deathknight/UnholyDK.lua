@@ -122,7 +122,7 @@ unholy.rot = {
 	end,
 	
 	items_healthstone = function()
-		if not player:isCastingAny() and player:health() <= 35 then
+		if player:health() <= 35 then
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) then
@@ -132,7 +132,7 @@ unholy.rot = {
 	end,
 	
 	items_noggenfogger = function()
-		if not player:isCastingAny() and player:ItemCooldown(8529) == 0
+		if player:ItemCooldown(8529) == 0
 			and player:ItemCount(8529) > 0
 			and player:ItemUsable(8529)
 			and (not player:BuffAny(16591) or not player:BuffAny(16595)) -- drink until you get both these buffs
@@ -144,7 +144,7 @@ unholy.rot = {
 	end,
 	
 	items_strpot = function()
-		if not player:isCastingAny() and player:ItemCooldown(76095) == 0
+		if player:ItemCooldown(76095) == 0
 			and player:ItemCount(76095) > 0
 			and player:ItemUsable(76095)
 			and player:Buff("Unholy Frenzy")
@@ -571,11 +571,13 @@ unholy.rot = {
 	end,
 	
 	festeringstrikePVEnohuman = function()
-		local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-		if lowestmelee then
-			if lowestmelee:exists() then
-				if not lowestmelee.isplayer then
-					return lowestmelee:Cast("Festering Strike")
+		if player:SpellReady("Festering Strike") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					if not lowestmelee.isplayer then
+						return lowestmelee:Cast("Festering Strike")
+					end
 				end
 			end
 		end
@@ -618,22 +620,20 @@ unholy.rot = {
 		if player:SpellCooldown("Horn of Winter")<player:Gcd() and _A.dkenergy <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Horn of Winter")
 		end
-	end,
-}
----========================
----========================
----========================
----========================
----========================
-local inCombat = function()	
-	player = player or Object("player")
-    if not player then return end
-	if _A.buttondelayfunc() then return end
-	local player = Object("player")
-	if player then
+		end,
+		}
+		---========================
+	---========================
+	---========================
+	---========================
+	---========================
+	local inCombat = function()	
+		player = player or Object("player")
+		if not player then return end
+		if _A.buttondelayfunc() then return end
 		unholy.rot.GrabGrab()
 		unholy.rot.GrabGrabHunter()
-		if not player:Mounted() and not player:lostcontrol() then
+		if not player:Mounted() and not player:lostcontrol() and not player:isCastingAny() then
 			-- utility
 			unholy.rot.caching()
 			unholy.rot.ClickthisPleasepvp()
@@ -680,26 +680,26 @@ local inCombat = function()
 			unholy.rot.blank()
 		end
 	end
-end
-local outCombat = function()
-	return inCombat()
-end
-local spellIds_Loc = function()
-end
-local blacklist = function()
-end
-_A.CR:Add(252, {
-	name = "UnholyDK",
-	ic = inCombat,
-	ooc = outCombat,
-	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
-})
+	local outCombat = function()
+		return inCombat()
+	end
+	local spellIds_Loc = function()
+	end
+	local blacklist = function()
+	end
+	_A.CR:Add(252, {
+		name = "UnholyDK",
+		ic = inCombat,
+		ooc = outCombat,
+		use_lua_engine = true,
+		gui = GUI,
+		gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+		wow_ver = "5.4.8",
+		apep_ver = "1.1",
+		-- ids = spellIds_Loc,
+		-- blacklist = blacklist,
+		-- pooling = false,
+		load = exeOnLoad,
+		unload = exeOnUnload
+	})
+		
