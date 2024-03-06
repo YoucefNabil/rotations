@@ -237,7 +237,7 @@ local mw_rot = {
 	
 	pvp_disable = function()
 		local target = Object("target")
-		--if not player:LostControl() then
+		if not _A.modifier_shift() then
 		if player:Stance() == 1 --and pull_location()=="arena" 
 			then
 			if target then
@@ -260,6 +260,7 @@ local mw_rot = {
 					end
 				end
 			end
+		end
 		end
 	end,
 	
