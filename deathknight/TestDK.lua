@@ -43,13 +43,13 @@ _A.hooksecurefunc("UseAction", function(...)
 		_A.pressedbuttonat = 0
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
 			_A.Interface:toggleToggle("mastertoggle", true)
-			_A.print("ON")
+			-- _A.print("ON")
 		end
 	end
 	if slot==_A.STOPSLOT then 
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 			_A.Interface:toggleToggle("mastertoggle", false)
-			_A.print("OFF")
+			-- _A.print("OFF")
 		end
 	end
 end)

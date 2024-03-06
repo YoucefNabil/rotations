@@ -570,6 +570,7 @@ unholy.rot = {
 	end,
 	
 	festeringstrikePVEnohuman = function()
+	if _A.pull_location == "party" or _A.pull_location == "raid" then
 		if player:SpellCooldown("Festering Strike")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
@@ -579,6 +580,7 @@ unholy.rot = {
 					end
 				end
 			end
+		end
 		end
 	end,
 	
