@@ -216,7 +216,6 @@ unholy.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike")
 					and obj:caninterrupt() 
-					and not obj:State("silence") 
 					and (obj:castsecond() < 0.4 or obj:chanpercent()<=90
 					)
 					and _A.notimmune(obj)
@@ -275,7 +274,7 @@ unholy.rot = {
 					if obj:isCastingAny()  and obj.isplayer and obj:SpellRange("Strangulate") and _A.isthisahealer(obj) 
 						then if ((player:SpellCooldown("Mind Freeze")>1.5 or not obj:SpellRange("Death Strike") or not obj:caninterrupt()) and (player:SpellCooldown("Death Grip")>1.5 or obj:State("root")))
 							and _A.someoneislow() -- default : or
-							then if not obj:State("silence")  and not obj:iscasting("Mana tea") and not obj:DebuffAny("Strangulate")
+							then if not obj:iscasting("Mana tea") and not obj:DebuffAny("Strangulate")
 								and _A.notimmune(obj) and obj:infront() and obj:los() then
 								obj:Cast("Strangulate")
 							end
