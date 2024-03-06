@@ -25,7 +25,6 @@ end
 local exeOnUnload = function()
 end
 local heFLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true,}
-
 local mw_rot = {
 	ClickthisPleasepvp = function()
 		local tempTable = {}
@@ -543,11 +542,7 @@ local mw_rot = {
 	end,
 	
 	healingsphere_shift = function()
-		--if not player:LostControl() then
-		if player:Stance() == 1 
-			--and pull_location()=="arena"
-			then
-			--- ORBS
+		if player:SpellCooldown("Healing Sphere")<.3 then
 			if player:Stance() == 1 then
 				if _A.modifier_shift() then
 					if _A.enoughmana(115460) then
@@ -558,7 +553,7 @@ local mw_rot = {
 									if lowest:exists() then
 										if lowest:Distance() < 40 then
 											if lowest:los() then
-												return lowest:CastGround("Healing Sphere")
+												return lowest:CastGround("Healing Sphere", true)
 											end
 										end
 									end
@@ -573,20 +568,22 @@ local mw_rot = {
 	
 	healingsphere = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 then
-			if _A.enoughmana(115460) then
-				if _A.manaengine()==true or _A.modifier_shift() then
-					--- ORBS
-					local lowest = Object("lowestall")
-					if lowest then
-						if lowest:exists() then
-							if lowest:alive() then
-								if not lowest:enemy() and not lowest:DebuffAny("Parasitic Growth") and not lowest:DebuffAny("Dissonance Field") then
-									if (lowest:Health() < 85) then
-										if lowest:Distance() < 40 then
+		if player:SpellCooldown("Healing Sphere")<.3 then
+			if player:Stance() == 1 then
+				if _A.enoughmana(115460) then
+					if _A.manaengine()==true or _A.modifier_shift() then
+						--- ORBS
+						local lowest = Object("lowestall")
+						if lowest then
+							if lowest:exists() then
+								if lowest:alive() then
+									if not lowest:enemy() and not lowest:DebuffAny("Parasitic Growth") and not lowest:DebuffAny("Dissonance Field") then
+										if (lowest:Health() < 85) then
+											if lowest:Distance() < 40 then
 											if lowest:los() then
 												return lowest:CastGround("Healing Sphere")
 											end
+										end
 										end
 									end
 								end
