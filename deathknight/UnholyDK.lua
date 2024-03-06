@@ -327,7 +327,7 @@ unholy.rot = {
 	dotsnapshotOutBreak = function()
 		if _A.pull_location == "party" or _A.pull_location == "raid" then
 			local target = Object("target")
-			if player:SpellReady("Outbreak") then 
+			if player:SpellCooldown("Outbreak")<.3 then 
 				if target and target:exists()
 					and target:enemy()
 					and target:SpellRange("Outbreak")
@@ -571,7 +571,7 @@ unholy.rot = {
 	end,
 	
 	festeringstrikePVEnohuman = function()
-		if player:SpellReady("Festering Strike") then
+		if player:SpellCooldown("Festering Strike")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
 				if lowestmelee:exists() then
