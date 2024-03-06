@@ -363,7 +363,7 @@ unholy.rot = {
 					then
 					if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
 						if target:infront() and target:los() then
-							print("refreshing dot")
+							-- print("refreshing dot")
 							return target:Cast("Outbreak")
 						end
 					end
@@ -384,7 +384,7 @@ unholy.rot = {
 					then
 					if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
 						if target:infront() and target:los() then
-							print("refreshing dot")
+							-- print("refreshing dot")
 							return target:Cast("Plague Strike")
 						end
 					end
