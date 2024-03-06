@@ -315,7 +315,7 @@ end
 _A.FakeUnits:Add('EnemyHealer', function(num, spell)
 	local tempTable = {}
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and _A.isthisahealer(Obj) and _A.UnitIsPlayer(Obj.guid)==1  and _A.notimmune(Obj)  and not Obj:immune("all") and  Obj:Infront() and Obj:los() then
+		if Obj.isplayer  and Obj:spellRange(spell) and Obj:Infront() and _A.isthisahealer(Obj) and _A.notimmune(Obj) and Obj:los() then
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
 				health = Obj:health()
@@ -336,11 +336,11 @@ _A.FakeUnits:Add('lowestEnemyInRange', function(num, range_target)
 	local range, target = _A.StrExplode(range_target)
 	range = tonumber(range) or 40
 	target = target or "player"
-	if ttt and  ttt:enemy() and ttt:rangefrom(target)<=range and _A.notimmune(ttt) and ttt:Infront() and ttt:los() then
+	if ttt and  ttt:enemy() and ttt:rangefrom(target)<=range and ttt:Infront() and _A.notimmune(ttt)  and ttt:los() then
 		return ttt and ttt.guid
 	end
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:rangefrom(target)<=range and _A.notimmune(Obj) and Obj:Infront() and Obj:los() then
+		if Obj:rangefrom(target)<=range and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
 				health = Obj:health(),
@@ -360,7 +360,7 @@ _A.FakeUnits:Add('lowestEnemyInRangeNOTAR', function(num, range_target)
 	range = tonumber(range) or 40
 	target = target or "player"
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:rangefrom(target)<=range  and  _A.notimmune(Obj) and Obj:Infront() and Obj:los() then
+		if Obj:rangefrom(target)<=range  and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
 				health = Obj:health(),
@@ -400,7 +400,7 @@ end)
 _A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 	local tempTable = {}
 	local target = Object("target")
-	if target and target:enemy() and target:spellRange(spell) and  _A.notimmune(target) and target:Infront() and target:los() then
+	if target and target:enemy() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
 		return target and target.guid
 	end
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do
@@ -421,7 +421,7 @@ end)
 _A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 	local tempTable = {}
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and _A.notimmune(Obj) and Obj:Infront()  and Obj:los() then
+		if Obj:spellRange(spell) and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
 				health = Obj:health(),
