@@ -620,86 +620,86 @@ unholy.rot = {
 		if player:SpellCooldown("Horn of Winter")<player:Gcd() and _A.dkenergy <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Horn of Winter")
 		end
-		end,
-		}
-		---========================
-	---========================
-	---========================
-	---========================
-	---========================
-	local inCombat = function()	
-		player = player or Object("player")
-		if not player then return end
-		if _A.buttondelayfunc() then return end
-		unholy.rot.GrabGrab()
-		unholy.rot.GrabGrabHunter()
-		if not player:Mounted() and not player:lostcontrol() and not player:isCastingAny() then
-			-- utility
-			unholy.rot.caching()
-			unholy.rot.ClickthisPleasepvp()
-			-- Burst and utility
-			unholy.rot.items_strpot()
-			unholy.rot.items_strflask()
-			unholy.rot.hasteburst()
-			unholy.rot.items_healthstone()
-			unholy.rot.gargoyle()
-			unholy.rot.Empowerruneweapon()
-			-- PVP INTERRUPTS AND CC
-			unholy.rot.MindFreeze()
-			-- unholy.rot.strangulate()
-			unholy.rot.strangulatesnipe()
-			unholy.rot.darksimulacrum()
-			unholy.rot.root()
-			-- DEFS
-			unholy.rot.antimagicshell()
-			unholy.rot.petres()
-			unholy.rot.deathpact()
-			unholy.rot.Lichborne()
-			-- rotation
-			unholy.rot.DeathcoilDump()
-			unholy.rot.dkuhaoe()
-			unholy.rot.outbreak()
-			unholy.rot.dotapplication()
-			unholy.rot.pettransform()
-			unholy.rot.BonusDeathStrike()
-			unholy.rot.DeathcoilHEAL()
-			unholy.rot.SoulReaper()
-			----pve part
-			unholy.rot.dotsnapshotOutBreak()
-			unholy.rot.dotsnapshotPS()
-			unholy.rot.festeringstrikePVEnohuman()
-			----pvp part
-			unholy.rot.NecroStrike()
-			unholy.rot.icytouch()
-			unholy.rot.bloodboilorphanblood()
-			unholy.rot.festeringstrike()
-			unholy.rot.Deathcoil()
-			----filler
-			unholy.rot.scourgestrike()
-			unholy.rot.Buffbuff()
-			unholy.rot.blank()
-		end
-	end
-	local outCombat = function()
-		return inCombat()
-	end
-	local spellIds_Loc = function()
-	end
-	local blacklist = function()
-	end
-	_A.CR:Add(252, {
-		name = "UnholyDK",
-		ic = inCombat,
-		ooc = outCombat,
-		use_lua_engine = true,
-		gui = GUI,
-		gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-		wow_ver = "5.4.8",
-		apep_ver = "1.1",
-		-- ids = spellIds_Loc,
-		-- blacklist = blacklist,
-		-- pooling = false,
-		load = exeOnLoad,
-		unload = exeOnUnload
-	})
-		
+	end,
+}
+---========================
+---========================
+---========================
+---========================
+---========================
+local inCombat = function()	
+	player = player or Object("player")
+	if not player then return end
+	if _A.buttondelayfunc() then return end
+	if player:lostcontrol() return end
+	if player:isCastingAny() return end
+	unholy.rot.GrabGrab()
+	unholy.rot.GrabGrabHunter()
+	if player:Mounted() return end
+	-- utility
+	unholy.rot.caching()
+	unholy.rot.ClickthisPleasepvp()
+	-- Burst and utility
+	unholy.rot.items_strpot()
+	unholy.rot.items_strflask()
+	unholy.rot.hasteburst()
+	unholy.rot.items_healthstone()
+	unholy.rot.gargoyle()
+	unholy.rot.Empowerruneweapon()
+	-- PVP INTERRUPTS AND CC
+	unholy.rot.MindFreeze()
+	-- unholy.rot.strangulate()
+	unholy.rot.strangulatesnipe()
+	unholy.rot.darksimulacrum()
+	unholy.rot.root()
+	-- DEFS
+	unholy.rot.antimagicshell()
+	unholy.rot.petres()
+	unholy.rot.deathpact()
+	unholy.rot.Lichborne()
+	-- rotation
+	unholy.rot.DeathcoilDump()
+	unholy.rot.dkuhaoe()
+	unholy.rot.outbreak()
+	unholy.rot.dotapplication()
+	unholy.rot.pettransform()
+	unholy.rot.BonusDeathStrike()
+	unholy.rot.DeathcoilHEAL()
+	unholy.rot.SoulReaper()
+	----pve part
+	unholy.rot.dotsnapshotOutBreak()
+	unholy.rot.dotsnapshotPS()
+	unholy.rot.festeringstrikePVEnohuman()
+	----pvp part
+	unholy.rot.NecroStrike()
+	unholy.rot.icytouch()
+	unholy.rot.bloodboilorphanblood()
+	unholy.rot.festeringstrike()
+	unholy.rot.Deathcoil()
+	----filler
+	unholy.rot.scourgestrike()
+	unholy.rot.Buffbuff()
+	unholy.rot.blank()
+end
+local outCombat = function()
+	return inCombat()
+end
+local spellIds_Loc = function()
+end
+local blacklist = function()
+end
+_A.CR:Add(252, {
+	name = "UnholyDK",
+	ic = inCombat,
+	ooc = outCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
+})
