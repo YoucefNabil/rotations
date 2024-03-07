@@ -245,7 +245,7 @@ local mw_rot = {
 						and obj:SpellRange("Grapple Weapon") 
 						and obj:Infront()
 						and not healerspecid[_A.UnitSpec(obj.guid)] 
-						and obj:BuffAny("Call of Victory")
+						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
 						and not obj:LostControl()
 						and not obj:state("disarm")
 						and _A.notimmune(obj)
