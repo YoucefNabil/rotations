@@ -349,9 +349,7 @@ local mw_rot = {
 	end,
 	
 	thunderfocustea = function()
-		--if not player:LostControl() then
-		if player:Stance() == 1 then
-			
+		if player:Stance() == 1 and player:Chi()>=1 then
 			if	player:SpellCooldown("Thunder Focus Tea")==0
 				and _A.enoughmana(116680)
 				then
