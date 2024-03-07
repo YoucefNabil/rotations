@@ -242,7 +242,7 @@ local mw_rot = {
 			if player:SpellCooldown("Grapple Weapon")<.3 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer 
-						and obj:SpellRange("Paralysis") 
+						and obj:SpellRange("Grapple Weapon") 
 						and obj:Infront()
 						and not healerspecid[_A.UnitSpec(obj.guid)] 
 						and obj:BuffAny("Call of Victory")
