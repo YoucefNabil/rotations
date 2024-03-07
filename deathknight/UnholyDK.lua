@@ -284,7 +284,7 @@ unholy.rot = {
 				if obj.isplayer then
 					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)] or darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)] 
 						then
-						if objs:isCastingAny() and obj:SpellRange("Dark Simulacrum") and obj:infront() and not obj:State("silence") 
+						if obj:SpellRange("Dark Simulacrum") and obj:infront() and not obj:State("silence") 
 							and not obj:lostcontrol()
 							and _A.notimmune(obj)
 							and obj:los() 
@@ -581,16 +581,6 @@ unholy.rot = {
 		end
 	end,
 	
-	festeringstrike = function()
-		if (_A.blood >=1 and _A.frost >=1) then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if lowestmelee 
-				and lowestmelee:exists() then
-				return lowestmelee:Cast("Festering Strike")
-			end
-		end
-	end,
-	
 	Deathcoil = function()
 		if player:SpellCooldown("Death Coil")<player:Gcd() and (player:buff("Sudden Doom") or _A.dkenergy>=32) then 
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
@@ -672,7 +662,6 @@ local inCombat = function()
 	unholy.rot.NecroStrike()
 	unholy.rot.icytouch()
 	unholy.rot.bloodboilorphanblood()
-	-- unholy.rot.festeringstrike()
 	unholy.rot.Deathcoil()
 	----filler
 	unholy.rot.scourgestrike()
