@@ -245,30 +245,13 @@ unholy.rot = {
 		end
 	end,
 	
-	strangulate=function()
-		if (_A.blood>=1 or _A.death>=1) and player:SpellCooldown("Strangulate")==0 then
-			if player:Glyph("Glyph of Strangulate") or _A.someoneislow() then
-				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj.isplayer and obj:isCastingAny()  and obj:SpellRange("Strangulate") and obj:infront() and _A.isthisahealer(obj) 
-						then if ((player:SpellCooldown("Mind Freeze")>player:Gcd() or not obj:SpellRange("Death Strike") or not obj:caninterrupt()) and (player:SpellCooldown("Death Grip")>player:Gcd() or obj:State("root")))
-							and _A.someoneislow() -- default : or
-							then if not obj:iscasting("Mana tea") and not obj:DebuffAny("Strangulate")
-								and _A.notimmune(obj)  and obj:los() then
-								obj:Cast("Strangulate", true)
-							end
-						end
-					end
-				end
-			end
-		end
-	end,
-	
 	strangulatesnipe = function()
 		if  (_A.blood>=1 or _A.death>=1) and player:SpellCooldown("Strangulate")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
 					and not obj:DebuffAny("Strangulate")
 					and not obj:State("silence")
+					and not obj:lostcontrol()
 					and _A.notimmune(obj)
 					and _A.someoneisuperlow()
 					and obj:los() then
@@ -636,7 +619,6 @@ local inCombat = function()
 	unholy.rot.Empowerruneweapon()
 	-- PVP INTERRUPTS AND CC
 	unholy.rot.MindFreeze()
-	-- unholy.rot.strangulate()
 	unholy.rot.strangulatesnipe()
 	unholy.rot.darksimulacrum()
 	unholy.rot.root()
