@@ -246,6 +246,7 @@ local mw_rot = {
 						and obj:Infront()
 						and not healerspecid[_A.UnitSpec(obj.guid)] 
 						and obj:BuffAny("Call of Victory")
+						and not obj:LostControl()
 						and _A.notimmune(obj)
 						and obj:los() then
 						return obj:Cast("Grapple Weapon")
