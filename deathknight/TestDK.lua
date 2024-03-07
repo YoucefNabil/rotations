@@ -283,13 +283,24 @@ function _A.someoneisuperlow()
 end
 
 local healerspecid = {
-	[105]=true,
-	[270]=true,
-	[65]=true,
-	[257]=true,
-	[256]=true,
-	[102]=true,
-	[264]=true
+	-- [265]="Lock Affli",
+	-- [266]="Lock Demono",
+	-- [267]="Lock Destro",
+	[105]="Druid Resto",
+	[102]="Druid Balance",
+	[270]="monk mistweaver",
+	-- [65]="Paladin Holy",
+	-- [66]="Paladin prot",
+	-- [70]="Paladin retri",
+	[257]="Priest Holy",
+	[256]="Priest discipline",
+	-- [258]="Priest shadow",
+	[264]="Sham Resto",
+	-- [262]="Sham Elem",
+	-- [263]="Sham enh",
+	-- [62]="Mage Arcane",
+	-- [63]="Mage Fire",
+	-- [64]="Mage Frost"
 }
 
 function _A.isthisahealer(unit)

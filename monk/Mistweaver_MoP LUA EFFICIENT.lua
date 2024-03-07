@@ -18,6 +18,26 @@ local function pull_location()
 end
 --
 --
+local healerspecid = {
+	-- [265]="Lock Affli",
+	-- [266]="Lock Demono",
+	-- [267]="Lock Destro",
+	[105]="Druid Resto",
+	-- [102]="Druid Balance",
+	[270]="monk mistweaver",
+	-- [65]="Paladin Holy",
+	-- [66]="Paladin prot",
+	-- [70]="Paladin retri",
+	[257]="Priest Holy",
+	[256]="Priest discipline",
+	-- [258]="Priest shadow",
+	[264]="Sham Resto",
+	-- [262]="Sham Elem",
+	-- [263]="Sham enh",
+	-- [62]="Mage Arcane",
+	-- [63]="Mage Fire",
+	-- [64]="Mage Frost"
+}
 local GUI = {
 }
 local exeOnLoad = function()
@@ -213,6 +233,25 @@ local mw_rot = {
 				end
 			end
 			
+		end
+	end,
+	
+	burstdisarm = function()
+		--if not player:LostControl() then
+		if player:Stance() == 1 then
+			if player:SpellCooldown("Grapple Weapon")<.3 then
+				for _, obj in pairs(_A.OM:Get('Enemy')) do
+					if obj.isplayer 
+						and obj:SpellRange("Paralysis") 
+						and obj:Infront()
+						and not healerspecid[_A.UnitSpec(obj.guid)] 
+						and obj:BuffAny("Call of Victory")
+						and _A.notimmune(obj)
+						and obj:los() then
+						return obj:Cast("Grapple Weapon")
+					end
+				end
+			end
 		end
 	end,
 	
@@ -794,6 +833,7 @@ local inCombat = function()
 	mw_rot.kick_legsweep()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
+	mw_rot.burstdisarm()
 	mw_rot.pvp_disable()
 	mw_rot.ringofpeace()
 	mw_rot.healingsphere_shift()
