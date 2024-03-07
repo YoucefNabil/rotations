@@ -275,7 +275,6 @@ unholy.rot = {
 					obj:Cast("Strangulate", true)
 				end
 			end
-			
 		end
 	end,
 	
@@ -285,7 +284,7 @@ unholy.rot = {
 				if obj.isplayer then
 					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)] or darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)] 
 						then
-						if obj:SpellRange("Dark Simulacrum") and obj:infront() and not obj:State("silence") 
+						if objs:isCastingAny() and obj:SpellRange("Dark Simulacrum") and obj:infront() and not obj:State("silence") 
 							and not obj:lostcontrol()
 							and _A.notimmune(obj)
 							and obj:los() 
