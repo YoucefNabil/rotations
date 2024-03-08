@@ -244,10 +244,11 @@ local mw_rot = {
 						and obj:SpellRange("Grapple Weapon") 
 						and obj:Infront()
 						and not healerspecid[_A.UnitSpec(obj.guid)] 
-						-- and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
 						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
+						and not obj:BuffAny("Bladestorm")
 						and not obj:LostControl()
 						and not obj:state("disarm")
+						and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
 						and _A.notimmune(obj)
 						and obj:los() then
 						return obj:Cast("Grapple Weapon")
@@ -279,29 +280,29 @@ local mw_rot = {
 	pvp_disable = function()
 		local target = Object("target")
 		if not _A.modifier_shift() then
-		if player:Stance() == 1 --and pull_location()=="arena" 
-			then
-			if target then
-				if target:exists() then
-					if target:enemy()
-						and _A.UnitIsPlayer(target.guid)
-						and target:SpellRange("Blackout Kick") 
-						and target:Infront()
-						and not target:BuffAny("Bladestorm")
-						and not target:BuffAny("Divine Shield")
-						and not target:BuffAny("Die by the Sword")
-						and not target:BuffAny("Hand of Protection")
-						and not target:BuffAny("Hand of Freedom")
-						and not target:BuffAny("Deterrence")
-						and target:DebuffDuration("Disable")<1 
-						and ( target:DebuffDuration("Disable")>0 or not target:DebuffAny("disable") )
-						and _A.notimmune(target)
-						and target:los() then
-						return target:Cast("Disable")
+			if player:Stance() == 1 --and pull_location()=="arena" 
+				then
+				if target then
+					if target:exists() then
+						if target:enemy()
+							and _A.UnitIsPlayer(target.guid)
+							and target:SpellRange("Blackout Kick") 
+							and target:Infront()
+							and not target:BuffAny("Bladestorm")
+							and not target:BuffAny("Divine Shield")
+							and not target:BuffAny("Die by the Sword")
+							and not target:BuffAny("Hand of Protection")
+							and not target:BuffAny("Hand of Freedom")
+							and not target:BuffAny("Deterrence")
+							and target:DebuffDuration("Disable")<1 
+							and ( target:DebuffDuration("Disable")>0 or not target:DebuffAny("disable") )
+							and _A.notimmune(target)
+							and target:los() then
+							return target:Cast("Disable")
+						end
 					end
 				end
 			end
-		end
 		end
 	end,
 	
@@ -620,10 +621,10 @@ local mw_rot = {
 									if not lowest:enemy() and not lowest:DebuffAny("Parasitic Growth") and not lowest:DebuffAny("Dissonance Field") then
 										if (lowest:Health() < 85) then
 											if lowest:Distance() < 40 then
-											if lowest:los() then
-												return lowest:CastGround("Healing Sphere")
+												if lowest:los() then
+													return lowest:CastGround("Healing Sphere")
+												end
 											end
-										end
 										end
 									end
 								end
@@ -824,10 +825,7 @@ local mw_rot = {
 
 local inCombat = function()	
 	player = player or Object("player")
-	if not player then return end
-	if _A.buttondelayfunc() then return end 
-	if player:isCastingAny() then return end
-	if player:Mounted() then return end
+	if not player or _A.buttondelayfunc() or player:isCastingAny() or player:Mounted() then return end 
 	mw_rot.ClickthisPleasepvp()
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
