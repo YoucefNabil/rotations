@@ -246,16 +246,19 @@ unholy.rot = {
 	end,
 	
 	strangulatesnipe = function()
-		if  (_A.blood>=1 or _A.death>=1) and player:SpellCooldown("Strangulate")==0 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
-					and not obj:DebuffAny("Strangulate")
-					and not obj:State("silence")
-					and not obj:lostcontrol()
-					and _A.notimmune(obj)
-					and _A.someoneisuperlow()
-					and obj:los() then
-					obj:Cast("Strangulate", true)
+		if (_A.blood>=1 or _A.death>=1)  then
+			if   not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 then
+				for _, obj in pairs(_A.OM:Get('Enemy')) do
+					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
+						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
+						and not obj:DebuffAny("Strangulate")
+						and not obj:State("silence")
+						and not obj:lostcontrol()
+						and _A.notimmune(obj)
+						and _A.someoneisuperlow()
+						and obj:los() then
+						obj:Cast("Strangulate", true)
+					end
 				end
 			end
 		end
@@ -564,11 +567,37 @@ unholy.rot = {
 		end
 	end,
 	
+	festeringstrike = function()
+		if _A.blood >= 1 and _A.frost >=1 then
+			if player:SpellCooldown("Festering Strike")<player:Gcd() then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+				if lowestmelee and lowestmelee:exists() then
+					return lowestmelee:Cast("Festering Strike")
+				end
+			end
+		end
+	end,
+	
 	Deathcoil = function()
 		if player:SpellCooldown("Death Coil")<player:Gcd() and (player:buff("Sudden Doom") or _A.dkenergy>=32) then 
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
 			if lowestmelee and lowestmelee:exists() then
 				return lowestmelee:Cast("Death Coil")
+			end
+		end
+	end,
+	
+	DeathcoilRefund = function()
+		if _A.dkenergy<=80 then
+			if player:Glyph("Glyph of Death's Embrace") and player:SpellCooldown("Death Coil")<player:Gcd() and player:buff("Sudden Doom") then 
+				if  _A.UnitExists("pet")
+					and not _A.UnitIsDeadOrGhost("pet")
+					and _A.HasPetUI() then
+					local lowestmelee = Object("pet")
+					if lowestmelee and lowestmelee:exists() and lowestmelee:SpellRange("Death Coil") and lowestmelee:los() then
+						return lowestmelee:Cast("Death Coil")
+					end
+				end
 			end
 		end
 	end,
@@ -628,6 +657,7 @@ local inCombat = function()
 	unholy.rot.deathpact()
 	unholy.rot.Lichborne()
 	-- rotation
+	unholy.rot.DeathcoilRefund()
 	unholy.rot.DeathcoilDump()
 	unholy.rot.dkuhaoe()
 	unholy.rot.outbreak()
@@ -646,6 +676,7 @@ local inCombat = function()
 	unholy.rot.bloodboilorphanblood()
 	unholy.rot.Deathcoil()
 	----filler
+	unholy.rot.festeringstrike()
 	unholy.rot.scourgestrike()
 	unholy.rot.Buffbuff()
 	unholy.rot.blank()

@@ -232,7 +232,6 @@ local mw_rot = {
 					end
 				end
 			end
-			
 		end
 	end,
 	
@@ -245,6 +244,7 @@ local mw_rot = {
 						and obj:SpellRange("Grapple Weapon") 
 						and obj:Infront()
 						and not healerspecid[_A.UnitSpec(obj.guid)] 
+						and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
 						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
 						and not obj:LostControl()
 						and not obj:state("disarm")
