@@ -265,6 +265,42 @@ unholy.rot = {
 		end
 	end,
 	
+	Asphyxiatesnipe = function()
+		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  and obj:infront() 
+					and not obj:lostcontrol()
+					and not obj:DebuffAny("Asphyxiate")
+					and not obj:State("silence")
+					and (obj:drState("Asphyxiate") == 1 or obj:drState("Asphyxiate")==-1)
+					and _A.notimmune(obj)
+					and _A.someoneisuperlow()
+					and obj:los() then
+					return obj:Cast("Asphyxiate")
+				end
+			end
+		end
+	end,
+	
+	AsphyxiateBurst = function()
+		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer  and not _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  and obj:infront()
+					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
+					and not obj:lostcontrol()
+					and not obj:DebuffAny("Asphyxiate")
+					and not obj:BuffAny("bladestorm")
+					and not obj:BuffAny("Anti-Magic Shell")
+					and not obj:State("silence")
+					and (obj:drState("Asphyxiate") == 1 or obj:drState("Asphyxiate")==-1)
+					and _A.notimmune(obj)
+					and obj:los() then
+					return obj:Cast("Asphyxiate")
+				end
+			end
+		end
+	end,
+	
 	darksimulacrum = function()
 		if _A.dkenergy>=20 and player and player:SpellCooldown("Dark Simulacrum")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -625,6 +661,8 @@ local inCombat = function()
 	-- PVP INTERRUPTS AND CC
 	unholy.rot.MindFreeze()
 	unholy.rot.strangulatesnipe()
+	unholy.rot.Asphyxiatesnipe()
+	unholy.rot.AsphyxiateBurst()
 	unholy.rot.darksimulacrum()
 	unholy.rot.root()
 	-- DEFS
