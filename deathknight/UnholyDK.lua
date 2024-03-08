@@ -512,11 +512,16 @@ unholy.rot = {
 	
 	DeathcoilDump = function()
 		if _A.dkenergy >= 85 then
-			if player:SpellCooldown("Death Coil")<.3 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			if player:SpellCooldown("Death Coil")<.3 
+			and not player:BuffAny("Runic Corruption") 
+			then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 				local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
 				if lowestmelee then
 					if lowestmelee:exists() then
-						return lowestmelee:Cast("Death Coil")
+						if not player:Buff("Lichborne") then
+							return lowestmelee:Cast("Death Coil")
+							else return player:Cast("Death Coil")
+						end
 					end
 				end
 			end
@@ -524,7 +529,9 @@ unholy.rot = {
 	end,
 	
 	DeathcoilHEAL = function()
-		if player:SpellCooldown("Death Coil")<.3 and player:Buff("Lichborne") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if player:SpellCooldown("Death Coil")<.3 and player:Buff("Lichborne") 
+		-- and not player:BuffAny("Runic Corruption") 
+		then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			if _A.enoughmana(47541) then
 				return player:Cast("Death Coil")
 			end
@@ -540,7 +547,7 @@ unholy.rot = {
 					if lowestmelee:health()<35 then
 						return lowestmelee:Cast("Soul Reaper")
 					end
-				end
+					end
 			end
 		end
 	end,
@@ -594,7 +601,9 @@ unholy.rot = {
 	
 	
 	Deathcoil = function()
-		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or _A.dkenergy>=32) then 
+		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or _A.dkenergy>=32)
+		and not player:BuffAny("Runic Corruption")  
+		then 
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
 			if lowestmelee and lowestmelee:exists() then
 				return lowestmelee:Cast("Death Coil")
@@ -603,7 +612,9 @@ unholy.rot = {
 	end,
 	
 	DeathcoilRefund = function()
-		if _A.dkenergy<=80 then
+		if _A.dkenergy<=80 
+		and not player:BuffAny("Runic Corruption") 
+		then
 			if player:Glyph("Glyph of Death's Embrace") and player:SpellCooldown("Death Coil")<.3 and player:buff("Sudden Doom") then 
 				if  _A.UnitExists("pet")
 					and not _A.UnitIsDeadOrGhost("pet")
