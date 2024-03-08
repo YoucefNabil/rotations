@@ -250,7 +250,7 @@ unholy.rot = {
 			if   not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
-						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
+						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and not obj:DebuffAny("Strangulate")
 						and not obj:State("silence")
 						and not obj:lostcontrol()
