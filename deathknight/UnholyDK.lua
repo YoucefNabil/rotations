@@ -657,7 +657,7 @@ local inCombat = function()
 	unholy.rot.deathpact()
 	unholy.rot.Lichborne()
 	-- rotation
-	unholy.rot.DeathcoilRefund()
+	-- unholy.rot.DeathcoilRefund()
 	unholy.rot.DeathcoilDump()
 	unholy.rot.dkuhaoe()
 	unholy.rot.outbreak()
