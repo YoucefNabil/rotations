@@ -513,8 +513,8 @@ unholy.rot = {
 	DeathcoilDump = function()
 		if _A.dkenergy >= 85 then
 			if player:SpellCooldown("Death Coil")<.3 
-			and not player:BuffAny("Runic Corruption") 
-			then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+				and not player:BuffAny("Runic Corruption") 
+				then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 				local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
 				if lowestmelee then
 					if lowestmelee:exists() then
@@ -530,8 +530,8 @@ unholy.rot = {
 	
 	DeathcoilHEAL = function()
 		if player:SpellCooldown("Death Coil")<.3 and player:Buff("Lichborne") 
-		-- and not player:BuffAny("Runic Corruption") 
-		then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			-- and not player:BuffAny("Runic Corruption") 
+			then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			if _A.enoughmana(47541) then
 				return player:Cast("Death Coil")
 			end
@@ -547,7 +547,7 @@ unholy.rot = {
 					if lowestmelee:health()<35 then
 						return lowestmelee:Cast("Soul Reaper")
 					end
-					end
+				end
 			end
 		end
 	end,
@@ -568,7 +568,8 @@ unholy.rot = {
 	end,
 	
 	icytouch = function()
-		if (_A.frost>_A.blood and _A.frost>=1) then
+		-- if (_A.frost>_A.blood and _A.frost>=1) then
+		if _A.frost>=1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
 			if lowestmelee and lowestmelee:exists() then
 				return lowestmelee:Cast("Icy Touch")
@@ -577,7 +578,8 @@ unholy.rot = {
 	end,
 	
 	bloodboilorphanblood = function()
-		if ((_A.blood>_A.frost and _A.blood>=1))
+		-- if ((_A.blood>_A.frost and _A.blood>=1))
+		if _A.blood>=1
 			then
 			local lowestmelee = Object("lowestEnemyInRangeNOTARNOFACE(9)")
 			if lowestmelee and lowestmelee:exists() then
@@ -602,8 +604,8 @@ unholy.rot = {
 	
 	Deathcoil = function()
 		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or _A.dkenergy>=32)
-		and not player:BuffAny("Runic Corruption")  
-		then 
+			and not player:BuffAny("Runic Corruption")  
+			then 
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
 			if lowestmelee and lowestmelee:exists() then
 				return lowestmelee:Cast("Death Coil")
@@ -613,8 +615,8 @@ unholy.rot = {
 	
 	DeathcoilRefund = function()
 		if _A.dkenergy<=80 
-		and not player:BuffAny("Runic Corruption") 
-		then
+			and not player:BuffAny("Runic Corruption") 
+			then
 			if player:Glyph("Glyph of Death's Embrace") and player:SpellCooldown("Death Coil")<.3 and player:buff("Sudden Doom") then 
 				if  _A.UnitExists("pet")
 					and not _A.UnitIsDeadOrGhost("pet")
@@ -699,8 +701,8 @@ local inCombat = function()
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 		unholy.rot.NecroStrike()
-		unholy.rot.icytouch()
 		unholy.rot.bloodboilorphanblood()
+		unholy.rot.icytouch()
 	end
 	----filler
 	unholy.rot.Deathcoil()
