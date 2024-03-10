@@ -13,6 +13,12 @@ _A.ceeceed = function(unit)
 	end
 	return false
 end
+function _A.breakableceecee(unit)
+	if unit and unit:State("fear || sleep || charm || disorient || incapacitate")
+		then return true
+	end
+	return false
+end
 _A.hooksecurefunc("UseAction", function(...)
 	local slot, target, clickType = ...
 	local Type, id, subType, spellID

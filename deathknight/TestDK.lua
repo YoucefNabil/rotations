@@ -289,6 +289,13 @@ function _A.ceeceed(unit)
 	return false
 end
 
+function _A.breakableceecee(unit)
+	if unit and unit:State("fear || sleep || charm || disorient || incapacitate")
+		then return true
+	end
+	return false
+end
+
 local healerspecid = {
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",

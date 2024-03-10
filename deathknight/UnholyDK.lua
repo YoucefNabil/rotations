@@ -434,6 +434,9 @@ unholy.rot = {
 			if player:Talent("Roiling Blood") then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj:range()<=10 then
+						if _A.modifier_shift() then
+							return player:Cast("Blood Boil")
+						end
 						if (Obj:Debuff("Frost Fever") and Obj:Debuff("Blood Plague")) then
 							if  _A.notimmune(Obj) then
 								pestcheck = true
@@ -453,9 +456,6 @@ unholy.rot = {
 					end
 				end
 				
-			end
-			if _A.modifier_shift() then
-				return player:Cast("Blood Boil")
 			end
 		end
 	end,
@@ -734,6 +734,6 @@ _A.CR:Add(252, {
 	-- ids = spellIds_Loc,
 	-- blacklist = blacklist,
 	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+load = exeOnLoad,
+unload = exeOnUnload
 })
