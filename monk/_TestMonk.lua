@@ -7,6 +7,12 @@ _A.buttondelay = 0.6
 local STARTSLOT = 97
 local STOPSLOT = 104
 --
+_A.ceeceed = function(unit)
+	if unit and unit:State("fear || sleep || charm || disorient || incapacitate || misc || stun")
+		then return true
+	end
+	return false
+end
 _A.hooksecurefunc("UseAction", function(...)
 	local slot, target, clickType = ...
 	local Type, id, subType, spellID
@@ -143,11 +149,11 @@ function _A.IsPStr() --temporary method to get strafing.
     local moveLeft = _A.IsKeyDown("a")
     local moveRight = _A.IsKeyDown("z")
     if isMoving and moveLeft then
-        return "left"
+		return "left"
 		elseif isMoving and moveRight then
-        return "right"
+		return "right"
 		else
-        return "none"
+		return "none"
 	end
 end
 function _A.pSpeed(unit, maxDistance)
@@ -157,21 +163,21 @@ function _A.pSpeed(unit, maxDistance)
     local speed = _A.GetUnitSpeed(unit)
     local distance
     if speed <= 4.5 then
-        distance = 1.5
+		distance = 1.5
 		else
-        distance = math.min(maxDistance, speed - 4.5)
+		distance = math.min(maxDistance, speed - 4.5)
 	end
     -- Check strafing only if the unit is the player currently because can't get apep's lua functions to check for strafing
     if unit == player then
-        local isMoving = _A.UnitMoving(unit)
-        if not isMoving then
-            return x, y, z
+		local isMoving = _A.UnitMoving(unit)
+		if not isMoving then
+			return x, y, z
 		end
-        local strafeDirection = _A.IsPStr()
-        if strafeDirection == "left" then
-            facing = facing + math.pi / 2
+		local strafeDirection = _A.IsPStr()
+		if strafeDirection == "left" then
+			facing = facing + math.pi / 2
 			elseif strafeDirection == "right" then
-            facing = facing - math.pi / 2
+			facing = facing - math.pi / 2
 		end
 	end
     local newX = x + distance * math.cos(facing)
@@ -183,8 +189,8 @@ function _A.CastPredictedPos(unit, spell, distance)
 	local px, py, pz = _A.pSpeed(unit, distance)
 	_A.CastSpellByName(spell)
     if player:SpellIsTargeting() then
-        _A.ClickPosition(px, py, pz)
-        _A.SpellStopTargeting()
+		_A.ClickPosition(px, py, pz)
+		_A.SpellStopTargeting()
 	end
 end
 -------------------------------------------------------
@@ -750,7 +756,7 @@ end)
 
 _A.DSL:Register('UnitCastID', function(t)
     if t=="player" then
-        t = U.playerGUID
+		t = U.playerGUID
 	end
     return _A.UnitCastID(t) -- castid, channelid, guid, pointer
 end)
@@ -981,11 +987,11 @@ end)
 	if enemy then
 	if _A.UnitIsPlayer(enemy.guid) then
 	local tguid = UnitTarget(enemy.guid)
-	if tguid then
-	targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
-	end
-	end
-	end
+if tguid then
+targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
+end
+end
+end
 end
 for guid, count in pairs(targets) do
 if count > most then

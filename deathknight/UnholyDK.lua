@@ -657,7 +657,11 @@ unholy.rot = {
 ---========================
 local inCombat = function()	
 	player = player or Object("player")
-	if not player  or _A.buttondelayfunc() or player:lostcontrol() or  player:isCastingAny() then return end
+	if not player then return end
+	if _A.buttondelayfunc()  then return end
+	if player:lostcontrol()  then return end 
+	if _A.ceeceed(player)  then return end 
+	if  player:isCastingAny() then return end
 	unholy.rot.GrabGrab()
 	unholy.rot.GrabGrabHunter()
 	if player:Mounted() then return end

@@ -642,7 +642,7 @@ local mw_rot = {
 			if player:Chi()>=2 then
 				if player:Buff("Muscle Memory") then
 					---------------------------------- 
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInRange(4)")
 					if lowestmelee then
 						if lowestmelee:exists() then
 							---------------------------------- 
@@ -661,7 +661,7 @@ local mw_rot = {
 			if player:Chi()>=1 then
 				if player:Buff("Muscle Memory") then
 					---------------------------------- 
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInRange(4)")
 					if lowestmelee then
 						if lowestmelee:exists() then
 							---------------------------------- 
@@ -681,7 +681,7 @@ local mw_rot = {
 				if player:Chi()>= 2
 					and not player:Buff("Serpent's Zeal") -- and player:Buff("Muscle Memory") 
 					then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInRange(4)")
 					if lowestmelee then
 						if lowestmelee:exists() then
 							
@@ -700,7 +700,7 @@ local mw_rot = {
 				if player:Chi()>= 1
 					and not player:Buff("Tiger Power")
 					then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInRange(4)")
 					if lowestmelee then
 						if lowestmelee:exists() then
 							return lowestmelee:Cast("Tiger Palm")
@@ -739,7 +739,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if player:Chi() == 1 then
 				if player:Buff("Muscle Memory") then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInRange(4)")
 					if lowestmelee then
 						if lowestmelee:exists() then
 							return lowestmelee:Cast("Tiger Palm")
@@ -755,7 +755,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if _A.manaengine() then
 				if player:Buff("Rushing Jade Wind") and not player:Buff("Muscle Memory") then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInRange(4)")
 					if lowestmelee then
 						if lowestmelee:exists() then
 							return lowestmelee:Cast("Jab")
@@ -771,7 +771,7 @@ local mw_rot = {
 		if player:Stance() ~= 1 then
 			if not player:Buff("Muscle Memory")
 				or player:Chi()==0 then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+				local lowestmelee = Object("lowestEnemyInRange(4)")
 				if lowestmelee then
 					if lowestmelee:exists() then
 						return lowestmelee:Cast("Jab")
@@ -810,7 +810,7 @@ local mw_rot = {
 				if player:Talent("Rushing Jade Wind") then
 					return player:Cast("Stance of the Fierce Tiger")
 				end
-				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+				local lowestmelee = Object("lowestEnemyInRange(4)")
 				if lowestmelee then
 					if lowestmelee:exists() then
 						return player:Cast("Stance of the Fierce Tiger")
@@ -825,12 +825,16 @@ local mw_rot = {
 
 local inCombat = function()	
 	player = player or Object("player")
-	if not player or _A.buttondelayfunc() or player:isCastingAny() or player:Mounted() then return end 
+	if not player then return end
+	if _A.buttondelayfunc()  then return end
+	if player:lostcontrol()  then return end 
+	-- if _A.ceeceed(player)  then return end 
+	if  player:isCastingAny() then return end
 	mw_rot.ClickthisPleasepvp()
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
-	mw_rot.kick_legsweep()
+	-- mw_rot.kick_legsweep()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
 	mw_rot.burstdisarm()
@@ -843,7 +847,7 @@ local inCombat = function()
 	mw_rot.fortifyingbrew()
 	mw_rot.thunderfocustea()
 	mw_rot.dispellplzarena()
-	-- mw_rot.dispellplz()
+	mw_rot.dispellplz()
 	mw_rot.tigerslust()
 	mw_rot.lifecocoon()
 	mw_rot.surgingmist()
