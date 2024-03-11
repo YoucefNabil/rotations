@@ -618,7 +618,7 @@ snapsnap:SetScript("OnEvent", function(self, event, _, subevent, _, guidsrc, _, 
 				or 
 				(idd==55078) or (idd==55095)  -- debuffs, I think
 				then 
-				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS" or (subevent=="SPELL_PERIODIC_DAMAGE" and _A.enemyguidtab[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
+				if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS" and not idd==85948) or (subevent=="SPELL_PERIODIC_DAMAGE" and _A.enemyguidtab[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
 				-- every spell aura refresh of dk refreshes both stats and duration, EXCEPT festering strike (only duration), that's what that check is for
 					then
 					_A.enemyguidtab[guiddest]=_A.myscore()
