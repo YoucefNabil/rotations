@@ -948,30 +948,14 @@ _A.FakeUnits:Add('mostTargetedRosterPVP', function()
 	return mostGuid
 end)
 
-_A.FakeUnits:Add('lowestall', function()
-	local frens = {}
-	local leasthealth = 100
-	local leasthealthGUID = nil
-	for _, fr in pairs(_A.OM:Get('Friendly')) do
-		-- if fr and ( fr.isplayer or fr:ispet()) then
-		if fr and ( fr.isplayer ) then
-			local tguid = fr.guid
-			frens[tguid] = fr:health()
-		end
-	end
-	for guid, hp in pairs(frens) do
-		if hp <= leasthealth then
-			leasthealth = hp
-			leasthealthGUID = guid
-		end
-	end
-	return leasthealthGUID
-end)
 
-_A.FakeUnits:Add('dispellunit', function()
+
+_A.FakeUnits:Add('dispellunit', function(num)
 	local tempTable = {}
 	for _, roster in pairs(_A.OM:Get('Roster')) do
-		if roster then
+		if roster 
+			and roster.player then
+			-- and roster.player or roster:ispet() then
 			if roster:DebuffType("Magic") or roster:DebuffType("Disease") or roster:DebuffType("Poison") then
 				if _A.notimmune(roster) and roster:los() then
 					tempTable[#tempTable+1] = {
@@ -981,11 +965,42 @@ _A.FakeUnits:Add('dispellunit', function()
 				end
 			end
 		end
-		if #tempTable > 1 then
-			table.sort(tempTable, function(a, b) return a.health < b.health end)
-		end
 	end
-	return tempTable[1] and tempTable[1].guid
+	if #tempTable > 1 then
+		table.sort(tempTable, function(a, b) return a.health < b.health end)
+	end
+	return tempTable[num] and tempTable[num].guid
+end)
+
+-- _A.FakeUnits:Add('lowestall', function(num)
+	-- local tempTable = {}
+	-- for _, roster in pairs(_A.OM:Get('Friendly')) do
+		-- if roster 
+			-- and roster.player then
+			-- tempTable[#tempTable+1] = {
+				-- guid = roster.guid,
+				-- health = roster:Health()
+			-- }
+		-- end
+	-- end
+	-- if #tempTable > 1 then
+		-- table.sort(tempTable, function(a, b) return a.health < b.health end)
+	-- end
+	-- return tempTable[num] and tempTable[num].guid
+-- end)
+
+_A.FakeUnits:Add('lowestall', function()
+    local lowestHP, lowestHPguid = 100
+    for _, fr in pairs(_A.OM:Get('Friendly')) do
+        if fr.isplayer then
+            local hp = fr:health()
+            if hp < lowestHP then
+                lowestHP = hp
+                lowestHPguid = fr.guid
+            end
+        end
+    end
+    return lowestHPguid
 end)
 
 --[[_A.FakeUnits:Add('targetingme', function()
@@ -993,19 +1008,19 @@ end)
 	if enemy then
 	if _A.UnitIsPlayer(enemy.guid) then
 	local tguid = UnitTarget(enemy.guid)
-if tguid then
-targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
-end
-end
-end
-end
-for guid, count in pairs(targets) do
-if count > most then
-most = count
-mostGuid = guid
-end
-end
-return mostGuid
+	if tguid then
+	targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
+	end
+	end
+	end
+	end
+	for guid, count in pairs(targets) do
+	if count > most then
+	most = count
+	mostGuid = guid
+	end
+	end
+	return mostGuid
 end)--]]
 
 

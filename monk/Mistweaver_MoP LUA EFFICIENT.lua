@@ -434,13 +434,9 @@ local mw_rot = {
 						lowest:alive()
 						and lowest:exists()
 						then 
-						-- DETOX
-						--
 						if lowest:SpellRange("Detox") then
-							
-							if lowest:State("root") or lowest:State("silence") or lowest:State("misc") or lowest:State("charm") or lowest:State("disorient")
-								or lowest:State("fear") or lowest:State("incapacitate") or lowest:State("stun") or 
-								lowest:DebuffAny("Entangling Roots") or  lowest:DebuffAny("Freezing Trap") or lowest:LostControl()
+							if lowest:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or lowest:LostControl() or
+								lowest:DebuffAny("Entangling Roots") or  lowest:DebuffAny("Freezing Trap")
 								then
 								return lowest:Cast("Detox")
 							end
@@ -464,8 +460,7 @@ local mw_rot = {
 						-- DETOX
 						--
 						if lowest:SpellRange("Detox") then
-							if lowest:State("root") or lowest:State("silence") or lowest:State("misc") or lowest:State("charm") or lowest:State("disorient")
-								or lowest:State("fear") or lowest:State("incapacitate") or lowest:State("stun") or 
+							if lowest:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or lowest:LostControl() or
 								lowest:DebuffAny("Entangling Roots") or  lowest:DebuffAny("Freezing Trap")  or (pull_location()~="pvp")
 								then
 								return lowest:Cast("Detox")
@@ -847,7 +842,7 @@ local inCombat = function()
 	mw_rot.fortifyingbrew()
 	mw_rot.thunderfocustea()
 	mw_rot.dispellplzarena()
-	mw_rot.dispellplz()
+	-- mw_rot.dispellplz()
 	mw_rot.tigerslust()
 	mw_rot.lifecocoon()
 	mw_rot.surgingmist()
@@ -876,16 +871,16 @@ local blacklist = function()
 end
 _A.CR:Add(270, {
 	name = "Monk Heal EFFICIENT",
-	ic = inCombat,
-	ooc = outCombat,
-	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+ic = inCombat,
+ooc = outCombat,
+use_lua_engine = true,
+gui = GUI,
+gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+wow_ver = "5.4.8",
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })
