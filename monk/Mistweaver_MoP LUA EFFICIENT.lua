@@ -395,7 +395,7 @@ local mw_rot = {
 			if	player:SpellCooldown("Thunder Focus Tea")==0
 				and _A.enoughmana(116680)
 				then
-				player:Cast("Thunder Focus Tea", true)
+				player:Cast("Thunder Focus Tea")
 			end
 		end
 	end,
@@ -617,7 +617,7 @@ local mw_rot = {
 										if (lowest:Health() < 85) then
 											if lowest:Distance() < 40 then
 												if lowest:los() then
-													return lowest:CastGround("Healing Sphere")
+													return lowest:CastGround("Healing Sphere", true)
 												end
 											end
 										end
