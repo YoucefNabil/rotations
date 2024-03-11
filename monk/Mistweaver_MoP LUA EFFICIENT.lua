@@ -824,6 +824,7 @@ local inCombat = function()
 	if player:lostcontrol()  then return end 
 	-- if _A.ceeceed(player)  then return end 
 	if  player:isCastingAny() then return end
+	if player:Mounted() then return end
 	mw_rot.ClickthisPleasepvp()
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
