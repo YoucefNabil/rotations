@@ -393,7 +393,6 @@ local mw_rot = {
 	thunderfocustea = function()
 		if player:Stance() == 1 and player:Chi()>=1 then
 			if	player:SpellCooldown("Thunder Focus Tea")==0
-				and _A.enoughmana(116680)
 				then
 				player:Cast("Thunder Focus Tea")
 			end
