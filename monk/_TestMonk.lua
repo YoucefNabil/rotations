@@ -32,11 +32,15 @@ _A.hooksecurefunc("UseAction", function(...)
 		end
 	end
 	if slot==STOPSLOT then 
+		-- TEST STUFF
+		-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
+		-- TEST STUFF
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 			_A.Interface:toggleToggle("mastertoggle", false)
 			_A.print("OFF")
 		end
 	end
+	--
 	if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
 		Type, id, subType = _A.GetActionInfo(slot)
 		if Type == "spell" or Type == "macro" -- remove macro?
@@ -973,33 +977,35 @@ _A.FakeUnits:Add('dispellunit', function(num)
 end)
 
 -- _A.FakeUnits:Add('lowestall', function(num)
-	-- local tempTable = {}
-	-- for _, roster in pairs(_A.OM:Get('Friendly')) do
-		-- if roster 
-			-- and roster.player then
-			-- tempTable[#tempTable+1] = {
-				-- guid = roster.guid,
-				-- health = roster:Health()
-			-- }
-		-- end
-	-- end
-	-- if #tempTable > 1 then
-		-- table.sort(tempTable, function(a, b) return a.health < b.health end)
-	-- end
-	-- return tempTable[num] and tempTable[num].guid
+-- local tempTable = {}
+-- for _, roster in pairs(_A.OM:Get('Friendly')) do
+-- if roster 
+-- and roster.player then
+-- tempTable[#tempTable+1] = {
+-- guid = roster.guid,
+-- health = roster:Health()
+-- }
+-- end
+-- end
+-- if #tempTable > 1 then
+-- table.sort(tempTable, function(a, b) return a.health < b.health end)
+-- end
+-- return tempTable[num] and tempTable[num].guid
 -- end)
 
 _A.FakeUnits:Add('lowestall', function()
     local lowestHP, lowestHPguid = 100
+	local location = pull_location()
     for _, fr in pairs(_A.OM:Get('Friendly')) do
-        if fr.isplayer then
+        -- if fr.isplayer then
+        if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
             local hp = fr:health()
             if hp < lowestHP then
                 lowestHP = hp
                 lowestHPguid = fr.guid
-            end
-        end
-    end
+			end
+		end
+	end
     return lowestHPguid
 end)
 

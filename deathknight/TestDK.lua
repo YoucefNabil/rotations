@@ -465,7 +465,12 @@ _A.DSL:Register('UnitCastID', function(t)
 		t = U.playerGUID
 	end
 	return _A.UnitCastID(t) -- castid, channelid, guid, pointer
-end)	
+end)
+_A.DSL:Register('castspecial', function(u, arg1, arg2)
+    if u:los() then
+        return u:cast(arg1, arg2)
+	end
+end)
 
 
 
@@ -505,143 +510,143 @@ function _A.usablelite(spellid)
 			else return false
 		end
 		else return false
-	end
-end
-
-function _A.runes()
-	local bloodrunenb = 0
-	local frostrunenb = 0
-	local unholyrunenb = 0
-	local deathrunenb = 0
-	for i = 1, 6 do
-		if (select(3,GetRuneCooldown(i)))==true
-			then
-			if GetRuneType(i)==1
-				then bloodrunenb = bloodrunenb + 1
-				elseif GetRuneType(i)==3
-				then frostrunenb = frostrunenb + 1
-				elseif GetRuneType(i)==4
-				then deathrunenb = deathrunenb + 1
-				elseif GetRuneType(i)==2
-				then unholyrunenb = unholyrunenb + 1
-			end
 		end
-	end
-	return bloodrunenb, frostrunenb, unholyrunenb, deathrunenb, bloodrunenb + frostrunenb + deathrunenb + unholyrunenb
-end
-
-function _A.depletedrune()
-	local batch1 = 0
-	local batch2 = 0
-	local batch3 = 0
-	if (select(3,GetRuneCooldown(1)))==false and (select(3,GetRuneCooldown(2)))==false
+		end
+		
+		function _A.runes()
+		local bloodrunenb = 0
+		local frostrunenb = 0
+		local unholyrunenb = 0
+		local deathrunenb = 0
+		for i = 1, 6 do
+		if (select(3,GetRuneCooldown(i)))==true
+		then
+		if GetRuneType(i)==1
+		then bloodrunenb = bloodrunenb + 1
+		elseif GetRuneType(i)==3
+		then frostrunenb = frostrunenb + 1
+		elseif GetRuneType(i)==4
+		then deathrunenb = deathrunenb + 1
+		elseif GetRuneType(i)==2
+		then unholyrunenb = unholyrunenb + 1
+		end
+		end
+		end
+		return bloodrunenb, frostrunenb, unholyrunenb, deathrunenb, bloodrunenb + frostrunenb + deathrunenb + unholyrunenb
+		end
+		
+		function _A.depletedrune()
+		local batch1 = 0
+		local batch2 = 0
+		local batch3 = 0
+		if (select(3,GetRuneCooldown(1)))==false and (select(3,GetRuneCooldown(2)))==false
 		then batch1=1
 		else batch1=0
-	end
-	if (select(3,GetRuneCooldown(3)))==false and (select(3,GetRuneCooldown(4)))==false
+		end
+		if (select(3,GetRuneCooldown(3)))==false and (select(3,GetRuneCooldown(4)))==false
 		then batch2=1
 		else batch2=0
-	end
-	if (select(3,GetRuneCooldown(5)))==false and (select(3,GetRuneCooldown(6)))==false
+		end
+		if (select(3,GetRuneCooldown(5)))==false and (select(3,GetRuneCooldown(6)))==false
 		then batch3=1
 		else batch3=0
-	end
-	return (batch1 + batch2 + batch3)
-end	
-
-
-local keyboardframe = CreateFrame("Frame")
-keyboardframe:SetPropagateKeyboardInput(true)
-local function testkeys(self, key)
-	if key==_A.GRABKEY then
+		end
+		return (batch1 + batch2 + batch3)
+		end	
+		
+		
+		local keyboardframe = CreateFrame("Frame")
+		keyboardframe:SetPropagateKeyboardInput(true)
+		local function testkeys(self, key)
+		if key==_A.GRABKEY then
 		local player = Object("player")
 		local target = Object("target")
 		if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip")
-			then
-			if target
-				and target:exists()
-				and target:enemy() 
-				and target:spellRange("Death Grip")
-				and target:alive()
-				and not target:State("root")
-				and _A.isthishuman(target.guid)
-				and _A.notimmune(target)
-				and target:infront()
-				and target:los() then
-				return target:Cast("Death Grip")
-			end
+		then
+		if target
+		and target:exists()
+		and target:enemy() 
+		and target:spellRange("Death Grip")
+		and target:alive()
+		and not target:State("root")
+		and _A.isthishuman(target.guid)
+		and _A.notimmune(target)
+		and target:infront()
+		and target:los() then
+		return target:Cast("Death Grip")
 		end
-	end
-end
-keyboardframe:SetScript("OnKeyDown", testkeys)
-
-function _A.myscore()
-	local base, posBuff, negBuff = UnitAttackPower("player");
-	local ap = base + posBuff + negBuff
-	local mastery = GetCombatRating(26)
-	local crit = GetCombatRating(9)
-	local haste = GetCombatRating(18)
-	return (ap + mastery + crit + haste)
-	--return (mastery + crit + haste)
-end
-
-
--- dot snapshorring
-_A.enemyguidtab = {}
-ijustdidthatthing = false
-ijustdidthatthingtime = 0
-local snapsnap = CreateFrame("Frame")
-snapsnap:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-snapsnap:RegisterEvent("PLAYER_ENTERING_WORLD")
-snapsnap:RegisterEvent("PLAYER_REGEN_ENABLED")
-snapsnap:SetScript("OnEvent", function(self, event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-	if event == "PLAYER_ENTERING_WORLD"
+		end
+		end
+		end
+		keyboardframe:SetScript("OnKeyDown", testkeys)
+		
+		function _A.myscore()
+		local base, posBuff, negBuff = UnitAttackPower("player");
+		local ap = base + posBuff + negBuff
+		local mastery = GetCombatRating(26)
+		local crit = GetCombatRating(9)
+		local haste = GetCombatRating(18)
+		return (ap + mastery + crit + haste)
+		--return (mastery + crit + haste)
+		end
+		
+		
+		-- dot snapshorring
+		_A.enemyguidtab = {}
+		ijustdidthatthing = false
+		ijustdidthatthingtime = 0
+		local snapsnap = CreateFrame("Frame")
+		snapsnap:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+		snapsnap:RegisterEvent("PLAYER_ENTERING_WORLD")
+		snapsnap:RegisterEvent("PLAYER_REGEN_ENABLED")
+		snapsnap:SetScript("OnEvent", function(self, event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+		if event == "PLAYER_ENTERING_WORLD"
 		or event == "PLAYER_REGEN_ENABLED"
 		then
 		if next(_A.enemyguidtab)~=nil then
-			for k in pairs(_A.enemyguidtab) do
-				_A.enemyguidtab[k]=nil
-				snapsnap:UnregisterEvent("PLAYER_ENTERING_WORLD")
-			end
+		for k in pairs(_A.enemyguidtab) do
+		_A.enemyguidtab[k]=nil
+		snapsnap:UnregisterEvent("PLAYER_ENTERING_WORLD")
 		end
-	end
-	if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT" 
+		end
+		end
+		if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT" 
 		then
 		if guidsrc == UnitGUID("player") then -- only filter by me
-			if subevent =="SPELL_CAST_SUCCESS" then
-				if idd==85948 then --festering strike, refreshes dot duration but not stats
-					ijustdidthatthing = true -- when true, means I just used FS
-					ijustdidthatthingtime = GetTime()
-				end
-			end
-			if (idd==45462) or (idd==77575) -- or (idd==50842) -- outbreak -- Plague Strike -- pestilence(doesnt work because it only works on the target, and not on everyone else)
-				or 
-				(idd==55078) or (idd==55095)  -- debuffs, I think
-				then 
-				if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS" and not idd==85948) or (subevent=="SPELL_PERIODIC_DAMAGE" and _A.enemyguidtab[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
-				-- every spell aura refresh of dk refreshes both stats and duration, EXCEPT festering strike (only duration), that's what that check is for
-					then
-					_A.enemyguidtab[guiddest]=_A.myscore()
-				end
-				if subevent=="SPELL_AURA_REMOVED" 
-					then
-					_A.enemyguidtab[guiddest]=nil
-				end
-			end	
+		if subevent =="SPELL_CAST_SUCCESS" then
+		if idd==85948 then --festering strike, refreshes dot duration but not stats
+		ijustdidthatthing = true -- when true, means I just used FS
+		ijustdidthatthingtime = GetTime()
 		end
-	end
-end)
-
-local timerframe = CreateFrame("Frame")
-local timerframeinterval = 0.05 -- default
-timerframe.TimeSinceLastUpdate2 = 0
-timerframe:SetScript("OnUpdate", function(self,elapsed)
-	self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 + elapsed;
-	if self.TimeSinceLastUpdate2 >= timerframeinterval then
+		end
+		if (idd==45462) or (idd==77575) -- or (idd==50842) -- outbreak -- Plague Strike -- pestilence(doesnt work because it only works on the target, and not on everyone else)
+		or 
+		(idd==55078) or (idd==55095)  -- debuffs, I think
+		then 
+		if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS" and not idd==85948) or (subevent=="SPELL_PERIODIC_DAMAGE" and _A.enemyguidtab[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
+		-- every spell aura refresh of dk refreshes both stats and duration, EXCEPT festering strike (only duration), that's what that check is for
+		then
+		_A.enemyguidtab[guiddest]=_A.myscore()
+		end
+		if subevent=="SPELL_AURA_REMOVED" 
+		then
+		_A.enemyguidtab[guiddest]=nil
+		end
+		end	
+		end
+		end
+		end)
+		
+		local timerframe = CreateFrame("Frame")
+		local timerframeinterval = 0.05 -- default
+		timerframe.TimeSinceLastUpdate2 = 0
+		timerframe:SetScript("OnUpdate", function(self,elapsed)
+		self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 + elapsed;
+		if self.TimeSinceLastUpdate2 >= timerframeinterval then
 		if GetTime()-ijustdidthatthingtime>=.2 then
-			ijustdidthatthing=false
+		ijustdidthatthing=false
 		end
 		self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 - timerframeinterval
-	end
-end
-)
+		end
+		end
+		)				

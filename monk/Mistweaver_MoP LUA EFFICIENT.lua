@@ -392,7 +392,7 @@ local mw_rot = {
 	
 	thunderfocustea = function()
 		if player:Stance() == 1 and player:Chi()>=1 then
-			if	player:SpellCooldown("Thunder Focus Tea")==0
+			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea")
 				then
 				player:Cast("Thunder Focus Tea")
 			end
@@ -840,7 +840,6 @@ local inCombat = function()
 	mw_rot.manatea()
 	mw_rot.chibrew()
 	mw_rot.fortifyingbrew()
-	mw_rot.thunderfocustea()
 	mw_rot.dispellplzarena()
 	-- mw_rot.dispellplz()
 	mw_rot.tigerslust()
@@ -852,6 +851,7 @@ local inCombat = function()
 	mw_rot.tigerpalm_mm()
 	mw_rot.bk_buff()
 	mw_rot.tp_buff()
+	mw_rot.thunderfocustea()
 	mw_rot.uplift()
 	mw_rot.expelharm()
 	mw_rot.tigerpalm_filler()
