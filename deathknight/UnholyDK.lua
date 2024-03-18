@@ -97,6 +97,15 @@ unholy.rot = {
 	blank = function()
 	end,
 	
+	gnawinterrupt = function()
+	end,
+	
+	leapinterrupt = function()
+	end,
+	
+	petmagnet = function()
+	end,
+	
 	caching= function()
 		_A.dkenergy = _A.UnitPower("player") or 0
 		_A.blood, _A.frost, _A.unholy, _A.death, _A.total = _A.runes()
@@ -446,7 +455,8 @@ unholy.rot = {
 				end
 				if pestcheck == true then
 					for _, Obj in pairs(_A.OM:Get('Enemy')) do
-						if Obj.isplayer and Obj:range()<10 then
+						if (Obj.isplayer or pull_location == "party" or pull_location == "raid") and Obj:range()<10 then
+						-- if  Obj:range()<10 then
 							if (not Obj:Debuff("Frost Fever") and not Obj:Debuff("Blood Plague")) then
 								if not _A.notimmune(Obj) then
 									return player:Cast("Blood Boil")
@@ -664,10 +674,10 @@ local inCombat = function()
 	if  player:isCastingAny() then return end
 	unholy.rot.GrabGrab()
 	unholy.rot.GrabGrabHunter()
+	unholy.rot.ClickthisPleasepvp()
 	if player:Mounted() then return end
 	-- utility
 	unholy.rot.caching()
-	unholy.rot.ClickthisPleasepvp()
 	-- Burst and utility
 	unholy.rot.items_strpot()
 	unholy.rot.items_strflask()
@@ -734,6 +744,6 @@ _A.CR:Add(252, {
 	-- ids = spellIds_Loc,
 	-- blacklist = blacklist,
 	-- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	load = exeOnLoad,
+	unload = exeOnUnload
 })

@@ -545,3 +545,4 @@ function _A.myscore()
 	return (ap + mastery + crit + haste)
 	--return (mastery + crit + haste)
 end
+-- MAKE MULTIPLE SNAPSHOT TABLES, ONE FOR EACH DOT
