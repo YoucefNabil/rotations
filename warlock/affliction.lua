@@ -68,6 +68,29 @@ local hunterspecs = {
 	[254]=true,
 	[255]=true
 }
+local function cditemRemains(itemid)
+	local itempointerpoint;
+	if itemid ~= nil
+		then 
+		if tonumber(itemid)~=nil
+			then 
+			if itemid<=23
+				then itempointerpoint = (select(1, GetInventoryItemID("player", itemid)))
+			end
+			if itemid>23
+				then itempointerpoint = itemid
+			end
+		end
+	end
+	local startcast1 = (select(2, GetItemCooldown(itempointerpoint)))
+	local endcast1 = (select(1, GetItemCooldown(itempointerpoint)))
+	local gettm1 = GetTime()
+	if startcast1 + (endcast1 - gettm1) > 0 then
+		return startcast1 + (endcast1 - gettm1)
+		else
+		return 0
+	end
+end
 local function power(unit)
 	local intel2 = UnitPower(unit)
 	if intel2 == 0
@@ -92,9 +115,7 @@ local corruptiontbl = {}
 local agonytbl = {}
 local unstabletbl = {}
 local soulswaporigin = nil
-local ijustdidthatthing = false
 local ijustdidthatthing2 = false
-local ijustdidthatthingtime = 0
 local ijustdidthatthingtime2 = 0
 --Cleaning
 -- _A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
@@ -116,25 +137,22 @@ _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- be
 	end
 	soulswaporigin = nil
 	ijustdidthatthing2 = false
-	ijustdidthatthing = false
 end)
 -- dots
 _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 	if guidsrc == UnitGUID("player") then -- only filter by me
 		if (idd==146739) or (idd==172) then
-			if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS") or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
-				-- if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS") or (subevent=="SPELL_PERIODIC_DAMAGE" and corruptiontbl[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
+			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
-				corruptiontbl[guiddest]=_A.myscore()
+				corruptiontbl[guiddest]=_A.myscore() 
 			end
 			if subevent=="SPELL_AURA_REMOVED" 
 				then
 				corruptiontbl[guiddest]=nil
 			end
 		end
-		if (idd==980)  then
-			if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS") or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
-				-- if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS") or (subevent=="SPELL_PERIODIC_DAMAGE" and agonytbl[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
+		if (idd==980) then
+			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
 				agonytbl[guiddest]=_A.myscore()
 			end
@@ -143,26 +161,22 @@ _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, 
 				agonytbl[guiddest]=nil
 			end
 		end
-		if (idd==30108)  then
-			if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS") or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
-				-- if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS") or (subevent=="SPELL_PERIODIC_DAMAGE" and unstabletbl[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
+		if (idd==30108) then
+			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
-				unstabletbl[guiddest]=_A.myscore()
-				
+				unstabletbl[guiddest]=_A.myscore() 
 			end
 			if subevent=="SPELL_AURA_REMOVED" 
 				then
 				unstabletbl[guiddest]=nil
 			end
-		end	
-		
-	end
-	if guiddest == UnitGUID("player") then -- only filter by me
-		if (idd==86211)  then
-			if subevent=="SPELL_AURA_REMOVED" 
+		end
+		if (idd==119678) then
+			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
-				ijustdidthatthing2 = false
-				soulswaporigin=nil 
+				corruptiontbl[guiddest]=_A.myscore() 
+				unstabletbl[guiddest]=_A.myscore() 
+				agonytbl[guiddest]=_A.myscore() 
 			end
 		end
 	end
@@ -173,20 +187,16 @@ _A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event
 	if guidsrc == UnitGUID("player") then -- only filter by me
 		if subevent =="SPELL_CAST_SUCCESS" then
 			if idd==86121 then -- Soul Swap 86213
+				soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
 				ijustdidthatthing2 = true
 				ijustdidthatthingtime2 = GetTime() -- time at which I used soulswap
-				soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
 			end
 			if idd==86213 then -- exhale
-				ijustdidthatthing = true -- when true, means I just used exhale, important so stats stay accurate
-				ijustdidthatthingtime = GetTime() -- time at which I used exhale
 				unstabletbl[guiddest]=unstabletbl[soulswaporigin]
 				agonytbl[guiddest]=agonytbl[soulswaporigin]
 				corruptiontbl[guiddest]=corruptiontbl[soulswaporigin]
-				-- copy stats from origin to exhale dest
 				ijustdidthatthing2 = false
 				soulswaporigin = nil -- remove after 3 seconds or after exhaling
-				-- print("you just exhaled "..guiddest)
 			end
 		end
 	end
@@ -197,18 +207,15 @@ timerframe.TimeSinceLastUpdate2 = 0
 timerframe:SetScript("OnUpdate", function(self,elapsed)
 	self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 + elapsed;
 	if self.TimeSinceLastUpdate2 >= timerframeinterval then
-		if ijustdidthatthing == true and GetTime()-ijustdidthatthingtime>=.3 then
-			-- print("safe to snapshot now")
-			ijustdidthatthing=false -- so I wouldn't overwrite stats wrongfully
-		end
 		if ijustdidthatthing2 == true and GetTime()-ijustdidthatthingtime2>=3 then
-			-- print("yes yes yes yes")
 			soulswaporigin = nil
 			ijustdidthatthing2=false -- so I wouldn't overwrite stats wrongfully
 		end
 		self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 - timerframeinterval
 	end
-end)	
+end)
+_A.totalscore = function()
+end
 --============================================
 --============================================
 --============================================
@@ -222,13 +229,17 @@ end
 local exeOnUnload = function()
 end
 local heFLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true,}
-
+local usableitems= { -- item slots
+	13, --first trinket
+	14 --second trinket
+}	
 affliction.rot = {
 	blank = function()
 	end,
 	
 	caching= function()
 		_A.pull_location = pull_location()
+		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
 	end,
 	
 	ClickthisPleasepvp = function()
@@ -297,6 +308,27 @@ affliction.rot = {
 	--============================================
 	--============================================
 	--============================================
+	activetrinket = function()
+		if player:buff("Surge of Dominance") then
+			for i=1, #usableitems do
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
+							return _A.RunMacroText(string.format(("/use %s "), usableitems[i]))
+						end
+					end
+				end
+			end
+		end
+	end,
+	
+	hasteburst = function()
+		if player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") then
+			if player:buff("Surge of Dominance") then
+				return player:cast("Dark Soul: Misery")
+			end
+		end
+	end,
 	--============================================
 	--============================================
 	--============================================
@@ -320,7 +352,8 @@ affliction.rot = {
 				if (score == 0 and score >= highestscore) or score > highestscore then
 					highestscore = score
 					highestscoreGUID = Obj
-					if highestscoreGUID and (corruptiontbl[Obj.guid]~=nil and _A.myscore() > corruptiontbl[Obj.guid]) or (corruptiontbl[Obj.guid]==nil) then return highestscoreGUID:cast("Corruption") end
+					if highestscoreGUID and (corruptiontbl[Obj.guid]~=nil and _A.myscore() > corruptiontbl[Obj.guid]) or (corruptiontbl[Obj.guid]==nil) then 
+					return highestscoreGUID:cast("Corruption") end
 				end
 			end
 		end
@@ -334,7 +367,27 @@ affliction.rot = {
 				if (score == 0 and score >= highestscore) or score > highestscore then
 					highestscore = score
 					highestscoreGUID = Obj
-					if highestscoreGUID and (agonytbl[Obj.guid]~=nil and _A.myscore() > agonytbl[Obj.guid]) or (agonytbl[Obj.guid]==nil) then return highestscoreGUID:cast("Agony") end
+					if highestscoreGUID and (agonytbl[Obj.guid]~=nil and _A.myscore() > agonytbl[Obj.guid]) or (agonytbl[Obj.guid]==nil) then 
+					return highestscoreGUID:cast("Agony") end
+				end
+			end
+		end
+	end,
+	
+	unstablesnapinstant = function()
+		local highestscore, highestscoreGUID = 0
+		if not player:moving() and not player:Iscasting("Unstable Affliction") then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
+					local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
+					if (score == 0 and score >= highestscore) or score > highestscore then
+						highestscore = score
+						highestscoreGUID = Obj
+						if highestscoreGUID and (unstabletbl[Obj.guid]~=nil and _A.myscore() > unstabletbl[Obj.guid]) or (unstabletbl[Obj.guid]==nil) then 
+							if player:buff(74434) then return highestscoreGUID:cast(119678) end
+							if not player:buff(74434) and _A.enoughmana(74434) or player:buff("Shadow Trance") then return player:cast(74434) end
+						end
+					end
 				end
 			end
 		end
@@ -349,7 +402,8 @@ affliction.rot = {
 					if (score == 0 and score >= highestscore) or score > highestscore then
 						highestscore = score
 						highestscoreGUID = Obj
-						if highestscoreGUID and (unstabletbl[Obj.guid]~=nil and _A.myscore() > unstabletbl[Obj.guid]) or (unstabletbl[Obj.guid]==nil) then return highestscoreGUID:cast("Unstable Affliction") end
+						if highestscoreGUID and (unstabletbl[Obj.guid]~=nil and _A.myscore() > unstabletbl[Obj.guid]) or (unstabletbl[Obj.guid]==nil) then 
+						return highestscoreGUID:cast("Unstable Affliction") end
 					end
 				end
 			end
@@ -374,60 +428,38 @@ affliction.rot = {
 		end
 	end,
 	
-	exhalenodebuffs = function()
-		local highestscore, highestscoreGUID = 9999999
-		if soulswaporigin ~= nil  then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
-					if Obj.guid ~= soulswaporigin then
-						if (not Obj:Debuff("Agony")) or (not Obj:Debuff("Corruption")) or (not Obj:Debuff("Unstable Affliction")) then
-							return Obj:cast(86213)
-						end
-					end
-				end
-			end
-		end
-	end,
-	
 	exhale = function()
-		local highestscore, highestscoreGUID = 9999999
-		if soulswaporigin ~= nil  then
+		local temptable = {}
+		if soulswaporigin ~= nil then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then -- order then by lowest duration
-					if Obj.guid ~= soulswaporigin then
-						local score = (unstabletbl[Obj.guid]==nil and 0 or unstabletbl[Obj.guid]) + (corruptiontbl[Obj.guid]==nil and 0 or corruptiontbl[Obj.guid]) + (agonytbl[Obj.guid]==nil and 0 or agonytbl[Obj.guid])  -- make a function out of this to avoid doubling functions
-						if score <= highestscore then
-							highestscore = score
-							highestscoreGUID = Obj
-							if highestscoreGUID then return highestscoreGUID:cast(86213) end
-						end
-					end
+				if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
+					temptable[#temptable+1] = {
+						obj = Obj,
+						duration = Obj:DebuffDuration("Unstable Affliction"),
+					}
 				end
 			end
+			table.sort( temptable, function(a,b) return ( a.duration < b.duration ) end )
+			return temptable[1] and temptable[1].obj:Cast(86213)
 		end
 	end,
 	
-	soulswap = function()
-		local numnum = 0
-		local highestscore, highestscoreGUID = 0
-		if soulswaporigin == nil  then
+	soulswap = function() -- order by highest score first, highest duration second
+		local temptable = {}
+		if soulswaporigin == nil then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
-					numnum =  numnum + 1
-					if numnum >= 2 then
-						local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
-						if (score == 0 and score >= highestscore) or score > highestscore then -- order then by highest duration
-							highestscore = score
-							highestscoreGUID = Obj
-							if highestscoreGUID then 
-								if _A.enoughmana(74434) and not player:buff("Soulburn") then player:cast(74434) end
-							return highestscoreGUID:cast(86121) end
-						end
-					end
+					temptable[#temptable+1] = {
+						obj = Obj,
+						duration = Obj:DebuffDuration("Unstable Affliction"),
+					}
 				end
 			end
+			table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end )
+			return temptable[1] and temptable[1].obj:Cast(86121)
 		end
 	end,
+	
 	
 	
 	
@@ -435,56 +467,56 @@ affliction.rot = {
 		if player:SpellCooldown("Horn of Winter")<.3 and _A.dkenergy <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Horn of Winter")
 		end
-		end,
-	}
-	---========================
-	---========================
-	---========================
-	---========================
-	---========================
-	local inCombat = function()	
-		player = player or Object("player")
-		if not player then return end
-		affliction.rot.caching()
-		affliction.rot.ClickthisPleasepvp()
-		if _A.buttondelayfunc()  then return end
-		if player:lostcontrol()  then return end 
-		if player:isCastingAny() then return end
-		if _A.ceeceed(player)  then return end 
-		-- if  player:isCastingAny() then return end
-		if player:Mounted() then return end
-		-- affliction.rot.unstableaffliction()
-		--snapshots
-		affliction.rot.drainsoul()
-		affliction.rot.agonysnap()
-		affliction.rot.corruptionsnap()
-		affliction.rot.unstablesnap()
-		-- soul swap
-		-- soulswaps
-		affliction.rot.soulswap()
-		affliction.rot.exhalenodebuffs()
-		affliction.rot.exhale()
-	end
-	local outCombat = function()
-		return inCombat()
-	end
-	local spellIds_Loc = function()
-	end
-	local blacklist = function()
-	end
-	_A.CR:Add(265, {
-		name = "Youcef's Affliction",
-		ic = inCombat,
-		ooc = outCombat,
-		use_lua_engine = true,
-		gui = GUI,
-		gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-		wow_ver = "5.4.8",
-		apep_ver = "1.1",
-		-- ids = spellIds_Loc,
-		-- blacklist = blacklist,
-		-- pooling = false,
-		load = exeOnLoad,
-		unload = exeOnUnload
-	})
-		
+	end,
+}
+---========================
+---========================
+---========================
+---========================
+---========================
+local inCombat = function()	
+	player = player or Object("player")
+	if not player then return end
+	affliction.rot.caching()
+	affliction.rot.ClickthisPleasepvp()
+	if _A.buttondelayfunc()  then return end
+	if player:lostcontrol()  then return end 
+	if player:isCastingAny() then return end
+	if _A.ceeceed(player)  then return end 
+	-- if  player:isCastingAny() then return end
+	if player:Mounted() then return end
+	-- affliction.rot.unstableaffliction()
+	--snapshots
+	-- affliction.rot.activetrinket()
+	-- affliction.rot.hasteburst()
+	-- affliction.rot.drainsoul()
+	affliction.rot.agonysnap()
+	affliction.rot.corruptionsnap()
+	affliction.rot.unstablesnapinstant()
+	affliction.rot.unstablesnap()
+	-- soul swap
+	affliction.rot.soulswap()
+	affliction.rot.exhale()
+end
+local outCombat = function()
+	return inCombat()
+end
+local spellIds_Loc = function()
+end
+local blacklist = function()
+end
+_A.CR:Add(265, {
+	name = "Youcef's Affliction",
+	ic = inCombat,
+	ooc = outCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
+})
