@@ -373,28 +373,26 @@ affliction.rot = {
 			if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
 				local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
 				if (score == 0 and score >= highestscore) or score > highestscore then
-				highestscore = score
-				highestscoreGUID = Obj
-				if highestscoreGUID and (agonytbl[Obj.guid]~=nil and _A.myscore() > agonytbl[Obj.guid]) or (agonytbl[Obj.guid]==nil) then 
-				return highestscoreGUID:cast("Agony") end
-			end
+					highestscore = score
+					highestscoreGUID = Obj
+					if highestscoreGUID and (agonytbl[Obj.guid]~=nil and _A.myscore() > agonytbl[Obj.guid]) or (agonytbl[Obj.guid]==nil) then 
+					return highestscoreGUID:cast("Agony") end
+				end
 			end
 		end
 	end,
 	
 	unstablesnapinstant = function()
 		local highestscore, highestscoreGUID = 0
-		if not player:moving() and not player:Iscasting("Unstable Affliction") then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
-					local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
-					if (score == 0 and score >= highestscore) or score > highestscore then
-						highestscore = score
-						highestscoreGUID = Obj
-						if highestscoreGUID and (unstabletbl[Obj.guid]~=nil and _A.myscore() > unstabletbl[Obj.guid]) or (unstabletbl[Obj.guid]==nil) then 
-							if player:buff(74434) then return highestscoreGUID:cast(119678) end
-							if (not player:buff(74434) and _A.enoughmana(74434)) or player:buff("Shadow Trance") then return player:cast(74434) end
-						end
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
+				local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
+				if (score == 0 and score >= highestscore) or score > highestscore then
+					highestscore = score
+					highestscoreGUID = Obj
+					if highestscoreGUID and (unstabletbl[Obj.guid]~=nil and _A.myscore() > unstabletbl[Obj.guid]) or (unstabletbl[Obj.guid]==nil) then 
+						if player:buff(74434) then return highestscoreGUID:cast(119678) end
+						if (not player:buff(74434) and _A.enoughmana(74434)) or player:buff("Shadow Trance") then return player:cast(74434) end
 					end
 				end
 			end
