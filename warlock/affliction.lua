@@ -344,6 +344,14 @@ affliction.rot = {
 		end
 	end,
 	
+	lifetap = function()
+		if player:SpellCooldown("life tap")<=.3 
+			and player:Mana()<=75 
+			then
+			player:cast("life tap")
+		end
+	end,
+	
 	corruptionsnap = function()
 		local highestscore, highestscoreGUID = 0
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
@@ -365,11 +373,11 @@ affliction.rot = {
 			if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
 				local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
 				if (score == 0 and score >= highestscore) or score > highestscore then
-					highestscore = score
-					highestscoreGUID = Obj
-					if highestscoreGUID and (agonytbl[Obj.guid]~=nil and _A.myscore() > agonytbl[Obj.guid]) or (agonytbl[Obj.guid]==nil) then 
-					return highestscoreGUID:cast("Agony") end
-				end
+				highestscore = score
+				highestscoreGUID = Obj
+				if highestscoreGUID and (agonytbl[Obj.guid]~=nil and _A.myscore() > agonytbl[Obj.guid]) or (agonytbl[Obj.guid]==nil) then 
+				return highestscoreGUID:cast("Agony") end
+			end
 			end
 		end
 	end,
@@ -385,7 +393,7 @@ affliction.rot = {
 						highestscoreGUID = Obj
 						if highestscoreGUID and (unstabletbl[Obj.guid]~=nil and _A.myscore() > unstabletbl[Obj.guid]) or (unstabletbl[Obj.guid]==nil) then 
 							if player:buff(74434) then return highestscoreGUID:cast(119678) end
-							if not player:buff(74434) and _A.enoughmana(74434) or player:buff("Shadow Trance") then return player:cast(74434) end
+							if (not player:buff(74434) and _A.enoughmana(74434)) or player:buff("Shadow Trance") then return player:cast(74434) end
 						end
 					end
 				end
@@ -482,13 +490,13 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if player:lostcontrol()  then return end 
 	if player:isCastingAny() then return end
-	if _A.ceeceed(player)  then return end 
-	-- if  player:isCastingAny() then return end
+	-- if _A.ceeceed(player)  then return end 
 	if player:Mounted() then return end
-	-- affliction.rot.unstableaffliction()
 	--snapshots
-	-- affliction.rot.activetrinket()
-	-- affliction.rot.hasteburst()
+	affliction.rot.activetrinket()
+	affliction.rot.hasteburst()
+	--utility
+	affliction.rot.lifetap()
 	-- affliction.rot.drainsoul()
 	affliction.rot.agonysnap()
 	affliction.rot.corruptionsnap()
