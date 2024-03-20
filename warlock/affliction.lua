@@ -118,8 +118,8 @@ local soulswaporigin = nil
 local ijustdidthatthing2 = false
 local ijustdidthatthingtime2 = 0
 --Cleaning
--- _A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
-_A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
+_A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
+-- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
 	if next(corruptiontbl)~=nil then
 		for k in pairs(corruptiontbl) do
 			corruptiontbl[k]=nil
@@ -232,14 +232,28 @@ local heFLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Min
 local usableitems= { -- item slots
 	13, --first trinket
 	14 --second trinket
-}	
+}
+_A.temptabletbl = {}
 affliction.rot = {
 	blank = function()
 	end,
 	
 	caching= function()
+		_A.temptabletbl = {}
 		_A.pull_location = pull_location()
 		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+				_A.temptabletbl[#_A.temptabletbl+1] = {
+					obj = Obj,
+					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
+					agonyscore = (agonytbl[Obj.guid] or 0),
+					unstablescore = (unstabletbl[Obj.guid] or 0),
+					corruptionscore = (corruptiontbl[Obj.guid] or 0)
+				}
+			end
+		end
+		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 	end,
 	
 	ClickthisPleasepvp = function()
@@ -334,12 +348,14 @@ affliction.rot = {
 	--============================================
 	
 	petres = function()
-		if player:SpellCooldown("Raise Dead")<.3 then
+		if not player:Buff("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 then
 			if not _A.UnitExists("pet")
 				or _A.UnitIsDeadOrGhost("pet")
 				or not _A.HasPetUI()
 				then 
-				return player:cast("Raise Dead")
+				if not player:moving() and not player:Iscasting("Summon Imp") then
+				return player:cast("Summon Imp")
+			end
 			end
 		end
 	end,
@@ -348,87 +364,43 @@ affliction.rot = {
 		if soulswaporigin == nil 
 			and player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
-			and player:Mana()<=75 
+			and player:Mana()<=45
 			then
 			player:cast("life tap")
 		end
 	end,
 	
 	corruptionsnap = function()
-		local temptable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-				temptable[#temptable+1] = {
-					obj = Obj,
-					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
-					scorespec = (corruptiontbl[Obj.guid] or 0)
-				}
-			end
-		end
-		table.sort( temptable, function(a,b) return ( a.score > b.score ) end )
-		if temptable[1] then 
-			if _A.myscore()>temptable[1].scorespec then return temptable[1].obj:Cast("Corruption")
+		if _A.temptabletbl[1] then 
+			if _A.myscore()>_A.temptabletbl[1].corruptionscore then return _A.temptabletbl[1].obj:Cast("Corruption")
 			end
 		end
 	end,
 	
 	agonysnap = function()
-		local temptable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-				temptable[#temptable+1] = {
-					obj = Obj,
-					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
-					scorespec = (agonytbl[Obj.guid] or 0)
-				}
-			end
-		end
-		table.sort( temptable, function(a,b) return ( a.score > b.score ) end )
-		if temptable[1] then 
-			if _A.myscore()>temptable[1].scorespec then return temptable[1].obj:Cast("Agony")
+		if _A.temptabletbl[1] then 
+			if _A.myscore()>_A.temptabletbl[1].agonyscore then return _A.temptabletbl[1].obj:Cast("Agony")
 			end
 		end
 	end,
 	
 	unstablesnapinstant = function()
-		local temptable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-				temptable[#temptable+1] = {
-					obj = Obj,
-					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
-					scorespec = (unstabletbl[Obj.guid] or 0)
-				}
-			end
-		end
-		table.sort( temptable, function(a,b) return ( a.score > b.score ) end )
-		if temptable[1] then 
-			if player:buff(74434) then return temptable[1].obj:Cast(119678) end
+		if  _A.temptabletbl[1] then 
+			if player:buff(74434) then return  _A.temptabletbl[1].obj:Cast(119678) end -- improved soul swap (dots instead)
 			if (not player:buff(74434) and _A.enoughmana(74434)) --or player:buff("Shadow Trance")
 				then 
-				if _A.myscore()>temptable[1].scorespec  then player:cast(74434) -- shadowburn
+				if _A.myscore()> _A.temptabletbl[1].unstablescore  then player:cast(74434) -- shadowburn
 				end	 
 			end		
 		end		
 	end,
 	
 	unstablesnap = function()
-		local temptable = {}
+		if _A.temptabletbl[1] then 
 		if not player:moving() and not player:Iscasting("Unstable Affliction") then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-					temptable[#temptable+1] = {
-						obj = Obj,
-						score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
-						scorespec = (unstabletbl[Obj.guid] or 0)
-					}
-				end
+			if _A.myscore()>_A.temptabletbl[1].unstablescore then return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
 			end
-			table.sort( temptable, function(a,b) return ( a.score > b.score ) end )
-			if temptable[1] then 
-				if _A.myscore()>temptable[1].scorespec then return temptable[1].obj:Cast("Unstable Affliction")
-				end
-			end
+		end
 		end
 	end,
 	
@@ -466,12 +438,9 @@ affliction.rot = {
 		end
 	end,
 	
-	
-	
-	
 	Buffbuff = function()
-		if player:SpellCooldown("Horn of Winter")<.3 and _A.dkenergy <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
-			return player:Cast("Horn of Winter")
+		if player:SpellCooldown("Grimoire of Sacrifice")==0 and _A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return player:Cast("Grimoire of Sacrifice")
 		end
 	end,
 }
@@ -488,11 +457,17 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if player:lostcontrol()  then return end 
 	if player:isCastingAny() then return end
-	-- if _A.ceeceed(player)  then return end 
 	if player:Mounted() then return end
+	--
+	affliction.rot.Buffbuff()
+	affliction.rot.petres()
+	affliction.rot.items_healthstone()
+	--buff
 	--snapshots
 	affliction.rot.activetrinket()
 	affliction.rot.hasteburst()
+	--exhale
+	affliction.rot.exhale()
 	--utility
 	affliction.rot.lifetap()
 	-- affliction.rot.drainsoul()
@@ -502,7 +477,6 @@ local inCombat = function()
 	affliction.rot.unstablesnap()
 	-- soul swap
 	affliction.rot.soulswap()
-	affliction.rot.exhale()
 end
 local outCombat = function()
 	return inCombat()
