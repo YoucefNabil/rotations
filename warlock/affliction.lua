@@ -357,11 +357,11 @@ affliction.rot = {
 	end,
 	
 	drainsoul = function()
-		local lowesthealth, lowesthealthGUID = 100
+		local lowesthealth, lowesthealthGUID = 99999999999999999
 		if player:Soulshards() <=2 and not player:moving() and not player:Iscasting("Drain Soul") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj:spellRange(172) and Obj:infront() and _A.notimmune(Obj) and Obj:los() then
-					local health = Obj:health()
+					local health = Obj:HealthActual()
 					if  health <= lowesthealth then
 						lowesthealth = health
 						lowesthealthGUID = Obj
