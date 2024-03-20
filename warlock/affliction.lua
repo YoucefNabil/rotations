@@ -392,7 +392,7 @@ affliction.rot = {
 					highestscoreGUID = Obj
 					if highestscoreGUID and (unstabletbl[Obj.guid]~=nil and _A.myscore() > unstabletbl[Obj.guid]) or (unstabletbl[Obj.guid]==nil) then 
 						if player:buff(74434) then return highestscoreGUID:cast(119678) end
-						if (not player:buff(74434) and _A.enoughmana(74434)) or player:buff("Shadow Trance") then return player:cast(74434) end
+						if (not player:buff(74434) and _A.enoughmana(74434)) or player:buff("Shadow Trance") then player:cast(74434) end
 					end
 				end
 			end
