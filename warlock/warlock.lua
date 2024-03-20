@@ -479,6 +479,64 @@ _A.FakeUnits:Add('lowestEnemyInSpellRangeDebuff', function(num, spell_debuff)
 	end
 	return tempTable[num] and tempTable[num].guid
 end)
+--========================
+_A.FakeUnits:Add('closestEnemyInSpellRangeDebuff', function(num, spell_debuff)
+	local tempTable = {}
+	local spell, debuff = _A.StrExplode(spell_debuff)
+	spell = spell
+	debuff = debuff
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		if Obj:spellRange(spell) and (not Obj:Debuff(debuff)) and _A.notimmune(Obj) and Obj:los() then
+			tempTable[#tempTable+1] = {
+				guid = Obj.guid,
+				range = Obj:range(),
+				isplayer = Obj.isplayer and 1 or 0
+			}
+		end
+	end
+	if #tempTable>1 then
+		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.range < b.range) end )
+	end
+	return tempTable[num] and tempTable[num].guid
+end)
+_A.FakeUnits:Add('AclosestEnemyInSpellRangeDebuff', function(num, spell_debuff)
+	local tempTable = {}
+	local spell, debuff = _A.StrExplode(spell_debuff)
+	spell = spell
+	debuff = debuff
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		if Obj:spellRange(spell) and (not Obj:Debuff(debuff)) and (Obj:Debuff("Corruption")) and _A.notimmune(Obj) and Obj:los() then
+			tempTable[#tempTable+1] = {
+				guid = Obj.guid,
+				range = Obj:range(),
+				isplayer = Obj.isplayer and 1 or 0
+			}
+		end
+	end
+	if #tempTable>1 then
+		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.range < b.range) end )
+	end
+	return tempTable[num] and tempTable[num].guid
+end)
+_A.FakeUnits:Add('BclosestEnemyInSpellRangeDebuff', function(num, spell_debuff)
+	local tempTable = {}
+	local spell, debuff = _A.StrExplode(spell_debuff)
+	spell = spell
+	debuff = debuff
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		if Obj:spellRange(spell) and (not Obj:Debuff(debuff)) and (Obj:Debuff("Corruption")) and (Obj:Debuff("Agony")) and _A.notimmune(Obj) and Obj:los() then
+			tempTable[#tempTable+1] = {
+				guid = Obj.guid,
+				range = Obj:range(),
+				isplayer = Obj.isplayer and 1 or 0
+			}
+		end
+	end
+	if #tempTable>1 then
+		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.range < b.range) end )
+	end
+	return tempTable[num] and tempTable[num].guid
+end)
 
 
 
@@ -537,12 +595,9 @@ function _A.usablelite(spellid)
 end
 
 function _A.myscore()
-	local base, posBuff, negBuff = UnitAttackPower("player");
-	local ap = base + posBuff + negBuff
+	local ap = GetSpellBonusDamage(6) -- shadowdamage
 	local mastery = GetCombatRating(26)
 	local crit = GetCombatRating(9)
 	local haste = GetCombatRating(18)
 	return (ap + mastery + crit + haste)
-	--return (mastery + crit + haste)
 end
--- MAKE MULTIPLE SNAPSHOT TABLES, ONE FOR EACH DOT
