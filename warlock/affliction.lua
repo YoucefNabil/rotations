@@ -384,10 +384,10 @@ affliction.rot = {
 							return Obj:cast(86213)
 						end
 					end
-					end
 				end
 			end
-		end,
+		end
+	end,
 	
 	exhale = function()
 		local highestscore, highestscoreGUID = 9999999
@@ -408,17 +408,21 @@ affliction.rot = {
 	end,
 	
 	soulswap = function()
+		local numnum = 0
 		local highestscore, highestscoreGUID = 0
 		if soulswaporigin == nil  then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
-					local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
-					if (score == 0 and score >= highestscore) or score > highestscore then -- order then by highest duration
-						highestscore = score
-						highestscoreGUID = Obj
-						if highestscoreGUID then 
-							if _A.enoughmana(74434) then player:cast(74434) end
-						return highestscoreGUID:cast(86121) end
+					numnum =  numnum + 1
+					if numnum >= 2 then
+						local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
+						if (score == 0 and score >= highestscore) or score > highestscore then -- order then by highest duration
+							highestscore = score
+							highestscoreGUID = Obj
+							if highestscoreGUID then 
+								if _A.enoughmana(74434) and not player:buff("Soulburn") then player:cast(74434) end
+							return highestscoreGUID:cast(86121) end
+						end
 					end
 				end
 			end
@@ -431,55 +435,56 @@ affliction.rot = {
 		if player:SpellCooldown("Horn of Winter")<.3 and _A.dkenergy <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Horn of Winter")
 		end
-	end,
-}
----========================
----========================
----========================
----========================
----========================
-local inCombat = function()	
-	player = player or Object("player")
-	if not player then return end
-	affliction.rot.caching()
-	affliction.rot.ClickthisPleasepvp()
-	if _A.buttondelayfunc()  then return end
-	if player:lostcontrol()  then return end 
-	if player:isCastingAny() then return end
-	if _A.ceeceed(player)  then return end 
-	-- if  player:isCastingAny() then return end
-	if player:Mounted() then return end
-	-- affliction.rot.unstableaffliction()
-	--snapshots
-	affliction.rot.drainsoul()
-	affliction.rot.agonysnap()
-	affliction.rot.corruptionsnap()
-	affliction.rot.unstablesnap()
-	-- soul swap
-	-- soulswaps
-	affliction.rot.soulswap()
-	affliction.rot.exhalenodebuffs()
-	affliction.rot.exhale()
-end
-local outCombat = function()
-	return inCombat()
-end
-local spellIds_Loc = function()
-end
-local blacklist = function()
-end
-_A.CR:Add(265, {
-	name = "Youcef's Affliction",
-	ic = inCombat,
-	ooc = outCombat,
-	use_lua_engine = true,
-	gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
-})
+		end,
+	}
+	---========================
+	---========================
+	---========================
+	---========================
+	---========================
+	local inCombat = function()	
+		player = player or Object("player")
+		if not player then return end
+		affliction.rot.caching()
+		affliction.rot.ClickthisPleasepvp()
+		if _A.buttondelayfunc()  then return end
+		if player:lostcontrol()  then return end 
+		if player:isCastingAny() then return end
+		if _A.ceeceed(player)  then return end 
+		-- if  player:isCastingAny() then return end
+		if player:Mounted() then return end
+		-- affliction.rot.unstableaffliction()
+		--snapshots
+		affliction.rot.drainsoul()
+		affliction.rot.agonysnap()
+		affliction.rot.corruptionsnap()
+		affliction.rot.unstablesnap()
+		-- soul swap
+		-- soulswaps
+		affliction.rot.soulswap()
+		affliction.rot.exhalenodebuffs()
+		affliction.rot.exhale()
+	end
+	local outCombat = function()
+		return inCombat()
+	end
+	local spellIds_Loc = function()
+	end
+	local blacklist = function()
+	end
+	_A.CR:Add(265, {
+		name = "Youcef's Affliction",
+		ic = inCombat,
+		ooc = outCombat,
+		use_lua_engine = true,
+		gui = GUI,
+		gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+		wow_ver = "5.4.8",
+		apep_ver = "1.1",
+		-- ids = spellIds_Loc,
+		-- blacklist = blacklist,
+		-- pooling = false,
+		load = exeOnLoad,
+		unload = exeOnUnload
+	})
+		
