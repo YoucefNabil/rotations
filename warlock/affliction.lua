@@ -345,7 +345,9 @@ affliction.rot = {
 	end,
 	
 	lifetap = function()
-		if player:SpellCooldown("life tap")<=.3 
+		if soulswaporigin == nil 
+			and player:SpellCooldown("life tap")<=.3 
+			and player:health()>=35
 			and player:Mana()<=75 
 			then
 			player:cast("life tap")
@@ -353,82 +355,78 @@ affliction.rot = {
 	end,
 	
 	corruptionsnap = function()
-		local highestscore, highestscoreGUID = 0
+		local temptable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
-				local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
-				if (score == 0 and score >= highestscore) or score > highestscore then
-					highestscore = score
-					highestscoreGUID = Obj
-					if highestscoreGUID and (corruptiontbl[Obj.guid]~=nil and _A.myscore() > corruptiontbl[Obj.guid]) or (corruptiontbl[Obj.guid]==nil) then 
-					return highestscoreGUID:cast("Corruption") end
-				end
+			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+				temptable[#temptable+1] = {
+					obj = Obj,
+					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
+					scorespec = (corruptiontbl[Obj.guid] or 0)
+				}
+			end
+		end
+		table.sort( temptable, function(a,b) return ( a.score > b.score ) end )
+		if temptable[1] then 
+			if _A.myscore()>temptable[1].scorespec then return temptable[1].obj:Cast("Corruption")
 			end
 		end
 	end,
 	
 	agonysnap = function()
-		local highestscore, highestscoreGUID = 0
+		local temptable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
-				local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
-				if (score == 0 and score >= highestscore) or score > highestscore then
-					highestscore = score
-					highestscoreGUID = Obj
-					if highestscoreGUID and (agonytbl[Obj.guid]~=nil and _A.myscore() > agonytbl[Obj.guid]) or (agonytbl[Obj.guid]==nil) then 
-					return highestscoreGUID:cast("Agony") end
-				end
+			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+				temptable[#temptable+1] = {
+					obj = Obj,
+					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
+					scorespec = (agonytbl[Obj.guid] or 0)
+				}
+			end
+		end
+		table.sort( temptable, function(a,b) return ( a.score > b.score ) end )
+		if temptable[1] then 
+			if _A.myscore()>temptable[1].scorespec then return temptable[1].obj:Cast("Agony")
 			end
 		end
 	end,
 	
 	unstablesnapinstant = function()
-		local highestscore, highestscoreGUID = 0
+		local temptable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
-				local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
-				if (score == 0 and score >= highestscore) or score > highestscore then
-					highestscore = score
-					highestscoreGUID = Obj
-					if highestscoreGUID and (unstabletbl[Obj.guid]~=nil and _A.myscore() > unstabletbl[Obj.guid]) or (unstabletbl[Obj.guid]==nil) then 
-						if player:buff(74434) then return highestscoreGUID:cast(119678) end
-						if (not player:buff(74434) and _A.enoughmana(74434)) or player:buff("Shadow Trance") then player:cast(74434) end
-					end
-				end
+			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+				temptable[#temptable+1] = {
+					obj = Obj,
+					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
+					scorespec = (unstabletbl[Obj.guid] or 0)
+				}
 			end
 		end
+		table.sort( temptable, function(a,b) return ( a.score > b.score ) end )
+		if temptable[1] then 
+			if player:buff(74434) then return temptable[1].obj:Cast(119678) end
+			if (not player:buff(74434) and _A.enoughmana(74434)) --or player:buff("Shadow Trance")
+				then 
+				if _A.myscore()>temptable[1].scorespec  then player:cast(74434) -- shadowburn
+				end	 
+			end		
+		end		
 	end,
 	
 	unstablesnap = function()
-		local highestscore, highestscoreGUID = 0
+		local temptable = {}
 		if not player:moving() and not player:Iscasting("Unstable Affliction") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
-					local score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0)
-					if (score == 0 and score >= highestscore) or score > highestscore then
-						highestscore = score
-						highestscoreGUID = Obj
-						if highestscoreGUID and (unstabletbl[Obj.guid]~=nil and _A.myscore() > unstabletbl[Obj.guid]) or (unstabletbl[Obj.guid]==nil) then 
-						return highestscoreGUID:cast("Unstable Affliction") end
-					end
+				if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+					temptable[#temptable+1] = {
+						obj = Obj,
+						score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
+						scorespec = (unstabletbl[Obj.guid] or 0)
+					}
 				end
 			end
-		end
-	end,
-	
-	drainsoul = function()
-		local lowesthealth, lowesthealthGUID = 99999999999999999
-		if player:Soulshards() <=2 and not player:moving() and not player:Iscasting("Drain Soul") then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and Obj:infront() and _A.notimmune(Obj) and Obj:los() then
-					local health = Obj:HealthActual()
-					if  health <= lowesthealth then
-						lowesthealth = health
-						lowesthealthGUID = Obj
-						if lowesthealthGUID and lowesthealthGUID:Health()<=20 and lowesthealthGUID:HealthActual() <=70000 then
-							return lowesthealthGUID:cast("Drain Soul")
-						end
-					end
+			table.sort( temptable, function(a,b) return ( a.score > b.score ) end )
+			if temptable[1] then 
+				if _A.myscore()>temptable[1].scorespec then return temptable[1].obj:Cast("Unstable Affliction")
 				end
 			end
 		end
@@ -438,11 +436,13 @@ affliction.rot = {
 		local temptable = {}
 		if soulswaporigin ~= nil then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
-					temptable[#temptable+1] = {
-						obj = Obj,
-						duration = Obj:DebuffDuration("Unstable Affliction"),
-					}
+				if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+					if Obj.guid ~= soulswaporigin then
+						temptable[#temptable+1] = {
+							obj = Obj,
+							duration = Obj:DebuffDuration("Unstable Affliction")
+						}
+					end
 				end
 			end
 			table.sort( temptable, function(a,b) return ( a.duration < b.duration ) end )
@@ -454,10 +454,10 @@ affliction.rot = {
 		local temptable = {}
 		if soulswaporigin == nil then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.notimmune(Obj) and Obj:los() then
+				if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
 					temptable[#temptable+1] = {
 						obj = Obj,
-						duration = Obj:DebuffDuration("Unstable Affliction"),
+						duration = Obj:DebuffDuration("Unstable Affliction")
 					}
 				end
 			end

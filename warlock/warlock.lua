@@ -42,7 +42,9 @@ _A.hooksecurefunc("UseAction", function(...)
 			_A.print("ON")
 		end
 	end
-	if slot==_A.STOPSLOT then 
+	if slot==_A.STOPSLOT then
+		-- local target = Object("target")
+		-- if target and target:exists() then print(target:creatureType()) end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 			_A.Interface:toggleToggle("mastertoggle", false)
 			_A.print("OFF")
@@ -456,87 +458,6 @@ _A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 	return tempTable[num] and tempTable[num].guid
 end)
 --========================
-_A.FakeUnits:Add('lowestEnemyInSpellRangeDebuff', function(num, spell_debuff)
-	local tempTable = {}
-	local target = Object("target")
-	local spell, debuff = _A.StrExplode(spell_debuff)
-	spell = spell
-	debuff = debuff
-	if target and target:enemy() and target:spellRange(spell) and (not target:Debuff(debuff))  and _A.notimmune(target)  and target:los() then
-		return target and target.guid
-	end
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and (not Obj:Debuff(debuff)) and _A.notimmune(Obj) and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
-end)
---========================
-_A.FakeUnits:Add('closestEnemyInSpellRangeDebuff', function(num, spell_debuff)
-	local tempTable = {}
-	local spell, debuff = _A.StrExplode(spell_debuff)
-	spell = spell
-	debuff = debuff
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and (not Obj:Debuff(debuff)) and _A.notimmune(Obj) and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				range = Obj:range(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.range < b.range) end )
-	end
-	return tempTable[num] and tempTable[num].guid
-end)
-_A.FakeUnits:Add('AclosestEnemyInSpellRangeDebuff', function(num, spell_debuff)
-	local tempTable = {}
-	local spell, debuff = _A.StrExplode(spell_debuff)
-	spell = spell
-	debuff = debuff
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and (not Obj:Debuff(debuff)) and (Obj:Debuff("Corruption")) and _A.notimmune(Obj) and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				range = Obj:range(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.range < b.range) end )
-	end
-	return tempTable[num] and tempTable[num].guid
-end)
-_A.FakeUnits:Add('BclosestEnemyInSpellRangeDebuff', function(num, spell_debuff)
-	local tempTable = {}
-	local spell, debuff = _A.StrExplode(spell_debuff)
-	spell = spell
-	debuff = debuff
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and (not Obj:Debuff(debuff)) and (Obj:Debuff("Corruption")) and (Obj:Debuff("Agony")) and _A.notimmune(Obj) and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				range = Obj:range(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.range < b.range) end )
-	end
-	return tempTable[num] and tempTable[num].guid
-end)
 
 
 
@@ -600,4 +521,33 @@ function _A.myscore()
 	local crit = GetCombatRating(9)
 	local haste = GetCombatRating(18)
 	return (ap + mastery + crit + haste)
+end
+
+-- CreatureType = {
+    -- Unknown = 0,
+    -- Beast = 1,
+    -- Dragon = 2,
+    -- Demon = 3,
+    -- Elemental = 4,
+    -- Giant = 5,
+    -- Undead = 6,
+    -- Humanoid = 7,
+    -- Critter = 8,
+    -- Mechanical = 9,
+    -- NotSpecified = 10,
+    -- Totem = 11,
+    -- NonCombatPet = 12,
+    -- GasCloud = 13,
+-- }
+
+local types_i_dont_need = {
+    [0] = true, -- unknown
+    [10] = true, -- not specified
+    [11] = true, -- totems
+    [12] = true, -- non combat pets
+    [13] = true -- gas cloud
+}
+
+function _A.attackable(unit)
+	if unit and not types_i_dont_need[unit:CreatureType()] then return true end
 end
