@@ -353,7 +353,7 @@ destro.rot = {
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Shadowburn)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
-				return lowest:cast("Chaos Bolt")
+				return lowest:cast("Shadowburn")
 			end
 		end
 	end,
@@ -422,13 +422,13 @@ local inCombat = function()
 	destro.rot.activetrinket()
 	--utility
 	destro.rot.lifetap()
+	destro.rot.shadowburn()
 	destro.rot.brimstone()
 	destro.rot.immolateaoe()
 	destro.rot.incinerateaoe()
 	--
 	destro.rot.immolate()
 	destro.rot.conflagrate()
-	destro.rot.shadowburn()
 	destro.rot.chaosbolt()
 	destro.rot.conflagrateonecharge()
 	destro.rot.incinerate()
