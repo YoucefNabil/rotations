@@ -455,8 +455,8 @@ unholy.rot = {
 				end
 				if pestcheck == true then
 					for _, Obj in pairs(_A.OM:Get('Enemy')) do
-						if (Obj.isplayer or pull_location == "party" or pull_location == "raid") and Obj:range()<10 then
-						-- if  Obj:range()<10 then
+						if (Obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid") and Obj:range()<10 then
+							-- if  Obj:range()<10 then
 							if (not Obj:Debuff("Frost Fever") and not Obj:Debuff("Blood Plague")) then
 								if not _A.notimmune(Obj) then
 									return player:Cast("Blood Boil")
@@ -707,17 +707,17 @@ local inCombat = function()
 	unholy.rot.DeathcoilHEAL()
 	unholy.rot.SoulReaper()
 	----pve part
-	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		unholy.rot.dotsnapshotOutBreak()
-		unholy.rot.dotsnapshotPS()
-		unholy.rot.festeringstrike()
-	end
+	-- if _A.pull_location == "party" or _A.pull_location == "raid" then
+	-- unholy.rot.dotsnapshotOutBreak()
+	-- unholy.rot.dotsnapshotPS()
+	-- unholy.rot.festeringstrike()
+	-- end
 	----pvp part
-	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		unholy.rot.NecroStrike()
-		unholy.rot.bloodboilorphanblood()
-		unholy.rot.icytouch()
-	end
+	-- if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+	unholy.rot.NecroStrike()
+	unholy.rot.bloodboilorphanblood()
+	unholy.rot.icytouch()
+	-- end
 	----filler
 	unholy.rot.Deathcoil()
 	unholy.rot.festeringstrike()
@@ -738,12 +738,12 @@ _A.CR:Add(252, {
 	ooc = outCombat,
 	use_lua_engine = true,
 	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+wow_ver = "5.4.8",
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })

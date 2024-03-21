@@ -458,7 +458,55 @@ _A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 	return tempTable[num] and tempTable[num].guid
 end)
 --========================
-
+--========================
+--========================
+--========================
+--========================
+--========================
+--========================
+--========================
+_A.FakeUnits:Add('DebufflowestEnemyInSpellRange', function(num, spell_debuff)
+	local tempTable = {}
+	local spell, debuff = _A.StrExplode(spell_debuff)
+	spell = spell
+	debuff = debuff
+	local target = Object("target")
+	if target and target:enemy() and target:spellRange(spell) and target:Infront() and not target:debuff(debuff) and _A.notimmune(target)  and target:los() then
+		return target and target.guid
+	end
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		if Obj:spellRange(spell) and not Obj:debuff(debuff) and _A.notimmune(Obj) and  Obj:Infront() and Obj:los() then
+			tempTable[#tempTable+1] = {
+				guid = Obj.guid,
+				health = Obj:health(),
+				isplayer = Obj.isplayer and 1 or 0
+			}
+		end
+	end
+	if #tempTable>1 then
+		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+	end
+	return tempTable[num] and tempTable[num].guid
+end)
+_A.FakeUnits:Add('DebufflowestEnemyInSpellRangeNOTAR', function(num, spell_debuff)
+	local tempTable = {}
+	local spell, debuff = _A.StrExplode(spell_debuff)
+	spell = spell
+	debuff = debuff
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		if Obj:spellRange(spell) and not Obj:debuff(debuff) and _A.notimmune(Obj) and  Obj:Infront() and Obj:los() then
+			tempTable[#tempTable+1] = {
+				guid = Obj.guid,
+				health = Obj:health(),
+				isplayer = Obj.isplayer and 1 or 0
+			}
+		end
+	end
+	if #tempTable>1 then
+		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+	end
+	return tempTable[num] and tempTable[num].guid
+end)
 
 
 

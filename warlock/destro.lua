@@ -2,7 +2,7 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local player
-local affliction = {}
+local destro = {}
 local healerspecid = {
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",
@@ -110,112 +110,6 @@ end
 --============================================
 --============================================
 --============================================
---snapshottable
-local corruptiontbl = {}
-local agonytbl = {}
-local unstabletbl = {}
-local soulswaporigin = nil
-local ijustdidthatthing2 = false
-local ijustdidthatthingtime2 = 0
---Cleaning
-_A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
--- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
-	if next(corruptiontbl)~=nil then
-		for k in pairs(corruptiontbl) do
-			corruptiontbl[k]=nil
-		end
-	end	
-	if next(agonytbl)~=nil then
-		for k in pairs(agonytbl) do
-			agonytbl[k]=nil
-		end
-	end	
-	if next(unstabletbl)~=nil then
-		for k in pairs(unstabletbl) do
-			unstabletbl[k]=nil
-		end
-	end
-	soulswaporigin = nil
-	ijustdidthatthing2 = false
-end)
--- dots
-_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
-	if guidsrc == UnitGUID("player") then -- only filter by me
-		if (idd==146739) or (idd==172) then
-			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				then
-				corruptiontbl[guiddest]=_A.myscore() 
-			end
-			if subevent=="SPELL_AURA_REMOVED" 
-				then
-				corruptiontbl[guiddest]=nil
-			end
-		end
-		if (idd==980) then
-			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				then
-				agonytbl[guiddest]=_A.myscore()
-			end
-			if subevent=="SPELL_AURA_REMOVED" 
-				then
-				agonytbl[guiddest]=nil
-			end
-		end
-		if (idd==30108) then
-			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				then
-				unstabletbl[guiddest]=_A.myscore() 
-			end
-			if subevent=="SPELL_AURA_REMOVED" 
-				then
-				unstabletbl[guiddest]=nil
-			end
-		end
-		if (idd==119678) then
-			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				then
-				corruptiontbl[guiddest]=_A.myscore() 
-				unstabletbl[guiddest]=_A.myscore() 
-				agonytbl[guiddest]=_A.myscore() 
-			end
-		end
-	end
-end
-)
--- Soul Swap
-_A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-	if guidsrc == UnitGUID("player") then -- only filter by me
-		if subevent =="SPELL_CAST_SUCCESS" then
-			if idd==86121 then -- Soul Swap 86213
-				soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
-				ijustdidthatthing2 = true
-				ijustdidthatthingtime2 = GetTime() -- time at which I used soulswap
-			end
-			if idd==86213 then -- exhale
-				unstabletbl[guiddest]=unstabletbl[soulswaporigin]
-				agonytbl[guiddest]=agonytbl[soulswaporigin]
-				corruptiontbl[guiddest]=corruptiontbl[soulswaporigin]
-				ijustdidthatthing2 = false
-				soulswaporigin = nil -- remove after 3 seconds or after exhaling
-			end
-		end
-	end
-end)
-local timerframe = CreateFrame("Frame")
-local timerframeinterval = 0.1 -- default
-timerframe.TimeSinceLastUpdate2 = 0
-timerframe:SetScript("OnUpdate", function(self,elapsed)
-	self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 + elapsed;
-	if self.TimeSinceLastUpdate2 >= timerframeinterval then
-		if ijustdidthatthing2 == true and GetTime()-ijustdidthatthingtime2>=3 then
-			soulswaporigin = nil
-			ijustdidthatthing2=false -- so I wouldn't overwrite stats wrongfully
-		end
-		self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 - timerframeinterval
-	end
-end)
-_A.totalscore = function()
-end
 --============================================
 --============================================
 --============================================
@@ -233,27 +127,13 @@ local usableitems= { -- item slots
 	13, --first trinket
 	14 --second trinket
 }
-_A.temptabletbl = {}
-affliction.rot = {
+destro.rot = {
 	blank = function()
 	end,
 	
 	caching= function()
-		_A.temptabletbl = {}
 		_A.pull_location = pull_location()
-		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-				_A.temptabletbl[#_A.temptabletbl+1] = {
-					obj = Obj,
-					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
-					agonyscore = (agonytbl[Obj.guid] or 0),
-					unstablescore = (unstabletbl[Obj.guid] or 0),
-					corruptionscore = (corruptiontbl[Obj.guid] or 0)
-				}
-			end
-		end
-		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
+		_A.BurningEmbers = _A.UnitPower("player", 14)
 	end,
 	
 	ClickthisPleasepvp = function()
@@ -335,14 +215,6 @@ affliction.rot = {
 			end
 		end
 	end,
-	
-	hasteburst = function()
-		if player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") then
-			if player:buff("Surge of Dominance") then
-				return player:cast("Dark Soul: Misery")
-			end
-		end
-	end,
 	--============================================
 	--============================================
 	--============================================
@@ -354,9 +226,15 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				then 
 				if not player:moving() and not player:Iscasting("Summon Imp") then
-				return player:cast("Summon Imp")
+					return player:cast("Summon Imp")
+				end
 			end
-			end
+		end
+	end,
+	
+	Buffbuff = function()
+		if player:talent("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 and _A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return player:Cast("Grimoire of Sacrifice")
 		end
 	end,
 	
@@ -369,78 +247,60 @@ affliction.rot = {
 			player:cast("life tap")
 		end
 	end,
-	
-	corruptionsnap = function()
-		if _A.temptabletbl[1] then 
-			if _A.myscore()>_A.temptabletbl[1].corruptionscore then return _A.temptabletbl[1].obj:Cast("Corruption")
+	--======================================
+	--======================================
+	--======================================
+	immolate = function()
+		if not player:moving() and not player:Iscasting("immolate") then
+			local lowest = Object("DebufflowestEnemyInSpellRange(Immolate, Immolate)")
+			if lowest then
+				return lowest:cast("Immolate")
+			end
+		end
+	end,
+	conflagrate = function()
+		if player:SpellCharges("Conflagrate") > 1 then
+			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
+			if lowest then
+				return lowest:cast("Conflagrate")
+			end
+		end
+	end,
+	chaosbolt = function()
+		if _A.BurningEmbers >= 3 or 
+			(_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability"))
+			then
+			local lowest = Object("lowestEnemyInSpellRange(Chaos Bolt)")
+			if lowest then
+				return lowest:cast("Conflagrate")
 			end
 		end
 	end,
 	
-	agonysnap = function()
-		if _A.temptabletbl[1] then 
-			if _A.myscore()>_A.temptabletbl[1].agonyscore then return _A.temptabletbl[1].obj:Cast("Agony")
+	conflagrateonecharge = function()
+		if player:SpellCharges("Conflagrate") == 1 then
+			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
+			if lowest then
+				return lowest:cast("Conflagrate")
 			end
 		end
 	end,
 	
-	unstablesnapinstant = function()
-		if  _A.temptabletbl[1] then 
-			if player:buff(74434) then return  _A.temptabletbl[1].obj:Cast(119678) end -- improved soul swap (dots instead)
-			if (not player:buff(74434) and _A.enoughmana(74434)) --or player:buff("Shadow Trance")
-				then 
-				if _A.myscore()> _A.temptabletbl[1].unstablescore  then player:cast(74434) -- shadowburn
-				end	 
-			end		
-		end		
-	end,
-	
-	unstablesnap = function()
-		if _A.temptabletbl[1] then 
-		if not player:moving() and not player:Iscasting("Unstable Affliction") then
-			if _A.myscore()>_A.temptabletbl[1].unstablescore then return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
+	incinerate = function()
+		if not player:moving() and not player:Iscasting("Incinerate") then
+			local lowest = Object("lowestEnemyInSpellRange(Incinerate)")
+			if lowest then
+				return lowest:cast("Incinerate")
 			end
 		end
-		end
 	end,
 	
-	exhale = function()
-		local temptable = {}
-		if soulswaporigin ~= nil then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-					if Obj.guid ~= soulswaporigin then
-						temptable[#temptable+1] = {
-							obj = Obj,
-							duration = Obj:DebuffDuration("Unstable Affliction")
-						}
-					end
-				end
+	felflame = function()
+		if player:moving() then
+			local lowest = Object("lowestEnemyInSpellRange(felflame)")
+			if lowest then
+				return lowest:cast("felflame")
 			end
-			table.sort( temptable, function(a,b) return ( a.duration < b.duration ) end )
-			return temptable[1] and temptable[1].obj:Cast(86213)
-		end
-	end,
-	
-	soulswap = function() -- order by highest score first, highest duration second
-		local temptable = {}
-		if soulswaporigin == nil then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-					temptable[#temptable+1] = {
-						obj = Obj,
-						duration = Obj:DebuffDuration("Unstable Affliction")
-					}
-				end
-			end
-			table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end )
-			return temptable[1] and temptable[1].obj:Cast(86121)
-		end
-	end,
-	
-	Buffbuff = function()
-		if player:talent("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 and _A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
-			return player:Cast("Grimoire of Sacrifice")
 		end
 	end,
 }
@@ -452,31 +312,28 @@ affliction.rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
-	affliction.rot.caching()
-	affliction.rot.ClickthisPleasepvp()
+	destro.rot.caching()
+	destro.rot.ClickthisPleasepvp()
 	if _A.buttondelayfunc()  then return end
 	if player:lostcontrol()  then return end 
 	if player:isCastingAny() then return end
 	if player:Mounted() then return end
 	--
-	affliction.rot.Buffbuff()
-	affliction.rot.petres()
-	affliction.rot.items_healthstone()
+	destro.rot.Buffbuff()
+	destro.rot.petres()
+	destro.rot.items_healthstone()
 	--buff
 	--snapshots
-	affliction.rot.activetrinket()
-	affliction.rot.hasteburst()
-	--exhale
-	affliction.rot.exhale()
+	destro.rot.activetrinket()
 	--utility
-	affliction.rot.lifetap()
-	-- affliction.rot.drainsoul()
-	affliction.rot.agonysnap()
-	affliction.rot.corruptionsnap()
-	affliction.rot.unstablesnapinstant()
-	affliction.rot.unstablesnap()
+	destro.rot.lifetap()
+	destro.rot.immolate()
+	destro.rot.conflagrate()
+	destro.rot.chaosbolt()
+	destro.rot.conflagrateonecharge()
+	destro.rot.incinerate()
+	destro.rot.felflame()
 	-- soul swap
-	affliction.rot.soulswap()
 end
 local outCombat = function()
 	return inCombat()
@@ -485,8 +342,8 @@ local spellIds_Loc = function()
 end
 local blacklist = function()
 end
-_A.CR:Add(265, {
-	name = "Youcef's Affliction",
+_A.CR:Add(267, {
+	name = "Youcef's Destro",
 	ic = inCombat,
 	ooc = outCombat,
 	use_lua_engine = true,
