@@ -57,6 +57,16 @@ _A.buttondelayfunc = function()
 end
 -------------------------------------------------------
 -------------------------------------------------------
+local types_i_dont_need = {
+	[0] = true, -- unknown
+	[10] = true, -- not specified
+	[11] = true, -- totems
+	[12] = true, -- non combat pets
+	[13] = true -- gas cloud
+}
+function _A.attackable(unit)
+	if unit and not types_i_dont_need[unit:CreatureType()] then return true end
+end	
 -------------------------------------------------------
 -------------------------------------------------------
 function _A.isthishuman(unit)
@@ -351,163 +361,56 @@ _A.FakeUnits:Add('EnemyHealer', function(num, spell)
 	return tempTable[num] and tempTable[num].guid
 end)
 
-
---
-_A.FakeUnits:Add('lowestEnemyInRange', function(num, range_target)
-	local tempTable = {}
-	local ttt = Object("target")
-	local range, target = _A.StrExplode(range_target)
-	range = tonumber(range) or 40
-	target = target or "player"
-	if ttt and  ttt:enemy() and ttt:rangefrom(target)<=range and ttt:Infront() and _A.notimmune(ttt)  and ttt:los() then
-		return ttt and ttt.guid
-	end
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:rangefrom(target)<=range and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
-end)
---
-_A.FakeUnits:Add('lowestEnemyInRangeNOTAR', function(num, range_target)
-	local tempTable = {}
-	local range, target = _A.StrExplode(range_target)
-	range = tonumber(range) or 40
-	target = target or "player"
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:rangefrom(target)<=range  and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
-end)
---
-_A.FakeUnits:Add('lowestEnemyInRangeNOTARNOFACE', function(num, range_target)
-	local tempTable = {}
-	local range, target = _A.StrExplode(range_target)
-	range = tonumber(range) or 40
-	target = target or "player"
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:rangefrom(target)<=range  and  _A.notimmune(Obj) and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
-end)
---
---
---
---
 _A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 	local tempTable = {}
+	local numnum = 0
 	local target = Object("target")
-	if target and target:enemy() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
+	if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
 		return target and target.guid
 	end
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and _A.notimmune(Obj) and  Obj:Infront() and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
+	for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
+		if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
 		end
-	end
 	if #tempTable>1 then
 		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 	end
 	return tempTable[num] and tempTable[num].guid
+end
+)
+--========================
+--========================
+--========================
+--========================
+--========================
+--========================
+--========================
+--========================
+_A.FakeUnits:Add('mostgroupedenemy', function(num, spell_area_min)
+    local spell, area, min = _A.StrExplode(spell_range_min)
+    if not spell then return end
+    area = tonumber(area) or 8
+    min = tonumber(min) or 3
+    local tempTable, count, enemiesCombat = {}, 0, _A.OM:Get('EnemyCombat')
+    for _, obj in pairs(enemiesCombat) do
+        if obj:spellRange(spell) and obj:infront() and obj:los() then
+            count = 1
+            for _, obj2 in pairs(enemiesCombat) do
+                if obj2.guid~=obj.guid and obj2:rangeFrom(obj)<=area then
+                    count = count + 1
+                end
+            end
+            tempTable[#tempTable+1] = { guid = obj.guid, mobsNear = count }
+        end
+    end
+    table.sort( tempTable, function(a,b) return a.mobsNear > b.mobsNear end )
+    return tempTable[num] and tempTable[num].mobsNear>=min and tempTable[num].guid  
 end)
---
-_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
-	local tempTable = {}
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
-end)
---========================
---========================
---========================
---========================
---========================
---========================
---========================
---========================
-_A.FakeUnits:Add('DebufflowestEnemyInSpellRange', function(num, spell_debuff)
-	local tempTable = {}
-	local spell, debuff = _A.StrExplode(spell_debuff)
-	spell = spell
-	debuff = debuff
-	local target = Object("target")
-	if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.notimmune(target)  and target:los() then
-		return target and target.guid
-	end
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and not Obj:debuff(debuff) and _A.notimmune(Obj) and  Obj:Infront() and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
-end)
-_A.FakeUnits:Add('DebufflowestEnemyInSpellRangeNOTAR', function(num, spell_debuff)
-	local tempTable = {}
-	local spell, debuff = _A.StrExplode(spell_debuff)
-	spell = spell
-	debuff = debuff
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and not Obj:debuff(debuff) and _A.notimmune(Obj) and  Obj:Infront() and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
-end)
-
 
 
 _A.DSL:Register('UnitCastID', function(t)
@@ -572,30 +475,18 @@ function _A.myscore()
 end
 
 -- CreatureType = {
-    -- Unknown = 0,
-    -- Beast = 1,
-    -- Dragon = 2,
-    -- Demon = 3,
-    -- Elemental = 4,
-    -- Giant = 5,
-    -- Undead = 6,
-    -- Humanoid = 7,
-    -- Critter = 8,
-    -- Mechanical = 9,
-    -- NotSpecified = 10,
-    -- Totem = 11,
-    -- NonCombatPet = 12,
-    -- GasCloud = 13,
+-- Unknown = 0,
+-- Beast = 1,
+-- Dragon = 2,
+-- Demon = 3,
+-- Elemental = 4,
+-- Giant = 5,
+-- Undead = 6,
+-- Humanoid = 7,
+-- Critter = 8,
+-- Mechanical = 9,
+-- NotSpecified = 10,
+-- Totem = 11,
+-- NonCombatPet = 12,
+-- GasCloud = 13,
 -- }
-
-local types_i_dont_need = {
-    [0] = true, -- unknown
-    [10] = true, -- not specified
-    [11] = true, -- totems
-    [12] = true, -- non combat pets
-    [13] = true -- gas cloud
-}
-
-function _A.attackable(unit)
-	if unit and not types_i_dont_need[unit:CreatureType()] then return true end
-end

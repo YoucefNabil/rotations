@@ -250,11 +250,46 @@ destro.rot = {
 	--======================================
 	--======================================
 	--======================================
+	--AOE
+	brimstone = function()
+		local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
+		if lowest and lowest:exists() then
+			if not player:buff("Fire and Brimstone") then
+				if _A.BurningEmbers>=1 then
+					return player:cast("Fire and Brimstone")
+				end
+			end
+			else
+			if player:buff("Fire and Brimstone") then
+				return _A.RunMacroText("/cancelaura Fire and Brimstone")
+			end
+		end
+	end,
+	
+	immolateaoe = function()
+		if player:buff("Fire and Brimstone") then
+			local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
+			if lowest and lowest:exists() then
+				if not player:buff("Fire and Brimstone") then
+					if _A.BurningEmbers>=1 then
+						return player:cast("Fire and Brimstone")
+					end
+				end
+				else
+				if player:buff("Fire and Brimstone") then
+					return _A.RunMacroText("/cancelaura Fire and Brimstone")
+				end
+			end
+		end
+	end,
+	--======================================
+	--======================================
+	--======================================
 	immolate = function()
 		if not player:moving() and not player:Iscasting("Immolate") then
 			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
 			if lowest and lowest:exists() then
-				if not lowest:debuff("Immolate") then
+				if not lowest:debuffrefreshable("Immolate") then
 					return lowest:cast("Immolate")
 				end
 			end
@@ -333,6 +368,7 @@ local inCombat = function()
 	destro.rot.activetrinket()
 	--utility
 	destro.rot.lifetap()
+	destro.rot.brimstone()
 	destro.rot.immolate()
 	destro.rot.conflagrate()
 	destro.rot.chaosbolt()
