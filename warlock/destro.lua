@@ -109,6 +109,36 @@ end
 --============================================
 --============================================
 --============================================
+_A.casttimers = {}
+_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+	if guidsrc == UnitGUID("player") then -- only filter by me
+		-- print(subevent.." "..idd)
+		if (idd==688) then
+			print(subevent)
+			if subevent == "SPELL_CAST_SUCCESS" then
+				_A.casttimers[idd] = _A.GetTime()
+			end
+		end
+	end
+end)
+_A.casttbl = {}
+_A.Listener:Add("iscasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+	if guidsrc == UnitGUID("player") then -- only filter by me
+		if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED"   then
+			_A.casttbl[idd] = nil
+		end
+		if subevent == "SPELL_CAST_START" then
+			_A.casttbl[idd] = true
+		end
+	end
+end)
+function _A.overkillcheck(id)
+	if not id then return false end
+	if not player:Iscasting(id) and _A.casttbl[idd] == true then
+		_A.casttbl[idd] = nil return false
+	end
+	return _A.casttbl[idd] or false
+end
 --============================================
 --============================================
 --============================================
@@ -160,6 +190,14 @@ destro.rot = {
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) then
 				player:useitem("Healthstone")
+			end
+		end
+	end,
+	
+	summ_healthstone = function()
+		if player:ItemCount(5512) == 0 and not player:combat() then
+			if not player:moving() and not player:Iscasting("Create Healthstone") then
+				player:cast("Create Healthstone")
 			end
 		end
 	end,
@@ -221,11 +259,13 @@ destro.rot = {
 	
 	petres = function()
 		if player:talent("Grimoire of Sacrifice") and not player:Buff("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 then
-			if not _A.UnitExists("pet")
-				or _A.UnitIsDeadOrGhost("pet")
-				or not _A.HasPetUI()
+			if 
+				-- not _A.UnitExists("pet")
+				-- or _A.UnitIsDeadOrGhost("pet")
+				-- or 
+				not _A.HasPetUI()
 				then 
-				if not player:moving() and not player:Iscasting("Summon Imp") then
+				if not player:moving() and not player:iscasting("Summon Imp") then
 					return player:cast("Summon Imp")
 				end
 			end
@@ -233,7 +273,7 @@ destro.rot = {
 	end,
 	
 	Buffbuff = function()
-		if player:talent("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 and _A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if player:talent("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 and _A.HasPetUI() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Grimoire of Sacrifice")
 		end
 	end,
@@ -308,6 +348,16 @@ destro.rot = {
 		end
 	end,
 	
+	shadowburn = function()
+		if _A.BurningEmbers >= 1
+			then
+			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Shadowburn)")
+			if lowest and lowest:exists() and lowest:health()<=20 then
+				return lowest:cast("Chaos Bolt")
+			end
+		end
+	end,
+	
 	chaosbolt = function()
 		if _A.BurningEmbers >= 3 or 
 			(_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability"))
@@ -365,6 +415,7 @@ local inCombat = function()
 	--
 	destro.rot.Buffbuff()
 	destro.rot.petres()
+	destro.rot.summ_healthstone()
 	destro.rot.items_healthstone()
 	--buff
 	--snapshots
@@ -377,6 +428,7 @@ local inCombat = function()
 	--
 	destro.rot.immolate()
 	destro.rot.conflagrate()
+	destro.rot.shadowburn()
 	destro.rot.chaosbolt()
 	destro.rot.conflagrateonecharge()
 	destro.rot.incinerate()
