@@ -291,7 +291,7 @@ destro.rot = {
 	--======================================
 	--AOE
 	brimstone = function()
-		local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
+		local lowest = Object("mostgroupedenemy(Conflagrate,10,3)")
 		if lowest and lowest:exists() then
 			if not player:buff("Fire and Brimstone") then
 				if _A.BurningEmbers>=1 then
@@ -308,7 +308,7 @@ destro.rot = {
 	immolateaoe = function()
 		if player:buff("Fire and Brimstone") then
 			if not player:moving() and not player:Iscasting("Immolate") then
-				local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
+				local lowest = Object("mostgroupedenemy(Conflagrate,10,3)")
 				if lowest and lowest:exists() then
 					if lowest:debuffrefreshable("Immolate") then
 						return lowest:cast("Immolate")
@@ -321,7 +321,7 @@ destro.rot = {
 	incinerateaoe = function()
 		if player:buff("Fire and Brimstone") then
 			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
-				local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
+				local lowest = Object("mostgroupedenemy(Conflagrate,10,3)")
 				if lowest and lowest:exists() then
 					return lowest:cast("incinerate")
 				end

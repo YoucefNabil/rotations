@@ -293,6 +293,7 @@ affliction.rot = {
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) then
+				player:cast("Dark Regeneration", true)
 				player:useitem("Healthstone")
 			end
 		end
@@ -378,6 +379,24 @@ affliction.rot = {
 				then 
 				if not player:moving() and not player:iscasting("Summon Imp") then
 					return player:cast("Summon Imp")
+				end
+			end
+		end
+	end,
+	
+	petres_supremacy = function()
+		if player:talent("Grimoire of Supremacy") and player:SpellCooldown(112869)<.3 then
+			if 
+				not _A.UnitExists("pet")
+				or _A.UnitIsDeadOrGhost("pet")
+				or 
+				not _A.HasPetUI()
+				then 
+				if (not player:buff(74434) and _A.enoughmana(74434) and player:combat()) --or player:buff("Shadow Trance") 
+					then player:cast(74434) -- shadowburn
+				end	
+				if (not player:moving()  or player:buff(74434))  and not player:iscasting(112869) and _A.castdelay(112869, 1.5) then
+					return player:cast(112869)
 				end
 			end
 		end
@@ -514,6 +533,7 @@ local inCombat = function()
 	--
 	affliction.rot.Buffbuff()
 	affliction.rot.petres()
+	affliction.rot.petres_supremacy()
 	affliction.rot.items_healthstone()
 	affliction.rot.summ_healthstone()
 	--snapshots
