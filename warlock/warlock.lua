@@ -471,7 +471,7 @@ _A.FakeUnits:Add('DebufflowestEnemyInSpellRange', function(num, spell_debuff)
 	spell = spell
 	debuff = debuff
 	local target = Object("target")
-	if target and target:enemy() and target:spellRange(spell) and target:Infront() and not target:debuff(debuff) and _A.notimmune(target)  and target:los() then
+	if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.notimmune(target)  and target:los() then
 		return target and target.guid
 	end
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do

@@ -251,28 +251,34 @@ destro.rot = {
 	--======================================
 	--======================================
 	immolate = function()
-		if not player:moving() and not player:Iscasting("immolate") then
-			local lowest = Object("DebufflowestEnemyInSpellRange(Immolate, Immolate)")
-			if lowest then
-				return lowest:cast("Immolate")
+		if not player:moving() and not player:Iscasting("Immolate") then
+			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
+			if lowest and lowest:exists() then
+				if not lowest:debuff("Immolate") then
+					return lowest:cast("Immolate")
+				end
 			end
 		end
 	end,
+	
 	conflagrate = function()
 		if player:SpellCharges("Conflagrate") > 1 then
 			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
-			if lowest then
+			if lowest and lowest:exists() then
 				return lowest:cast("Conflagrate")
 			end
 		end
 	end,
+	
 	chaosbolt = function()
 		if _A.BurningEmbers >= 3 or 
 			(_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability"))
 			then
-			local lowest = Object("lowestEnemyInSpellRange(Chaos Bolt)")
-			if lowest then
-				return lowest:cast("Conflagrate")
+			if not player:moving() and not player:Iscasting("Chaos Bolt") then
+				local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
+				if lowest and lowest:exists() then
+					return lowest:cast("Chaos Bolt")
+				end
 			end
 		end
 	end,
@@ -280,16 +286,16 @@ destro.rot = {
 	conflagrateonecharge = function()
 		if player:SpellCharges("Conflagrate") == 1 then
 			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
-			if lowest then
+			if lowest and lowest:exists() then
 				return lowest:cast("Conflagrate")
 			end
 		end
 	end,
 	
 	incinerate = function()
-		if not player:moving() and not player:Iscasting("Incinerate") then
-			local lowest = Object("lowestEnemyInSpellRange(Incinerate)")
-			if lowest then
+		if (not player:moving() or player:buff("Backlash")) and not player:Iscasting("Incinerate") then
+			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
+			if lowest and lowest:exists() then
 				return lowest:cast("Incinerate")
 			end
 		end
@@ -297,8 +303,8 @@ destro.rot = {
 	
 	felflame = function()
 		if player:moving() then
-			local lowest = Object("lowestEnemyInSpellRange(felflame)")
-			if lowest then
+			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
+			if lowest and lowest:exists() then
 				return lowest:cast("felflame")
 			end
 		end
