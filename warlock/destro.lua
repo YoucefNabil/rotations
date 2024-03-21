@@ -343,7 +343,7 @@ destro.rot = {
 		if player:moving() then
 			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
 			if lowest and lowest:exists() then
-				return lowest:cast("felflame")
+				return lowest:cast("fel flame")
 			end
 		end
 	end,
