@@ -465,24 +465,20 @@ affliction.rot = {
 		end
 	end,
 	
-	shiftmode_haunt = function()
-		if _A.modifier_shift() then
-			if not player:moving() and not player:Iscasting("Haunt") and _A.enoughmana(48181) and _A.castdelay(48181, 1.5) then
-				local lowest = Object("lowestEnemyInSpellRange(Corruption)")
-				if lowest and lowest:exists() and not lowest:debuff(48181) then
-					lowest:cast("haunt")
-				end
+	haunt = function()
+		if not player:moving() and not player:Iscasting("Haunt") and _A.enoughmana(48181) and _A.castdelay(48181, 1.5) then
+			local lowest = Object("lowestEnemyInSpellRange(Corruption)")
+			if lowest and lowest:exists() and not lowest:debuff(48181) then
+				lowest:cast("haunt")
 			end
 		end
 	end,
 	
-	shiftmode_grasp = function()
-		if _A.modifier_shift() then
-			if not player:moving() and not player:Iscasting("Malefic Grasp") then
-				local lowest = Object("lowestEnemyInSpellRange(Corruption)")
-				if lowest and lowest:exists() then
-					lowest:cast("Malefic Grasp")
-				end
+	grasp = function()
+		if not player:moving() and not player:Iscasting("Malefic Grasp") then
+			local lowest = Object("lowestEnemyInSpellRange(Corruption)")
+			if lowest and lowest:exists() then
+				lowest:cast("Malefic Grasp")
 			end
 		end
 	end,
@@ -537,7 +533,7 @@ local inCombat = function()
 	if player:lostcontrol()  then return end 
 	if player:isCastingAny() then return end
 	if player:Mounted() then return end
-	--
+	--stuff
 	affliction.rot.Buffbuff()
 	affliction.rot.petres()
 	affliction.rot.petres_supremacy()
@@ -546,24 +542,28 @@ local inCombat = function()
 	--snapshots
 	affliction.rot.activetrinket()
 	affliction.rot.hasteburst()
-	--utility
-	affliction.rot.bloodhorror()
 	--exhale
 	affliction.rot.exhale()
 	--utility
+	affliction.rot.bloodhorror()
 	affliction.rot.lifetap()
-	-- affliction.rot.drainsoul()
+	-- snapshots
 	affliction.rot.agonysnap()
 	affliction.rot.corruptionsnap()
 	affliction.rot.unstablesnapinstant()
 	affliction.rot.unstablesnap()
 	-- shift mode
-	affliction.rot.shiftmode_haunt()
-	affliction.rot.shiftmode_grasp()
+	if _A.modifier_shift() then
+		affliction.rot.haunt()
+		affliction.rot.grasp()
+	end
 	-- soul swap
 	affliction.rot.soulswap()
 	--buff
 	affliction.rot.darkintent()
+	--fills
+	affliction.rot.haunt()
+	affliction.rot.grasp()
 end
 local outCombat = function()
 	return inCombat()
