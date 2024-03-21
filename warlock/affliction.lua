@@ -294,6 +294,7 @@ affliction.rot = {
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) then
 				player:cast("Dark Regeneration", true)
+				player:cast("Unending Resolve", true)
 				player:useitem("Healthstone")
 			end
 		end
@@ -337,7 +338,7 @@ affliction.rot = {
 	--============================================
 	--============================================
 	summ_healthstone = function()
-		if player:ItemCount(5512) == 0 and not player:combat() then
+		if player:ItemCount(5512) < 3 and not player:combat() then
 			if not player:moving() and not player:Iscasting("Create Healthstone") then
 				player:cast("Create Healthstone")
 			end
@@ -411,6 +412,12 @@ affliction.rot = {
 	darkintent = function()
 		if not player:buffany("Dark Intent") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Dark Intent")
+		end
+	end,
+	
+	bloodhorror = function()
+		if player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return player:Cast("Blood Horror")
 		end
 	end,
 	
@@ -539,6 +546,8 @@ local inCombat = function()
 	--snapshots
 	affliction.rot.activetrinket()
 	affliction.rot.hasteburst()
+	--utility
+	affliction.rot.bloodhorror()
 	--exhale
 	affliction.rot.exhale()
 	--utility

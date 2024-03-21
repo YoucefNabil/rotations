@@ -255,6 +255,8 @@ function _A.notimmune(unit) -- needs to be object
 			if not unit:DebuffAny("Cyclone")
 				and not unit:BuffAny("Deterrence") 
 				and not unit:BuffAny("Hand of Protection")
+				and not unit:BuffAny("Dematerialize")
+				and not unit:BuffAny("Choking Smoke Bomb")
 				and not unit:BuffAny("Ice Block")
 				and not unit:BuffAny("Divine Shield") then
 				return true
