@@ -270,15 +270,18 @@ destro.rot = {
 		if player:buff("Fire and Brimstone") then
 			local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
 			if lowest and lowest:exists() then
-				if not player:buff("Fire and Brimstone") then
-					if _A.BurningEmbers>=1 then
-						return player:cast("Fire and Brimstone")
-					end
+				if lowest:debuffrefreshable("Immolate") then
+					return lowest:cast("Immolate")
 				end
-				else
-				if player:buff("Fire and Brimstone") then
-					return _A.RunMacroText("/cancelaura Fire and Brimstone")
-				end
+			end
+		end
+	end,
+	
+	incinerateaoe = function()
+		if player:buff("Fire and Brimstone") then
+			local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
+			if lowest and lowest:exists() then
+				return lowest:cast("incinerate")
 			end
 		end
 	end,
@@ -289,7 +292,7 @@ destro.rot = {
 		if not player:moving() and not player:Iscasting("Immolate") then
 			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
 			if lowest and lowest:exists() then
-				if not lowest:debuffrefreshable("Immolate") then
+				if lowest:debuffrefreshable("Immolate") then
 					return lowest:cast("Immolate")
 				end
 			end
