@@ -372,6 +372,9 @@ local inCombat = function()
 	--utility
 	destro.rot.lifetap()
 	destro.rot.brimstone()
+	destro.rot.immolateaoe()
+	destro.rot.incinerateaoe()
+	--
 	destro.rot.immolate()
 	destro.rot.conflagrate()
 	destro.rot.chaosbolt()

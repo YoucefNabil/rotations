@@ -391,27 +391,32 @@ end
 --========================
 --========================
 --========================
-_A.FakeUnits:Add('mostgroupedenemy', function(num, spell_area_min)
-    local spell, area, min = _A.StrExplode(spell_range_min)
+_A.FakeUnits:Add('mostgroupedenemy', function(num, spell_range_threshhold)
+    local tempTable = {}
+    local most, mostGuid = 0
+    local spell, range, threshhold = _A.StrExplode(spell_range_threshhold)
     if not spell then return end
-    area = tonumber(area) or 8
-    min = tonumber(min) or 3
-    local tempTable, count, enemiesCombat = {}, 0, _A.OM:Get('EnemyCombat')
-    for _, obj in pairs(enemiesCombat) do
-        if obj:spellRange(spell) and obj:infront() and obj:los() then
-            count = 1
-            for _, obj2 in pairs(enemiesCombat) do
-                if obj2.guid~=obj.guid and obj2:rangeFrom(obj)<=area then
-                    count = count + 1
+    range = tonumber(range) or 10
+    threshhold = tonumber(threshhold) or 1
+    for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
+        if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+            tempTable[Obj.guid] = 1
+            for _, Obj2 in pairs(_A.OM:Get('EnemyCombat')) do
+                if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2,1)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
+                    tempTable[Obj.guid] = tempTable[Obj.guid] + 1
                 end
             end
-            tempTable[#tempTable+1] = { guid = obj.guid, mobsNear = count }
         end
     end
-    table.sort( tempTable, function(a,b) return a.mobsNear > b.mobsNear end )
-    return tempTable[num] and tempTable[num].mobsNear>=min and tempTable[num].guid  
-end)
-
+    for guid, count in pairs(tempTable) do
+        if count > most then
+            most = count
+            mostGuid = guid
+        end
+    end
+    if most>=threshhold then return mostGuid end
+end
+)
 
 _A.DSL:Register('UnitCastID', function(t)
 	if t=="player" then
