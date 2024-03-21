@@ -119,7 +119,7 @@ local ijustdidthatthing2 = false
 local ijustdidthatthingtime2 = 0
 --Cleaning
 _A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
--- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
+	-- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
 	if next(corruptiontbl)~=nil then
 		for k in pairs(corruptiontbl) do
 			corruptiontbl[k]=nil
@@ -321,6 +321,13 @@ affliction.rot = {
 	end,
 	--============================================
 	--============================================
+	summ_healthstone = function()
+		if player:ItemCount(5512) == 0 and not player:combat() then
+			if not player:moving() and not player:Iscasting("Create Healthstone") then
+				player:cast("Create Healthstone")
+			end
+		end
+	end,
 	--============================================
 	activetrinket = function()
 		if player:buff("Surge of Dominance") then
@@ -349,14 +356,22 @@ affliction.rot = {
 	
 	petres = function()
 		if player:talent("Grimoire of Sacrifice") and not player:Buff("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 then
-			if not _A.UnitExists("pet")
-				or _A.UnitIsDeadOrGhost("pet")
-				or not _A.HasPetUI()
+			if 
+				-- not _A.UnitExists("pet")
+				-- or _A.UnitIsDeadOrGhost("pet")
+				-- or 
+				not _A.HasPetUI()
 				then 
-				if not player:moving() and not player:Iscasting("Summon Imp") then
-				return player:cast("Summon Imp")
+				if not player:moving() and not player:iscasting("Summon Imp") then
+					return player:cast("Summon Imp")
+				end
 			end
-			end
+		end
+	end,
+	
+	Buffbuff = function()
+		if player:talent("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 and _A.HasPetUI() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return player:Cast("Grimoire of Sacrifice")
 		end
 	end,
 	
@@ -397,10 +412,32 @@ affliction.rot = {
 	
 	unstablesnap = function()
 		if _A.temptabletbl[1] then 
-		if not player:moving() and not player:Iscasting("Unstable Affliction") then
-			if _A.myscore()>_A.temptabletbl[1].unstablescore then return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
+			if not player:moving() and not player:Iscasting("Unstable Affliction") then
+				if _A.myscore()>_A.temptabletbl[1].unstablescore then return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
+				end
 			end
 		end
+	end,
+	
+	shiftmode_haunt = function()
+		if _A.modifier_shift() then
+			if not player:moving() and not player:Iscasting("Haunt") and _A.enoughmana(48181) then
+				local lowest = Object("lowestEnemyInSpellRange(Corruption)")
+				if lowest and lowest:exists() then
+					lowest:cast("haunt")
+				end
+			end
+		end
+	end,
+	
+	shiftmode_grasp = function()
+		if _A.modifier_shift() then
+			if not player:moving() and not player:Iscasting("Malefic Grasp") then
+				local lowest = Object("lowestEnemyInSpellRange(Corruption)")
+				if lowest and lowest:exists() then
+					lowest:cast("Malefic Grasp")
+				end
+			end
 		end
 	end,
 	
@@ -434,13 +471,9 @@ affliction.rot = {
 				end
 			end
 			table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end )
-			return temptable[1] and temptable[1].obj:Cast(86121)
-		end
-	end,
-	
-	Buffbuff = function()
-		if player:talent("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 and _A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
-			return player:Cast("Grimoire of Sacrifice")
+			if #temptable>=2 then
+				return temptable[1] and temptable[1].obj:Cast(86121)
+			end
 		end
 	end,
 }
@@ -462,6 +495,7 @@ local inCombat = function()
 	affliction.rot.Buffbuff()
 	affliction.rot.petres()
 	affliction.rot.items_healthstone()
+	affliction.rot.summ_healthstone()
 	--buff
 	--snapshots
 	affliction.rot.activetrinket()
@@ -475,6 +509,9 @@ local inCombat = function()
 	affliction.rot.corruptionsnap()
 	affliction.rot.unstablesnapinstant()
 	affliction.rot.unstablesnap()
+	-- shift mode
+	affliction.rot.shiftmode_haunt()
+	affliction.rot.shiftmode_grasp()
 	-- soul swap
 	affliction.rot.soulswap()
 end

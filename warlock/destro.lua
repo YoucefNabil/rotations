@@ -308,10 +308,12 @@ destro.rot = {
 	
 	immolateaoe = function()
 		if player:buff("Fire and Brimstone") then
-			local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
-			if lowest and lowest:exists() then
-				if lowest:debuffrefreshable("Immolate") then
-					return lowest:cast("Immolate")
+			if not player:moving() and not player:Iscasting("Immolate") then
+				local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
+				if lowest and lowest:exists() then
+					if lowest:debuffrefreshable("Immolate") then
+						return lowest:cast("Immolate")
+					end
 				end
 			end
 		end
@@ -319,9 +321,11 @@ destro.rot = {
 	
 	incinerateaoe = function()
 		if player:buff("Fire and Brimstone") then
-			local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
-			if lowest and lowest:exists() then
-				return lowest:cast("incinerate")
+			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
+				local lowest = Object("mostgroupedenemy(Conflagrate,10,2)")
+				if lowest and lowest:exists() then
+					return lowest:cast("incinerate")
+				end
 			end
 		end
 	end,
@@ -381,7 +385,7 @@ destro.rot = {
 	end,
 	
 	incinerate = function()
-		if (not player:moving() or player:buff("Backlash")) and not player:Iscasting("Incinerate") then
+		if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
 			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
 			if lowest and lowest:exists() then
 				return lowest:cast("Incinerate")
