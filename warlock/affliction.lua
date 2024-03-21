@@ -219,6 +219,20 @@ end
 --============================================
 --============================================
 --============================================
+_A.casttimers = {}
+_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+	if guidsrc == UnitGUID("player") then -- only filter by me
+		-- print(subevent.." "..idd)
+		if subevent == "SPELL_CAST_SUCCESS" then
+			_A.casttimers[idd] = _A.GetTime()
+		end
+	end
+end)
+function _A.castdelay(idd, delay)
+	if delay == nil then return true end
+	if _A.casttimers[idd]==nil then return true end
+	return (_A.GetTime() - _A.casttimers[idd])>=delay
+end
 --============================================
 --============================================
 --============================================
@@ -375,6 +389,12 @@ affliction.rot = {
 		end
 	end,
 	
+	darkintent = function()
+		if not player:buffany("Dark Intent") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return player:Cast("Dark Intent")
+		end
+	end,
+	
 	lifetap = function()
 		if soulswaporigin == nil 
 			and player:SpellCooldown("life tap")<=.3 
@@ -421,9 +441,9 @@ affliction.rot = {
 	
 	shiftmode_haunt = function()
 		if _A.modifier_shift() then
-			if not player:moving() and not player:Iscasting("Haunt") and _A.enoughmana(48181) then
+			if not player:moving() and not player:Iscasting("Haunt") and _A.enoughmana(48181) and _A.castdelay(48181, 1.5) then
 				local lowest = Object("lowestEnemyInSpellRange(Corruption)")
-				if lowest and lowest:exists() then
+				if lowest and lowest:exists() and not lowest:debuff(48181) then
 					lowest:cast("haunt")
 				end
 			end
@@ -496,7 +516,6 @@ local inCombat = function()
 	affliction.rot.petres()
 	affliction.rot.items_healthstone()
 	affliction.rot.summ_healthstone()
-	--buff
 	--snapshots
 	affliction.rot.activetrinket()
 	affliction.rot.hasteburst()
@@ -514,6 +533,8 @@ local inCombat = function()
 	affliction.rot.shiftmode_grasp()
 	-- soul swap
 	affliction.rot.soulswap()
+	--buff
+	affliction.rot.darkintent()
 end
 local outCombat = function()
 	return inCombat()

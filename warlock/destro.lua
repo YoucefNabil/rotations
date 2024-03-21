@@ -114,7 +114,6 @@ _A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, 
 	if guidsrc == UnitGUID("player") then -- only filter by me
 		-- print(subevent.." "..idd)
 		if (idd==688) then
-			print(subevent)
 			if subevent == "SPELL_CAST_SUCCESS" then
 				_A.casttimers[idd] = _A.GetTime()
 			end
