@@ -43,8 +43,8 @@ _A.hooksecurefunc("UseAction", function(...)
 		end
 	end
 	if slot==_A.STOPSLOT then
-		-- local target = Object("target")
-		-- if target and target:exists() then print(target:creatureType()) end
+		local target = Object("target")
+		if target and target:exists() then print(target:creatureType()) end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 			_A.Interface:toggleToggle("mastertoggle", false)
 			_A.print("OFF")
@@ -65,7 +65,10 @@ local types_i_dont_need = {
 	[13] = true -- gas cloud
 }
 function _A.attackable(unit)
-	if unit and not types_i_dont_need[unit:CreatureType()] then return true end
+	if unit then 
+		if unit:CreatureType()==nil then return false end
+		if not types_i_dont_need[unit:CreatureType()] then return true end
+	end	
 end	
 -------------------------------------------------------
 -------------------------------------------------------
@@ -89,8 +92,8 @@ function _A.IsPStr() --temporary method to get strafing.
 		return "left"
 		elseif isMoving and moveRight then
 		return "right"
-		else
-		return "none"
+	else
+	return "none"
 	end
 end
 function _A.pSpeed(unit, maxDistance)
@@ -147,15 +150,6 @@ end
 local SPELL_SHIELD_LOW    = GetSpellInfo(142863)
 local SPELL_SHIELD_MEDIUM = GetSpellInfo(142864)
 local SPELL_SHIELD_FULL   = GetSpellInfo(142865)
-
-local function modifier_shift()
-	local modkeyb = IsShiftKeyDown()
-	if modkeyb then
-		return true
-		else
-		return false
-	end
-end
 
 function _A.modifier_shift()
 	local modkeyb = IsShiftKeyDown()
@@ -371,13 +365,13 @@ _A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 	end
 	for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
 		if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					health = Obj:health(),
-					isplayer = Obj.isplayer and 1 or 0
-				}
-			end
+			tempTable[#tempTable+1] = {
+				guid = Obj.guid,
+				health = Obj:health(),
+				isplayer = Obj.isplayer and 1 or 0
+			}
 		end
+	end
 	if #tempTable>1 then
 		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 	end
@@ -388,13 +382,13 @@ _A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 	local tempTable = {}
 	for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
 		if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					health = Obj:health(),
-					isplayer = Obj.isplayer and 1 or 0
-				}
-			end
+			tempTable[#tempTable+1] = {
+				guid = Obj.guid,
+				health = Obj:health(),
+				isplayer = Obj.isplayer and 1 or 0
+			}
 		end
+	end
 	if #tempTable>1 then
 		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 	end
@@ -422,16 +416,16 @@ _A.FakeUnits:Add('mostgroupedenemy', function(num, spell_range_threshhold)
             for _, Obj2 in pairs(_A.OM:Get('EnemyCombat')) do
                 if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2,1)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
                     tempTable[Obj.guid] = tempTable[Obj.guid] + 1
-                end
-            end
-        end
-    end
+				end
+			end
+		end
+	end
     for guid, count in pairs(tempTable) do
         if count > most then
             most = count
             mostGuid = guid
-        end
-    end
+		end
+	end
     if most>=threshhold then return mostGuid end
 end
 )
