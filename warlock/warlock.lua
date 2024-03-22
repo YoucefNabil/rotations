@@ -255,13 +255,13 @@ immunebuffs = {
 	"Divine Shield"
 }
 immunedebuffs = {
-	"Cyclone"
-	-- "Choking Smoke Bomb"
+	"Cyclone",
+	"Choking Smoke Bomb"
 }
 
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
-		if unit:immune("all") then return true end-- add saps and fears?
+		if unit:immune("all") then return false end-- add saps and fears?
 		for _,v in ipairs(immunedebuffs) do
 			if not unit:Debuffany(v)
 				then
@@ -275,7 +275,7 @@ function _A.notimmune(unit) -- needs to be object
 			end
 		end
 	end
-	return false
+	return true
 end
 
 function _A.someoneislow()
