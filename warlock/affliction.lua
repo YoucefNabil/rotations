@@ -428,11 +428,11 @@ affliction.rot = {
 	
 	lifetap_delayed = function()
 		-- if soulswaporigin == nil 
-		if soulswaporigin ~= nil 
+		if soulswaporigin ~= nil -- only lifetap when you can exhale, you benefit from exhaling late since you save the stats (including duration) the moment you soulswap (not when you exhale)
 			and player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
 			and player:Mana()<=80
-			and _A.castdelay(1454, 35)
+			and _A.castdelay(1454, 35) -- 35sec delay
 			then
 			player:cast("life tap")
 		end
