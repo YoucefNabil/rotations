@@ -354,7 +354,7 @@ affliction.rot = {
 	end,
 	--============================================
 	activetrinket = function()
-		if player:buff("Surge of Dominance") then
+		if player:combat() and player:buff("Surge of Dominance") then
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -368,7 +368,7 @@ affliction.rot = {
 	end,
 	
 	hasteburst = function()
-		if player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860)  then
+		if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860)  then
 			if player:buff("Surge of Dominance") then
 				return player:cast("Dark Soul: Misery")
 			end
