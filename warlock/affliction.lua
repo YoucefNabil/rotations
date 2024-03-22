@@ -259,6 +259,7 @@ affliction.rot = {
 	end,
 	
 	caching= function()
+		_A.reflectcheck = false
 		_A.temptabletbl = {}
 		_A.pull_location = pull_location()
 		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
@@ -270,8 +271,10 @@ affliction.rot = {
 					agonyscore = (agonytbl[Obj.guid] or 0),
 					unstablescore = (unstabletbl[Obj.guid] or 0),
 					corruptionscore = (corruptiontbl[Obj.guid] or 0)
-				}			
+				}
 			end
+			if Obj.isplayer and Obj:range()<6 and (UnitTarget(Obj.guid)==player.guid) and (Obj:BuffAny("Spell Reflection") or Obj:BuffAny("Mass Spell Reflection")) then
+			_A.reflectcheck = false end
 		end
 		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 	end,
@@ -427,8 +430,14 @@ affliction.rot = {
 	end,
 	
 	bloodhorror = function()
-		if player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if _A.reflectcheck == false and player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Blood Horror")
+		end
+	end,
+	
+	bloodhorrorremoval = function()
+		if _A.reflectcheck == true and player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			_A.RunMacroText("/cancelaura Blood Horror")
 		end
 	end,
 	
@@ -508,7 +517,7 @@ affliction.rot = {
 	drainsoul = function()
 		if not player:moving() and not player:Iscasting("Drain Soul") and _A.enoughmana(1120) then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-			if lowest and lowest:exists() then
+			if lowest and lowest:exists() and lowest:health()<=20 then
 				return lowest:cast("Drain Soul")
 			end
 		end
@@ -564,7 +573,7 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if player:lostcontrol()  then return end 
 	if modifier_shift() then
-	affliction.rot.drainsoul()
+		affliction.rot.drainsoul()
 	end
 	if player:isCastingAny() then return end
 	--delayed lifetap
@@ -582,11 +591,12 @@ local inCombat = function()
 	affliction.rot.activetrinket()
 	affliction.rot.hasteburst()
 	--utility
-	affliction.rot.bloodhorror() -- fix warriors reflecting this
+	affliction.rot.bloodhorrorremoval()
+	affliction.rot.bloodhorror()
 	--shift
 	if modifier_shift() then
-	affliction.rot.haunt()
-	affliction.rot.grasp()
+		affliction.rot.haunt()
+		affliction.rot.grasp()
 	end
 	-- snapshots
 	affliction.rot.agonysnap()
@@ -618,10 +628,10 @@ _A.CR:Add(265, {
 	gui = GUI,
 	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
 	wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })

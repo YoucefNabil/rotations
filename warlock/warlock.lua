@@ -247,6 +247,8 @@ immunebuffs = {
 	"Deterrence",
 	"Anti-Magic Shell",
 	"Hand of Protection",
+	"Spell Reflection",
+	"Mass Spell Reflection",
 	"Dematerialize",
 	"Choking Smoke Bomb",
 	"Ice Block",
