@@ -119,7 +119,7 @@ local ijustdidthatthing2 = false
 local ijustdidthatthingtime2 = 0
 --Cleaning
 _A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
--- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
+	-- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
 	if next(corruptiontbl)~=nil then
 		for k in pairs(corruptiontbl) do
 			corruptiontbl[k]=nil
@@ -549,6 +549,10 @@ local inCombat = function()
 	if player:lostcontrol()  then return end 
 	if player:isCastingAny() then return end
 	if player:Mounted() then return end
+	--delayed lifetap
+	affliction.rot.lifetap_delayed()
+	--exhale
+	affliction.rot.exhale()
 	--stuff
 	affliction.rot.Buffbuff()
 	affliction.rot.petres()
@@ -561,9 +565,6 @@ local inCombat = function()
 	affliction.rot.hasteburst()
 	--utility
 	affliction.rot.bloodhorror() -- fix warriors reflecting this
-	affliction.rot.lifetap_delayed()
-	--exhale
-	affliction.rot.exhale()
 	-- snapshots
 	affliction.rot.agonysnap()
 	affliction.rot.corruptionsnap()
@@ -594,10 +595,10 @@ _A.CR:Add(265, {
 	gui = GUI,
 	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
 	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })
