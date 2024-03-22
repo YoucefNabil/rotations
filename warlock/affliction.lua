@@ -104,6 +104,12 @@ local function pull_location()
 	local whereimi = string.lower(select(2, GetInstanceInfo()))
 	return string.lower(select(2, GetInstanceInfo()))
 end
+local function modifier_shift()
+	local modkeyb = _A.IsShiftKeyDown()
+	if modkeyb then return true
+	end
+	return false
+end
 --============================================
 --============================================
 --============================================
@@ -565,6 +571,11 @@ local inCombat = function()
 	affliction.rot.hasteburst()
 	--utility
 	affliction.rot.bloodhorror() -- fix warriors reflecting this
+	--shift
+	if modifier_shift() then
+	affliction.rot.haunt()
+	affliction.rot.grasp()
+	end
 	-- snapshots
 	affliction.rot.agonysnap()
 	affliction.rot.corruptionsnap()
