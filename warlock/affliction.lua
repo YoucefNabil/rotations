@@ -219,11 +219,11 @@ end
 --============================================
 --============================================
 --============================================
-_A.casttimers = {}
-_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
-	if guidsrc == UnitGUID("player") then -- only filter by me
+_A.casttimers = {} -- doesnt work with channeled spells
+_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+	if guidsrc == UnitGUID("player") then
 		-- print(subevent.." "..idd)
-		if subevent == "SPELL_CAST_SUCCESS" then
+		if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 			_A.casttimers[idd] = _A.GetTime()
 		end
 	end
@@ -294,7 +294,6 @@ affliction.rot = {
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) then
 				player:cast("Dark Regeneration", true)
-				player:cast("Unending Resolve", true)
 				player:useitem("Healthstone")
 			end
 		end
@@ -428,7 +427,8 @@ affliction.rot = {
 	end,
 	
 	lifetap_delayed = function()
-		if soulswaporigin == nil 
+		-- if soulswaporigin == nil 
+		if soulswaporigin ~= nil 
 			and player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
 			and player:Mana()<=80
@@ -439,8 +439,7 @@ affliction.rot = {
 	end,
 	
 	lifetap= function()
-		if soulswaporigin == nil 
-			and player:SpellCooldown("life tap")<=.3 
+		if player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
 			and player:Mana()<=80
 			then
