@@ -251,6 +251,7 @@ immunebuffs = {
 	"Mass Spell Reflection",
 	"Dematerialize",
 	"Choking Smoke Bomb",
+	"Cloak of Shadows",
 	"Ice Block",
 	"Divine Shield"
 }
