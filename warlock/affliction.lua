@@ -434,7 +434,7 @@ affliction.rot = {
 			and player:Mana()<=80
 			and _A.castdelay(1454, 35) -- 35sec delay
 			then
-			player:cast("life tap")
+			return player:cast("life tap")
 		end
 	end,
 	
@@ -443,7 +443,7 @@ affliction.rot = {
 			and player:health()>=35
 			and player:Mana()<=80
 			then
-			player:cast("life tap")
+			return player:cast("life tap")
 		end
 	end,
 	
@@ -485,7 +485,7 @@ affliction.rot = {
 		if not player:moving() and not player:Iscasting("Haunt") and _A.enoughmana(48181) and _A.castdelay(48181, 1.5) then
 			local lowest = Object("lowestEnemyInSpellRange(Corruption)")
 			if lowest and lowest:exists() and not lowest:debuff(48181) then
-				lowest:cast("haunt")
+				return lowest:cast("haunt")
 			end
 		end
 	end,
@@ -494,7 +494,7 @@ affliction.rot = {
 		if not player:moving() and not player:Iscasting("Malefic Grasp") and _A.enoughmana(103103) then
 			local lowest = Object("lowestEnemyInSpellRange(Corruption)")
 			if lowest and lowest:exists() then
-				lowest:cast("Malefic Grasp")
+				return lowest:cast("Malefic Grasp")
 			end
 		end
 	end,
