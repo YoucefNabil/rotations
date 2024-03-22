@@ -118,8 +118,8 @@ local soulswaporigin = nil
 local ijustdidthatthing2 = false
 local ijustdidthatthingtime2 = 0
 --Cleaning
--- _A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
-_A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
+_A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
+-- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
 	if next(corruptiontbl)~=nil then
 		for k in pairs(corruptiontbl) do
 			corruptiontbl[k]=nil
