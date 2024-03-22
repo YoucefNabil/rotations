@@ -432,7 +432,7 @@ affliction.rot = {
 			and player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
 			and player:Mana()<=80
-			and _A.castdelay(1454, 40)
+			and _A.castdelay(1454, 35)
 			then
 			player:cast("life tap")
 		end
@@ -560,7 +560,7 @@ local inCombat = function()
 	affliction.rot.activetrinket()
 	affliction.rot.hasteburst()
 	--utility
-	affliction.rot.bloodhorror()
+	affliction.rot.bloodhorror() -- fix warriors reflecting this
 	affliction.rot.lifetap_delayed()
 	--exhale
 	affliction.rot.exhale()
