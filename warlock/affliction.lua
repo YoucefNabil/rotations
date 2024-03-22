@@ -489,7 +489,7 @@ affliction.rot = {
 	
 	haunt = function()
 		if not player:moving() and not player:Iscasting("Haunt") and _A.enoughmana(48181) and _A.castdelay(48181, 1.5) then
-			local lowest = Object("lowestEnemyInSpellRange(Corruption)")
+			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and not lowest:debuff(48181) then
 				return lowest:cast("haunt")
 			end
@@ -498,9 +498,18 @@ affliction.rot = {
 	
 	grasp = function()
 		if not player:moving() and not player:Iscasting("Malefic Grasp") and _A.enoughmana(103103) then
-			local lowest = Object("lowestEnemyInSpellRange(Corruption)")
+			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() then
 				return lowest:cast("Malefic Grasp")
+			end
+		end
+	end,
+	
+	drainsoul = function()
+		if not player:moving() and not player:Iscasting("Drain Soul") and _A.enoughmana(1120) then
+			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+			if lowest and lowest:exists() then
+				return lowest:cast("Drain Soul")
 			end
 		end
 	end,
@@ -549,12 +558,15 @@ affliction.rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
-	affliction.rot.ClickthisPleasepvp()
 	affliction.rot.caching()
+	affliction.rot.ClickthisPleasepvp()
+	if player:Mounted() then return end
 	if _A.buttondelayfunc()  then return end
 	if player:lostcontrol()  then return end 
+	if modifier_shift() then
+	affliction.rot.drainsoul()
+	end
 	if player:isCastingAny() then return end
-	if player:Mounted() then return end
 	--delayed lifetap
 	affliction.rot.lifetap_delayed()
 	--exhale
@@ -588,8 +600,8 @@ local inCombat = function()
 	--fills
 	affliction.rot.lifetap()
 	affliction.rot.haunt()
+	affliction.rot.drainsoul()
 	affliction.rot.grasp()
-	
 end
 local outCombat = function()
 	return inCombat()

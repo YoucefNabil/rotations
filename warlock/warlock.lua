@@ -92,8 +92,8 @@ function _A.IsPStr() --temporary method to get strafing.
 		return "left"
 		elseif isMoving and moveRight then
 		return "right"
-	else
-	return "none"
+		else
+		return "none"
 	end
 end
 function _A.pSpeed(unit, maxDistance)
@@ -242,17 +242,32 @@ _A.DSL:Register('unitisimmobile', function()
 end)
 
 -- Lowest enemy in range
+immunebuffs = {
+	"Deterrence",
+	"Anti-Magic Shell",
+	"Hand of Protection",
+	"Dematerialize",
+	"Choking Smoke Bomb",
+	"Ice Block",
+	"Divine Shield"
+}
+immunedebuffs = {
+	"Cyclone"
+	-- "Choking Smoke Bomb"
+}
 
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
-		if not unit:immune("all") then -- add saps and fears?
-			if not unit:DebuffAny("Cyclone")
-				and not unit:BuffAny("Deterrence") 
-				and not unit:BuffAny("Hand of Protection")
-				and not unit:BuffAny("Dematerialize")
-				and not unit:BuffAny("Choking Smoke Bomb")
-				and not unit:BuffAny("Ice Block")
-				and not unit:BuffAny("Divine Shield") then
+		if unit:immune("all") then return true end-- add saps and fears?
+		for _,v in ipairs(immunedebuffs) do
+			if not unit:Debuffany(v)
+				then
+				return true
+			end
+		end
+		for _,v in ipairs(immunebuffs) do
+			if not unit:BuffAny(v)
+				then
 				return true
 			end
 		end
@@ -267,9 +282,9 @@ function _A.someoneislow()
 				if Obj:range()<40 then
 					return true
 				end
+				end
 			end
 		end
-	end
 	return false
 end
 
@@ -487,8 +502,8 @@ function _A.myscore()
 	local ap = GetSpellBonusDamage(6) -- shadowdamage
 	local mastery = GetCombatRating(26)
 	local crit = GetCombatRating(9)
-	local haste = GetCombatRating(18)
-	return (ap + mastery + crit + haste)
+local haste = GetCombatRating(18)
+return (ap + mastery + crit + haste)
 end
 
 -- CreatureType = {
