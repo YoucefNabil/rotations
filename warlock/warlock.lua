@@ -67,7 +67,8 @@ local types_i_dont_need = {
 function _A.attackable(unit)
 	if unit then 
 		if unit:CreatureType()==nil then return false end
-		if not types_i_dont_need[unit:CreatureType()] then return true end
+		if types_i_dont_need[unit:CreatureType()] then return false end
+		return true
 	end	
 end	
 -------------------------------------------------------
