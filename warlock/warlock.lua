@@ -261,7 +261,6 @@ immunedebuffs = {
 
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
-		if unit:immune("all") then return false end-- add saps and fears?
 		for _,v in ipairs(immunedebuffs) do
 			if not unit:Debuffany(v)
 				then
@@ -274,6 +273,7 @@ function _A.notimmune(unit) -- needs to be object
 				return true
 			end
 		end
+		if unit:immune("all") then return false end-- add saps and fears?
 	end
 	return true
 end
