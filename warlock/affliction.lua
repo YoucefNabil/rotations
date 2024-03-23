@@ -160,9 +160,9 @@ _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, 
 				corruptiontbl[guiddest]=_A.myscore() 
 			end
 			-- if ( subevent=="SPELL_AURA_REFRESH" and ijustexhaled == false ) -- Incase you use soulburn seed of corruption
-				-- then
-				-- print("that thing fired")
-				-- corruptiontbl[guiddest]=_A.myscore() 
+			-- then
+			-- print("that thing fired")
+			-- corruptiontbl[guiddest]=_A.myscore() 
 			-- end
 			if subevent=="SPELL_AURA_REMOVED" 
 				then
@@ -264,6 +264,7 @@ end
 local exeOnUnload = function()
 end
 local heFLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true,}
+local FLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true,}
 local usableitems= { -- item slots
 	13, --first trinket
 	14 --second trinket
@@ -274,11 +275,12 @@ affliction.rot = {
 	end,
 	
 	caching= function()
+		_A.flagcarrier = nil
 		_A.reflectcheck = false
 		_A.temptabletbl = {}
 		_A.pull_location = pull_location()
 		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
-		-- snapshot engine and radar (to avoid iterating multiple times)
+		-- snapshot engine
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
@@ -294,8 +296,17 @@ affliction.rot = {
 					corruptionscore = (corruptiontbl[Obj.guid] or 0)
 				}
 			end
+			-- End of snapshot engine
+			-- CHECK IF REFLECTION IS GOING TO BE ANNOYING
 			if Obj.isplayer and Obj:range()<6 and (UnitTarget(Obj.guid)==player.guid) and (Obj:BuffAny("Spell Reflection") or Obj:BuffAny("Mass Spell Reflection")) then
 			_A.reflectcheck = false end
+			-- GET FLAG GUID
+			if Obj.isplayer and Obj:spellRange("Curse of Exhaustion") and Obj.infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+				for k,_ in pairs(FLAGS) do
+					if Obj:BuffAny(FLAGS) or Obj:DebuffAny(FLAGS) then
+					_A.flagcarrier = Obj end
+				end
+			end
 		end
 		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 	end,
@@ -315,6 +326,14 @@ affliction.rot = {
 				table.sort(tempTable, function(a, b) return a.distance < b.distance end)
 			end
 			if tempTable[1] then _A.ObjectInteract(tempTable[1].guid) end
+		end
+	end,
+	
+	snare_curse = function()
+		if _A.flagcarrier ~=nil then 
+			if not player:buff(74434) and not _A.flagcarrier:DebuffAny("Curse of Exhaustion") then
+				return _A.flagcarrier:cast("Curse of Exhaustion")
+			end
 		end
 	end,
 	
@@ -530,7 +549,7 @@ affliction.rot = {
 	end,
 	
 	unstablesnap = function()
-		if _A.temptabletbl[1] and _A.enoughmana(30108) then 
+		if _A.temptabletbl[1] and _A.enoughmana(30108) and not player:buff(74434) then 
 			if not player:moving() and not player:Iscasting("Unstable Affliction") then
 				if _A.myscore()>_A.temptabletbl[1].unstablescore then return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
 				end
@@ -637,10 +656,11 @@ local inCombat = function()
 	--utility
 	affliction.rot.bloodhorrorremoval()
 	affliction.rot.bloodhorror()
+	affliction.rot.snare_curse()
 	-- snapshots
-	affliction.rot.agonysnap()
 	affliction.rot.corruptionsnap()
 	affliction.rot.unstablesnapinstant()
+	affliction.rot.agonysnap()
 	affliction.rot.unstablesnap()
 	--shift
 	if modifier_shift() then
