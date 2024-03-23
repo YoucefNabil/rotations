@@ -587,84 +587,81 @@ affliction.rot = {
 			return temptable[1] and temptable[1].obj:Cast(86213)
 		end
 	end,
-	}
-	---========================
-	---========================
-	---========================
-	---========================
-	---========================
-	local inCombat = function()	
-		player = player or Object("player")
-		if not player then return end
-		affliction.rot.caching()
-		affliction.rot.ClickthisPleasepvp()
-		if player:Mounted() then return end
-		if _A.buttondelayfunc()  then return end
-		if player:lostcontrol()  then return end 
-		if modifier_shift() then
-			affliction.rot.drainsoul()
-		end
-		if player:isCastingAny() then return end
-		--delayed lifetap
-		affliction.rot.lifetap_delayed()
-		--exhale
-		affliction.rot.exhale()
-		--stuff
-		affliction.rot.Buffbuff()
-		affliction.rot.petres()
-		affliction.rot.petres_supremacy()
-		affliction.rot.items_healthstone()
-		affliction.rot.summ_healthstone()
-		--bursts
-		affliction.rot.activetrinket()
-		affliction.rot.hasteburst()
-		--HEALS
-		affliction.rot.CauterizeMaster()
-		affliction.rot.MortalCoil()
-		affliction.rot.twilightward()
-		--utility
-		affliction.rot.bloodhorrorremoval()
-		affliction.rot.bloodhorror()
-		--shift
-		if modifier_shift() then
-			affliction.rot.haunt()
-			affliction.rot.grasp()
-		end
-		-- snapshots
-		affliction.rot.agonysnap()
-		affliction.rot.corruptionsnap()
-		affliction.rot.unstablesnapinstant()
-		affliction.rot.unstablesnap()
-		-- soul swap
-		affliction.rot.soulswap()
-		--buff
-		affliction.rot.darkintent()
-		--fills
-		affliction.rot.lifetap()
+}
+---========================
+---========================
+---========================
+---========================
+---========================
+local inCombat = function()	
+	player = player or Object("player")
+	if not player then return end
+	affliction.rot.caching()
+	affliction.rot.ClickthisPleasepvp()
+	if player:Mounted() then return end
+	if player:lostcontrol()  then return end 
+	--delayed lifetap
+	affliction.rot.lifetap_delayed()
+	--exhale
+	affliction.rot.exhale()
+	if player:isCastingAny() then return end
+	if _A.buttondelayfunc()  then return end
+	--stuff
+	affliction.rot.Buffbuff()
+	affliction.rot.petres()
+	affliction.rot.petres_supremacy()
+	affliction.rot.items_healthstone()
+	affliction.rot.summ_healthstone()
+	--bursts
+	affliction.rot.activetrinket()
+	affliction.rot.hasteburst()
+	--HEALS
+	affliction.rot.CauterizeMaster()
+	affliction.rot.MortalCoil()
+	affliction.rot.twilightward()
+	--utility
+	affliction.rot.bloodhorrorremoval()
+	affliction.rot.bloodhorror()
+	--shift
+	if modifier_shift() then
 		affliction.rot.haunt()
 		affliction.rot.drainsoul()
 		affliction.rot.grasp()
 	end
-	local outCombat = function()
-		return inCombat()
-	end
-	local spellIds_Loc = function()
-	end
-	local blacklist = function()
-	end
-	_A.CR:Add(265, {
-		name = "Youcef's Affliction",
-		ic = inCombat,
-		ooc = outCombat,
-		use_lua_engine = true,
-		gui = GUI,
-		gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-		wow_ver = "5.4.8",
-		apep_ver = "1.1",
+	-- snapshots
+	affliction.rot.agonysnap()
+	affliction.rot.corruptionsnap()
+	affliction.rot.unstablesnapinstant()
+	affliction.rot.unstablesnap()
+	-- soul swap
+	affliction.rot.soulswap()
+	--buff
+	affliction.rot.darkintent()
+	--fills
+	affliction.rot.lifetap()
+	affliction.rot.haunt()
+	affliction.rot.drainsoul()
+	affliction.rot.grasp()
+end
+local outCombat = function()
+	return inCombat()
+end
+local spellIds_Loc = function()
+end
+local blacklist = function()
+end
+_A.CR:Add(265, {
+	name = "Youcef's Affliction",
+	ic = inCombat,
+	ooc = outCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
 	-- ids = spellIds_Loc,
 	-- blacklist = blacklist,
 	-- pooling = false,
 	load = exeOnLoad,
 	unload = exeOnUnload
-	})
-		
+})
