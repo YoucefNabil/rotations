@@ -402,7 +402,7 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy = function()
-		if player:talent("Grimoire of Supremacy") and _A.enoughmana(112866) then
+		if player:talent("Grimoire of Supremacy") and _A.enoughmana(112866) and player:SpellCooldown(112866)<.3 and _A.castdelay(112866, 1.5) and not player:iscasting(112866)  then
 			if 
 				not _A.UnitExists("pet")
 				or _A.UnitIsDeadOrGhost("pet")
@@ -412,7 +412,7 @@ affliction.rot = {
 				if (not player:buff(74434) and _A.enoughmana(74434) and player:combat()) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
 				end	
-				if (not player:moving()  or player:buff(74434))  and not player:iscasting(112866) and _A.castdelay(112866, 1.5) then
+				if not player:moving() or player:buff(74434)  then
 					return player:cast(112866)
 				end
 			end
