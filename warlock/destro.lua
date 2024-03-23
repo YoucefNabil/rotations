@@ -418,8 +418,9 @@ local inCombat = function()
 	--
 	destro.rot.Buffbuff()
 	destro.rot.petres()
+	-- HEALS AND DEFS
 	destro.rot.summ_healthstone()
-	destro.rot.items_healthstone()
+	destro.rot.items_healthstone() -- And Dark Regen
 	--buff
 	--snapshots
 	destro.rot.activetrinket()

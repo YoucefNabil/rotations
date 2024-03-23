@@ -43,8 +43,8 @@ _A.hooksecurefunc("UseAction", function(...)
 		end
 	end
 	if slot==_A.STOPSLOT then
-		local target = Object("target")
-		if target and target:exists() then print(target:creatureType()) end
+		-- local target = Object("target")
+		-- if target and target:exists() then print(target:creatureType()) end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 			_A.Interface:toggleToggle("mastertoggle", false)
 			_A.print("OFF")
@@ -250,31 +250,26 @@ immunebuffs = {
 	"Spell Reflection",
 	"Mass Spell Reflection",
 	"Dematerialize",
-	"Choking Smoke Bomb",
+	"Smoke Bomb",
 	"Cloak of Shadows",
 	"Ice Block",
 	"Divine Shield"
 }
 immunedebuffs = {
 	"Cyclone",
-	"Choking Smoke Bomb"
+	"Smoke Bomb"
 }
 
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
-		for _,v in ipairs(immunedebuffs) do
-			if not unit:Debuffany(v)
-				then
-				return true
+		if unit:immune("all") then
+			for i = 1,#immunebuffs do
+				if not unit:Debuffany(immunedebuffs[i])
+					and not unit:BuffAny(immunebuffs[i]) then 
+					return true
+				end
 			end
 		end
-		for _,v in ipairs(immunebuffs) do
-			if not unit:BuffAny(v)
-				then
-				return true
-			end
-		end
-		if unit:immune("all") then return false end-- add saps and fears?
 	end
 	return true
 end
@@ -286,23 +281,23 @@ function _A.someoneislow()
 				if Obj:range()<40 then
 					return true
 				end
-				end
 			end
 		end
+	end
 	return false
 end
 
 function _A.someoneisuperlow()
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if _A.isthishuman(Obj.guid) then
-			if Obj:Health()<35 then
-				if Obj:range()<40 then
-					return true
-				end
+	if _A.isthishuman(Obj.guid) then
+		if Obj:Health()<35 then
+			if Obj:range()<40 then
+				return true
 			end
 		end
 	end
-	return false
+end
+return false
 end
 
 function _A.ceeceed(unit)
@@ -433,7 +428,7 @@ _A.FakeUnits:Add('mostgroupedenemy', function(num, spell_range_threshhold)
         if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
             tempTable[Obj.guid] = 1
             for _, Obj2 in pairs(_A.OM:Get('EnemyCombat')) do
-                if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2,1)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
+                if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2,2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
                     tempTable[Obj.guid] = tempTable[Obj.guid] + 1
 				end
 			end

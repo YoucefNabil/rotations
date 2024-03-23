@@ -263,8 +263,14 @@ affliction.rot = {
 		_A.temptabletbl = {}
 		_A.pull_location = pull_location()
 		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
+		-- snapshot engine and radar (to avoid iterating multiple times)
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
+				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") then corruptiontbl[Obj.guid]=nil end
+				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") then agonytbl[Obj.guid]=nil end
+				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") then unstabletbl[Obj.guid]=nil end
+				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
 					obj = Obj,
 					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
@@ -348,7 +354,7 @@ affliction.rot = {
 	summ_healthstone = function()
 		if _A.enoughmana(6201) then
 			if player:ItemCount(5512) == 0 or (player:ItemCount(5512) < 3 and not player:combat()) then
-				if not player:moving() and not player:Iscasting("Create Healthstone") then
+				if not player:moving() and not player:Iscasting("Create Healthstone") and _A.castdelay(5512, 1.5) then
 					player:cast("Create Healthstone")
 				end
 			end
@@ -361,7 +367,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
-							return _A.RunMacroText(string.format(("/use %s "), usableitems[i]))
+							_A.RunMacroText(string.format(("/use %s "), usableitems[i]))
 						end
 					end
 				end
@@ -371,8 +377,8 @@ affliction.rot = {
 	
 	hasteburst = function()
 		if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860)  then
-			if player:buff("Surge of Dominance") then
-				return player:cast("Dark Soul: Misery")
+			if player:buff("Call of Dominance") then
+				player:cast("Dark Soul: Misery", true)
 			end
 		end
 	end,
@@ -396,7 +402,7 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy = function()
-		if player:talent("Grimoire of Supremacy") and player:SpellCooldown(112869)<.3 and _A.enoughmana(112869) then
+		if player:talent("Grimoire of Supremacy") and _A.enoughmana(112866) then
 			if 
 				not _A.UnitExists("pet")
 				or _A.UnitIsDeadOrGhost("pet")
@@ -406,8 +412,27 @@ affliction.rot = {
 				if (not player:buff(74434) and _A.enoughmana(74434) and player:combat()) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
 				end	
-				if (not player:moving()  or player:buff(74434))  and not player:iscasting(112869) and _A.castdelay(112869, 1.5) then
-					return player:cast(112869)
+				if (not player:moving()  or player:buff(74434))  and not player:iscasting(112866) and _A.castdelay(112866, 1.5) then
+					return player:cast(112866)
+				end
+			end
+		end
+	end,
+	
+	CauterizeMaster = function()
+		if player:health() <= 85 then
+			if player:SpellUsable("Cauterize Master") and player:SpellCooldown("Cauterize Master") == 0  then
+				player:cast("Cauterize Master", true)
+			end
+		end
+	end,
+	
+	MortalCoil = function()
+		if player:health() <= 85 then
+			if player:Talent("Mortal Coil") and player:SpellCooldown("Mortal Coil")<.3  then
+				local lowest = Object("lowestEnemyInSpellRangeNOTAR(Mortal Coil)")
+				if lowest and lowest:exists() then
+					return lowest:cast("Mortal Coil")
 				end
 			end
 		end
@@ -551,89 +576,95 @@ affliction.rot = {
 					if Obj.guid ~= soulswaporigin then
 						temptable[#temptable+1] = {
 							obj = Obj,
+							-- isplayer = Obj.isplayer and 1 or 0, -- exhales to players first
 							duration = Obj:DebuffDuration("Unstable Affliction") or 0
 						}
 					end
 				end
 			end
-			table.sort( temptable, function(a,b) return ( a.duration < b.duration ) end )
+			table.sort( temptable, function(a,b) return  (a.duration < b.duration ) end )
+			-- table.sort( temptable, function(a,b) return (a.isplayer > b.isplayer) or ( a.isplayer == b.isplayer and a.duration < b.duration ) end )
 			return temptable[1] and temptable[1].obj:Cast(86213)
 		end
 	end,
-}
----========================
----========================
----========================
----========================
----========================
-local inCombat = function()	
-	player = player or Object("player")
-	if not player then return end
-	affliction.rot.caching()
-	affliction.rot.ClickthisPleasepvp()
-	if player:Mounted() then return end
-	if _A.buttondelayfunc()  then return end
-	if player:lostcontrol()  then return end 
-	if modifier_shift() then
-		affliction.rot.drainsoul()
-	end
-	if player:isCastingAny() then return end
-	--delayed lifetap
-	affliction.rot.lifetap_delayed()
-	--exhale
-	affliction.rot.exhale()
-	--stuff
-	affliction.rot.Buffbuff()
-	affliction.rot.petres()
-	affliction.rot.petres_supremacy()
-	affliction.rot.items_healthstone()
-	affliction.rot.summ_healthstone()
-	affliction.rot.twilightward()
-	--bursts
-	affliction.rot.activetrinket()
-	affliction.rot.hasteburst()
-	--utility
-	affliction.rot.bloodhorrorremoval()
-	affliction.rot.bloodhorror()
-	--shift
-	if modifier_shift() then
+	}
+	---========================
+	---========================
+	---========================
+	---========================
+	---========================
+	local inCombat = function()	
+		player = player or Object("player")
+		if not player then return end
+		affliction.rot.caching()
+		affliction.rot.ClickthisPleasepvp()
+		if player:Mounted() then return end
+		if _A.buttondelayfunc()  then return end
+		if player:lostcontrol()  then return end 
+		if modifier_shift() then
+			affliction.rot.drainsoul()
+		end
+		if player:isCastingAny() then return end
+		--delayed lifetap
+		affliction.rot.lifetap_delayed()
+		--exhale
+		affliction.rot.exhale()
+		--stuff
+		affliction.rot.Buffbuff()
+		affliction.rot.petres()
+		affliction.rot.petres_supremacy()
+		affliction.rot.items_healthstone()
+		affliction.rot.summ_healthstone()
+		affliction.rot.twilightward()
+		--bursts
+		affliction.rot.activetrinket()
+		affliction.rot.hasteburst()
+		--HEALS
+		affliction.rot.CauterizeMaster()
+		affliction.rot.MortalCoil()
+		--utility
+		affliction.rot.bloodhorrorremoval()
+		affliction.rot.bloodhorror()
+		--shift
+		if modifier_shift() then
+			affliction.rot.haunt()
+			affliction.rot.grasp()
+		end
+		-- snapshots
+		affliction.rot.agonysnap()
+		affliction.rot.corruptionsnap()
+		affliction.rot.unstablesnapinstant()
+		affliction.rot.unstablesnap()
+		-- soul swap
+		affliction.rot.soulswap()
+		--buff
+		affliction.rot.darkintent()
+		--fills
+		affliction.rot.lifetap()
 		affliction.rot.haunt()
+		affliction.rot.drainsoul()
 		affliction.rot.grasp()
 	end
-	-- snapshots
-	affliction.rot.agonysnap()
-	affliction.rot.corruptionsnap()
-	affliction.rot.unstablesnapinstant()
-	affliction.rot.unstablesnap()
-	-- soul swap
-	affliction.rot.soulswap()
-	--buff
-	affliction.rot.darkintent()
-	--fills
-	affliction.rot.lifetap()
-	affliction.rot.haunt()
-	affliction.rot.drainsoul()
-	affliction.rot.grasp()
-end
-local outCombat = function()
-	return inCombat()
-end
-local spellIds_Loc = function()
-end
-local blacklist = function()
-end
-_A.CR:Add(265, {
-	name = "Youcef's Affliction",
-	ic = inCombat,
-	ooc = outCombat,
-	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
+	local outCombat = function()
+		return inCombat()
+	end
+	local spellIds_Loc = function()
+	end
+	local blacklist = function()
+	end
+	_A.CR:Add(265, {
+		name = "Youcef's Affliction",
+		ic = inCombat,
+		ooc = outCombat,
+		use_lua_engine = true,
+		gui = GUI,
+		gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+		wow_ver = "5.4.8",
+		apep_ver = "1.1",
 	-- ids = spellIds_Loc,
 	-- blacklist = blacklist,
 	-- pooling = false,
 	load = exeOnLoad,
 	unload = exeOnUnload
-})
+	})
+		
