@@ -121,8 +121,10 @@ local corruptiontbl = {}
 local agonytbl = {}
 local unstabletbl = {}
 local soulswaporigin = nil
-local ijustdidthatthing2 = false
-local ijustdidthatthingtime2 = 0
+local ijustsoulswapped = false
+local ijustsoulswappedattime = 0
+local ijustexhaled = false
+local ijustexhaledattime = 0
 --Cleaning
 _A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
 	-- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
@@ -142,14 +144,24 @@ _A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORL
 		end
 	end
 	soulswaporigin = nil
-	ijustdidthatthing2 = false
+	ijustsoulswapped = false
 end)
 -- dots
 _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 	if guidsrc == UnitGUID("player") then -- only filter by me
+		-- testing
+		-- if (idd==27243) then
+		-- print(subevent.." "..idd)
+		-- end
+		--
 		if (idd==146739) or (idd==172) then
 			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
+				corruptiontbl[guiddest]=_A.myscore() 
+			end
+			if ( subevent=="SPELL_AURA_REFRESH" and ijustexhaled == false ) -- Incase you use soulburn seed of corruption
+				then
+				print("that thing fired")
 				corruptiontbl[guiddest]=_A.myscore() 
 			end
 			if subevent=="SPELL_AURA_REMOVED" 
@@ -194,14 +206,16 @@ _A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event
 		if subevent =="SPELL_CAST_SUCCESS" then
 			if idd==86121 then -- Soul Swap 86213
 				soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
-				ijustdidthatthing2 = true
-				ijustdidthatthingtime2 = GetTime() -- time at which I used soulswap
+				ijustsoulswapped = true
+				ijustsoulswappedattime = GetTime() -- time at which I used soulswap
 			end
 			if idd==86213 then -- exhale
 				unstabletbl[guiddest]=unstabletbl[soulswaporigin]
 				agonytbl[guiddest]=agonytbl[soulswaporigin]
 				corruptiontbl[guiddest]=corruptiontbl[soulswaporigin]
-				ijustdidthatthing2 = false
+				ijustsoulswapped = false
+				ijustexhaled = true
+				ijustexhaledattime = _A.GetTime()
 				soulswaporigin = nil -- remove after 3 seconds or after exhaling
 			end
 		end
@@ -213,15 +227,16 @@ timerframe.TimeSinceLastUpdate2 = 0
 timerframe:SetScript("OnUpdate", function(self,elapsed)
 	self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 + elapsed;
 	if self.TimeSinceLastUpdate2 >= timerframeinterval then
-		if ijustdidthatthing2 == true and GetTime()-ijustdidthatthingtime2>=3 then
+		if ijustsoulswapped == true and GetTime()-ijustsoulswappedattime>=3 then
 			soulswaporigin = nil
-			ijustdidthatthing2=false -- so I wouldn't overwrite stats wrongfully
+			ijustsoulswapped=false -- so I wouldn't overwrite stats wrongfully
+		end
+		if ijustexhaled == true and GetTime() - ijustexhaledattime >= .3 then
+			ijustexhaled = false
 		end
 		self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 - timerframeinterval
 	end
 end)
-_A.totalscore = function()
-end
 --============================================
 --============================================
 --============================================
@@ -354,7 +369,7 @@ affliction.rot = {
 	summ_healthstone = function()
 		if _A.enoughmana(6201) then
 			if player:ItemCount(5512) == 0 or (player:ItemCount(5512) < 3 and not player:combat()) then
-				if not player:moving() and not player:Iscasting("Create Healthstone") and _A.castdelay(5512, 1.5) then
+				if not player:moving() and not player:Iscasting("Create Healthstone") and _A.castdelay(6201, 1.5) then
 					player:cast("Create Healthstone")
 				end
 			end
@@ -622,17 +637,17 @@ local inCombat = function()
 	--utility
 	affliction.rot.bloodhorrorremoval()
 	affliction.rot.bloodhorror()
+	-- snapshots
+	affliction.rot.agonysnap()
+	affliction.rot.corruptionsnap()
+	affliction.rot.unstablesnapinstant()
+	affliction.rot.unstablesnap()
 	--shift
 	if modifier_shift() then
 		affliction.rot.haunt()
 		affliction.rot.drainsoul()
 		affliction.rot.grasp()
 	end
-	-- snapshots
-	affliction.rot.agonysnap()
-	affliction.rot.corruptionsnap()
-	affliction.rot.unstablesnapinstant()
-	affliction.rot.unstablesnap()
 	-- soul swap
 	affliction.rot.soulswap()
 	--buff
