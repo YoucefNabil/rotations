@@ -377,7 +377,7 @@ _A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 	if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
 		return target and target.guid
 	end
-	for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
 		if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
@@ -394,7 +394,7 @@ end
 )
 _A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 	local tempTable = {}
-	for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
 		if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
@@ -424,10 +424,10 @@ _A.FakeUnits:Add('mostgroupedenemy', function(num, spell_range_threshhold)
     if not spell then return end
     range = tonumber(range) or 10
     threshhold = tonumber(threshhold) or 1
-    for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
+    for _, Obj in pairs(_A.OM:Get('Enemy')) do
         if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
             tempTable[Obj.guid] = 1
-            for _, Obj2 in pairs(_A.OM:Get('EnemyCombat')) do
+            for _, Obj2 in pairs(_A.OM:Get('Enemy')) do
                 if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2,2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
                     tempTable[Obj.guid] = tempTable[Obj.guid] + 1
 				end

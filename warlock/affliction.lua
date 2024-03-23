@@ -159,11 +159,11 @@ _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, 
 				then
 				corruptiontbl[guiddest]=_A.myscore() 
 			end
-			if ( subevent=="SPELL_AURA_REFRESH" and ijustexhaled == false ) -- Incase you use soulburn seed of corruption
-				then
-				print("that thing fired")
-				corruptiontbl[guiddest]=_A.myscore() 
-			end
+			-- if ( subevent=="SPELL_AURA_REFRESH" and ijustexhaled == false ) -- Incase you use soulburn seed of corruption
+				-- then
+				-- print("that thing fired")
+				-- corruptiontbl[guiddest]=_A.myscore() 
+			-- end
 			if subevent=="SPELL_AURA_REMOVED" 
 				then
 				corruptiontbl[guiddest]=nil
@@ -368,7 +368,7 @@ affliction.rot = {
 	--============================================
 	summ_healthstone = function()
 		if _A.enoughmana(6201) then
-			if player:ItemCount(5512) == 0 or (player:ItemCount(5512) < 3 and not player:combat()) then
+			if (player:ItemCount(5512) == 0 and player:ItemCooldown(5512) < 2.55 ) or (player:ItemCount(5512) < 3 and not player:combat()) then
 				if not player:moving() and not player:Iscasting("Create Healthstone") and _A.castdelay(6201, 1.5) then
 					player:cast("Create Healthstone")
 				end
