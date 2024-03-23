@@ -615,13 +615,13 @@ affliction.rot = {
 		affliction.rot.petres_supremacy()
 		affliction.rot.items_healthstone()
 		affliction.rot.summ_healthstone()
-		affliction.rot.twilightward()
 		--bursts
 		affliction.rot.activetrinket()
 		affliction.rot.hasteburst()
 		--HEALS
 		affliction.rot.CauterizeMaster()
 		affliction.rot.MortalCoil()
+		affliction.rot.twilightward()
 		--utility
 		affliction.rot.bloodhorrorremoval()
 		affliction.rot.bloodhorror()
