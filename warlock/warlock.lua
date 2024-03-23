@@ -262,7 +262,7 @@ immunedebuffs = {
 
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
-		if unit:immune("all") then
+		if not unit:immune("all") then
 			for i = 1,#immunebuffs do
 				if not unit:Debuffany(immunedebuffs[i])
 					and not unit:BuffAny(immunebuffs[i]) then 

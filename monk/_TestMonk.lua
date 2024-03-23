@@ -617,22 +617,57 @@ function _A.isthishuman(unit)
 	return false
 end
 
+immunebuffs = {
+	"Deterrence",
+	"Hand of Protection",
+	"Dematerialize",
+	-- "Smoke Bomb",
+	"Cloak of Shadows",
+	"Ice Block",
+	"Divine Shield"
+}
+immunedebuffs = {
+	"Cyclone"
+	-- "Smoke Bomb"
+}
+
+healimmunebuffs = {
+}
+healimmunedebuffs = {
+	"Cyclone"
+}
+
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
-		if not unit:immune("all") then -- add saps and fears?
-			if not unit:DebuffAny("Cyclone")
-				and not unit:BuffAny("Deterrence") 
-				and not unit:BuffAny("Hand of Protection")
-				and not unit:BuffAny("Ice Block")
-				and not unit:BuffAny("Divine Shield") then
-				return true
+		if not unit:immune("all") then
+			for i = 1,#immunebuffs do
+				if not unit:Debuffany(immunedebuffs[i])
+					and not unit:BuffAny(immunebuffs[i]) then 
+					return true
+				end
 			end
 		end
 	end
-	return false
+	return true
 end
 
 
+function _A.nothealimmune(unit)
+	local player = Object("player")
+	if unit then 
+		if not unit:immune("all") then
+			for i = 1,#immunebuffs do
+				if not unit:Debuffany(healimmunedebuffs[i]) then
+					if  (not unit:Debuffany("Smoke Bomb") and not player:Debuffany("Smoke Bomb"))  or (unit:Debuffany("Smoke Bomb") and player:Debuffany("Smoke Bomb"))
+						then 
+						return true
+					end
+				end
+			end
+		end
+	end
+	return true
+end
 --
 _A.FakeUnits:Add('lowestEnemyInRange', function(num, range_target)
 	local tempTable = {}
@@ -765,10 +800,10 @@ end)
 
 
 _A.DSL:Register('UnitCastID', function(t)
-    if t=="player" then
+	if t=="player" then
 		t = U.playerGUID
 	end
-    return _A.UnitCastID(t) -- castid, channelid, guid, pointer
+	return _A.UnitCastID(t) -- castid, channelid, guid, pointer
 end)
 
 
@@ -994,39 +1029,41 @@ end)
 -- end)
 
 _A.FakeUnits:Add('lowestall', function()
-    local lowestHP, lowestHPguid = 100
+	local lowestHP, lowestHPguid = 100
 	local location = pull_location()
-    for _, fr in pairs(_A.OM:Get('Friendly')) do
-        -- if fr.isplayer then
-        if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-            local hp = fr:health()
-            if hp < lowestHP then
-                lowestHP = hp
-                lowestHPguid = fr.guid
+	for _, fr in pairs(_A.OM:Get('Friendly')) do
+		-- if fr.isplayer then
+		if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
+		if _A.nothealimmune(fr) then
+			local hp = fr:health()
+			if hp < lowestHP then
+				lowestHP = hp
+				lowestHPguid = fr.guid
 			end
 		end
 	end
-    return lowestHPguid
+	end
+	return lowestHPguid
 end)
 
 --[[_A.FakeUnits:Add('targetingme', function()
-	for _, enemy in pairs(_A.OM:Get('Enemy')) do
-	if enemy then
-	if _A.UnitIsPlayer(enemy.guid) then
-	local tguid = UnitTarget(enemy.guid)
-	if tguid then
-	targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
-	end
-	end
-	end
-	end
-	for guid, count in pairs(targets) do
-	if count > most then
-	most = count
-	mostGuid = guid
-	end
-	end
-	return mostGuid
+for _, enemy in pairs(_A.OM:Get('Enemy')) do
+if enemy then
+if _A.UnitIsPlayer(enemy.guid) then
+local tguid = UnitTarget(enemy.guid)
+if tguid then
+targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
+end
+end
+end
+end
+for guid, count in pairs(targets) do
+if count > most then
+most = count
+mostGuid = guid
+end
+end
+return mostGuid
 end)--]]
 
 

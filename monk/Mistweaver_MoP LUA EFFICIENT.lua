@@ -400,23 +400,22 @@ local mw_rot = {
 	end,
 	
 	tigerslust = function()
-		if player:SpellCooldown("Tiger's Lust")<.3 then
-			--if not player:LostControl() then
-			if player:Stance() == 1 and player:Talent("Tiger's Lust") then
-				local lowest = Object("lowestall")
-				if lowest then
-					if lowest:SpellRange("Tiger's Lust") then
-						if not lowest:charmed()
-							and lowest:alive()
-							and lowest:exists()
-							then 
-							if (not lowest:LostControl()) and (lowest:State("root") or lowest:State("snare")) then
-								if lowest:los() --and _A.UnitCanCooperate("player",lowest.guid) 
+		if  player:Talent("Tiger's Lust") and player:SpellCooldown("Tiger's Lust")<.3 then
+			if player:Stance() == 1 then
+				for _, fr in pairs(_A.OM:Get('Friendly')) do
+					if fr:SpellRange("Tiger's Lust") then
+						if fr.isplayer then
+							if _A.nothealimmune(fr) then
+								if (not fr:LostControl()) and (fr:State("root") or fr:State("snare"))
 									then
-									return lowest:Cast("Tiger's Lust")
-								end	
+									if fr.guid ~= player.guid then
+										return fr:Cast("Tiger's Lust")
+										else
+										return fr:Cast("Tiger's Lust")
+									end
+								end
 							end
-						end
+						end	
 					end
 				end
 			end	
@@ -427,49 +426,24 @@ local mw_rot = {
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
-				local lowest = Object("dispellunit")
-				if lowest then
-					if 
-						lowest:alive()
-						and lowest:exists()
-						then 
-						if lowest:SpellRange("Detox") then
-							if lowest:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or lowest:LostControl() or
-								lowest:DebuffAny("Entangling Roots") or  lowest:DebuffAny("Freezing Trap")
-								then
-								return lowest:Cast("Detox")
+				for _, fr in pairs(_A.OM:Get('Friendly')) do
+					-- if fr.isplayer then
+					if fr:SpellRange("Detox") then
+						if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
+							if _A.nothealimmune(fr) then
+								if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or
+									fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
+									then
+									return fr:Cast("Detox")
+								end
 							end
-						end
-					end	
+						end	
+					end
 				end
 			end
 		end
 	end,
 	
-	dispellplz = function()
-		--if not player:LostControl() then
-		if player:Stance() == 1 then
-			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
-				local lowest = Object("dispellunit")
-				if lowest then
-					if 
-						lowest:alive()
-						and lowest:exists()
-						then 
-						-- DETOX
-						--
-						if lowest:SpellRange("Detox") then
-							if lowest:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or lowest:LostControl() or
-								lowest:DebuffAny("Entangling Roots") or  lowest:DebuffAny("Freezing Trap")  or (pull_location()~="pvp")
-								then
-								return lowest:Cast("Detox")
-							end
-						end
-					end	
-				end
-			end
-		end
-	end,
 	-- end
 	-- end
 	
@@ -869,7 +843,7 @@ end
 local blacklist = function()
 end
 _A.CR:Add(270, {
-	name = "Monk Heal EFFICIENT",
+name = "Monk Heal EFFICIENT",
 ic = inCombat,
 ooc = outCombat,
 use_lua_engine = true,
