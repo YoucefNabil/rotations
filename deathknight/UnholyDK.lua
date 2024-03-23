@@ -708,16 +708,16 @@ local inCombat = function()
 	unholy.rot.SoulReaper()
 	----pve part
 	if _A.pull_location == "party" or _A.pull_location == "raid" then
-	unholy.rot.dotsnapshotOutBreak()
-	unholy.rot.dotsnapshotPS()
-	unholy.rot.festeringstrike()
+		unholy.rot.dotsnapshotOutBreak()
+		unholy.rot.dotsnapshotPS()
+		unholy.rot.festeringstrike()
 	end
 	----pvp part
-	-- if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-	unholy.rot.NecroStrike()
-	unholy.rot.bloodboilorphanblood()
-	unholy.rot.icytouch()
-	-- end
+	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+		unholy.rot.NecroStrike()
+		unholy.rot.bloodboilorphanblood()
+		unholy.rot.icytouch()
+	end
 	----filler
 	unholy.rot.Deathcoil()
 	unholy.rot.festeringstrike()
@@ -738,12 +738,12 @@ _A.CR:Add(252, {
 	ooc = outCombat,
 	use_lua_engine = true,
 	gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })
