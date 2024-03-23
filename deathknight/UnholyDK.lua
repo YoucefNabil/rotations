@@ -707,11 +707,11 @@ local inCombat = function()
 	unholy.rot.DeathcoilHEAL()
 	unholy.rot.SoulReaper()
 	----pve part
-	-- if _A.pull_location == "party" or _A.pull_location == "raid" then
-	-- unholy.rot.dotsnapshotOutBreak()
-	-- unholy.rot.dotsnapshotPS()
-	-- unholy.rot.festeringstrike()
-	-- end
+	if _A.pull_location == "party" or _A.pull_location == "raid" then
+	unholy.rot.dotsnapshotOutBreak()
+	unholy.rot.dotsnapshotPS()
+	unholy.rot.festeringstrike()
+	end
 	----pvp part
 	-- if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 	unholy.rot.NecroStrike()
