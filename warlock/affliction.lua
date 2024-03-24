@@ -662,8 +662,8 @@ local inCombat = function()
 	-- affliction.rot.snare_curse()
 	-- snapshots
 	affliction.rot.corruptionsnap()
-	affliction.rot.unstablesnapinstant()
 	affliction.rot.agonysnap()
+	affliction.rot.unstablesnapinstant()
 	affliction.rot.unstablesnap()
 	--shift
 	if modifier_shift() then
