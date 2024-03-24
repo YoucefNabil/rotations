@@ -288,14 +288,20 @@ affliction.rot = {
 				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
 					obj = Obj,
-					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0),
+					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0), -- ALWAYS ORDER THIS BY SCORE FIRST
 					agonyscore = (agonytbl[Obj.guid] or 0),
 					unstablescore = (unstabletbl[Obj.guid] or 0),
-					corruptionscore = (corruptiontbl[Obj.guid] or 0)
+					corruptionscore = (corruptiontbl[Obj.guid] or 0),
+					range = Obj:range(2) or 30,
+					isplayer = Obj.isplayer and 1 or 0
 				}
 			end
 		end
-		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
+		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
+		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) 
+		or ( a.score == b.score and a.isplayer > b.isplayer )
+		or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range )
+		end )
 	end,
 	
 	ClickthisPleasepvp = function()
@@ -479,7 +485,7 @@ affliction.rot = {
 	end,
 	
 	bloodhorror = function()
-		if _A.reflectcheck == false and player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Blood Horror")
 		end
 	end,
