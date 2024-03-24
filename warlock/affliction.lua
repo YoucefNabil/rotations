@@ -342,7 +342,7 @@ affliction.rot = {
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) then
-				player:cast("Dark Regeneration", true)
+				player:cast("Dark Regeneration")
 				player:useitem("Healthstone")
 			end
 		end
@@ -412,7 +412,8 @@ affliction.rot = {
 	hasteburst = function()
 		if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860)  then
 			if player:buff("Call of Dominance") then
-				player:cast("Dark Soul: Misery", true)
+				player:cast("Lifeblood")
+				player:cast("Dark Soul: Misery")
 			end
 		end
 	end,
@@ -456,7 +457,7 @@ affliction.rot = {
 	CauterizeMaster = function()
 		if player:health() <= 85 then
 			if player:SpellUsable("Cauterize Master") and player:SpellCooldown("Cauterize Master") == 0  then
-				player:cast("Cauterize Master", true)
+				player:cast("Cauterize Master")
 			end
 		end
 	end,

@@ -428,7 +428,7 @@ _A.FakeUnits:Add('mostgroupedenemy', function(num, spell_range_threshhold)
         if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
             tempTable[Obj.guid] = 1
             for _, Obj2 in pairs(_A.OM:Get('Enemy')) do
-                if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2,2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
+                if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
                     tempTable[Obj.guid] = tempTable[Obj.guid] + 1
 				end
 			end
