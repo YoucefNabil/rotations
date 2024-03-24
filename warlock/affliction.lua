@@ -292,15 +292,15 @@ affliction.rot = {
 					agonyscore = (agonytbl[Obj.guid] or 0),
 					unstablescore = (unstabletbl[Obj.guid] or 0),
 					corruptionscore = (corruptiontbl[Obj.guid] or 0),
-					range = Obj:range(2) or 30,
+					range = Obj:range(2) or 40,
 					isplayer = Obj.isplayer and 1 or 0
 				}
 			end
 		end
 		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
-		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) 
-		or ( a.score == b.score and a.isplayer > b.isplayer )
-		or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range )
+		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
+		or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
+		or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
 		end )
 	end,
 	
@@ -606,7 +606,7 @@ affliction.rot = {
 					if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
 						temptable[#temptable+1] = {
 							obj = Obj,
-							rangedis = Obj:range(2) or 30,
+							rangedis = Obj:range(2) or 40,
 							isplayer = Obj.isplayer and 1 or 0,
 							-- health = Obj:HealthActual() or 0,
 							duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
@@ -615,9 +615,9 @@ affliction.rot = {
 				end
 			end
 			if #temptable > 1 then
-				table.sort(temptable, function(a,b) return  (a.duration < b.duration ) 
-					or (a.duration == b.duration and a.isplayer > b.isplayer ) 
-					or (a.duration == b.duration and a.isplayer == b.isplayer and a.rangedis < b.rangedis ) 
+				table.sort(temptable, function(a,b) return  (a.duration < b.duration )  -- order by duration
+					or (a.duration == b.duration and a.isplayer > b.isplayer ) -- if same (or no) duration, order by players first
+					or (a.duration == b.duration and a.isplayer == b.isplayer and a.rangedis < b.rangedis )  -- if same (or no) duration, and same isplayer, order by closest
 				end
 				)
 			end
