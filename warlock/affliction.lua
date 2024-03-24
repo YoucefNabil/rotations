@@ -275,8 +275,6 @@ affliction.rot = {
 	end,
 	
 	caching= function()
-		_A.flagcarrier = nil
-		_A.reflectcheck = false
 		_A.temptabletbl = {}
 		_A.pull_location = pull_location()
 		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
@@ -295,17 +293,6 @@ affliction.rot = {
 					unstablescore = (unstabletbl[Obj.guid] or 0),
 					corruptionscore = (corruptiontbl[Obj.guid] or 0)
 				}
-			end
-			-- End of snapshot engine
-			-- CHECK IF REFLECTION IS GOING TO BE ANNOYING
-			if Obj.isplayer and Obj:range()<6 and (UnitTarget(Obj.guid)==player.guid) and (Obj:BuffAny("Spell Reflection") or Obj:BuffAny("Mass Spell Reflection")) then
-			_A.reflectcheck = false end
-			-- GET FLAG GUID
-			if Obj.isplayer and Obj:spellRange("Curse of Exhaustion") and Obj.infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-				for k,_ in pairs(FLAGS) do
-					if Obj:BuffAny(FLAGS) or Obj:DebuffAny(FLAGS) then
-					_A.flagcarrier = Obj end
-				end
 			end
 		end
 		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
@@ -329,13 +316,13 @@ affliction.rot = {
 		end
 	end,
 	
-	snare_curse = function()
-		if _A.flagcarrier ~=nil then 
-			if not player:buff(74434) and not _A.flagcarrier:DebuffAny("Curse of Exhaustion") then
-				return _A.flagcarrier:cast("Curse of Exhaustion")
-			end
-		end
-	end,
+	-- snare_curse = function() -- rework this
+		-- if _A.flagcarrier ~=nil then 
+			-- if not player:buff(74434) and not _A.flagcarrier:DebuffAny("Curse of Exhaustion") then
+				-- return _A.flagcarrier:cast("Curse of Exhaustion")
+			-- end
+		-- end
+	-- end,
 	
 	items_healthstone = function()
 		if player:health() <= 35 then
@@ -497,11 +484,11 @@ affliction.rot = {
 		end
 	end,
 	
-	bloodhorrorremoval = function()
-		if _A.reflectcheck == true and player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
-			_A.RunMacroText("/cancelaura Blood Horror")
-		end
-	end,
+	-- bloodhorrorremoval = function() -- rework this
+		-- if _A.reflectcheck == true and player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			-- _A.RunMacroText("/cancelaura Blood Horror")
+		-- end
+	-- end,
 	
 	lifetap_delayed = function()
 		-- if soulswaporigin == nil 
@@ -608,22 +595,24 @@ affliction.rot = {
 		if soulswaporigin ~= nil then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-					if Obj.guid ~= soulswaporigin then
+					if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
 						temptable[#temptable+1] = {
 							obj = Obj,
-							-- isplayer = Obj.isplayer and 1 or 0, -- exhales to players first
-							-- health = Obj:HealthActual() or 0, -- order by highest hp, best solution to make the highest dotticks survive as long as possible at the expense of spreading it as many times as possible
-							duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible
+							range = Obj:range(2) or 100,
+							isplayer = Obj.isplayer and 1 or 0,
+							-- health = Obj:HealthActual() or 0,
+							duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
 						}
 					end
 				end
 			end
-			-- duration sortings
-			table.sort( temptable, function(a,b) return  (a.duration < b.duration ) end )
-			-- table.sort( temptable, function(a,b) return (a.isplayer > b.isplayer) or ( a.isplayer == b.isplayer and a.duration < b.duration ) end )
-			-- health sortings
-			-- table.sort( temptable, function(a,b) return  (a.health > b.health ) end )
-			-- table.sort( temptable, function(a,b) return (a.isplayer > b.isplayer) or ( a.isplayer == b.isplayer and a.health > b.health ) end )
+		table.sort(temptable, function(a,b) 
+			return  (a.duration < b.duration ) 
+			-- or (a.duration == b.duration and a.range < b.range ) 
+			or (a.duration == b.duration and a.player > b.player )
+			or (a.player == b.player and a.range < b.range ) 
+			end 
+			) -- order by none or lowest duration, then players above other units, then closest units
 			return temptable[1] and temptable[1].obj:Cast(86213)
 		end
 	end,
@@ -660,9 +649,9 @@ local inCombat = function()
 	affliction.rot.MortalCoil()
 	affliction.rot.twilightward()
 	--utility
-	affliction.rot.bloodhorrorremoval()
+	-- affliction.rot.bloodhorrorremoval()
 	affliction.rot.bloodhorror()
-	affliction.rot.snare_curse()
+	-- affliction.rot.snare_curse()
 	-- snapshots
 	affliction.rot.corruptionsnap()
 	affliction.rot.unstablesnapinstant()
