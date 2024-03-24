@@ -693,8 +693,16 @@ end
 local blacklist = function()
 end
 
+-- _A.C_Timer.NewTicker(garbagedelay, function() -- 200ms
+	-- local var1
+	-- local var2
+	-- var1 = collectgarbage("count")
+	-- collectgarbage("collect")
+	-- var2= collectgarbage("count")
+	-- print("Memory Diff:", var1-var2)
+-- end, false, "garbage")
 _A.C_Timer.NewTicker(garbagedelay, function() -- 200ms
-	collectgarbage()
+	collectgarbage("collect")
 end, false, "garbage")
 
 _A.CR:Add(265, {
