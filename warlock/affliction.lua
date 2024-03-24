@@ -317,11 +317,11 @@ affliction.rot = {
 	end,
 	
 	-- snare_curse = function() -- rework this
-		-- if _A.flagcarrier ~=nil then 
-			-- if not player:buff(74434) and not _A.flagcarrier:DebuffAny("Curse of Exhaustion") then
-				-- return _A.flagcarrier:cast("Curse of Exhaustion")
-			-- end
-		-- end
+	-- if _A.flagcarrier ~=nil then 
+	-- if not player:buff(74434) and not _A.flagcarrier:DebuffAny("Curse of Exhaustion") then
+	-- return _A.flagcarrier:cast("Curse of Exhaustion")
+	-- end
+	-- end
 	-- end,
 	
 	items_healthstone = function()
@@ -485,9 +485,9 @@ affliction.rot = {
 	end,
 	
 	-- bloodhorrorremoval = function() -- rework this
-		-- if _A.reflectcheck == true and player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
-			-- _A.RunMacroText("/cancelaura Blood Horror")
-		-- end
+	-- if _A.reflectcheck == true and player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+	-- _A.RunMacroText("/cancelaura Blood Horror")
+	-- end
 	-- end,
 	
 	lifetap_delayed = function()
@@ -606,14 +606,10 @@ affliction.rot = {
 					end
 				end
 			end
-		table.sort(temptable, function(a,b) 
-			return  (a.duration < b.duration ) 
-			-- or (a.duration == b.duration and a.range < b.range ) 
-			or (a.duration == b.duration and a.player > b.player )
-			or (a.player == b.player and a.range < b.range ) 
-			end 
-			) -- order by none or lowest duration, then players above other units, then closest units
-			return temptable[1] and temptable[1].obj:Cast(86213)
+			if #temptable > 1 then
+				table.sort(temptable, function(a,b) return  (a.duration < b.duration ) or (a.duration == b.duration and a.isplayer > b.isplayer ) or (a.isplayer == b.isplayer and a.range < b.range ) end )
+				return temptable[1] and temptable[1].obj:Cast(86213)
+			end
 		end
 	end,
 }
@@ -635,43 +631,43 @@ local inCombat = function()
 	affliction.rot.exhale()
 	if player:isCastingAny() then return end
 	if _A.buttondelayfunc()  then return end
-	--stuff
-	affliction.rot.Buffbuff()
-	affliction.rot.petres()
-	affliction.rot.petres_supremacy()
-	affliction.rot.items_healthstone()
-	affliction.rot.summ_healthstone()
-	--bursts
-	affliction.rot.activetrinket()
-	affliction.rot.hasteburst()
-	--HEALS
-	affliction.rot.CauterizeMaster()
-	affliction.rot.MortalCoil()
-	affliction.rot.twilightward()
-	--utility
-	-- affliction.rot.bloodhorrorremoval()
-	affliction.rot.bloodhorror()
-	-- affliction.rot.snare_curse()
-	-- snapshots
-	affliction.rot.corruptionsnap()
-	affliction.rot.unstablesnapinstant()
-	affliction.rot.agonysnap()
-	affliction.rot.unstablesnap()
-	--shift
-	if modifier_shift() then
-		affliction.rot.haunt()
-		affliction.rot.drainsoul()
-		affliction.rot.grasp()
-	end
-	-- soul swap
-	affliction.rot.soulswap()
-	--buff
-	affliction.rot.darkintent()
-	--fills
-	affliction.rot.lifetap()
+--stuff
+affliction.rot.Buffbuff()
+affliction.rot.petres()
+affliction.rot.petres_supremacy()
+affliction.rot.items_healthstone()
+affliction.rot.summ_healthstone()
+--bursts
+affliction.rot.activetrinket()
+affliction.rot.hasteburst()
+--HEALS
+affliction.rot.CauterizeMaster()
+affliction.rot.MortalCoil()
+affliction.rot.twilightward()
+--utility
+-- affliction.rot.bloodhorrorremoval()
+affliction.rot.bloodhorror()
+-- affliction.rot.snare_curse()
+-- snapshots
+affliction.rot.corruptionsnap()
+affliction.rot.unstablesnapinstant()
+affliction.rot.agonysnap()
+affliction.rot.unstablesnap()
+--shift
+if modifier_shift() then
 	affliction.rot.haunt()
 	affliction.rot.drainsoul()
 	affliction.rot.grasp()
+end
+-- soul swap
+affliction.rot.soulswap()
+--buff
+affliction.rot.darkintent()
+--fills
+affliction.rot.lifetap()
+affliction.rot.haunt()
+affliction.rot.drainsoul()
+affliction.rot.grasp()
 end
 local outCombat = function()
 	return inCombat()
