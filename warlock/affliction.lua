@@ -592,18 +592,18 @@ affliction.rot = {
 				if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
 					temptable[#temptable+1] = {
 						obj = Obj,
-						duration = Obj:DebuffDuration("Unstable Affliction") or 0
+						duration = Obj:DebuffDuration("Unstable Affliction") or 0 
 					}
 				end
 			end
-			table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end )
+			table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
 			if #temptable>=2 then
 				return temptable[1] and temptable[1].obj:Cast(86121)
 			end
 		end
 	end,
 	
-	exhale = function()
+	exhale = function() -- not sure about the best solution yet
 		local temptable = {}
 		if soulswaporigin ~= nil then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
@@ -612,13 +612,18 @@ affliction.rot = {
 						temptable[#temptable+1] = {
 							obj = Obj,
 							-- isplayer = Obj.isplayer and 1 or 0, -- exhales to players first
-							duration = Obj:DebuffDuration("Unstable Affliction") or 0
+							-- health = Obj:HealthActual() or 0, -- order by highest hp, best solution to make the highest dotticks survive as long as possible at the expense of spreading it as many times as possible
+							duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible
 						}
 					end
 				end
 			end
+			-- duration sortings
 			table.sort( temptable, function(a,b) return  (a.duration < b.duration ) end )
 			-- table.sort( temptable, function(a,b) return (a.isplayer > b.isplayer) or ( a.isplayer == b.isplayer and a.duration < b.duration ) end )
+			-- health sortings
+			-- table.sort( temptable, function(a,b) return  (a.health > b.health ) end )
+			-- table.sort( temptable, function(a,b) return (a.isplayer > b.isplayer) or ( a.isplayer == b.isplayer and a.health > b.health ) end )
 			return temptable[1] and temptable[1].obj:Cast(86213)
 		end
 	end,
