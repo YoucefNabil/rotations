@@ -434,7 +434,7 @@ affliction.rot = {
 				if (not player:buff(74434) and _A.enoughmana(74434) and player:combat()) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
 				end	
-				if not player:moving() or player:buff(74434)  then
+				if player:buff(74434) or not player:moving() then
 					return player:cast(112866)
 				end
 			end
@@ -600,7 +600,7 @@ affliction.rot = {
 					if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
 						temptable[#temptable+1] = {
 							obj = Obj,
-							range = Obj:range(2) or 100,
+							rangedis = Obj:range(2) or 30,
 							isplayer = Obj.isplayer and 1 or 0,
 							-- health = Obj:HealthActual() or 0,
 							duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
@@ -611,7 +611,7 @@ affliction.rot = {
 			if #temptable > 1 then
 				table.sort(temptable, function(a,b) return  (a.duration < b.duration ) 
 					or (a.duration == b.duration and a.isplayer > b.isplayer ) 
-					-- or (a.isplayer == b.isplayer and a.range < b.range ) 
+					or (a.duration == b.duration and a.isplayer == b.isplayer and a.rangedis < b.rangedis ) 
 				end
 				)
 			end
