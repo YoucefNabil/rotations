@@ -574,19 +574,21 @@ affliction.rot = {
 	
 	soulswap = function() -- order by highest score first, highest duration second
 		local temptable = {}
-		if soulswaporigin == nil and _A.enoughmana(86121) then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-					temptable[#temptable+1] = {
-						obj = Obj,
-						duration = Obj:DebuffDuration("Unstable Affliction") or 0 
-					}
+		if _A.enoughmana(86121) then
+			if soulswaporigin == nil then
+				for _, Obj in pairs(_A.OM:Get('Enemy')) do
+					if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+						temptable[#temptable+1] = {
+							obj = Obj,
+							duration = Obj:DebuffDuration("Unstable Affliction") or 0 
+						}
+					end
 				end
 			end
 			table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
 			if #temptable>=2 then
-				return temptable[1] and temptable[1].obj:Cast(86121)
 			end
+			return temptable[1] and temptable[1].obj:Cast(86121)
 		end
 	end,
 	
@@ -607,9 +609,13 @@ affliction.rot = {
 				end
 			end
 			if #temptable > 1 then
-				table.sort(temptable, function(a,b) return  (a.duration < b.duration ) or (a.duration == b.duration and a.isplayer > b.isplayer ) or (a.isplayer == b.isplayer and a.range < b.range ) end )
-				return temptable[1] and temptable[1].obj:Cast(86213)
+				table.sort(temptable, function(a,b) return  (a.duration < b.duration ) 
+					or (a.duration == b.duration and a.isplayer > b.isplayer ) 
+					-- or (a.isplayer == b.isplayer and a.range < b.range ) 
+				end
+				)
 			end
+			return temptable[1] and temptable[1].obj:Cast(86213)
 		end
 	end,
 }
@@ -631,43 +637,43 @@ local inCombat = function()
 	affliction.rot.exhale()
 	if player:isCastingAny() then return end
 	if _A.buttondelayfunc()  then return end
---stuff
-affliction.rot.Buffbuff()
-affliction.rot.petres()
-affliction.rot.petres_supremacy()
-affliction.rot.items_healthstone()
-affliction.rot.summ_healthstone()
---bursts
-affliction.rot.activetrinket()
-affliction.rot.hasteburst()
---HEALS
-affliction.rot.CauterizeMaster()
-affliction.rot.MortalCoil()
-affliction.rot.twilightward()
---utility
--- affliction.rot.bloodhorrorremoval()
-affliction.rot.bloodhorror()
--- affliction.rot.snare_curse()
--- snapshots
-affliction.rot.corruptionsnap()
-affliction.rot.unstablesnapinstant()
-affliction.rot.agonysnap()
-affliction.rot.unstablesnap()
---shift
-if modifier_shift() then
+	--stuff
+	affliction.rot.Buffbuff()
+	affliction.rot.petres()
+	affliction.rot.petres_supremacy()
+	affliction.rot.items_healthstone()
+	affliction.rot.summ_healthstone()
+	--bursts
+	affliction.rot.activetrinket()
+	affliction.rot.hasteburst()
+	--HEALS
+	affliction.rot.CauterizeMaster()
+	affliction.rot.MortalCoil()
+	affliction.rot.twilightward()
+	--utility
+	-- affliction.rot.bloodhorrorremoval()
+	affliction.rot.bloodhorror()
+	-- affliction.rot.snare_curse()
+	-- snapshots
+	affliction.rot.corruptionsnap()
+	affliction.rot.unstablesnapinstant()
+	affliction.rot.agonysnap()
+	affliction.rot.unstablesnap()
+	--shift
+	if modifier_shift() then
+		affliction.rot.haunt()
+		affliction.rot.drainsoul()
+		affliction.rot.grasp()
+	end
+	-- soul swap
+	affliction.rot.soulswap()
+	--buff
+	affliction.rot.darkintent()
+	--fills
+	affliction.rot.lifetap()
 	affliction.rot.haunt()
 	affliction.rot.drainsoul()
 	affliction.rot.grasp()
-end
--- soul swap
-affliction.rot.soulswap()
---buff
-affliction.rot.darkintent()
---fills
-affliction.rot.lifetap()
-affliction.rot.haunt()
-affliction.rot.drainsoul()
-affliction.rot.grasp()
 end
 local outCombat = function()
 	return inCombat()
