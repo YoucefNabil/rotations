@@ -2,6 +2,10 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local player
+local garbagedelay = 10
+_A.C_Timer.NewTicker(garbagedelay, function()
+	collectgarbage("collect")
+end, false, "garbage")
 local destro = {}
 local healerspecid = {
 	-- [265]="Lock Affli",

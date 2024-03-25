@@ -1,6 +1,10 @@
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
+local garbagedelay = 10
+_A.C_Timer.NewTicker(garbagedelay, function()
+	collectgarbage("collect")
+end, false, "garbage")
 local function blank()
 end
 local function runthese(...)
