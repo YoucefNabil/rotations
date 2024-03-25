@@ -402,15 +402,14 @@ local inCombat = function()
 	destro.rot.summ_healthstone()
 	destro.rot.items_healthstone() -- And Dark Regen
 	--buff
-	--snapshots
 	destro.rot.activetrinket()
+	destro.rot.shadowburn()
 	--utility
 	destro.rot.lifetap()
 	destro.rot.brimstone()
 	destro.rot.immolateaoe()
 	destro.rot.incinerateaoe()
 	--
-	destro.rot.shadowburn()
 	destro.rot.immolate()
 	destro.rot.conflagrate()
 	destro.rot.chaosbolt()
