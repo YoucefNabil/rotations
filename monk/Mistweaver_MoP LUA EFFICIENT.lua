@@ -1,7 +1,7 @@
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
-local garbagedelay = 20
+local garbagedelay = 25
 local function blank()
 end
 local function runthese(...)
@@ -261,7 +261,7 @@ local mw_rot = {
 	
 	kick_spear = function()
 		--if not player:LostControl() then
-		if player:SpellReady("Spear Hand Strik") then
+		if player:SpellCooldown("Spear Hand Strik")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj:isCastingAny()
 					and obj:SpellRange("Blackout Kick") 
@@ -423,26 +423,25 @@ local mw_rot = {
 		end
 	end,
 	
-	dispellplzarena = function()
+	dispellplz = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
 			if player:SpellReady("Detox") and _A.enoughmana("Detox")then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
-					-- if fr.isplayer then
-					if fr:SpellRange("Detox") then
-						if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-							if _A.nothealimmune(fr) then
-								if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or
-									fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
-									then
-									return fr:Cast("Detox")
-								end
-							end
-						end	
+					if fr.isplayer
+						and fr:SpellRange("Detox")
+						and _A.nothealimmune(fr)
+						and fr:DebuffType("Magic || Poison || Disease")
+						and (fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl()
+						-- or fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
+						)
+						then
+						return fr:Cast("Detox")
 					end
 				end
 			end
 		end
+		
 	end,
 	
 	-- end
@@ -463,22 +462,22 @@ local mw_rot = {
 				if lowest then 
 					if not lowest:enemy()
 						and not lowest:charmed()
-						and lowest:alive()
-						and lowest:exists()
-						and not lowest:DebuffAny("Parasitic Growth")
-						and not lowest:DebuffAny("Dissonance Field")
-						then				
-						--]]
-						if 
-							(lowest:health()<30 or (pull_location()=="pvp" and lowest:health()<40))
-							and lowest:SpellRange("Life Cocoon")
-							then
-							if lowest:los() then
-								return lowest:Cast("Life Cocoon")
-							end
+					and lowest:alive()
+					and lowest:exists()
+					and not lowest:DebuffAny("Parasitic Growth")
+					and not lowest:DebuffAny("Dissonance Field")
+					then				
+					--]]
+					if 
+						(lowest:health()<30 or (pull_location()=="pvp" and lowest:health()<40))
+						and lowest:SpellRange("Life Cocoon")
+						then
+						if lowest:los() then
+							return lowest:Cast("Life Cocoon")
 						end
 					end
 				end
+			end
 			end
 		end
 	end,
@@ -813,8 +812,7 @@ local inCombat = function()
 	mw_rot.manatea()
 	mw_rot.chibrew()
 	mw_rot.fortifyingbrew()
-	mw_rot.dispellplzarena()
-	-- mw_rot.dispellplz()
+	mw_rot.dispellplz()
 	mw_rot.tigerslust()
 	mw_rot.lifecocoon()
 	mw_rot.surgingmist()
@@ -844,17 +842,17 @@ _A.C_Timer.NewTicker(garbagedelay, function()
 end, false, "garbage")
 
 _A.CR:Add(270, {
-name = "Monk Heal EFFICIENT",
-ic = inCombat,
-ooc = inCombat,
-use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	name = "Monk Heal EFFICIENT",
+	ic = inCombat,
+	ooc = inCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })

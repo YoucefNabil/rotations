@@ -8,6 +8,7 @@ local STARTSLOT = 97
 local STOPSLOT = 104
 local blacklist = {
 	["Scara"] = true,
+	["Ruins"] = true
 }
 --
 _A.ceeceed = function(unit)
