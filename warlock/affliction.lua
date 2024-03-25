@@ -335,10 +335,21 @@ affliction.rot = {
 		if player:health() <= 35 then
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
-				and player:ItemUsable(5512) then
-				player:cast("Dark Regeneration")
+				and player:ItemUsable(5512) 
+				and (player:Buff("Dark Regeneration") or not player:Talent("Dark Regeneration"))
+				then
 				player:useitem("Healthstone")
 			end
+		end
+	end,
+	
+	Darkregeneration = function()
+		if player:Talent("Dark Regeneration") 
+			and player:spellready("Dark Regeneration") 
+			and player:health() <= 35 
+			and player:combat() 
+			then
+			player:cast("Dark Regeneration")
 		end
 	end,
 	
@@ -347,9 +358,9 @@ affliction.rot = {
 			and player:ItemCount(8529) > 0
 			and player:ItemUsable(8529)
 			and (not player:BuffAny(16591) or not player:BuffAny(16595)) -- drink until you get both these buffs
-			then
-			if _A.pull_location=="pvp" then
-				player:useitem("Noggenfogger Elixir")
+		then
+		if _A.pull_location=="pvp" then
+			player:useitem("Noggenfogger Elixir")
 			end
 		end
 	end,
@@ -655,6 +666,7 @@ local inCombat = function()
 	affliction.rot.activetrinket()
 	affliction.rot.hasteburst()
 	--HEALS
+	affliction.rot.Darkregeneration()
 	affliction.rot.CauterizeMaster()
 	affliction.rot.MortalCoil()
 	affliction.rot.twilightward()
