@@ -241,19 +241,34 @@ end)
 
 -- Lowest enemy in range
 
+immunebuffs = {
+	"Deterrence",
+	-- "Anti-Magic Shell",
+	"Hand of Protection",
+	-- "Spell Reflection",
+	-- "Mass Spell Reflection",
+	"Dematerialize",
+	-- "Smoke Bomb",
+	-- "Cloak of Shadows",
+	"Ice Block",
+	"Divine Shield"
+}
+immunedebuffs = {
+	"Cyclone",
+	-- "Smoke Bomb"
+}
+
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
-		if not unit:immune("all") then -- add saps and fears?
-			if not unit:DebuffAny("Cyclone")
-				and not unit:BuffAny("Deterrence") 
-				and not unit:BuffAny("Hand of Protection")
-				and not unit:BuffAny("Ice Block")
-				and not unit:BuffAny("Divine Shield") then
-				return true
-			end
-		end
+		if unit:immune("all") then return false end
 	end
-	return false
+	for _,v in ipairs(immunebuffs) do
+		if unit:BuffAny(v) then return false end
+	end
+	for _,v in ipairs(immunedebuffs) do
+		if unit:DebuffAny(v) then return false end
+	end
+	return true
 end
 
 function _A.someoneislow()

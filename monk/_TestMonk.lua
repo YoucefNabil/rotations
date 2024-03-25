@@ -641,7 +641,7 @@ function _A.notimmune(unit) -- needs to be object
 	if unit then 
 		if unit:immune("all") then return false end
 	end
-	for _,v in ipairs(imunebuffs) do
+	for _,v in ipairs(immunebuffs) do
 		if unit:BuffAny(v) then return false end
 	end
 	for _,v in ipairs(immunedebuffs) do
@@ -654,7 +654,7 @@ end
 function _A.nothealimmune(unit)
 	local player = Object("player")
 	if unit then 
-		if not unit:DebuffAny("Cyclone") then return false end
+		if unit:DebuffAny("Cyclone") then return false end
 	end
 	return true
 end
@@ -1034,9 +1034,9 @@ _A.FakeUnits:Add('lowestall', function()
 		end
 	end
 	return lowestHPguid
-	end)
-	
-	--[[_A.FakeUnits:Add('targetingme', function()
+end)
+
+--[[_A.FakeUnits:Add('targetingme', function()
 	for _, enemy in pairs(_A.OM:Get('Enemy')) do
 	if enemy then
 	if _A.UnitIsPlayer(enemy.guid) then
@@ -1049,12 +1049,11 @@ _A.FakeUnits:Add('lowestall', function()
 	end
 	for guid, count in pairs(targets) do
 	if count > most then
-	most = count
-	mostGuid = guid
-	end
-	end
-	return mostGuid
-	end)--]]
-	
-	
-		
+most = count
+mostGuid = guid
+end
+end
+return mostGuid
+end)--]]
+
+

@@ -263,13 +263,13 @@ immunedebuffs = {
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
 		if unit:immune("all") then return false end
-		end
-		for _,v in ipairs(imunebuffs) do
+	end
+	for _,v in ipairs(immunebuffs) do
 		if unit:BuffAny(v) then return false end
-		end
-		for _,v in ipairs(immunedebuffs) do
+	end
+	for _,v in ipairs(immunedebuffs) do
 		if unit:DebuffAny(v) then return false end
-		end
+	end
 	return true
 end
 
