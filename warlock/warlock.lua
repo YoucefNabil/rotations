@@ -261,7 +261,7 @@ immunedebuffs = {
 }
 
 function _A.notimmune(unit) -- needs to be object
-	if unit and unit:exists() then 
+	if unit then 
 		if unit:immune("all") then return false end
 		for i = 1,#immunebuffs do
 			if unit:Debuffany(immunedebuffs[i]) then 
