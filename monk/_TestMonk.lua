@@ -631,42 +631,31 @@ immunedebuffs = {
 	-- "Smoke Bomb"
 }
 
-healimmunebuffs = {
-}
-healimmunedebuffs = {
-	"Cyclone"
-}
-
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
-		if not unit:immune("all") then
-			for i = 1,#immunebuffs do
-				if not unit:Debuffany(immunedebuffs[i])
-					and not unit:BuffAny(immunebuffs[i]) then 
-					return true
-				end
+		if unit:immune("all") then return false end
+		for _,v in ipairs(immunebuffs) do
+			if unit:Debuffany(v) then 
+				return false
 			end
 		end
+		for _,v in ipairs(immunebuffs) do
+			if unit:Buffany(v) then 
+				return false
+			end
+		end
+		return true
 	end
-	return true
 end
 
 
 function _A.nothealimmune(unit)
 	local player = Object("player")
 	if unit then 
-		if not unit:immune("all") then
-			for i = 1,#immunebuffs do
-				if not unit:Debuffany(healimmunedebuffs[i]) then
-					if  (not unit:Debuffany("Smoke Bomb") and not player:Debuffany("Smoke Bomb"))  or (unit:Debuffany("Smoke Bomb") and player:Debuffany("Smoke Bomb"))
-						then 
-						return true
-					end
-				end
-			end
-		end
+		if unit:immune("all") then return false end
+		if unit:DebuffAny("Cyclone") then return false end
+		return true
 	end
-	return true
 end
 --
 _A.FakeUnits:Add('lowestEnemyInRange', function(num, range_target)
@@ -1029,21 +1018,21 @@ end)
 -- end)
 
 _A.FakeUnits:Add('lowestall', function()
-	local lowestHP, lowestHPguid = 100
-	local location = pull_location()
-	for _, fr in pairs(_A.OM:Get('Friendly')) do
-		-- if fr.isplayer then
-		if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-		if _A.nothealimmune(fr) then
-			local hp = fr:health()
-			if hp < lowestHP then
-				lowestHP = hp
-				lowestHPguid = fr.guid
-			end
-		end
-	end
-	end
-	return lowestHPguid
+local lowestHP, lowestHPguid = 100
+local location = pull_location()
+for _, fr in pairs(_A.OM:Get('Friendly')) do
+-- if fr.isplayer then
+if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
+if _A.nothealimmune(fr) then
+local hp = fr:health()
+if hp < lowestHP then
+lowestHP = hp
+lowestHPguid = fr.guid
+end
+end
+end
+end
+return lowestHPguid
 end)
 
 --[[_A.FakeUnits:Add('targetingme', function()
