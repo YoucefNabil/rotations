@@ -269,7 +269,7 @@ function _A.notimmune(unit) -- needs to be object
 			end
 		end
 		for v = 1,#immunebuffs do
-			if unit:Debuffany(immunebuffs[v]) then 
+			if unit:Buffany(immunebuffs[v]) then 
 				return false
 			end
 		end
