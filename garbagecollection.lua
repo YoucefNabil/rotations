@@ -11,7 +11,7 @@ local ClickthisPleasepvp = function()
 	-- if pull_location()=="pvp" then
 	for _, Obj in pairs(_A.OM:Get('GameObject')) do
 		if heFLAGS[Obj.name] then
-		print("It's working")
+		-- print("It's working")
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
 				distance = Obj:distance()
