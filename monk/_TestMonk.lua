@@ -6,10 +6,6 @@ _A.pressedbuttonat = 0
 _A.buttondelay = 0.6
 local STARTSLOT = 97
 local STOPSLOT = 104
-local blacklist = {
-	["Scara"] = true,
-	["Ruins"] = true
-}
 --
 _A.ceeceed = function(unit)
 	if unit and unit:State("fear || sleep || charm || disorient || incapacitate || misc || stun")
@@ -635,31 +631,32 @@ immunedebuffs = {
 	-- "Smoke Bomb"
 }
 
+healimmunebuffs = {
+}
+healimmunedebuffs = {
+	"Cyclone"
+}
+
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
 		if unit:immune("all") then return false end
-		for _,v in ipairs(immunebuffs) do
-			if unit:Debuffany(v) then 
-				return false
-			end
-		end
-		for _,v in ipairs(immunebuffs) do
-			if unit:Buffany(v) then 
-				return false
-			end
-		end
-		return true
 	end
+	for _,v in ipairs(imunebuffs) do
+		if unit:BuffAny(v) then return false end
+	end
+	for _,v in ipairs(immunedebuffs) do
+		if unit:DebuffAny(v) then return false end
+	end
+	return true
 end
 
 
 function _A.nothealimmune(unit)
 	local player = Object("player")
 	if unit then 
-		if unit:immune("all") then return false end
-		if unit:DebuffAny("Cyclone") then return false end
-		return true
+		if not unit:DebuffAny("Cyclone") then return false end
 	end
+	return true
 end
 --
 _A.FakeUnits:Add('lowestEnemyInRange', function(num, range_target)
@@ -1027,21 +1024,19 @@ _A.FakeUnits:Add('lowestall', function()
 	for _, fr in pairs(_A.OM:Get('Friendly')) do
 		-- if fr.isplayer then
 		if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-			if not blacklist[fr.name] then
-				if _A.nothealimmune(fr) then
-					local hp = fr:health()
-					if hp < lowestHP then
-						lowestHP = hp
-						lowestHPguid = fr.guid
-					end
+			if _A.nothealimmune(fr) then
+				local hp = fr:health()
+				if hp < lowestHP then
+					lowestHP = hp
+					lowestHPguid = fr.guid
 				end
 			end
 		end
 	end
 	return lowestHPguid
-end)
-
---[[_A.FakeUnits:Add('targetingme', function()
+	end)
+	
+	--[[_A.FakeUnits:Add('targetingme', function()
 	for _, enemy in pairs(_A.OM:Get('Enemy')) do
 	if enemy then
 	if _A.UnitIsPlayer(enemy.guid) then
@@ -1059,6 +1054,7 @@ end)
 	end
 	end
 	return mostGuid
-end)--]]
-
-
+	end)--]]
+	
+	
+		

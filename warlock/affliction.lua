@@ -2,7 +2,6 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local player
-local garbagedelay = 20
 local affliction = {}
 local healerspecid = {
 	-- [265]="Lock Affli",
@@ -300,8 +299,8 @@ affliction.rot = {
 		end
 		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
-			or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-			or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
+		or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
+		or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
 		end )
 	end,
 	
@@ -336,7 +335,7 @@ affliction.rot = {
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) 
-				and (player:Buff("Dark Regeneration") or not player:Talent("Dark Regeneration"))
+				and (player:Buff("Dark Regeneration") or not player:talent("Dark regeneration"))
 				then
 				player:useitem("Healthstone")
 			end
@@ -344,12 +343,11 @@ affliction.rot = {
 	end,
 	
 	Darkregeneration = function()
-		if player:Talent("Dark Regeneration") 
-			and player:spellready("Dark Regeneration") 
-			and player:health() <= 35 
-			and player:combat() 
-			then
-			player:cast("Dark Regeneration")
+		if player:health() <= 35 then
+			if player:SpellCooldown("Dark Regeneration") == 0
+				then
+				player:useitem("Healthstone")
+			end
 		end
 	end,
 	
@@ -358,9 +356,9 @@ affliction.rot = {
 			and player:ItemCount(8529) > 0
 			and player:ItemUsable(8529)
 			and (not player:BuffAny(16591) or not player:BuffAny(16595)) -- drink until you get both these buffs
-		then
-		if _A.pull_location=="pvp" then
-			player:useitem("Noggenfogger Elixir")
+			then
+			if _A.pull_location=="pvp" then
+				player:useitem("Noggenfogger Elixir")
 			end
 		end
 	end,
@@ -415,7 +413,7 @@ affliction.rot = {
 	end,
 	
 	hasteburst = function()
-		if player:combat() and player:spellready("Dark Soul: Misery") and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860)  then
+		if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860)  then
 			if player:buff("Call of Dominance") then
 				player:cast("Lifeblood")
 				player:cast("Dark Soul: Misery")
@@ -427,7 +425,7 @@ affliction.rot = {
 	--============================================
 	
 	petres = function()
-		if player:talent("Grimoire of Sacrifice") and player:spellready("Grimoire of Sacrifice") and not player:Buff("Grimoire of Sacrifice")  then
+		if player:talent("Grimoire of Sacrifice") and not player:Buff("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 then
 			if 
 				-- not _A.UnitExists("pet")
 				-- or _A.UnitIsDeadOrGhost("pet")
@@ -442,14 +440,14 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy = function()
-		if player:talent("Grimoire of Supremacy") and player:spellready(112866) and _A.enoughmana(112866)  and _A.castdelay(112866, 1.5) and not player:iscasting(112866)  then
+		if player:talent("Grimoire of Supremacy") and _A.enoughmana(112866) and player:SpellCooldown(112866)<.3 and _A.castdelay(112866, 1.5) and not player:iscasting(112866)  then
 			if 
 				not _A.UnitExists("pet")
 				or _A.UnitIsDeadOrGhost("pet")
 				or 
 				not _A.HasPetUI()
 				then 
-				if (not player:buff(74434) and _A.enoughmana(74434) and player:spellready(74434) and player:combat()) --or player:buff("Shadow Trance") 
+				if (not player:buff(74434) and _A.enoughmana(74434) and player:combat()) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
 				end	
 				if player:buff(74434) or not player:moving() then
@@ -461,7 +459,7 @@ affliction.rot = {
 	
 	CauterizeMaster = function()
 		if player:health() <= 85 then
-			if player:spellready("Cauterize Master") and player:SpellUsable("Cauterize Master") then
+			if player:SpellUsable("Cauterize Master") and player:SpellCooldown("Cauterize Master") == 0  then
 				player:cast("Cauterize Master")
 			end
 		end
@@ -469,7 +467,7 @@ affliction.rot = {
 	
 	MortalCoil = function()
 		if player:health() <= 85 then
-			if player:Talent("Mortal Coil") and player:spellready("Mortal Coil")   then
+			if player:Talent("Mortal Coil") and player:SpellCooldown("Mortal Coil")<.3  then
 				local lowest = Object("lowestEnemyInSpellRangeNOTAR(Mortal Coil)")
 				if lowest and lowest:exists() then
 					return lowest:cast("Mortal Coil")
@@ -479,25 +477,25 @@ affliction.rot = {
 	end,
 	
 	Buffbuff = function()
-		if player:talent("Grimoire of Sacrifice") and player:spellready("Grimoire of Sacrifice") and  _A.HasPetUI() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if player:talent("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 and _A.HasPetUI() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Grimoire of Sacrifice")
 		end
 	end,
 	
 	darkintent = function()
-		if player:spellready("Dark Intent") and not player:buffany("Dark Intent") and _A.enoughmana(109773) then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if not player:buffany("Dark Intent") and _A.enoughmana(109773) then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Dark Intent")
 		end
 	end,
 	
 	twilightward = function()
-		if player:spellready("Twilight Ward") and player:combat() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if player:SpellCooldown("Twilight Ward")<.3 and player:combat() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Twilight Ward")
 		end
 	end,
 	
 	bloodhorror = function()
-		if player:spellready("Blood Horror") and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Blood Horror")
 		end
 	end,
@@ -511,7 +509,7 @@ affliction.rot = {
 	lifetap_delayed = function()
 		-- if soulswaporigin == nil 
 		if soulswaporigin ~= nil -- only lifetap when you can exhale, you benefit from exhaling late since you save the stats (including duration) the moment you soulswap (not when you exhale)
-			and player:spellready("life tap")
+			and player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
 			and player:Mana()<=80
 			and _A.castdelay(1454, 35) -- 35sec delay
@@ -521,7 +519,7 @@ affliction.rot = {
 	end,
 	
 	lifetap= function()
-		if player:spellready("life tap")
+		if player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
 			and player:Mana()<=80
 			then
@@ -530,14 +528,14 @@ affliction.rot = {
 	end,
 	
 	corruptionsnap = function()
-		if player:spellready(172) and _A.temptabletbl[1] and _A.enoughmana(172) then 
+		if _A.temptabletbl[1] and _A.enoughmana(172)  then 
 			if _A.myscore()>_A.temptabletbl[1].corruptionscore then return _A.temptabletbl[1].obj:Cast("Corruption")
 			end
 		end
 	end,
 	
 	agonysnap = function()
-		if player:spellready(980) and _A.temptabletbl[1] and _A.enoughmana(980) then 
+		if _A.temptabletbl[1] and _A.enoughmana(980) then 
 			if _A.myscore()>_A.temptabletbl[1].agonyscore then return _A.temptabletbl[1].obj:Cast("Agony")
 			end
 		end
@@ -545,18 +543,17 @@ affliction.rot = {
 	
 	unstablesnapinstant = function()
 		if  _A.temptabletbl[1]  then 
-			if player:spellready(119678) and player:buff(74434) then return  _A.temptabletbl[1].obj:Cast(119678) end -- improved soul swap (dots instead)
-			if ( player:spellready(74434) and not player:buff(74434) and _A.enoughmana(74434)) --or player:buff("Shadow Trance")
+			if player:buff(74434) then return  _A.temptabletbl[1].obj:Cast(119678) end -- improved soul swap (dots instead)
+			if (not player:buff(74434) and _A.enoughmana(74434)) --or player:buff("Shadow Trance")
 				then 
-				if _A.myscore()> _A.temptabletbl[1].unstablescore  
-					then player:cast(74434) -- shadowburn
+				if _A.myscore()> _A.temptabletbl[1].unstablescore  then player:cast(74434) -- shadowburn
 				end	 
 			end		
 		end		
 	end,
 	
 	unstablesnap = function()
-		if player:spellready(30108) and _A.temptabletbl[1] and _A.enoughmana(30108) and not player:buff(74434) then 
+		if _A.temptabletbl[1] and _A.enoughmana(30108) and not player:buff(74434) then 
 			if not player:moving() and not player:Iscasting("Unstable Affliction") then
 				if _A.myscore()>_A.temptabletbl[1].unstablescore then return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
 				end
@@ -565,7 +562,7 @@ affliction.rot = {
 	end,
 	
 	haunt = function()
-		if player:spellready(48181) and not player:moving() and not player:Iscasting("Haunt") and _A.enoughmana(48181) and _A.castdelay(48181, 1.5) then
+		if not player:moving() and not player:Iscasting("Haunt") and _A.enoughmana(48181) and _A.castdelay(48181, 1.5) then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and not lowest:debuff(48181) then
 				return lowest:cast("haunt")
@@ -574,7 +571,7 @@ affliction.rot = {
 	end,
 	
 	grasp = function()
-		if player:spellready(103103) and not player:moving() and not player:Iscasting("Malefic Grasp") and _A.enoughmana(103103) then
+		if not player:moving() and not player:Iscasting("Malefic Grasp") and _A.enoughmana(103103) then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() then
 				return lowest:cast("Malefic Grasp")
@@ -583,7 +580,7 @@ affliction.rot = {
 	end,
 	
 	drainsoul = function()
-		if player:spellready(1120)  and not player:moving() and not player:Iscasting("Drain Soul") and _A.enoughmana(1120) then
+		if not player:moving() and not player:Iscasting("Drain Soul") and _A.enoughmana(1120) then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
 				return lowest:cast("Drain Soul")
@@ -593,7 +590,7 @@ affliction.rot = {
 	
 	soulswap = function() -- order by highest score first, highest duration second
 		local temptable = {}
-		if player:spellready(86121) and _A.enoughmana(86121) then
+		if _A.enoughmana(86121) then
 			if soulswaporigin == nil then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
@@ -604,8 +601,8 @@ affliction.rot = {
 					end
 				end
 			end
-			if #temptable>1 then
-				table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
+			table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
+			if #temptable>=2 then
 			end
 			return temptable[1] and temptable[1].obj:Cast(86121)
 		end
@@ -613,7 +610,7 @@ affliction.rot = {
 	
 	exhale = function() -- not sure about the best solution yet
 		local temptable = {}
-		if soulswaporigin ~= nil and player:spellready(86213) then
+		if soulswaporigin ~= nil then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
 					if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
@@ -694,30 +691,18 @@ local inCombat = function()
 	affliction.rot.haunt()
 	affliction.rot.drainsoul()
 	affliction.rot.grasp()
-	--
-	
+end
+local outCombat = function()
+	return inCombat()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
-
--- _A.C_Timer.NewTicker(garbagedelay, function() -- 200ms
--- local var1
--- local var2
--- var1 = collectgarbage("count")
--- collectgarbage("collect")
--- var2= collectgarbage("count")
--- print("Memory Diff:", var1-var2)
--- end, false, "garbage")
-_A.C_Timer.NewTicker(garbagedelay, function()
-	collectgarbage("collect")
-end, false, "garbage")
-
 _A.CR:Add(265, {
 	name = "Youcef's Affliction",
 	ic = inCombat,
-	ooc = inCombat,
+	ooc = outCombat,
 	use_lua_engine = true,
 	gui = GUI,
 	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},

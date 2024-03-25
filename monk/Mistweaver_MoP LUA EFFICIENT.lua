@@ -1,7 +1,6 @@
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
-local garbagedelay = 25
 local function blank()
 end
 local function runthese(...)
@@ -102,7 +101,7 @@ local mw_rot = {
 	kick_legsweep = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
-			if player:Talent("Leg Sweep") and player:SpellReady("Leg Sweep") then
+			if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj:isCastingAny()
 						and obj:enemy()
@@ -121,7 +120,7 @@ local mw_rot = {
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
 			if pull_location()=="arena" then
-				if player:Talent("Leg Sweep") and player:SpellReady("Leg Sweep") then
+				if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 then
 					for _, obj in pairs(_A.OM:Get('Enemy')) do
 						if 	obj.isplayer and obj:range()<4
 							and _A.notimmune(obj)
@@ -139,7 +138,7 @@ local mw_rot = {
 	
 	statbuff = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and player:SpellReady("Legacy of the Emperor") then
+		if player:Stance() == 1 then
 			local roster = Object("roster")
 			-- BUFFS
 			if roster then
@@ -163,7 +162,7 @@ local mw_rot = {
 	
 	statbuff_noarena = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and pull_location()~="arena" and player:SpellReady("Legacy of the Emperor") then
+		if player:Stance() == 1 and pull_location()~="arena" then
 			local roster = Object("roster")
 			-- BUFFS
 			if roster then
@@ -188,7 +187,7 @@ local mw_rot = {
 	kick_legsweep = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
-			if player:Talent("Leg Sweep") and player:SpellReady("Leg Sweep") then
+			if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj:isCastingAny()
 						and obj:range()<5
@@ -204,7 +203,7 @@ local mw_rot = {
 	kick_chargingox = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
-			if player:Talent("Charging Ox Wave") and player:SpellReady("Charging Ox Wave") then
+			if player:Talent("Charging Ox Wave") and player:SpellCooldown("Charging Ox Wave")<0.3 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj:isCastingAny()
 						and obj:range()<30
@@ -221,7 +220,7 @@ local mw_rot = {
 	kick_paralysis = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
-			if player:SpellReady("Paralysis") then
+			if player:SpellCooldown("Paralysis")<.3 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer 
 						and obj:isCastingAny()
@@ -239,7 +238,7 @@ local mw_rot = {
 	burstdisarm = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
-			if player:SpellReady("Grapple Weapon") then
+			if player:SpellCooldown("Grapple Weapon")<.3 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer 
 						and obj:SpellRange("Grapple Weapon") 
@@ -280,7 +279,7 @@ local mw_rot = {
 	
 	pvp_disable = function()
 		local target = Object("target")
-		if not _A.modifier_shift() and player:SpellReady("Disable") then
+		if not _A.modifier_shift() then
 			if player:Stance() == 1 --and pull_location()=="arena" 
 				then
 				if target then
@@ -310,7 +309,7 @@ local mw_rot = {
 	ringofpeace = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
-			if player:Talent("Ring of Peace") and player:SpellReady("Ring of Peace") then
+			if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<0.3 then
 				local peacetarget = Object("mostTargetedRosterPVP")
 				if peacetarget then
 					if not peacetarget:enemy()
@@ -332,7 +331,7 @@ local mw_rot = {
 	
 	chi_wave = function()
 		if player:Talent("Chi Wave")
-			and player:SpellReady("Chi Wave") then
+			and player:SpellCooldown("Chi Wave")<.3 then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
@@ -358,7 +357,7 @@ local mw_rot = {
 	
 	manatea = function()
 		if player:Stance() == 1 then
-			if player:SpellReady("Mana Tea")
+			if player:SpellCooldown("Mana Tea")<.3
 				and player:Glyph("Glyph of Mana Tea")
 				and _A.powerpercent()<= 92
 				and player:BuffStack("Mana Tea")>=2
@@ -373,7 +372,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			
 			if player:Talent("Chi Brew")
-				and player:SpellReady("Chi Brew")
+				and player:SpellCooldown("Chi Brew")==0
 				and player:Chi()<=2
 				then
 				player:Cast("Chi Brew")
@@ -383,7 +382,7 @@ local mw_rot = {
 	
 	fortifyingbrew = function()
 		if player:Stance() == 1 then
-			if	player:SpellReady("Fortifying Brew")
+			if	player:SpellCooldown("Fortifying Brew")==0
 				and player:Health()<50
 				then
 				player:Cast("Fortifying Brew")
@@ -393,7 +392,7 @@ local mw_rot = {
 	
 	thunderfocustea = function()
 		if player:Stance() == 1 and player:Chi()>=1 then
-			if	player:SpellReady("Thunder Focus Tea") and player:SpellUsable("Thunder Focus Tea")
+			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea")
 				then
 				player:Cast("Thunder Focus Tea")
 			end
@@ -401,7 +400,7 @@ local mw_rot = {
 	end,
 	
 	tigerslust = function()
-		if  player:Talent("Tiger's Lust") and player:SpellReady("Tiger's Lust") then
+		if  player:Talent("Tiger's Lust") and player:SpellCooldown("Tiger's Lust")<.3 then
 			if player:Stance() == 1 then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr:SpellRange("Tiger's Lust") then
@@ -423,25 +422,27 @@ local mw_rot = {
 		end
 	end,
 	
-	dispellplz = function()
+	dispellplzarena = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
-			if player:SpellReady("Detox") and _A.enoughmana("Detox")then
+			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
-					if fr.isplayer
-						and fr:SpellRange("Detox")
-						and _A.nothealimmune(fr)
-						and fr:DebuffType("Magic") or fr:DebuffType("Poison")  or fr:DebuffType("Disease")
-						and (fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl()
-						-- or fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
-						)
-						then
-						return fr:Cast("Detox")
+					if fr.isplayer then
+					if fr:SpellRange("Detox") then
+							if _A.nothealimmune(fr) then
+								if fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease") then
+								if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or
+									fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
+									then
+									return fr:Cast("Detox")
+								end
+							end
+						end	
 					end
 				end
 			end
+			end
 		end
-		
 	end,
 	
 	-- end
@@ -455,35 +456,35 @@ local mw_rot = {
 	-- )
 	
 	lifecocoon = function()
-		if player:SpellReady("Life Cocoon") and _A.enoughmana(116849) then
+		if player:SpellCooldown("Life Cocoon")<.3 and _A.enoughmana(116849) then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
 				if lowest then 
 					if not lowest:enemy()
 						and not lowest:charmed()
-					and lowest:alive()
-					and lowest:exists()
-					and not lowest:DebuffAny("Parasitic Growth")
-					and not lowest:DebuffAny("Dissonance Field")
-					then				
-					--]]
-					if 
-						(lowest:health()<30 or (pull_location()=="pvp" and lowest:health()<40))
-						and lowest:SpellRange("Life Cocoon")
-						then
-						if lowest:los() then
-							return lowest:Cast("Life Cocoon")
+						and lowest:alive()
+						and lowest:exists()
+						and not lowest:DebuffAny("Parasitic Growth")
+						and not lowest:DebuffAny("Dissonance Field")
+						then				
+						--]]
+						if 
+							(lowest:health()<30 or (pull_location()=="pvp" and lowest:health()<40))
+							and lowest:SpellRange("Life Cocoon")
+							then
+							if lowest:los() then
+								return lowest:Cast("Life Cocoon")
+							end
 						end
 					end
 				end
-			end
 			end
 		end
 	end,
 	
 	surgingmist = function()
-		if player:BuffStack("Vital Mists")>=5 and player:SpellReady("Surging Mist")
+		if player:BuffStack("Vital Mists")>=5
 			and player:Chi() < player:ChiMax() then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
@@ -513,7 +514,7 @@ local mw_rot = {
 	end,
 	
 	renewingmist = function()
-		if player:SpellReady("Renewing Mist") and _A.enoughmana(115151) then
+		if player:SpellCooldown("Renewing Mist")<.3 and _A.enoughmana(115151) then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
@@ -543,7 +544,7 @@ local mw_rot = {
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
 			
-			if	player:SpellReady("Summon Jade Serpent Statue")
+			if	player:SpellCooldown("Summon Jade Serpent Statue")<.3
 				then
 				return player:CastGround("Summon Jade Serpent Statue")
 			end
@@ -606,7 +607,7 @@ local mw_rot = {
 	
 	blackout_mm = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1  and player:SpellReady("Blackout Kick") then
+		if player:Stance() == 1 then
 			if player:Chi()>=2 then
 				if player:Buff("Muscle Memory") then
 					---------------------------------- 
@@ -625,7 +626,7 @@ local mw_rot = {
 	
 	tigerpalm_mm = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and player:SpellReady("Tiger Palm")  then
+		if player:Stance() == 1 then
 			if player:Chi()>=1 then
 				if player:Buff("Muscle Memory") then
 					---------------------------------- 
@@ -644,7 +645,7 @@ local mw_rot = {
 	
 	bk_buff = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1  and player:SpellReady("Blackout Kick") then
+		if player:Stance() == 1 then
 			if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory") 
 				if player:Chi()>= 2
 					and not player:Buff("Serpent's Zeal") -- and player:Buff("Muscle Memory") 
@@ -663,7 +664,7 @@ local mw_rot = {
 	
 	tp_buff = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and player:SpellReady("Tiger Palm") then
+		if player:Stance() == 1 then
 			if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory") 
 				if player:Chi()>= 1
 					and not player:Buff("Tiger Power")
@@ -681,7 +682,7 @@ local mw_rot = {
 	
 	uplift = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and player:SpellReady("Uplift") then
+		if player:Stance() == 1 then
 			if	player:SpellUsable("Uplift")
 				and player:Chi()>= 2 
 				then
@@ -692,8 +693,9 @@ local mw_rot = {
 	
 	expelharm = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and player:SpellReady("Expel Harm") then
+		if player:Stance() == 1 then
 			if	player:Chi()<player:ChiMax()
+				and player:SpellCooldown("Expel Harm")<.3
 				and _A.enoughmana(115072)
 				then
 				return player:Cast("Expel Harm")
@@ -703,7 +705,7 @@ local mw_rot = {
 	
 	tigerpalm_filler = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and player:SpellReady("Tiger Palm") then
+		if player:Stance() == 1 then
 			if player:Chi() == 1 then
 				if player:Buff("Muscle Memory") then
 					local lowestmelee = Object("lowestEnemyInRange(4)")
@@ -719,7 +721,7 @@ local mw_rot = {
 	
 	jab_filler = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and player:SpellReady("Jab") then
+		if player:Stance() == 1 then
 			if _A.manaengine() then
 				if player:Buff("Rushing Jade Wind") and not player:Buff("Muscle Memory") then
 					local lowestmelee = Object("lowestEnemyInRange(4)")
@@ -735,7 +737,7 @@ local mw_rot = {
 	end,
 	
 	dpsstance_jab = function()
-		if player:Stance() ~= 1 and player:SpellReady("Jab") then
+		if player:Stance() ~= 1 then
 			if not player:Buff("Muscle Memory")
 				or player:Chi()==0 then
 				local lowestmelee = Object("lowestEnemyInRange(4)")
@@ -752,7 +754,7 @@ local mw_rot = {
 		if player:Stance() ~= 1 then
 			
 			if	player:Talent("Rushing Jade Wind") 
-				and player:SpellReady("Rushing Jade Wind")
+				and player:SpellCooldown("Rushing Jade Wind")<.3
 				then
 				return player:Cast("Rushing Jade Wind")
 			end
@@ -761,7 +763,7 @@ local mw_rot = {
 	
 	dpsstance_healstance = function()
 		if player:Stance() ~= 1 then
-			if	player:SpellReady("Stance of the Wise Serpent")
+			if	player:SpellCooldown("Stance of the Wise Serpent")<.3
 				then
 				return player:Cast("Stance of the Wise Serpent")
 			end
@@ -772,7 +774,7 @@ local mw_rot = {
 		
 		--if not player:LostControl() then
 		if player:Stance() ~= 2 and not _A.modifier_shift() then
-			if player:SpellReady("Stance of the Fierce Tiger")
+			if player:SpellCooldown("Stance of the Fierce Tiger")<.3
 				and not player:Buff("Rushing Jade Wind") then
 				if player:Talent("Rushing Jade Wind") then
 					return player:Cast("Stance of the Fierce Tiger")
@@ -802,7 +804,7 @@ local inCombat = function()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	-- mw_rot.kick_legsweep()
-	mw_rot.dispellplz()
+	mw_rot.dispellplzarena()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
 	mw_rot.burstdisarm()
@@ -833,26 +835,25 @@ local inCombat = function()
 	mw_rot.dpsstance_healstance()
 	mw_rot.dpsstanceswap()
 end
+local outCombat = function()
+	return inCombat()
+end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
-_A.C_Timer.NewTicker(garbagedelay, function()
-	collectgarbage("collect")
-end, false, "garbage")
-
 _A.CR:Add(270, {
-	name = "Monk Heal EFFICIENT",
-	ic = inCombat,
-	ooc = inCombat,
-	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+name = "Monk Heal EFFICIENT",
+ic = inCombat,
+ooc = outCombat,
+use_lua_engine = true,
+gui = GUI,
+gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+wow_ver = "5.4.8",
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })

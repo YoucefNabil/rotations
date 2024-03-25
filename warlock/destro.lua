@@ -2,7 +2,6 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local player
-local garbagedelay = 25
 local destro = {}
 local healerspecid = {
 	-- [265]="Lock Affli",
@@ -447,9 +446,6 @@ local spellIds_Loc = function()
 end
 local blacklist = function()
 end
-_A.C_Timer.NewTicker(garbagedelay, function()
-	collectgarbage("collect")
-end, false, "garbage")
 _A.CR:Add(267, {
 	name = "Youcef's Destro",
 	ic = inCombat,

@@ -263,18 +263,14 @@ immunedebuffs = {
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
 		if unit:immune("all") then return false end
-		for _,v in ipairs(immunebuffs) do
-			if unit:Debuffany(v) then 
-				return false
-			end
 		end
-		for _,v in ipairs(immunebuffs) do
-			if unit:Buffany(v) then 
-				return false
-			end
+		for _,v in ipairs(imunebuffs) do
+		if unit:BuffAny(v) then return false end
 		end
-		return true
-	end
+		for _,v in ipairs(immunedebuffs) do
+		if unit:DebuffAny(v) then return false end
+		end
+	return true
 end
 
 function _A.someoneislow()
@@ -292,15 +288,15 @@ end
 
 function _A.someoneisuperlow()
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if _A.isthishuman(Obj.guid) then
-			if Obj:Health()<35 then
-				if Obj:range()<40 then
-					return true
-				end
+	if _A.isthishuman(Obj.guid) then
+		if Obj:Health()<35 then
+			if Obj:range()<40 then
+				return true
 			end
 		end
 	end
-	return false
+end
+return false
 end
 
 function _A.ceeceed(unit)
@@ -504,8 +500,8 @@ function _A.myscore()
 	local ap = GetSpellBonusDamage(6) -- shadowdamage
 	local mastery = GetCombatRating(26)
 	local crit = GetCombatRating(9)
-	local haste = GetCombatRating(18)
-	return (ap + mastery + crit + haste)
+local haste = GetCombatRating(18)
+return (ap + mastery + crit + haste)
 end
 
 -- CreatureType = {
@@ -523,4 +519,4 @@ end
 -- Totem = 11,
 -- NonCombatPet = 12,
 -- GasCloud = 13,
--- }	
+-- }
