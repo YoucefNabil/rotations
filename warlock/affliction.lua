@@ -593,8 +593,8 @@ affliction.rot = {
 					end
 				end
 			end
-			table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
-			if #temptable>=2 then
+			if #temptable>1 then
+				table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
 			end
 			return temptable[1] and temptable[1].obj:Cast(86121)
 		end
@@ -694,14 +694,14 @@ local blacklist = function()
 end
 
 -- _A.C_Timer.NewTicker(garbagedelay, function() -- 200ms
-	-- local var1
-	-- local var2
-	-- var1 = collectgarbage("count")
-	-- collectgarbage("collect")
-	-- var2= collectgarbage("count")
-	-- print("Memory Diff:", var1-var2)
+-- local var1
+-- local var2
+-- var1 = collectgarbage("count")
+-- collectgarbage("collect")
+-- var2= collectgarbage("count")
+-- print("Memory Diff:", var1-var2)
 -- end, false, "garbage")
-_A.C_Timer.NewTicker(garbagedelay, function() -- 200ms
+_A.C_Timer.NewTicker(garbagedelay, function()
 	collectgarbage("collect")
 end, false, "garbage")
 
