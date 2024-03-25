@@ -206,7 +206,7 @@ unholy.rot = {
 	
 	
 	MindFreeze = function()
-		if player:SpellReady("Mind Freeze") then
+		if player:SpellCooldown("Mind Freeze")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike") and obj:infront()
 					and obj:caninterrupt() 
@@ -226,7 +226,7 @@ unholy.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if (_A.pull_location ~= "arena") or (_A.pull_location == "arena" and not hunterspecs[_A.UnitSpec(obj.guid)]) then
 					if obj.isplayer and obj:isCastingAny() and obj:SpellRange("Death Grip") and obj:infront() 
-						and (player:SpellReady("Mind Freeze") or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
+						and (player:SpellCooldown("Mind Freeze")==0 or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
 						and not obj:State("root")
 						and _A.notimmune(obj)
 						and obj:los() then
@@ -240,7 +240,7 @@ unholy.rot = {
 	GrabGrabHunter = function()
 		if _A.pull_location == "arena" then
 			local roster = Object("roster")
-			if player:SpellReady("Death Grip") then
+			if player:SpellCooldown("Death Grip")==0 then
 				if roster and roster:DebuffAny("Scatter Shot") then
 					for _, obj in pairs(_A.OM:Get('Enemy')) do
 						if 	obj.isplayer and hunterspecs[_A.UnitSpec(obj.guid)] and obj:SpellRange("Death Grip") and obj:infront() 
