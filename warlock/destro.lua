@@ -151,7 +151,6 @@ local exeOnLoad = function()
 end
 local exeOnUnload = function()
 end
-local heFLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true,}
 local usableitems= { -- item slots
 	13, --first trinket
 	14 --second trinket
@@ -163,24 +162,6 @@ destro.rot = {
 	caching= function()
 		_A.pull_location = pull_location()
 		_A.BurningEmbers = _A.UnitPower("player", 14)
-	end,
-	
-	ClickthisPleasepvp = function()
-		local tempTable = {}
-		if _A.pull_location=="pvp" then
-			for _, Obj in pairs(_A.OM:Get('GameObject')) do
-				if heFLAGS[Obj.name] then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						distance = Obj:distance()
-					}
-				end
-			end
-			if #tempTable > 1 then
-				table.sort(tempTable, function(a, b) return a.distance < b.distance end)
-			end
-			if tempTable[1] then _A.ObjectInteract(tempTable[1].guid) end
-		end
 	end,
 	
 	items_healthstone = function()
@@ -410,7 +391,6 @@ local inCombat = function()
 	player = player or Object("player")
 	if not player then return end
 	destro.rot.caching()
-	destro.rot.ClickthisPleasepvp()
 	if _A.buttondelayfunc()  then return end
 	if player:lostcontrol()  then return end 
 	if player:isCastingAny() then return end

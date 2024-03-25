@@ -44,25 +44,7 @@ local exeOnLoad = function()
 end
 local exeOnUnload = function()
 end
-local heFLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true,}
 local mw_rot = {
-	ClickthisPleasepvp = function()
-		local tempTable = {}
-		if pull_location()=="pvp" then
-			for _, Obj in pairs(_A.OM:Get('GameObject')) do
-				if heFLAGS[Obj.name] then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						distance = Obj:distance()
-					}
-				end
-			end
-			if #tempTable > 1 then
-				table.sort(tempTable, function(a, b) return a.distance < b.distance end)
-			end
-			if tempTable[1] then _A.ObjectInteract(tempTable[1].guid) end
-		end
-	end,
 	
 	items_intflask = function()
 		if player:ItemCooldown(76085) == 0
@@ -747,7 +729,6 @@ local inCombat = function()
 	if not player then return end
 	if _A.buttondelayfunc()  then return end
 	if player:lostcontrol()  then return end 
-	mw_rot.ClickthisPleasepvp()
 	if  player:isCastingAny() then return end
 	if player:Mounted() then return end
 	mw_rot.items_healthstone()
