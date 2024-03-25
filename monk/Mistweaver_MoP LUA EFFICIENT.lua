@@ -332,8 +332,6 @@ local mw_rot = {
 				local lowest = Object("lowestall")
 				if lowest then
 					if  lowest:exists() and lowest:SpellRange("Chi Wave")
-						and not lowest:DebuffAny("Parasitic Growth")
-						and not lowest:DebuffAny("Dissonance Field")
 						then 
 						if lowest:los() then
 							return lowest:Cast("Chi Wave")
@@ -449,10 +447,7 @@ local mw_rot = {
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
-				if lowest and lowest:exists() and lowest:SpellRange("Life Cocoon") then 
-					if  not lowest:DebuffAny("Parasitic Growth")
-						and not lowest:DebuffAny("Dissonance Field")
-						then				
+				if lowest and lowest:exists() and lowest:SpellRange("Life Cocoon") then 			
 						--]]
 						if 
 							(lowest:health()<30 or (pull_location()=="pvp" and lowest:health()<40))
@@ -465,7 +460,6 @@ local mw_rot = {
 					end
 				end
 			end
-		end
 	end,
 	
 	surgingmist = function()
@@ -474,10 +468,7 @@ local mw_rot = {
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
-				if lowest and lowest:SpellRange("Surging Mist") then 
-					if not lowest:DebuffAny("Parasitic Growth")
-						and not lowest:DebuffAny("Dissonance Field")
-						then				
+				if lowest and lowest:SpellRange("Surging Mist") then 	
 						--]]
 						
 						if  
@@ -491,7 +482,6 @@ local mw_rot = {
 					end
 				end
 			end
-		end
 	end,
 	
 	renewingmist = function()
@@ -500,12 +490,8 @@ local mw_rot = {
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
 				if lowest and lowest:exists() and lowest:SpellRange("Renewing Mist") then 
-					if  not lowest:DebuffAny("Parasitic Growth")
-						and not lowest:DebuffAny("Dissonance Field")
-						then
-						if lowest:los() then
-							return lowest:Cast("Renewing Mist")
-						end
+					if lowest:los() then
+						return lowest:Cast("Renewing Mist")
 					end
 				end
 			end
@@ -530,12 +516,10 @@ local mw_rot = {
 					if _A.enoughmana(115460) then
 						local lowest = Object("lowestall")
 						if lowest and lowest:exists() then
-							if not lowest:DebuffAny("Parasitic Growth") and not lowest:DebuffAny("Dissonance Field") then
-								if (lowest:Health() < 99) then
-									if lowest:Distance() < 40 then
-										if lowest:los() then
-											return lowest:CastGround("Healing Sphere", true)
-										end
+							if (lowest:Health() < 99) then
+								if lowest:Distance() < 40 then
+									if lowest:los() then
+										return lowest:CastGround("Healing Sphere", true)
 									end
 								end
 							end
@@ -556,7 +540,6 @@ local mw_rot = {
 						local lowest = Object("lowestall")
 						if lowest then
 							if lowest:exists() then
-								if  not lowest:DebuffAny("Parasitic Growth") and not lowest:DebuffAny("Dissonance Field") then
 									if (lowest:Health() < 85) then
 										if lowest:Distance() < 40 then
 											if lowest:los() then
@@ -567,7 +550,6 @@ local mw_rot = {
 								end
 							end
 						end
-					end
 				end
 			end
 		end
@@ -811,17 +793,17 @@ end
 local blacklist = function()
 end
 _A.CR:Add(270, {
-name = "Monk Heal EFFICIENT",
-ic = inCombat,
-ooc = outCombat,
-use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	name = "Monk Heal EFFICIENT",
+	ic = inCombat,
+	ooc = outCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })
