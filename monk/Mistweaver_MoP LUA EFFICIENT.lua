@@ -311,16 +311,11 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<0.3 then
 				local peacetarget = Object("mostTargetedRosterPVP")
-				if peacetarget then
-					if not peacetarget:enemy()
-						and not peacetarget:charmed()
-						and peacetarget:alive()
-						and peacetarget:exists() then
-						if peacetarget:SpellRange("Ring of Peace") and peacetarget:Health()<=85 and not peacetarget:BuffAny("Ring of Peace") then
-							if ( peacetarget:areaEnemies(6) >= 3 ) or ( peacetarget:areaEnemies(6) >= 1 and peacetarget:Health()<85 ) then
-								if peacetarget:los() then
-									return peacetarget:Cast("Ring of Peace")
-								end
+				if peacetarget and peacetarget:exists()  then
+					if peacetarget:SpellRange("Ring of Peace") and peacetarget:Health()<=85 and not peacetarget:BuffAny("Ring of Peace") then
+						if ( peacetarget:areaEnemies(6) >= 3 ) or ( peacetarget:areaEnemies(6) >= 1 and peacetarget:Health()<85 ) then
+							if peacetarget:los() then
+								return peacetarget:Cast("Ring of Peace")
 							end
 						end
 					end
@@ -336,18 +331,12 @@ local mw_rot = {
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
 				if lowest then
-					if  lowest:exists()
-						and lowest:alive()					
-						and not lowest:charmed()
+					if  lowest:exists() and lowest:SpellRange("Chi Wave")
 						and not lowest:DebuffAny("Parasitic Growth")
 						and not lowest:DebuffAny("Dissonance Field")
 						then 
-						if 
-							lowest:SpellRange("Chi Wave")
-							then 
-							if lowest:los() then
-								return lowest:Cast("Chi Wave")
-							end
+						if lowest:los() then
+							return lowest:Cast("Chi Wave")
 						end
 					end
 				end
@@ -428,19 +417,19 @@ local mw_rot = {
 			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer then
-					if fr:SpellRange("Detox") then
+						if fr:SpellRange("Detox") then
 							if _A.nothealimmune(fr) then
 								if fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease") then
-								if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or
-									fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
-									then
-									return fr:Cast("Detox")
+									if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or
+										fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
+										then
+										return fr:Cast("Detox")
+									end
 								end
-							end
-						end	
+							end	
+						end
 					end
 				end
-			end
 			end
 		end
 	end,
@@ -460,18 +449,14 @@ local mw_rot = {
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
-				if lowest then 
-					if not lowest:enemy()
-						and not lowest:charmed()
-						and lowest:alive()
-						and lowest:exists()
-						and not lowest:DebuffAny("Parasitic Growth")
+				if lowest and lowest:exists() and lowest:SpellRange("Life Cocoon") then 
+					if  not lowest:DebuffAny("Parasitic Growth")
 						and not lowest:DebuffAny("Dissonance Field")
 						then				
 						--]]
 						if 
 							(lowest:health()<30 or (pull_location()=="pvp" and lowest:health()<40))
-							and lowest:SpellRange("Life Cocoon")
+							
 							then
 							if lowest:los() then
 								return lowest:Cast("Life Cocoon")
@@ -489,19 +474,15 @@ local mw_rot = {
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
-				if lowest then 
-					if not lowest:enemy()
-						and not lowest:charmed()
-						and lowest:alive()
-						and lowest:exists()
-						and not lowest:DebuffAny("Parasitic Growth")
+				if lowest and lowest:SpellRange("Surging Mist") then 
+					if not lowest:DebuffAny("Parasitic Growth")
 						and not lowest:DebuffAny("Dissonance Field")
 						then				
 						--]]
 						
 						if  
 							lowest:Health()<=85
-							and lowest:SpellRange("Surging Mist")
+							
 							then
 							if lowest:los() then
 								return lowest:Cast("Surging Mist")
@@ -518,21 +499,12 @@ local mw_rot = {
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
-				if lowest then 
-					if not lowest:enemy()
-						and not lowest:charmed()
-						and lowest:alive()
-						and lowest:exists()
-						and not lowest:DebuffAny("Parasitic Growth")
+				if lowest and lowest:exists() and lowest:SpellRange("Renewing Mist") then 
+					if  not lowest:DebuffAny("Parasitic Growth")
 						and not lowest:DebuffAny("Dissonance Field")
 						then
-						if 
-							lowest:SpellRange("Renewing Mist")
-							
-							then
-							if lowest:los() then
-								return lowest:Cast("Renewing Mist")
-							end
+						if lowest:los() then
+							return lowest:Cast("Renewing Mist")
 						end
 					end
 				end
@@ -557,14 +529,12 @@ local mw_rot = {
 				if _A.modifier_shift() then
 					if _A.enoughmana(115460) then
 						local lowest = Object("lowestall")
-						if lowest then
-							if not lowest:enemy() and not lowest:DebuffAny("Parasitic Growth") and not lowest:DebuffAny("Dissonance Field") then
+						if lowest and lowest:exists() then
+							if not lowest:DebuffAny("Parasitic Growth") and not lowest:DebuffAny("Dissonance Field") then
 								if (lowest:Health() < 99) then
-									if lowest:exists() then
-										if lowest:Distance() < 40 then
-											if lowest:los() then
-												return lowest:CastGround("Healing Sphere", true)
-											end
+									if lowest:Distance() < 40 then
+										if lowest:los() then
+											return lowest:CastGround("Healing Sphere", true)
 										end
 									end
 								end
@@ -586,13 +556,11 @@ local mw_rot = {
 						local lowest = Object("lowestall")
 						if lowest then
 							if lowest:exists() then
-								if lowest:alive() then
-									if not lowest:enemy() and not lowest:DebuffAny("Parasitic Growth") and not lowest:DebuffAny("Dissonance Field") then
-										if (lowest:Health() < 85) then
-											if lowest:Distance() < 40 then
-												if lowest:los() then
-													return lowest:CastGround("Healing Sphere", true)
-												end
+								if  not lowest:DebuffAny("Parasitic Growth") and not lowest:DebuffAny("Dissonance Field") then
+									if (lowest:Health() < 85) then
+										if lowest:Distance() < 40 then
+											if lowest:los() then
+												return lowest:CastGround("Healing Sphere", true)
 											end
 										end
 									end
