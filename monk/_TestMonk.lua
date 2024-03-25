@@ -6,6 +6,9 @@ _A.pressedbuttonat = 0
 _A.buttondelay = 0.6
 local STARTSLOT = 97
 local STOPSLOT = 104
+local blacklist = {
+	["Scara"] = true,
+}
 --
 _A.ceeceed = function(unit)
 	if unit and unit:State("fear || sleep || charm || disorient || incapacitate || misc || stun")
@@ -1018,41 +1021,43 @@ end)
 -- end)
 
 _A.FakeUnits:Add('lowestall', function()
-local lowestHP, lowestHPguid = 100
-local location = pull_location()
-for _, fr in pairs(_A.OM:Get('Friendly')) do
--- if fr.isplayer then
-if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-if _A.nothealimmune(fr) then
-local hp = fr:health()
-if hp < lowestHP then
-lowestHP = hp
-lowestHPguid = fr.guid
-end
-end
-end
-end
-return lowestHPguid
+	local lowestHP, lowestHPguid = 100
+	local location = pull_location()
+	for _, fr in pairs(_A.OM:Get('Friendly')) do
+		-- if fr.isplayer then
+		if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
+			if not blacklist[fr.name] then
+				if _A.nothealimmune(fr) then
+					local hp = fr:health()
+					if hp < lowestHP then
+						lowestHP = hp
+						lowestHPguid = fr.guid
+					end
+				end
+			end
+		end
+	end
+	return lowestHPguid
 end)
 
 --[[_A.FakeUnits:Add('targetingme', function()
-for _, enemy in pairs(_A.OM:Get('Enemy')) do
-if enemy then
-if _A.UnitIsPlayer(enemy.guid) then
-local tguid = UnitTarget(enemy.guid)
-if tguid then
-targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
-end
-end
-end
-end
-for guid, count in pairs(targets) do
-if count > most then
-most = count
-mostGuid = guid
-end
-end
-return mostGuid
+	for _, enemy in pairs(_A.OM:Get('Enemy')) do
+	if enemy then
+	if _A.UnitIsPlayer(enemy.guid) then
+	local tguid = UnitTarget(enemy.guid)
+	if tguid then
+	targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
+	end
+	end
+	end
+	end
+	for guid, count in pairs(targets) do
+	if count > most then
+	most = count
+	mostGuid = guid
+	end
+	end
+	return mostGuid
 end)--]]
 
 
