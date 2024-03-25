@@ -455,72 +455,72 @@ _A.DSL:Register('UnitCastID', function(t)
 end)
 _A.DSL:Register('castspecial', function(u, arg1, arg2)
 	if u:los() then
-	return u:cast(arg1, arg2)
+		return u:cast(arg1, arg2)
 	end
-	end)
-	
-	
-	
-	local function cdRemains(spellid)
+end)
+
+
+
+local function cdRemains(spellid)
 	local endcast, startcast = GetSpellCooldown(spellid)
 	local gettm = GetTime()
 	if startcast + (endcast - gettm) > 0 then
-	return startcast + (endcast - gettm)
-	else
-	return 0
+		return startcast + (endcast - gettm)
+		else
+		return 0
 	end
-	end
-	
-	local function power(unit)
+end
+
+local function power(unit)
 	local intel2 = UnitPower(unit)
 	if intel2 == 0
-	or intel2 == nil
-	then return 0
-	else return intel2
+		or intel2 == nil
+		then return 0
+		else return intel2
 	end
 	intel2=nil
-	end
-	
-	local function spellcost(spellid)
+end
+
+local function spellcost(spellid)
 	local intel4 = (select(4, GetSpellInfo(spellid)))
 	if intel4 == 0
-	or intel4 == nil
-	then return 0
-	else return intel4
+		or intel4 == nil
+		then return 0
+		else return intel4
 	end
-	end
-	
-	function _A.usablelite(spellid)
+end
+
+function _A.usablelite(spellid)
 	if spellcost(spellid)~=nil then
-	if power("player")>=spellcost(spellid)
-	then return true
-	else return false
+		if power("player")>=spellcost(spellid)
+			then return true
+			else return false
+		end
+		else return false
 	end
-	else return false
-	end
-	end
-	
-	function _A.myscore()
+end
+
+function _A.myscore()
 	local ap = GetSpellBonusDamage(6) -- shadowdamage
 	local mastery = GetCombatRating(26)
 	local crit = GetCombatRating(9)
 	local haste = GetCombatRating(18)
 	return (ap + mastery + crit + haste)
-	end
-	
-	-- CreatureType = {
-	-- Unknown = 0,
-	-- Beast = 1,
-	-- Dragon = 2,
-	-- Demon = 3,
-	-- Elemental = 4,
-	-- Giant = 5,
-	-- Undead = 6,
-	-- Humanoid = 7,
-	-- Critter = 8,
-	-- Mechanical = 9,
-	-- NotSpecified = 10,
-	-- Totem = 11,
-	-- NonCombatPet = 12,
-	-- GasCloud = 13,
-	-- }	
+end
+
+-- CreatureType = {
+-- Unknown = 0,
+-- Beast = 1,
+-- Dragon = 2,
+-- Demon = 3,
+-- Elemental = 4,
+-- Giant = 5,
+-- Undead = 6,
+-- Humanoid = 7,
+-- Critter = 8,
+-- Mechanical = 9,
+-- NotSpecified = 10,
+-- Totem = 11,
+-- NonCombatPet = 12,
+-- GasCloud = 13,
+-- }	
