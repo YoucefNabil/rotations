@@ -3,9 +3,9 @@ local garbagedelay = 10
 local flagclick = .1
 local heFLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true, ["Orb of Power"] = true,}
 local function pull_location()
-	local whereimi = string.lower(select(2, GetInstanceInfo()))
 	return string.lower(select(2, GetInstanceInfo()))
 end
+
 local ClickthisPleasepvp = function()
 	local tempTable = {}
 	-- if pull_location()=="pvp" then

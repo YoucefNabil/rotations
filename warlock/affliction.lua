@@ -299,12 +299,12 @@ affliction.rot = {
 		end
 		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
-		or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-		-- or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
-		or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
+			or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
+			-- or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
+			or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
 		end )
 	end,
-
+	
 	-- snare_curse = function() -- rework this
 	-- if _A.flagcarrier ~=nil then 
 	-- if not player:buff(74434) and not _A.flagcarrier:DebuffAny("Curse of Exhaustion") then
@@ -524,9 +524,22 @@ affliction.rot = {
 		end
 	end,
 	
+	unstablesnapinstantdelayed = function()
+		if  _A.temptabletbl[1] and _A.castdelay(119678,2) then 
+			if player:buff(74434) then return  _A.temptabletbl[1].obj:Cast(119678)
+			end -- improved soul swap (dots instead)
+			if (not player:buff(74434) and _A.enoughmana(74434)) --or player:buff("Shadow Trance")
+				then 
+				if _A.myscore()> _A.temptabletbl[1].unstablescore  then player:cast(74434) -- shadowburn
+				end	 
+			end		
+		end		
+	end,
+	
 	unstablesnapinstant = function()
-		if  _A.temptabletbl[1]  then 
-			if player:buff(74434) then return  _A.temptabletbl[1].obj:Cast(119678) end -- improved soul swap (dots instead)
+		if  _A.temptabletbl[1] then 
+			if player:buff(74434) then return  _A.temptabletbl[1].obj:Cast(119678)
+			end -- improved soul swap (dots instead)
 			if (not player:buff(74434) and _A.enoughmana(74434)) --or player:buff("Shadow Trance")
 				then 
 				if _A.myscore()> _A.temptabletbl[1].unstablescore  then player:cast(74434) -- shadowburn
@@ -654,17 +667,18 @@ local inCombat = function()
 	-- affliction.rot.bloodhorrorremoval()
 	affliction.rot.bloodhorror()
 	-- affliction.rot.snare_curse()
-	-- snapshots
-	affliction.rot.corruptionsnap()
-	affliction.rot.agonysnap()
-	affliction.rot.unstablesnapinstant()
-	affliction.rot.unstablesnap()
 	--shift
 	if modifier_shift() then
 		affliction.rot.haunt()
 		affliction.rot.drainsoul()
 		affliction.rot.grasp()
 	end
+	-- snapshots
+	affliction.rot.unstablesnapinstantdelayed()
+	affliction.rot.corruptionsnap()
+	affliction.rot.agonysnap()
+	affliction.rot.unstablesnapinstant()
+	affliction.rot.unstablesnap()
 	-- soul swap
 	affliction.rot.soulswap()
 	--buff

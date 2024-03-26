@@ -399,7 +399,7 @@ local mw_rot = {
 						and fr:SpellRange("Detox")
 						and _A.nothealimmune(fr)
 						and (fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease")) then
-						if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl()
+						if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or _A.pull_location == "party" or _A.pull_location == "raid"
 							-- or fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
 							then
 							if fr:los() then
