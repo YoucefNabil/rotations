@@ -292,6 +292,7 @@ affliction.rot = {
 					unstablescore = (unstabletbl[Obj.guid] or 0),
 					corruptionscore = (corruptiontbl[Obj.guid] or 0),
 					range = Obj:range(2) or 40,
+					health = Obj:HealthActual() or 0,
 					isplayer = Obj.isplayer and 1 or 0
 				}
 			end
@@ -299,7 +300,8 @@ affliction.rot = {
 		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
 		or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-		or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
+		-- or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
+		or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
 		end )
 	end,
 
