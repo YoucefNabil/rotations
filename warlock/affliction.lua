@@ -599,7 +599,7 @@ affliction.rot = {
 							obj = Obj,
 							rangedis = Obj:range(2) or 40,
 							isplayer = Obj.isplayer and 1 or 0,
-							-- health = Obj:HealthActual() or 0,
+							health = Obj:HealthActual() or 0,
 							duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
 						}
 					end
@@ -608,7 +608,8 @@ affliction.rot = {
 			if #temptable > 1 then
 				table.sort(temptable, function(a,b) return  (a.duration < b.duration )  -- order by duration
 					or (a.duration == b.duration and a.isplayer > b.isplayer ) -- if same (or no) duration, order by players first
-					or (a.duration == b.duration and a.isplayer == b.isplayer and a.rangedis < b.rangedis )  -- if same (or no) duration, and same isplayer, order by closest
+					-- or (a.duration == b.duration and a.isplayer == b.isplayer and a.rangedis < b.rangedis )  -- if same (or no) duration, and same isplayer, order by closest
+					or (a.duration == b.duration and a.isplayer == b.isplayer and a.health > b.health )  -- if same (or no) duration, and same isplayer, order by highest health
 				end
 				)
 			end

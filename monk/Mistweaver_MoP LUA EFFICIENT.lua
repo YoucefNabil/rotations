@@ -375,7 +375,7 @@ local mw_rot = {
 					if fr:SpellRange("Tiger's Lust") then
 						if fr.isplayer then
 							if _A.nothealimmune(fr) then
-								if (not fr:LostControl()) and (fr:State("root") or fr:State("snare"))
+								if (not fr:LostControl()) and (fr:State("root") or fr:State("snare")) and fr:los()
 									then
 									if fr.guid ~= player.guid then
 										return fr:Cast("Tiger's Lust")
@@ -392,37 +392,25 @@ local mw_rot = {
 	end,
 	
 	dispellplzarena = function()
-		--if not player:LostControl() then
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
-					if fr.isplayer then
-						if fr:SpellRange("Detox") then
-							if _A.nothealimmune(fr) then
-								if fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease") then
-									if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or
-										fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
-										then
-										return fr:Cast("Detox")
-									end
-								end
-							end	
+					if fr.isplayer
+						and fr:SpellRange("Detox")
+						and _A.nothealimmune(fr)
+						and (fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease")) then
+						if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl()
+							-- or fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
+							then
+							if fr:los() then
+								return fr:Cast("Detox")
+							end
 						end
-					end
+					end	
 				end
 			end
 		end
 	end,
-	
-	-- end
-	-- end
-	
-	-- for j=1,40 do
-	-- if (
-	-- (select(5,UnitDebuff(k,j)))=="Magic"  -- mostly saps traps and fears
-	-- or (select(5,UnitDebuff(k,j)))=="Poison" -- spam, mostly useless
-	-- or (select(5,UnitDebuff(k,j)))=="Disease" -- spam, mostly useless
-	-- )
 	
 	lifecocoon = function()
 		if player:SpellCooldown("Life Cocoon")<.3 and _A.enoughmana(116849) then
@@ -430,18 +418,18 @@ local mw_rot = {
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
 				if lowest and lowest:exists() and lowest:SpellRange("Life Cocoon") then 			
-						--]]
-						if 
-							(lowest:health()<30 or (pull_location()=="pvp" and lowest:health()<40))
-							
-							then
-							if lowest:los() then
-								return lowest:Cast("Life Cocoon")
-							end
+					--]]
+					if 
+						(lowest:health()<30 or (pull_location()=="pvp" and lowest:health()<40))
+						
+						then
+						if lowest:los() then
+							return lowest:Cast("Life Cocoon")
 						end
 					end
 				end
 			end
+		end
 	end,
 	
 	surgingmist = function()
@@ -451,19 +439,19 @@ local mw_rot = {
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
 				if lowest and lowest:SpellRange("Surging Mist") then 	
-						--]]
+					--]]
+					
+					if  
+						lowest:Health()<=85
 						
-						if  
-							lowest:Health()<=85
-							
-							then
-							if lowest:los() then
-								return lowest:Cast("Surging Mist")
-							end
+						then
+						if lowest:los() then
+							return lowest:Cast("Surging Mist")
 						end
 					end
 				end
 			end
+		end
 	end,
 	
 	renewingmist = function()
@@ -522,16 +510,16 @@ local mw_rot = {
 						local lowest = Object("lowestall")
 						if lowest then
 							if lowest:exists() then
-									if (lowest:Health() < 85) then
-										if lowest:Distance() < 40 then
-											if lowest:los() then
-												return lowest:CastGround("Healing Sphere", true)
-											end
+								if (lowest:Health() < 85) then
+									if lowest:Distance() < 40 then
+										if lowest:los() then
+											return lowest:CastGround("Healing Sphere", true)
 										end
 									end
 								end
 							end
 						end
+					end
 				end
 			end
 		end
