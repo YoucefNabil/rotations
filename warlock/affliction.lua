@@ -592,7 +592,7 @@ affliction.rot = {
 					if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
 						temptable[#temptable+1] = {
 							obj = Obj,
-							duration = Obj:DebuffDuration("Unstable Affliction") or 0 
+							duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0
 						}
 					end
 				end
@@ -615,7 +615,7 @@ affliction.rot = {
 							rangedis = Obj:range(2) or 40,
 							isplayer = Obj.isplayer and 1 or 0,
 							health = Obj:HealthActual() or 0,
-							duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
+							duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
 						}
 					end
 				end
