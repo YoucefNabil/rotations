@@ -329,7 +329,7 @@ affliction.rot = {
 		if player:health() <= 35 then
 			if player:SpellCooldown("Dark Regeneration") == 0
 				then
-				player:useitem("Healthstone")
+				player:useitem("Dark Regeneration")
 			end
 		end
 	end,
