@@ -257,6 +257,16 @@ end
 --============================================
 --============================================
 --============================================
+--============================================
+--============================================
+--============================================
+--============================================
+--============================================
+--============================================
+--============================================
+--============================================
+--============================================
+--============================================
 local GUI = {
 }
 local exeOnLoad = function()
@@ -558,7 +568,9 @@ affliction.rot = {
 	end,
 	
 	haunt = function()
-		if not player:moving() and not player:Iscasting("Haunt") and _A.enoughmana(48181) and _A.castdelay(48181, 1.5) then
+		if not player:moving() and _A.enoughmana(48181) 
+			and not player:isCastingAny()
+			and _A.castdelay(48181, 1.5) then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and not lowest:debuff(48181) then
 				return lowest:cast("haunt")
@@ -567,7 +579,8 @@ affliction.rot = {
 	end,
 	
 	grasp = function()
-		if not player:moving() and not player:Iscasting("Malefic Grasp") and _A.enoughmana(103103) then
+		if not player:moving() and _A.enoughmana(103103)
+			and not player:isCastingAny()  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() then
 				return lowest:cast("Malefic Grasp")
@@ -576,7 +589,10 @@ affliction.rot = {
 	end,
 	
 	drainsoul = function()
-		if not player:moving() and not player:Iscasting("Drain Soul") and _A.enoughmana(1120) then
+		if not player:moving() and _A.enoughmana(1120)
+			and not player:Iscasting("Drain Soul") 
+			and not player:Iscasting("Unstable Affliction") 
+			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
 				return lowest:cast("Drain Soul")
@@ -647,44 +663,47 @@ local inCombat = function()
 	affliction.rot.lifetap_delayed()
 	--exhale
 	affliction.rot.exhale()
-	if player:isCastingAny() then return end
 	if _A.buttondelayfunc()  then return end
-	--stuff
-	affliction.rot.Buffbuff()
-	affliction.rot.petres()
-	affliction.rot.petres_supremacy()
-	affliction.rot.items_healthstone()
-	affliction.rot.summ_healthstone()
-	--bursts
-	affliction.rot.activetrinket()
-	affliction.rot.hasteburst()
-	--HEALS
-	affliction.rot.Darkregeneration()
-	affliction.rot.CauterizeMaster()
-	affliction.rot.MortalCoil()
-	affliction.rot.twilightward()
-	--utility
-	-- affliction.rot.bloodhorrorremoval()
-	affliction.rot.bloodhorror()
-	-- affliction.rot.snare_curse()
-	--shift
+	if not player:isCastingAny() then
+		--stuff
+		affliction.rot.Buffbuff()
+		affliction.rot.petres()
+		affliction.rot.petres_supremacy()
+		affliction.rot.items_healthstone()
+		affliction.rot.summ_healthstone()
+		--bursts
+		affliction.rot.activetrinket()
+		affliction.rot.hasteburst()
+		--HEALS
+		affliction.rot.Darkregeneration()
+		affliction.rot.CauterizeMaster()
+		affliction.rot.MortalCoil()
+		affliction.rot.twilightward()
+		--utility
+		-- affliction.rot.bloodhorrorremoval()
+		affliction.rot.bloodhorror()
+		-- affliction.rot.snare_curse()
+		--shift
+	end
 	if modifier_shift() then
 		affliction.rot.haunt()
 		affliction.rot.drainsoul()
 		affliction.rot.grasp()
 	end
-	-- snapshots
-	affliction.rot.unstablesnapinstantdelayed()
-	affliction.rot.corruptionsnap()
-	affliction.rot.agonysnap()
-	affliction.rot.unstablesnapinstant()
-	affliction.rot.unstablesnap()
-	-- soul swap
-	affliction.rot.soulswap()
-	--buff
-	affliction.rot.darkintent()
-	--fills
-	affliction.rot.lifetap()
+	if not player:isCastingAny() then
+		-- snapshots
+		affliction.rot.unstablesnapinstantdelayed()
+		affliction.rot.corruptionsnap()
+		affliction.rot.agonysnap()
+		affliction.rot.unstablesnapinstant()
+		affliction.rot.unstablesnap()
+		-- soul swap
+		affliction.rot.soulswap()
+		--buff
+		affliction.rot.darkintent()
+		--fills
+		affliction.rot.lifetap()
+	end
 	affliction.rot.haunt()
 	affliction.rot.drainsoul()
 	affliction.rot.grasp()
