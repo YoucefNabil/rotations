@@ -300,8 +300,8 @@ affliction.rot = {
 		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 		table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
 			or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-			-- or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
-			or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
+			or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
+			-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
 		end )
 	end,
 	
@@ -329,7 +329,7 @@ affliction.rot = {
 		if player:health() <= 35 then
 			if player:SpellCooldown("Dark Regeneration") == 0
 				then
-				player:useitem("Dark Regeneration")
+				player:cast("Dark Regeneration")
 			end
 		end
 	end,
