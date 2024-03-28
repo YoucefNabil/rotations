@@ -356,14 +356,14 @@ affliction.rot = {
 		end
 	end,
 	
-	items_strpot = function()
-		if player:ItemCooldown(76095) == 0
-			and player:ItemCount(76095) > 0
-			and player:ItemUsable(76095)
-			and player:Buff("Unholy Frenzy")
+	items_intpot = function()
+		if player:ItemCooldown(76093) == 0
+			and player:ItemCount(76093) > 0
+			and player:ItemUsable(76093)
+			and player:Buff("Dark Soul: Misery")
 			then
 			if _A.pull_location=="pvp" then
-				player:useitem("Potion of Mogu Power")
+				player:useitem("Potion of the Jade Serpent")
 			end
 		end
 	end,
@@ -596,8 +596,11 @@ affliction.rot = {
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
-				_A.SpellStopCasting()
-				return lowest:cast("Drain Soul", true)
+				if player:isCastingAny() then
+					_A.SpellStopCasting()
+					else
+					return lowest:cast("Drain Soul", true)
+				end
 			end
 		end
 	end,
@@ -619,8 +622,8 @@ affliction.rot = {
 			if #temptable>=2 then
 			end
 			return temptable[1] and temptable[1].obj:Cast(86121)
-		end
-	end,
+			end
+		end,
 	
 	exhale = function() -- not sure about the best solution yet
 		local temptable = {}
@@ -668,6 +671,7 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	--stuff
 	affliction.rot.Buffbuff()
+	affliction.rot.items_intpot()
 	affliction.rot.petres()
 	affliction.rot.petres_supremacy()
 	affliction.rot.items_healthstone()
@@ -685,10 +689,10 @@ local inCombat = function()
 	affliction.rot.bloodhorror()
 	-- affliction.rot.snare_curse()
 	--shift
-	if modifier_shift() then
-	affliction.rot.drainsoul()
-	affliction.rot.haunt()
-	affliction.rot.grasp()
+	if modifier_shift()==true then
+		affliction.rot.drainsoul()
+		affliction.rot.haunt()
+		affliction.rot.grasp()
 	end
 	-- snapshots
 	affliction.rot.unstablesnapinstantdelayed()

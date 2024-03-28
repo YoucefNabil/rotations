@@ -16,6 +16,8 @@ end
 local function pull_location()
 	return string.lower(select(2, GetInstanceInfo()))
 end
+local blacklist = {
+	}
 --
 --
 local healerspecid = {
