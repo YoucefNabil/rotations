@@ -130,3 +130,51 @@ local GUI = {
     {type = "spacer", size = 2},
 
 }
+
+	--================ canned, leaving if something goes wrong
+	-- soulswap = function() -- order by highest score first, highest duration second
+		-- local temptable = {}
+		-- if _A.enoughmana(86121) and #_A.temptabletbl>1 then
+			-- if soulswaporigin == nil then
+				-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
+					-- if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+						-- temptable[#temptable+1] = {
+							-- obj = Obj,
+							-- duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0
+						-- }
+					-- end
+				-- end
+			-- end
+			-- if #temptable > 1 then
+				-- table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
+			-- end
+			-- return temptable[1] and temptable[1].obj:Cast(86121)
+		-- end
+	-- end,
+	
+	-- exhale = function() -- not sure about the best solution yet
+		-- local temptable = {}
+		-- if soulswaporigin ~= nil then
+			-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				-- if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+					-- if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
+						-- temptable[#temptable+1] = {
+							-- obj = Obj,
+							-- rangedis = Obj:range(2) or 40,
+							-- isplayer = Obj.isplayer and 1 or 0,
+							-- health = Obj:HealthActual() or 0,
+							-- duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
+						-- }
+					-- end
+				-- end
+			-- end
+			-- if #temptable > 1 then
+				-- table.sort(temptable, function(a,b) return  (a.duration < b.duration )  -- order by duration
+					-- or (a.duration == b.duration and a.isplayer > b.isplayer ) -- if same (or no) duration, order by players first
+					-- or (a.duration == b.duration and a.isplayer == b.isplayer and a.health > b.health )  -- if same (or no) duration, and same isplayer, order by highest health
+				-- end
+				-- )
+			-- end
+			-- return temptable[1] and temptable[1].obj:Cast(86213)
+		-- end
+	-- end,

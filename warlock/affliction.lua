@@ -289,6 +289,7 @@ affliction.rot = {
 	end,
 	
 	caching= function()
+		_A.reflectcheck = false
 		_A.pull_location = pull_location()
 		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
 		-- snapshot engine
@@ -326,6 +327,9 @@ affliction.rot = {
 					}
 				end
 			end -- end of enemy filter
+			if warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range(1)<5 and Obj:BuffAny("Spell Reflection") and Obj:los() then
+				_A.reflectcheck = true
+			end
 		end -- end of iteration
 		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 		if #_A.temptabletbl>1 then
@@ -408,9 +412,10 @@ affliction.rot = {
 	--============================================
 	--============================================
 	summ_healthstone = function()
-		if _A.enoughmana(6201) then
-			if (player:ItemCount(5512) == 0 and player:ItemCooldown(5512) < 2.55 ) or (player:ItemCount(5512) < 3 and not player:combat()) then
-				if not player:moving() and not player:Iscasting("Create Healthstone") and _A.castdelay(6201, 1.5) then
+		
+		if (player:ItemCount(5512) == 0 and player:ItemCooldown(5512) < 2.55 ) or (player:ItemCount(5512) < 3 and not player:combat()) then
+			if not player:moving() and not player:Iscasting("Create Healthstone") and _A.castdelay(6201, 1.5) then
+				if _A.enoughmana(6201) then
 					player:cast("Create Healthstone")
 				end
 			end
@@ -459,14 +464,14 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy = function()
-		if player:talent("Grimoire of Supremacy") and _A.enoughmana(112866) and player:SpellCooldown(112866)<.3 and _A.castdelay(112866, 1.5) and not player:iscasting(112866)  then
+		if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112866)<.3 and _A.castdelay(112866, 1.5) and not player:iscasting(112866) and _A.enoughmana(112866)  then
 			if 
 				not _A.UnitExists("pet")
 				or _A.UnitIsDeadOrGhost("pet")
 				or 
 				not _A.HasPetUI()
 				then 
-				if (not player:buff(74434) and _A.enoughmana(74434) and player:combat()) --or player:buff("Shadow Trance") 
+				if (not player:buff(74434) and player:combat() and _A.enoughmana(74434) ) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
 				end	
 				if player:buff(74434) or not player:moving() then
@@ -514,7 +519,7 @@ affliction.rot = {
 	end,
 	
 	bloodhorror = function()
-		if player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if _A.reflectcheck == false and player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Blood Horror")
 		end
 	end,
@@ -530,6 +535,12 @@ affliction.rot = {
 			if reflectcheck == true then
 				_A.RunMacroText("/cancelaura Blood Horror")
 			end
+		end
+	end,
+	
+	bloodhorrorremovalopti = function() -- rework this
+		if _A.reflectcheck == true then
+			_A.RunMacroText("/cancelaura Blood Horror")
 		end
 	end,
 	
@@ -605,7 +616,7 @@ affliction.rot = {
 	end,
 	
 	unstablesnap = function()
-		if _A.temptabletbl[1] and _A.enoughmana(30108) and not player:buff(74434) then 
+		if _A.temptabletbl[1]  and not player:buff(74434) and _A.enoughmana(30108) then 
 			if not player:moving() and not player:Iscasting("Unstable Affliction") then
 				if _A.myscore()>_A.temptabletbl[1].unstablescore then return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
 				end
@@ -614,9 +625,9 @@ affliction.rot = {
 	end,
 	
 	haunt = function()
-		if not player:moving() and _A.enoughmana(48181) 
+		if not player:moving() 
 			and not player:isCastingAny()
-			and _A.castdelay(48181, 1.5) then
+			and _A.castdelay(48181, 1.5)  and _A.enoughmana(48181) then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and not lowest:debuff(48181) then
 				return lowest:cast("haunt")
@@ -625,8 +636,8 @@ affliction.rot = {
 	end,
 	
 	grasp = function()
-		if not player:moving() and _A.enoughmana(103103)
-			and not player:isCastingAny()  then
+		if not player:moving() 
+			and not player:isCastingAny() and _A.enoughmana(103103)  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() then
 				return lowest:cast("Malefic Grasp")
@@ -648,7 +659,7 @@ affliction.rot = {
 	end,
 	
 	soulswapopti = function()
-		if _A.enoughmana(86121) and #_A.temptabletbl>1 and soulswaporigin == nil then
+		if  #_A.temptabletbl>1 and soulswaporigin == nil and _A.enoughmana(86121) then
 			if #_A.temptabletblsoulswap > 1 then
 				table.sort( _A.temptabletblsoulswap, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
 			end
@@ -669,53 +680,6 @@ affliction.rot = {
 			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
 		end
 	end,
-	--================ canned, leaving if something goes wrong
-	-- soulswap = function() -- order by highest score first, highest duration second
-		-- local temptable = {}
-		-- if _A.enoughmana(86121) and #_A.temptabletbl>1 then
-			-- if soulswaporigin == nil then
-				-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
-					-- if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-						-- temptable[#temptable+1] = {
-							-- obj = Obj,
-							-- duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0
-						-- }
-					-- end
-				-- end
-			-- end
-			-- if #temptable > 1 then
-				-- table.sort( temptable, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
-			-- end
-			-- return temptable[1] and temptable[1].obj:Cast(86121)
-		-- end
-	-- end,
-	
-	-- exhale = function() -- not sure about the best solution yet
-		-- local temptable = {}
-		-- if soulswaporigin ~= nil then
-			-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				-- if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-					-- if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
-						-- temptable[#temptable+1] = {
-							-- obj = Obj,
-							-- rangedis = Obj:range(2) or 40,
-							-- isplayer = Obj.isplayer and 1 or 0,
-							-- health = Obj:HealthActual() or 0,
-							-- duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
-						-- }
-					-- end
-				-- end
-			-- end
-			-- if #temptable > 1 then
-				-- table.sort(temptable, function(a,b) return  (a.duration < b.duration )  -- order by duration
-					-- or (a.duration == b.duration and a.isplayer > b.isplayer ) -- if same (or no) duration, order by players first
-					-- or (a.duration == b.duration and a.isplayer == b.isplayer and a.health > b.health )  -- if same (or no) duration, and same isplayer, order by highest health
-				-- end
-				-- )
-			-- end
-			-- return temptable[1] and temptable[1].obj:Cast(86213)
-		-- end
-	-- end,
 }
 ---========================
 ---========================
@@ -755,7 +719,8 @@ local inCombat = function()
 	affliction.rot.MortalCoil()
 	affliction.rot.twilightward()
 	--utility
-	affliction.rot.bloodhorrorremoval()
+	-- affliction.rot.bloodhorrorremoval()
+	affliction.rot.bloodhorrorremovalopti()
 	affliction.rot.bloodhorror()
 	-- affliction.rot.snare_curse()
 	--shift
