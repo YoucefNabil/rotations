@@ -35,6 +35,8 @@ _A.hooksecurefunc("UseAction", function(...)
 		-- TEST STUFF
 		-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
 		-- TEST STUFF
+		local target = Object("target")
+		if target and target:exists() then print(target:creatureType()) end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 			_A.Interface:toggleToggle("mastertoggle", false)
 			_A.print("OFF")
@@ -558,447 +560,447 @@ local function castsecond(unit)
 	local givetime = GetTime()
 	local tempvar = select(6, UnitCastingInfo(unit))
 	local timetimetime15687
-	if unit == nil
-		then 
-		unit = "target"
-	end
-	if UnitCastingInfo(unit)~=nil
-		then timetimetime15687 = abs(givetime - (tempvar/1000)) 
-	end
-	return timetimetime15687 or 999
+if unit == nil
+then 
+unit = "target"
+end
+if UnitCastingInfo(unit)~=nil
+then timetimetime15687 = abs(givetime - (tempvar/1000)) 
+end
+return timetimetime15687 or 999
 end
 
 _A.DSL:Register('castsecond', function(unit)
-    return castsecond(unit)
+return castsecond(unit)
 end)
 
 
 local function chanpercent(unit)
-	local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
-	local givetime = GetTime()
-	if unit == nil
-		then 
-		unit = "target"
-	end	
-	if UnitChannelInfo(unit)~=nil
-		then local maxcasttime = abs(tempvar1-tempvar2)/1000
-		local remainingcasttimeinsec = abs(givetime - (tempvar2/1000))
-		local percentageofthis = (remainingcasttimeinsec * 100)/maxcasttime
-		return percentageofthis
-	end
-	return 999
+local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
+local givetime = GetTime()
+if unit == nil
+then 
+unit = "target"
+end	
+if UnitChannelInfo(unit)~=nil
+then local maxcasttime = abs(tempvar1-tempvar2)/1000
+local remainingcasttimeinsec = abs(givetime - (tempvar2/1000))
+local percentageofthis = (remainingcasttimeinsec * 100)/maxcasttime
+return percentageofthis
+end
+return 999
 end
 
 _A.DSL:Register('chanpercent', function(unit)
-    return chanpercent(unit)
+return chanpercent(unit)
 end)
 
 local function dispellablestuff(unit)
-	for i = 1, 40 do
-		if 	(select(5,UnitDebuff(unit,i)))=="Magic" or (select(5,UnitDebuff(unit,i)))=="Poison" or (select(5,UnitDebuff(unit,i)))=="Disease" then
-			return true
-		end
-	end
-	return false
+for i = 1, 40 do
+if 	(select(5,UnitDebuff(unit,i)))=="Magic" or (select(5,UnitDebuff(unit,i)))=="Poison" or (select(5,UnitDebuff(unit,i)))=="Disease" then
+return true
+end
+end
+return false
 end
 
 _A.DSL:Register('dispellablefr', function(unit)
-    return dispellablestuff(unit)
+return dispellablestuff(unit)
 end)
 
 _A.DSL:Register('unitisimmobile', function()
-    return GetUnitSpeed(unit)==0 
+return GetUnitSpeed(unit)==0 
 end)
 
 function _A.isthishuman(unit)
-	if _A.UnitIsPlayer(unit)==1
-		then return true
-	end
-	return false
+if _A.UnitIsPlayer(unit)==1
+then return true
+end
+return false
 end
 
 immunebuffs = {
-	"Deterrence",
-	"Hand of Protection",
-	"Dematerialize",
-	-- "Smoke Bomb",
-	"Cloak of Shadows",
-	"Ice Block",
-	"Divine Shield"
+"Deterrence",
+"Hand of Protection",
+"Dematerialize",
+-- "Smoke Bomb",
+"Cloak of Shadows",
+"Ice Block",
+"Divine Shield"
 }
 immunedebuffs = {
-	"Cyclone"
-	-- "Smoke Bomb"
+"Cyclone"
+-- "Smoke Bomb"
 }
 
 healimmunebuffs = {
 }
 healimmunedebuffs = {
-	"Cyclone"
+"Cyclone"
 }
 
 function _A.notimmune(unit) -- needs to be object
-	if unit then 
-		if unit:immune("all") then return false end
-	end
-	for _,v in ipairs(immunebuffs) do
-		if unit:BuffAny(v) then return false end
-	end
-	for _,v in ipairs(immunedebuffs) do
-		if unit:DebuffAny(v) then return false end
-	end
-	return true
+if unit then 
+if unit:immune("all") then return false end
+end
+for _,v in ipairs(immunebuffs) do
+if unit:BuffAny(v) then return false end
+end
+for _,v in ipairs(immunedebuffs) do
+if unit:DebuffAny(v) then return false end
+end
+return true
 end
 
 
 function _A.nothealimmune(unit)
-	local player = Object("player")
-	if unit then 
-		if unit:DebuffAny("Cyclone") then return false end
-	end
-	return true
+local player = Object("player")
+if unit then 
+if unit:DebuffAny("Cyclone") then return false end
+end
+return true
 end
 --
 _A.FakeUnits:Add('lowestEnemyInRange', function(num, range_target)
-	local tempTable = {}
-	local ttt = Object("target")
-	local range, target = _A.StrExplode(range_target)
-	range = tonumber(range) or 40
-	target = target or "player"
-	if ttt and  ttt:enemy() and ttt:rangefrom(target)<=range and ttt:Infront() and _A.notimmune(ttt)  and ttt:los() then
-		return ttt and ttt.guid
-	end
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:rangefrom(target)<=range and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
+local tempTable = {}
+local ttt = Object("target")
+local range, target = _A.StrExplode(range_target)
+range = tonumber(range) or 40
+target = target or "player"
+if ttt and  ttt:enemy() and ttt:rangefrom(target)<=range and ttt:Infront() and _A.notimmune(ttt)  and ttt:los() then
+return ttt and ttt.guid
+end
+for _, Obj in pairs(_A.OM:Get('Enemy')) do
+if Obj:rangefrom(target)<=range and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
+tempTable[#tempTable+1] = {
+guid = Obj.guid,
+health = Obj:health(),
+isplayer = Obj.isplayer and 1 or 0
+}
+end
+end
+if #tempTable>1 then
+table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+end
+return tempTable[num] and tempTable[num].guid
 end)
 --
 _A.FakeUnits:Add('lowestEnemyInRangeNOTAR', function(num, range_target)
-	local tempTable = {}
-	local range, target = _A.StrExplode(range_target)
-	range = tonumber(range) or 40
-	target = target or "player"
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:rangefrom(target)<=range  and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
+local tempTable = {}
+local range, target = _A.StrExplode(range_target)
+range = tonumber(range) or 40
+target = target or "player"
+for _, Obj in pairs(_A.OM:Get('Enemy')) do
+if Obj:rangefrom(target)<=range  and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
+tempTable[#tempTable+1] = {
+guid = Obj.guid,
+health = Obj:health(),
+isplayer = Obj.isplayer and 1 or 0
+}
+end
+end
+if #tempTable>1 then
+table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+end
+return tempTable[num] and tempTable[num].guid
 end)
 --
 _A.FakeUnits:Add('lowestEnemyInRangeNOTARNOFACE', function(num, range_target)
-	local tempTable = {}
-	local range, target = _A.StrExplode(range_target)
-	range = tonumber(range) or 40
-	target = target or "player"
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:rangefrom(target)<=range  and  _A.notimmune(Obj) and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
+local tempTable = {}
+local range, target = _A.StrExplode(range_target)
+range = tonumber(range) or 40
+target = target or "player"
+for _, Obj in pairs(_A.OM:Get('Enemy')) do
+if Obj:rangefrom(target)<=range  and  _A.notimmune(Obj) and Obj:los() then
+tempTable[#tempTable+1] = {
+guid = Obj.guid,
+health = Obj:health(),
+isplayer = Obj.isplayer and 1 or 0
+}
+end
+end
+if #tempTable>1 then
+table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+end
+return tempTable[num] and tempTable[num].guid
 end)
 --
 --
 --
 --
 _A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
-	local tempTable = {}
-	local target = Object("target")
-	if target and target:enemy() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
-		return target and target.guid
-	end
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and _A.notimmune(Obj) and  Obj:Infront() and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
+local tempTable = {}
+local target = Object("target")
+if target and target:enemy() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
+return target and target.guid
+end
+for _, Obj in pairs(_A.OM:Get('Enemy')) do
+if Obj:spellRange(spell) and _A.notimmune(Obj) and  Obj:Infront() and Obj:los() then
+tempTable[#tempTable+1] = {
+guid = Obj.guid,
+health = Obj:health(),
+isplayer = Obj.isplayer and 1 or 0
+}
+end
+end
+if #tempTable>1 then
+table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+end
+return tempTable[num] and tempTable[num].guid
 end)
 --
 _A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
-	local tempTable = {}
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				health = Obj:health(),
-				isplayer = Obj.isplayer and 1 or 0
-			}
-		end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-	end
-	return tempTable[num] and tempTable[num].guid
+local tempTable = {}
+for _, Obj in pairs(_A.OM:Get('Enemy')) do
+if Obj:spellRange(spell) and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
+tempTable[#tempTable+1] = {
+guid = Obj.guid,
+health = Obj:health(),
+isplayer = Obj.isplayer and 1 or 0
+}
+end
+end
+if #tempTable>1 then
+table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+end
+return tempTable[num] and tempTable[num].guid
 end)
 
 
 
 _A.FakeUnits:Add('soothingmisttarget', function()
-	for _, Obj in pairs(_A.OM:Get('Roster')) do
-		if Obj:Buff("Rejuvenation")then
-			return Obj.guid
-		end
-	end
+for _, Obj in pairs(_A.OM:Get('Roster')) do
+if Obj:Buff("Rejuvenation")then
+return Obj.guid
+end
+end
 end)
 
 _A.FakeUnits:Add('detoxtarget', function()
-	for _, Obj in pairs(_A.OM:Get('Roster')) do
-		if Obj:Range() < 40 then
-			if Obj:los() and _A.UnitCanCooperate("player",Obj.guid) then
-				if Obj.isplayer then
-					if Obj:DebuffType("Magic") or Obj:DebuffType("Poison") or Obj:DebuffType("Disease") then
-						return Obj.guid
-					end				
-				end
-			end
-		end
-	end
+for _, Obj in pairs(_A.OM:Get('Roster')) do
+if Obj:Range() < 40 then
+if Obj:los() and _A.UnitCanCooperate("player",Obj.guid) then
+if Obj.isplayer then
+if Obj:DebuffType("Magic") or Obj:DebuffType("Poison") or Obj:DebuffType("Disease") then
+return Obj.guid
+end				
+end
+end
+end
+end
 end)
 
 
 _A.DSL:Register('UnitCastID', function(t)
-	if t=="player" then
-		t = U.playerGUID
-	end
-	return _A.UnitCastID(t) -- castid, channelid, guid, pointer
+if t=="player" then
+t = U.playerGUID
+end
+return _A.UnitCastID(t) -- castid, channelid, guid, pointer
 end)
 
 
 _A.FakeUnits:Add('stuntarget', function()
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:UnitCastID() then
-			if Obj:IscastingAnySpell() then
-				if not Obj:immune("all") then
-					if Obj:range()<5 then
-						if Obj:los() then
-							return Obj.guid
-						end
-					end
-				end
-			end
-		end
-	end
+for _, Obj in pairs(_A.OM:Get('Enemy')) do
+if Obj:UnitCastID() then
+if Obj:IscastingAnySpell() then
+if not Obj:immune("all") then
+if Obj:range()<5 then
+if Obj:los() then
+return Obj.guid
+end
+end
+end
+end
+end
+end
 end)
 
 _A.FakeUnits:Add('oxwavetarget', function()
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:UnitCastID() then
-			if Obj:IscastingAnySpell() then
-				if Obj:Infront() then
-					if not Obj:immune("all") then
-						if Obj:range()<5 then
-							if Obj:los() then
-								return Obj.guid
-							end
-						end
-					end
-				end
-			end
-		end
-	end
+for _, Obj in pairs(_A.OM:Get('Enemy')) do
+if Obj:UnitCastID() then
+if Obj:IscastingAnySpell() then
+if Obj:Infront() then
+if not Obj:immune("all") then
+if Obj:range()<5 then
+if Obj:los() then
+return Obj.guid
+end
+end
+end
+end
+end
+end
+end
 end)
 
 _A.FakeUnits:Add('paralysistarget', function()
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:UnitCastID() then
-			if Obj:IscastingAnySpell() then
-				if Obj:range()<35 then
-					if Obj:infront() then
-						if not Obj:immune("all") then
-							if Obj:los() then
-								return Obj.guid
-							end
-						end
-					end
-				end
-			end
-		end
-	end
+for _, Obj in pairs(_A.OM:Get('Enemy')) do
+if Obj:UnitCastID() then
+if Obj:IscastingAnySpell() then
+if Obj:range()<35 then
+if Obj:infront() then
+if not Obj:immune("all") then
+if Obj:los() then
+return Obj.guid
+end
+end
+end
+end
+end
+end
+end
 end)	
 
 _A.FakeUnits:Add('kicktarget', function()
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:UnitCastID() then
-			if Obj:caninterrupt() then
-				if Obj:range()<4 then
-					if not Obj:immune("all") then
-						if Obj:castsecond() < 0.3 or Obj:chanpercent()<=90 then
-							if Obj:Infront() then
-								if Obj:los() then
-									return Obj.guid
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
+for _, Obj in pairs(_A.OM:Get('Enemy')) do
+if Obj:UnitCastID() then
+if Obj:caninterrupt() then
+if Obj:range()<4 then
+if not Obj:immune("all") then
+if Obj:castsecond() < 0.3 or Obj:chanpercent()<=90 then
+if Obj:Infront() then
+if Obj:los() then
+return Obj.guid
+end
+end
+end
+end
+end
+end
+end
+end
 end)					
 
 
 function _A.enemiesinrangeofspin()
-	local tempnumber = 0
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		--if Obj:los() then
-		if Obj:range()<=8 and Obj:alive() then
-			if not Obj:immune("all") then
-				tempnumber = tempnumber + 1
-			end
-		end
-		--end
-	end
-	return tempnumber
+local tempnumber = 0
+for _, Obj in pairs(_A.OM:Get('Enemy')) do
+--if Obj:los() then
+if Obj:range()<=8 and Obj:alive() then
+if not Obj:immune("all") then
+tempnumber = tempnumber + 1
+end
+end
+--end
+end
+return tempnumber
 end
 
 function _A.alliesinrangeofspin()
-	local tempnumber = 0
-	for _, Obj in pairs(_A.OM:Get('Friendly')) do
-		--if Obj:los() then
-		if Obj:range()<=8 then
-			if not Obj:immune("all") then
-				tempnumber = tempnumber + 1
-			end
-		end
-		--end
-	end
-	return tempnumber
+local tempnumber = 0
+for _, Obj in pairs(_A.OM:Get('Friendly')) do
+--if Obj:los() then
+if Obj:range()<=8 then
+if not Obj:immune("all") then
+tempnumber = tempnumber + 1
+end
+end
+--end
+end
+return tempnumber
 end
 
 _A.DSL:Register('spinnumber', function()
-	return _A.enemiesinrangeofspin()
+return _A.enemiesinrangeofspin()
 end)
 
 local function manaregen()
-	local intel3 = (select(1, GetPowerRegen()))
-	if intel3 == 0
-		or intel3 == nil
-		then return 0
-		else return intel3
-	end
+local intel3 = (select(1, GetPowerRegen()))
+if intel3 == 0
+or intel3 == nil
+then return 0
+else return intel3
+end
 end
 
 local function cdRemains(spellid)
-	local endcast, startcast = GetSpellCooldown(spellid)
-	local gettm = GetTime()
-	if startcast + (endcast - gettm) > 0 then
-		return startcast + (endcast - gettm)
-		else
-		return 0
-	end
+local endcast, startcast = GetSpellCooldown(spellid)
+local gettm = GetTime()
+if startcast + (endcast - gettm) > 0 then
+return startcast + (endcast - gettm)
+else
+return 0
+end
 end
 
 local function power(unit)
-	local intel2 = UnitPower(unit)
-	if intel2 == 0
-		or intel2 == nil
-		then return 0
-		else return intel2
-	end
-	intel2=nil
+local intel2 = UnitPower(unit)
+if intel2 == 0
+or intel2 == nil
+then return 0
+else return intel2
+end
+intel2=nil
 end
 
 _A.DSL:Register('kegcheck', function()
-	return (power("player")+(manaregen()*cdRemains(121253)))>=80
+return (power("player")+(manaregen()*cdRemains(121253)))>=80
 end)
 
 local function spellcost(spellid)
-	local intel4 = (select(4, GetSpellInfo(spellid)))
-	if intel4 == 0
-		or intel4 == nil
-		then return 0
-		else return intel4
-	end
+local intel4 = (select(4, GetSpellInfo(spellid)))
+if intel4 == 0
+or intel4 == nil
+then return 0
+else return intel4
+end
 end
 
 function _A.usablelite(spellid)
-	if spellcost(spellid)~=nil then
-		if power("player")>=spellcost(spellid)
-			then return true
-			else return false
-		end
-		else return false
-	end
+if spellcost(spellid)~=nil then
+if power("player")>=spellcost(spellid)
+then return true
+else return false
+end
+else return false
+end
 end
 
 
 _A.FakeUnits:Add('mostTargetedRosterPVP', function()
-	local targets = {}
-	local most, mostGuid = 0
-	for _, enemy in pairs(_A.OM:Get('Enemy')) do
-		if enemy then
-			if enemy.isplayer then
-				local tguid = UnitTarget(enemy.guid)
-				if tguid then
-					targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
-				end
-			end
-		end
-	end
-	for guid, count in pairs(targets) do
-		if count > most then
-			most = count
-			mostGuid = guid
-		end
-	end
-	return mostGuid
+local targets = {}
+local most, mostGuid = 0
+for _, enemy in pairs(_A.OM:Get('Enemy')) do
+if enemy then
+if enemy.isplayer then
+local tguid = UnitTarget(enemy.guid)
+if tguid then
+targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
+end
+end
+end
+end
+for guid, count in pairs(targets) do
+if count > most then
+most = count
+mostGuid = guid
+end
+end
+return mostGuid
 end)
 
 
 
 _A.FakeUnits:Add('dispellunit', function(num)
-	local tempTable = {}
-	for _, roster in pairs(_A.OM:Get('Roster')) do
-		if roster 
-			and roster.player then
-			-- and roster.player or roster:ispet() then
-			if roster:DebuffType("Magic") or roster:DebuffType("Disease") or roster:DebuffType("Poison") then
-				if _A.notimmune(roster) and roster:los() then
-					tempTable[#tempTable+1] = {
-						guid = roster.guid,
-						health = roster:Health()
-					}
-				end
-			end
-		end
-	end
-	if #tempTable > 1 then
-		table.sort(tempTable, function(a, b) return a.health < b.health end)
-	end
-	return tempTable[num] and tempTable[num].guid
+local tempTable = {}
+for _, roster in pairs(_A.OM:Get('Roster')) do
+if roster 
+and roster.player then
+-- and roster.player or roster:ispet() then
+if roster:DebuffType("Magic") or roster:DebuffType("Disease") or roster:DebuffType("Poison") then
+if _A.notimmune(roster) and roster:los() then
+tempTable[#tempTable+1] = {
+guid = roster.guid,
+health = roster:Health()
+}
+end
+end
+end
+end
+if #tempTable > 1 then
+table.sort(tempTable, function(a, b) return a.health < b.health end)
+end
+return tempTable[num] and tempTable[num].guid
 end)
 
 -- _A.FakeUnits:Add('lowestall', function(num)
@@ -1021,33 +1023,33 @@ end)
 
 local badhealdebuffs = 
 {"Parasitic Growth",
-	"Dissonance Field"
+"Dissonance Field"
 }
 _A.FakeUnits:Add('lowestall', function()
-	local lowestHP, lowestHPguid = 100
-	local location = pull_location()
-	for _, fr in pairs(_A.OM:Get('Friendly')) do
-		-- if fr.isplayer then
-		if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-			if _A.nothealimmune(fr) then
-				for _,v in ipairs(badhealdebuffs) do
-					if not fr:DebuffAny(v) then
-						local hp = fr:health()
-						if hp < lowestHP then
-							lowestHP = hp
-							lowestHPguid = fr.guid
-						end
-					end
-				end
-			end
-		end
-	end
-	return lowestHPguid
+local lowestHP, lowestHPguid = 100
+local location = pull_location()
+for _, fr in pairs(_A.OM:Get('Friendly')) do
+-- if fr.isplayer then
+if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
+if _A.nothealimmune(fr) then
+for _,v in ipairs(badhealdebuffs) do
+if not fr:DebuffAny(v) then
+local hp = fr:health()
+if hp < lowestHP then
+lowestHP = hp
+lowestHPguid = fr.guid
+end
+end
+end
+end
+end
+end
+return lowestHPguid
 end)
 
 --[[_A.FakeUnits:Add('targetingme', function()
-	for _, enemy in pairs(_A.OM:Get('Enemy')) do
-	if enemy then
+for _, enemy in pairs(_A.OM:Get('Enemy')) do
+if enemy then
 if _A.UnitIsPlayer(enemy.guid) then
 local tguid = UnitTarget(enemy.guid)
 if tguid then
