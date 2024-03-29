@@ -314,10 +314,6 @@ affliction.rot = {
 					health = Obj:HealthActual() or 0,
 					isplayer = Obj.isplayer and 1 or 0
 				}
-				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = {
-					obj = Obj,
-					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0
-				}
 				if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
 					_A.temptabletblexhale[#_A.temptabletblexhale+1] = {
 						obj = Obj,
@@ -327,6 +323,10 @@ affliction.rot = {
 						duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
 					}
 				end
+				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = {
+					obj = Obj,
+					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0
+				}
 			end -- end of enemy filter
 			if warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range(1)<5 and Obj:BuffAny("Spell Reflection") and Obj:los() then
 				_A.reflectcheck = true
@@ -469,8 +469,7 @@ affliction.rot = {
 			if 
 				not _A.UnitExists("pet")
 				or _A.UnitIsDeadOrGhost("pet")
-				or 
-				not _A.HasPetUI()
+				or not _A.HasPetUI()
 				then 
 				if (not player:buff(74434) and player:combat() and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
@@ -588,14 +587,14 @@ affliction.rot = {
 	agonysnap = function()
 		if _A.temptabletbl[1] and _A.myscore()>_A.temptabletbl[1].agonyscore and _A.enoughmana(980) 
 			then return _A.temptabletbl[1].obj:Cast("Agony")
-			end
+		end
 	end,
 	
 	unstablesnapinstantdelayed = function()
 		if _A.shards>=1 and _A.castdelay(119678,2) and _A.temptabletbl[1] and _A.myscore()> _A.temptabletbl[1].unstablescore  then
 			if not player:buff(74434) --or player:buff("Shadow Trance") 
 				then player:cast(74434) -- shadowburn
-			else
+				else
 				return  _A.temptabletbl[1].obj:Cast(119678)
 			end
 		end		
@@ -725,20 +724,20 @@ local inCombat = function()
 	affliction.rot.corruptionsnap()
 	affliction.rot.agonysnap()
 	affliction.rot.unstablesnapinstant()
-affliction.rot.unstablesnap()
--- soul swap
--- affliction.rot.soulswap()
-affliction.rot.soulswapopti()
---buff
-affliction.rot.darkintent()
---fills
-affliction.rot.lifetap()
-affliction.rot.drainsoul()
-affliction.rot.haunt()
-affliction.rot.grasp()
+	affliction.rot.unstablesnap()
+	-- soul swap
+	-- affliction.rot.soulswap()
+	affliction.rot.soulswapopti()
+	--buff
+	affliction.rot.darkintent()
+	--fills
+	affliction.rot.lifetap()
+	affliction.rot.drainsoul()
+	affliction.rot.haunt()
+	affliction.rot.grasp()
 end
 local outCombat = function()
-return inCombat()
+	return inCombat()
 end
 local spellIds_Loc = function()
 end
