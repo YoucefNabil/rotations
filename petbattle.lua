@@ -37,7 +37,7 @@ local function petinteract()
 	end
 	-- return tempTable[1] and _A.ObjectInteract(tempTable[1].guid)
 	if C_PetBattles.IsInBattle()==false then
-		print(C_PetBattles.IsInBattle())
+		-- print(C_PetBattles.IsInBattle())
 		if tempTable[1] then 
 			if tempTable[1].range<=4 then _A.ObjectInteract(tempTable[1].guid) end
 			local x,y,z = _A.ObjectPosition(tempTable[1].guid)
@@ -47,5 +47,5 @@ local function petinteract()
 end
 _A.C_Timer.NewTicker(petbattledelay, function()
 	petinteract()
-_A.SecureFunc("C_PetBattles.UseAbility(1)", 1)
+	_A.SecureFunc("C_PetBattles.UseAbility(1)", 1)
 end, false, "petbattle")
