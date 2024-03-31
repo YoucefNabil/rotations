@@ -355,11 +355,11 @@ affliction.rot = {
 	-- end,
 	
 	items_healthstone = function()
-		if player:health() <= 35 then
+		if player:health() <= 54 then
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) 
-				and (player:Buff("Dark Regeneration") or not player:talent("Dark regeneration"))
+				-- and (player:Buff("Dark Regeneration") or not player:talent("Dark regeneration"))
 				then
 				player:useitem("Healthstone")
 			end
@@ -367,10 +367,11 @@ affliction.rot = {
 	end,
 	
 	Darkregeneration = function()
-		if player:health() <= 35 then
+		if player:health() <= 55 then
 			if player:SpellCooldown("Dark Regeneration") == 0
 				then
 				player:cast("Dark Regeneration")
+				player:useitem("Healthstone")
 			end
 		end
 	end,
@@ -698,13 +699,13 @@ local inCombat = function()
 	affliction.rot.items_intpot()
 	affliction.rot.petres()
 	affliction.rot.petres_supremacy()
-	affliction.rot.items_healthstone()
 	affliction.rot.summ_healthstone()
 	--bursts
 	affliction.rot.activetrinket()
 	affliction.rot.hasteburst()
 	--HEALS
 	affliction.rot.Darkregeneration()
+	affliction.rot.items_healthstone()
 	affliction.rot.CauterizeMaster()
 	affliction.rot.MortalCoil()
 	affliction.rot.twilightward()

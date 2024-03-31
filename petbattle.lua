@@ -1,5 +1,8 @@
 local mediaPath, _A = ...
-local petbattledelay = 0.3
+local petbattledelay = 0.15
+local maxdistance = 40000
+local normaldistance = 45
+-- local defaultdistance = _A.OM.max_distance
 local function pull_location()
 	return string.lower(select(2, GetInstanceInfo()))
 end
@@ -52,7 +55,7 @@ end
 local function petinteract()
 	local tempTable = {}
 	for _, Obj in pairs(_A.OM:Get('Critters')) do
-		if Obj:CreatureType()==nil and not Obj:combat() then
+		if Obj:CreatureType()==nil and _A.UnitCanAttack("player", Obj.guid) then
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
 				range = Obj:range() or 40,
@@ -74,8 +77,13 @@ local function petinteract()
 	end
 end
 _A.C_Timer.NewTicker(petbattledelay, function()
+	-- print(_A.OM.max_distance)
 	if PB.isrunning == true then
+		if _A.OM.max_distance ~= maxdistance then _A.OM:maxDistance(maxdistance) end
 		petinteract()
 		_A.SecureFunc("C_PetBattles.UseAbility(1)", 1)
+	end
+	if PB.isrunning == false then
+		if _A.OM.max_distance ~= normaldistance then _A.OM:maxDistance(normaldistance) end
 	end
 end, false, "petbattle")
