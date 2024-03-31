@@ -612,7 +612,7 @@ affliction.rot = {
 	end,
 	
 	unstablesnap = function()
-		if _A.temptabletbl[1] and _A.myscore()>_A.temptabletbl[1].unstablescore  and not player:buff(74434) and _A.enoughmana(30108) then 
+		if _A.temptabletbl[1] and _A.myscore()>_A.temptabletbl[1].unstablescore then 
 			if not player:moving() and not player:Iscasting("Unstable Affliction") then
 				return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
 			end

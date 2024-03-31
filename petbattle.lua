@@ -32,8 +32,6 @@ local gui = {
 PB.GUI = _A.Interface:BuildGUI(gui)
 _A.Interface:AddPlugin("Pet Battle", function() PB.GUI.parent:Show() end)
 
-
-
 local function gotoPath(path)
     if not path or #path<=1 then return end
     local point = 2
@@ -79,6 +77,7 @@ end
 _A.C_Timer.NewTicker(petbattledelay, function()
 	-- print(_A.OM.max_distance)
 	if PB.isrunning == true then
+		if pull_location()~="none" then PB.isrunning = false end
 		if _A.OM.max_distance ~= maxdistance then _A.OM:maxDistance(maxdistance) end
 		petinteract()
 		_A.SecureFunc("C_PetBattles.UseAbility(1)", 1)
