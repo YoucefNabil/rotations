@@ -3,6 +3,34 @@ local petbattledelay = 0.3
 local function pull_location()
 	return string.lower(select(2, GetInstanceInfo()))
 end
+local PB = {}
+PB.isrunning = false
+function PB:your_function(_self)
+	PB.isrunning = not PB.isrunning
+	_self:SetText(PB.isrunning and "Stop" or "Start")
+	-- ...
+	-- the rest of your function
+	-- you can use PB.isrunning to find out whether you should start the cycle or stop the cycle.
+end
+local gui = {
+    key = 'Apep_PetBattle',
+    title = 'Pet Battle',
+    subtitle = '',
+    width = 100,
+    height = 120,
+    profiles = true,
+    config = {
+        { type = 'spacer' },
+        { type = "button", text = "Start", align = "center", key = "start_key", callback = function(_self) PB:your_function(_self) end},
+        { type = 'spacer' },
+	}
+}
+-- Create the GUI
+PB.GUI = _A.Interface:BuildGUI(gui)
+_A.Interface:AddPlugin("Pet Battle", function() PB.GUI.parent:Show() end)
+
+
+
 local function gotoPath(path)
     if not path or #path<=1 then return end
     local point = 2
@@ -24,7 +52,7 @@ end
 local function petinteract()
 	local tempTable = {}
 	for _, Obj in pairs(_A.OM:Get('Critters')) do
-		if Obj:CreatureType()==nil then
+		if Obj:CreatureType()==nil and not Obj:combat() then
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
 				range = Obj:range() or 40,
@@ -46,6 +74,8 @@ local function petinteract()
 	end
 end
 _A.C_Timer.NewTicker(petbattledelay, function()
-	petinteract()
-	_A.SecureFunc("C_PetBattles.UseAbility(1)", 1)
+	if PB.isrunning == true then
+		petinteract()
+		_A.SecureFunc("C_PetBattles.UseAbility(1)", 1)
+	end
 end, false, "petbattle")
