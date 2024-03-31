@@ -67,7 +67,7 @@ local function petinteract()
 	if C_PetBattles.IsInBattle()==false then
 		-- print(C_PetBattles.IsInBattle())
 		if tempTable[1] then 
-			if tempTable[1].range<=4 then _A.ObjectInteract(tempTable[1].guid) end
+			if tempTable[1].range<=10 then _A.ObjectInteract(tempTable[1].guid) end
 			local x,y,z = _A.ObjectPosition(tempTable[1].guid)
 			gotoPath(_A.CalculatePath(x,y,z))
 		end
