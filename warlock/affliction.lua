@@ -333,13 +333,6 @@ affliction.rot = {
 			end
 		end -- end of iteration
 		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
-		if #_A.temptabletbl>1 then
-			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
-				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
-				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
-			end )
-		end
 	end,
 	
 	
@@ -579,6 +572,13 @@ affliction.rot = {
 	end,
 	
 	corruptionsnap = function()
+		if #_A.temptabletbl>1 then
+			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
+				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
+				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
+				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
+			end )
+		end
 		if _A.temptabletbl[1] and _A.enoughmana(172)  then 
 			if _A.myscore()>_A.temptabletbl[1].corruptionscore then return _A.temptabletbl[1].obj:Cast("Corruption")
 			end
@@ -586,22 +586,26 @@ affliction.rot = {
 	end,
 	
 	agonysnap = function()
+		if #_A.temptabletbl>1 then
+			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
+				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
+				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
+				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
+			end )
+		end
 		if _A.temptabletbl[1] and _A.myscore()>_A.temptabletbl[1].agonyscore and _A.enoughmana(980) 
 			then return _A.temptabletbl[1].obj:Cast("Agony")
 		end
 	end,
 	
-	unstablesnapinstantdelayed = function()
-		if _A.shards>=1 and _A.castdelay(119678,2) and _A.temptabletbl[1] and _A.myscore()> _A.temptabletbl[1].unstablescore  then
-			if not player:buff(74434) --or player:buff("Shadow Trance") 
-				then player:cast(74434) -- shadowburn
-				else
-				return  _A.temptabletbl[1].obj:Cast(119678)
-			end
-		end		
-	end,
-	
 	unstablesnapinstant = function()
+		if #_A.temptabletbl>1 then
+			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
+				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
+				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
+				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
+			end )
+		end
 		if  _A.shards>=1 and _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore then 
 			if not player:buff(74434)--or player:buff("Shadow Trance")
 				then player:cast(74434) -- shadowburn
@@ -612,6 +616,13 @@ affliction.rot = {
 	end,
 	
 	unstablesnap = function()
+		if #_A.temptabletbl>1 then
+			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
+				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
+				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
+				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
+			end )
+		end
 		if _A.temptabletbl[1] and _A.myscore()>_A.temptabletbl[1].unstablescore then 
 			if not player:moving() and not player:Iscasting("Unstable Affliction") then
 				return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
@@ -721,10 +732,9 @@ local inCombat = function()
 		affliction.rot.grasp()
 	end
 	-- snapshots
-	affliction.rot.unstablesnapinstantdelayed()
+	affliction.rot.unstablesnapinstant()
 	affliction.rot.corruptionsnap()
 	affliction.rot.agonysnap()
-	affliction.rot.unstablesnapinstant()
 	affliction.rot.unstablesnap()
 	-- soul swap
 	-- affliction.rot.soulswap()
