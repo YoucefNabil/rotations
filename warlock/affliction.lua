@@ -468,7 +468,7 @@ affliction.rot = {
 				if (not player:buff(74434) and player:combat() and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
 				end	
-				if player:buff(74434) or not player:moving() then
+				if player:buff(74434) or ( not player:moving() and not player:combat() ) then
 					return player:cast(112866)
 				end
 			end
@@ -527,6 +527,7 @@ affliction.rot = {
 				end
 			end
 			if reflectcheck == true then
+				print("removing")
 				_A.RunMacroText("/cancelaura Blood Horror")
 			end
 		end
