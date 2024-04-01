@@ -535,6 +535,7 @@ affliction.rot = {
 	
 	bloodhorrorremovalopti = function() -- rework this
 		if _A.reflectcheck == true then
+			print("REMOVING REMOVING REMOVING")
 			_A.RunMacroText("/cancelaura Blood Horror")
 		end
 	end,
@@ -723,51 +724,54 @@ local inCombat = function()
 	affliction.rot.MortalCoil()
 	affliction.rot.twilightward()
 	--utility
-	-- affliction.rot.bloodhorrorremoval()
+	affliction.rot.bloodhorrorremoval()
 	affliction.rot.bloodhorrorremovalopti()
 	affliction.rot.bloodhorror()
-	-- affliction.rot.snare_curse()
+	affliction.rot.snare_curse()
 	--shift
-if modifier_shift()==true then
-affliction.rot.drainsoul()
-affliction.rot.haunt()
-affliction.rot.grasp()
-end
--- snapshots
-affliction.rot.unstablesnapinstant()
-affliction.rot.corruptionsnap()
-affliction.rot.agonysnap()
-affliction.rot.unstablesnap()
--- soul swap
--- affliction.rot.soulswap()
-affliction.rot.soulswapopti()
---buff
-affliction.rot.darkintent()
---fills
-affliction.rot.lifetap()
-affliction.rot.drainsoul()
-affliction.rot.haunt()
-affliction.rot.grasp()
+	if modifier_shift()==true then
+		affliction.rot.drainsoul()
+		affliction.rot.haunt()
+		affliction.rot.grasp()
+	end
+	-- snapshots
+	if _A.castdelay(119678, 4) then
+		affliction.rot.unstablesnapinstant()
+	end
+	affliction.rot.corruptionsnap()
+	affliction.rot.agonysnap()
+	affliction.rot.unstablesnapinstant()
+	affliction.rot.unstablesnap()
+	-- soul swap
+	-- affliction.rot.soulswap()
+	affliction.rot.soulswapopti()
+	--buff
+	affliction.rot.darkintent()
+	--fills
+	affliction.rot.lifetap()
+	affliction.rot.drainsoul()
+	affliction.rot.haunt()
+	affliction.rot.grasp()
 end
 local outCombat = function()
-return inCombat()
+	return inCombat()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
 _A.CR:Add(265, {
-name = "Youcef's Affliction",
-ic = inCombat,
-ooc = outCombat,
-use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	name = "Youcef's Affliction",
+	ic = inCombat,
+	ooc = outCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })
