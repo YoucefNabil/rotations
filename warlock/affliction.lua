@@ -465,12 +465,12 @@ affliction.rot = {
 				or _A.UnitIsDeadOrGhost("pet")
 				or not _A.HasPetUI()
 				then 
-				if (not player:buff(74434) and player:combat() and _A.shards>=1 ) --or player:buff("Shadow Trance") 
-					then player:cast(74434) -- shadowburn
-				end	
 				if player:buff(74434) or ( not player:moving() and not player:combat() ) then
 					return player:cast(112866)
 				end
+				if (not player:buff(74434) and player:combat() and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+					then player:cast(74434) -- shadowburn
+				end	
 			end
 		end
 	end,
@@ -609,11 +609,11 @@ affliction.rot = {
 			end )
 		end
 		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore then 
-			if  _A.shards>=1 and not player:buff(74434)--or player:buff("Shadow Trance")
-				then player:cast(74434) -- shadowburn
-			end
 			if player:buff(74434) then
 				return  _A.temptabletbl[1].obj:Cast(119678)
+			end
+			if  _A.shards>=1 and not player:buff(74434)--or player:buff("Shadow Trance")
+				then player:cast(74434) -- shadowburn
 			end
 		end -- improved soul swap (dots instead)
 	end,
