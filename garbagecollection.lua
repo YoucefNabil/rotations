@@ -24,8 +24,9 @@ local ClickthisPleasepvp = function()
 	if tempTable[1] then _A.ObjectInteract(tempTable[1].guid) end
 end
 _A.C_Timer.NewTicker(flagclick, function()
-	-- 
+	--local tickedat = _A.GetTime() 
 	ClickthisPleasepvp()
+	--print(tickedat)
 end, false, "flagclicking")
 
 _A.C_Timer.NewTicker(garbagedelay, function()
