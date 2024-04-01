@@ -426,8 +426,8 @@ local mw_rot = {
 				if lowest and lowest:exists() and lowest:SpellRange("Life Cocoon") then 			
 					--]]
 					if 
-						(lowest:health()<30 or (pull_location()=="pvp" and lowest:health()<40))
-						
+						-- (lowest:health()<40 or (pull_location()=="pvp" and lowest:health()<40))
+						lowest:health()<40
 						then
 						if lowest:los() then
 							return lowest:Cast("Life Cocoon")
@@ -730,7 +730,7 @@ local inCombat = function()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	mw_rot.kick_legsweep()
-	-- mw_rot.dispellplzarena()
+	mw_rot.dispellplzarena()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
 	mw_rot.burstdisarm()

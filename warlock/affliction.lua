@@ -159,7 +159,7 @@ _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, 
 		-- print(subevent.." "..idd)
 		-- end
 		--
-		if (idd==146739) or (idd==172) then
+		if (idd==146739) or (idd==172) then -- Corruption
 			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
 				corruptiontbl[guiddest]=_A.myscore() 
@@ -607,13 +607,14 @@ affliction.rot = {
 				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
 			end )
 		end
-		if  _A.shards>=1 and _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore then 
-			if not player:buff(74434)--or player:buff("Shadow Trance")
+		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore then 
+			if  _A.shards>=1 and not player:buff(74434)--or player:buff("Shadow Trance")
 				then player:cast(74434) -- shadowburn
-				else 
+			end
+			if player:buff(74434) then
 				return  _A.temptabletbl[1].obj:Cast(119678)
-			end -- improved soul swap (dots instead)
-		end		
+			end
+		end -- improved soul swap (dots instead)
 	end,
 	
 	unstablesnap = function()
@@ -727,29 +728,29 @@ local inCombat = function()
 	affliction.rot.bloodhorror()
 	-- affliction.rot.snare_curse()
 	--shift
-	if modifier_shift()==true then
-		affliction.rot.drainsoul()
-		affliction.rot.haunt()
-		affliction.rot.grasp()
-	end
-	-- snapshots
-	affliction.rot.unstablesnapinstant()
-	affliction.rot.corruptionsnap()
-	affliction.rot.agonysnap()
-	affliction.rot.unstablesnap()
-	-- soul swap
-	-- affliction.rot.soulswap()
-	affliction.rot.soulswapopti()
-	--buff
-	affliction.rot.darkintent()
-	--fills
-	affliction.rot.lifetap()
-	affliction.rot.drainsoul()
-	affliction.rot.haunt()
-	affliction.rot.grasp()
+if modifier_shift()==true then
+affliction.rot.drainsoul()
+affliction.rot.haunt()
+affliction.rot.grasp()
+end
+-- snapshots
+affliction.rot.unstablesnapinstant()
+affliction.rot.corruptionsnap()
+affliction.rot.agonysnap()
+affliction.rot.unstablesnap()
+-- soul swap
+-- affliction.rot.soulswap()
+affliction.rot.soulswapopti()
+--buff
+affliction.rot.darkintent()
+--fills
+affliction.rot.lifetap()
+affliction.rot.drainsoul()
+affliction.rot.haunt()
+affliction.rot.grasp()
 end
 local outCombat = function()
-	return inCombat()
+return inCombat()
 end
 local spellIds_Loc = function()
 end

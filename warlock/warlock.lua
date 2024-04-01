@@ -216,8 +216,6 @@ _A.DSL:Register('castsecond', function(unit)
 	return castsecond(unit)
 end)
 
-
-
 local function chanpercent(unit)
 	local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
 	local givetime = GetTime()
@@ -288,15 +286,15 @@ end
 
 function _A.someoneisuperlow()
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-	if _A.isthishuman(Obj.guid) then
-		if Obj:Health()<35 then
-			if Obj:range()<40 then
-				return true
+		if _A.isthishuman(Obj.guid) then
+			if Obj:Health()<35 then
+				if Obj:range()<40 then
+					return true
+				end
 			end
 		end
 	end
-end
-return false
+	return false
 end
 
 function _A.ceeceed(unit)
@@ -500,8 +498,8 @@ function _A.myscore()
 	local ap = GetSpellBonusDamage(6) -- shadowdamage
 	local mastery = GetCombatRating(26)
 	local crit = GetCombatRating(9)
-local haste = GetCombatRating(18)
-return (ap + mastery + crit + haste)
+	local haste = GetCombatRating(18)
+	return (ap + mastery + crit + haste)
 end
 
 -- CreatureType = {
