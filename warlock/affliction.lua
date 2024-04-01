@@ -724,7 +724,7 @@ local inCombat = function()
 	affliction.rot.MortalCoil()
 	affliction.rot.twilightward()
 	--utility
-	affliction.rot.bloodhorrorremoval()
+	-- affliction.rot.bloodhorrorremoval()
 	affliction.rot.bloodhorrorremovalopti()
 	affliction.rot.bloodhorror()
 	affliction.rot.snare_curse()
