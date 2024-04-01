@@ -735,9 +735,9 @@ local inCombat = function()
 		affliction.rot.grasp()
 	end
 	-- snapshots
-	if _A.castdelay(119678, 4) then
-		affliction.rot.unstablesnapinstant()
-	end
+	-- if _A.castdelay(119678, 10) then
+		-- affliction.rot.unstablesnapinstant()
+	-- end
 	affliction.rot.corruptionsnap()
 	affliction.rot.agonysnap()
 	affliction.rot.unstablesnapinstant()
