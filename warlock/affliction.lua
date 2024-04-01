@@ -527,7 +527,7 @@ affliction.rot = {
 				end
 			end
 			if reflectcheck == true then
-				print("removing")
+				-- print("removing")
 				_A.RunMacroText("/cancelaura Blood Horror")
 			end
 		end
@@ -535,7 +535,7 @@ affliction.rot = {
 	
 	bloodhorrorremovalopti = function() -- rework this
 		if _A.reflectcheck == true then
-			print("REMOVING REMOVING REMOVING")
+			-- print("REMOVING REMOVING REMOVING")
 			_A.RunMacroText("/cancelaura Blood Horror")
 		end
 	end,
