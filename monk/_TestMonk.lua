@@ -1025,8 +1025,8 @@ local badhealdebuffs =
 {"Parasitic Growth",
 	"Dissonance Field"
 }
-_A.FakeUnits:Add('lowestall', function()
-	local lowestHP, lowestHPguid = 100
+_A.FakeUnits:Add('lowestall', function(num, spell)
+	local lowestHP, lowestHPguid = 999999
 	local location = pull_location()
 	for _, fr in pairs(_A.OM:Get('Friendly')) do
 		-- if fr.isplayer then
@@ -1050,21 +1050,21 @@ end)
 --[[_A.FakeUnits:Add('targetingme', function()
 	for _, enemy in pairs(_A.OM:Get('Enemy')) do
 	if enemy then
-if _A.UnitIsPlayer(enemy.guid) then
-local tguid = UnitTarget(enemy.guid)
-if tguid then
-targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
-end
-end
-end
-end
-for guid, count in pairs(targets) do
-if count > most then
-most = count
-mostGuid = guid
-end
-end
-return mostGuid
+	if _A.UnitIsPlayer(enemy.guid) then
+	local tguid = UnitTarget(enemy.guid)
+	if tguid then
+	targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
+	end
+	end
+	end
+	end
+	for guid, count in pairs(targets) do
+	if count > most then
+	most = count
+	mostGuid = guid
+	end
+	end
+	return mostGuid
 end)--]]
 
 
