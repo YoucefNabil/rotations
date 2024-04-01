@@ -433,7 +433,7 @@ affliction.rot = {
 	end,
 	
 	hasteburst = function()
-		if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and player:combat()  then
+		if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) then
 			if player:buff("Call of Dominance") then
 				player:cast("Lifeblood")
 				player:cast("Dark Soul: Misery")
