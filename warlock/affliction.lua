@@ -653,7 +653,7 @@ affliction.rot = {
 	end,
 	
 	felflame = function()
-		if not player:isCastingAny() and not player:Ischannelingany() and _A.enoughmana(77799) then
+		if not player:isCastingAny() and _A.enoughmana(77799) then
 			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
 			if lowest and lowest:exists() and lowest:combat()  then
 				return lowest:cast("fel flame")
