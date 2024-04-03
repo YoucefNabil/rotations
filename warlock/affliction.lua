@@ -644,7 +644,7 @@ affliction.rot = {
 	end,
 	
 	grasp = function()
-		if not player:isCastingAny()  and not player:moving() and _A.enoughmana(103103)  then
+		if not player:isCastingAny() and not player:Ischanneling("Malefic Grasp")  and not player:moving() and _A.enoughmana(103103)  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and lowest:health()>20 then
 				return lowest:cast("Malefic Grasp", true)
