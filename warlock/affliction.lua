@@ -652,6 +652,15 @@ affliction.rot = {
 		end
 	end,
 	
+	felflame = function()
+		if not player:isCastingAny() and not player:Ischannelingany() and _A.enoughmana(77799) then
+			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
+			if lowest and lowest:exists() and lowest:combat()  then
+				return lowest:cast("fel flame")
+			end
+		end
+	end,
+	
 	drainsoul = function()
 		if not player:moving() 
 			and not player:Ischanneling("Drain Soul") 
@@ -659,8 +668,8 @@ affliction.rot = {
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
-				return lowest:cast("Drain Soul", true)
-			end
+			return lowest:cast("Drain Soul", true)
+		end
 		end
 	end,
 	
@@ -734,10 +743,11 @@ local inCombat = function()
 		affliction.rot.drainsoul()
 		affliction.rot.haunt()
 		affliction.rot.grasp()
+		affliction.rot.felflame()
 	end
 	-- snapshots
 	-- if _A.castdelay(119678, 10) then
-		-- affliction.rot.unstablesnapinstant()
+	-- affliction.rot.unstablesnapinstant()
 	-- end
 	affliction.rot.corruptionsnap()
 	affliction.rot.agonysnap()
@@ -753,6 +763,7 @@ local inCombat = function()
 	affliction.rot.drainsoul()
 	affliction.rot.haunt()
 	affliction.rot.grasp()
+	affliction.rot.felflame()
 end
 local outCombat = function()
 	return inCombat()
@@ -766,13 +777,13 @@ _A.CR:Add(265, {
 	ic = inCombat,
 	ooc = outCombat,
 	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+gui = GUI,
+gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+wow_ver = "5.4.8",
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })
