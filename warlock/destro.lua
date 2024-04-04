@@ -194,13 +194,13 @@ local exeOnLoad = function()
 	)
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeDESTRO', function(num, spell)
 		local tempTable = {}
-		local target = Object("target")
+		-- local target = Object("target")
 		local numbads = _A.numenemiesaround()
-		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
-			if (target:Debuff(80240)==false) or (numbads==1) then
-				return target and target.guid
-			end
-		end
+		-- if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
+			-- if (target:Debuff(80240)==false) or (numbads==1) then
+				-- return target and target.guid
+			-- end
+		-- end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
 				if (Obj:Debuff(80240)==false) or (numbads==1) then
@@ -224,11 +224,11 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
 				-- if (Obj:Debuff(80240)==false) or (numbads==1) then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						health = Obj:health(),
-						isplayer = Obj.isplayer and 1 or 0
-					}
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
 				-- end
 			end
 		end
@@ -255,10 +255,22 @@ destro.rot = {
 	end,
 	
 	items_healthstone = function()
-		if player:health() <= 35 then
+		if player:health() <= 54 then
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
-				and player:ItemUsable(5512) then
+				and player:ItemUsable(5512) 
+				-- and (player:Buff("Dark Regeneration") or not player:talent("Dark regeneration"))
+				then
+				player:useitem("Healthstone")
+			end
+		end
+	end,
+	
+	Darkregeneration = function()
+		if player:health() <= 55 then
+			if player:SpellCooldown("Dark Regeneration") == 0
+				then
+				player:cast("Dark Regeneration")
 				player:useitem("Healthstone")
 			end
 		end
@@ -326,6 +338,16 @@ destro.rot = {
 	--============================================
 	--============================================
 	--============================================
+	MortalCoil = function()
+		if player:health() <= 85 then
+			if player:Talent("Mortal Coil") and player:SpellCooldown("Mortal Coil")<.3  then
+				local lowest = Object("lowestEnemyInSpellRangeNOTAR(Mortal Coil)")
+				if lowest and lowest:exists() then
+					return lowest:cast("Mortal Coil")
+				end
+			end
+		end
+	end,
 	
 	petres = function()
 		if player:talent("Grimoire of Sacrifice") and not player:Buff("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 then
@@ -437,7 +459,12 @@ destro.rot = {
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTARDESTRO(Shadowburn)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
-				return lowest:cast("Shadowburn")
+				_A.SpellStopCasting()
+				_A.SpellStopCasting()
+				_A.RunMacroText("/stopcasting")
+				_A.RunMacroText("/stopcasting")
+				player:cast("Dark Soul: Instability")
+				return lowest:cast("Shadowburn", true)
 			end
 		end
 	end,
@@ -462,7 +489,7 @@ destro.rot = {
 				return lowest:cast("Conflagrate")
 			end
 		end
-	end,
+		end,
 	
 	incinerate = function()
 		if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
@@ -500,7 +527,9 @@ local inCombat = function()
 	destro.rot.petres()
 	-- HEALS AND DEFS
 	destro.rot.summ_healthstone()
+	destro.rot.Darkregeneration() -- And Dark Regen
 	destro.rot.items_healthstone() -- And Dark Regen
+	destro.rot.MortalCoil() -- And Dark Regen
 	--buff
 	destro.rot.activetrinket()
 	destro.rot.shadowburn()
