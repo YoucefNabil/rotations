@@ -229,7 +229,7 @@ local exeOnLoad = function()
 		min = tonumber(min) or 3
 		local tempTable, count, enemiesCombat = {}, {}, _A.OM:Get('EnemyCombat')
 		for _, obj in pairs(enemiesCombat) do
-			if obj:infront() and _A.attackable(obj) and _A.notimmune(obj) and ((not obj:Debuff(80240)) or (numbads==1)) and obj:los() then
+			if obj:infront() and ((not obj:Debuff(80240)) or (numbads==1)) and _A.attackable(obj) and _A.notimmune(obj)  and obj:los() then
 				count[obj.guid] = 1
 				for _, obj2 in pairs(enemiesCombat) do
 					if obj2.guid~=obj.guid and  _A.attackable(obj) and obj:rangeFrom(obj2)<=area then
@@ -249,19 +249,19 @@ local exeOnLoad = function()
 		local tempTable = {}
 		if _A.pull_location ~= "pvp" then
 			local target = Object("target")
-			if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable(target) and _A.notimmune(target) and ((not target:Debuff(80240)) or (numbads==1))  and target:los() then
+			if target and target:enemy() and target:spellRange(spell) and target:Infront() and ((not target:Debuff(80240)) or (numbads==1)) and _A.attackable(target) and _A.notimmune(target)  and target:los() then
 				return target and target.guid
 			end
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer and Obj:Infront() and _A.attackable(Obj) and  _A.notimmune(Obj) and ((not Obj:Debuff(80240)) or (numbads==1)) and Obj:los() then
+			if Obj.isplayer and Obj:Infront() and ((not Obj:Debuff(80240)) or (numbads==1)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health()
 				}
 			end
 			if next(tempTable) == nil then
-				if Obj:Infront() and _A.attackable(Obj) and  _A.notimmune(Obj) and ((not Obj:Debuff(80240)) or (numbads==1)) and Obj:los() then
+				if Obj:Infront() and ((not Obj:Debuff(80240)) or (numbads==1)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
 					tempTable[#tempTable+1] = {
 						guid = Obj.guid,
 						health = Obj:health()
@@ -663,13 +663,17 @@ local inCombat = function()
 	destro.rot.bloodhorrorremoval()
 	destro.rot.bloodhorror()
 	destro.rot.lifetap()
-	-- lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
-	-- destro.rot.brimstone()
-	-- if lowestaoe then
-	-- destro.rot.immolateaoe()
-	-- destro.rot.conflagrateaoe()
-	-- destro.rot.incinerateaoe()
-	-- end
+	if (_A.pull_location ~="pvp" 
+		and _A.pull_location ~="none"
+		) then
+		lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
+		destro.rot.brimstone()
+		if lowestaoe then
+			destro.rot.immolateaoe()
+			destro.rot.conflagrateaoe()
+			destro.rot.incinerateaoe()
+		end
+	end
 	lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 	if lowest then
 		destro.rot.immolate()
