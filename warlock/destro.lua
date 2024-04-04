@@ -472,12 +472,24 @@ destro.rot = {
 	end,
 	
 	immolateaoe = function()
-		if player:buff("Fire and Brimstone") then
-			if not player:moving() and not player:Iscasting("Immolate") then
-				if lowestaoe:exists() then
-					if lowestaoe:debuffrefreshable("Immolate") then
-						return lowestaoe:cast("Immolate")
+		if _A.pull_location ~= "pvp" then
+			if player:buff("Fire and Brimstone") then
+				if not player:moving() and not player:Iscasting("Immolate") then
+					if lowestaoe:exists() then
+						if lowestaoe:debuffrefreshable("Immolate") then
+							return lowestaoe:cast("Immolate")
+						end
 					end
+				end
+			end
+		end
+	end,
+	
+	incinerateaoe = function()
+		if player:buff("Fire and Brimstone") then
+			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
+				if lowestaoe:exists() then
+					return lowestaoe:cast("Incinerate")
 				end
 			end
 		end
@@ -496,10 +508,12 @@ destro.rot = {
 	--======================================
 	--======================================
 	immolate = function()
-		if not player:moving() and not player:Iscasting("Immolate") then
-			if lowest:exists() then
-				if lowest:debuffrefreshable("Immolate") then
+		if _A.pull_location ~= "pvp" then
+			if not player:moving() and not player:Iscasting("Immolate") then
+				if lowest:exists() then
+					if lowest:debuffrefreshable("Immolate") then
 					return lowest:cast("Immolate")
+				end
 				end
 			end
 		end
@@ -580,7 +594,7 @@ destro.rot = {
 ---========================
 ---========================
 local inCombat = function()	
-	lowestaoe = nil
+	-- lowestaoe = nil
 	player = player or Object("player")
 	if not player then return end
 	destro.rot.caching()
@@ -607,13 +621,13 @@ local inCombat = function()
 	lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
 	destro.rot.brimstone()
 	if lowestaoe then
-		-- destro.rot.immolateaoe()
+		destro.rot.immolateaoe()
 		destro.rot.conflagrateaoe()
 		destro.rot.incinerateaoe()
 	end
 	lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 	if lowest then
-		-- destro.rot.immolate()
+		destro.rot.immolate()
 		destro.rot.havoc()
 		destro.rot.conflagrate()
 		destro.rot.chaosbolt()
