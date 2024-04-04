@@ -156,6 +156,20 @@ end
 --============================================
 --============================================
 --============================================
+_A.casttimers = {} -- doesnt work with channeled spells
+_A.Listener:Add("destrodelaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+	if guidsrc == UnitGUID("player") then
+		-- print(subevent.." "..idd)
+		if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+			_A.casttimers[idd] = _A.GetTime()
+		end
+	end
+end)
+function _A.castdelay(idd, delay)
+	if delay == nil then return true end
+	if _A.casttimers[idd]==nil then return true end
+	return (_A.GetTime() - _A.casttimers[idd])>=delay
+end
 --============================================
 --============================================
 --============================================
@@ -213,7 +227,7 @@ local exeOnLoad = function()
 				if (not obj:Debuff(80240)) or (numbads==1) then
 					count[obj.guid] = 1
 					for _, obj2 in pairs(enemiesCombat) do
-						if obj2.guid~=obj.guid and obj2:rangeFrom(obj)<=area then
+						if obj2.guid~=obj.guid and  _A.attackable(obj) and obj:rangeFrom(obj2)<=area then
 							count[obj.guid] = count[obj.guid] and count[obj.guid] + 1 or 0
 						end
 					end
@@ -222,7 +236,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.mobsNear > b.mobsNear end )
+			table.sort( tempTable, function(a,b) return a.mobsNear and b.mobsNear and a.mobsNear > b.mobsNear end )
 		end
 		return tempTable[num] and tempTable[num].mobsNear and tempTable[num].mobsNear>=min and tempTable[num].guid  
 	end
@@ -249,11 +263,11 @@ local exeOnLoad = function()
 			if next(tempTable) == nil then
 				if Obj:Infront() and _A.attackable(Obj) and  _A.notimmune(Obj) and Obj:los() then
 					if (not Obj:Debuff(80240)) or (numbads==1) then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						health = Obj:health()
-					}
-				end
+						tempTable[#tempTable+1] = {
+							guid = Obj.guid,
+							health = Obj:health()
+						}
+					end
 				end
 			end
 		end
@@ -328,10 +342,18 @@ destro.rot = {
 		end
 	end,
 	
+	twilightward = function()
+		if player:SpellCooldown("Twilight Ward")<.3 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return player:Cast("Twilight Ward")
+		end
+	end,
+	
 	summ_healthstone = function()
-		if player:ItemCount(5512) == 0 and not player:combat() then
-			if not player:moving() and not player:Iscasting("Create Healthstone") then
-				player:cast("Create Healthstone")
+		if (player:ItemCount(5512) == 0 and player:ItemCooldown(5512) < 2.55 ) or (player:ItemCount(5512) < 3 and not player:combat()) then
+			if not player:moving() and not player:Iscasting("Create Healthstone") and _A.castdelay(6201, 1.5) then
+				if _A.enoughmana(6201) then
+					player:cast("Create Healthstone")
+				end
 			end
 		end
 	end,
@@ -558,6 +580,7 @@ destro.rot = {
 ---========================
 ---========================
 local inCombat = function()	
+	lowestaoe = nil
 	player = player or Object("player")
 	if not player then return end
 	destro.rot.caching()
@@ -573,6 +596,7 @@ local inCombat = function()
 	-- HEALS AND DEFS
 	destro.rot.summ_healthstone()
 	destro.rot.Darkregeneration() -- And Dark Regen
+	destro.rot.twilightward() -- And Dark Regen
 	destro.rot.items_healthstone() -- And Dark Regen
 	destro.rot.MortalCoil() -- And Dark Regen
 	--buff
@@ -580,13 +604,14 @@ local inCombat = function()
 	destro.rot.shadowburn()
 	--utility
 	destro.rot.lifetap()
-	-- lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
-	-- if lowestaoe then
-	-- destro.rot.brimstone()
-	-- destro.rot.immolateaoe()
-	-- destro.rot.incinerateaoe()
-	-- end
-	
+	lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
+	if lowestaoe then
+		destro.rot.brimstone()
+		destro.rot.immolateaoe()
+		destro.rot.incinerateaoe()
+		else 
+		destro.rot.brimstone()
+	end
 	lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 	if lowest then
 		-- destro.rot.immolate()
@@ -615,9 +640,9 @@ _A.CR:Add(267, {
 	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
 	wow_ver = "5.4.8",
 	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })

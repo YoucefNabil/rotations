@@ -408,7 +408,6 @@ affliction.rot = {
 	--============================================
 	--============================================
 	summ_healthstone = function()
-		
 		if (player:ItemCount(5512) == 0 and player:ItemCooldown(5512) < 2.55 ) or (player:ItemCount(5512) < 3 and not player:combat()) then
 			if not player:moving() and not player:Iscasting("Create Healthstone") and _A.castdelay(6201, 1.5) then
 				if _A.enoughmana(6201) then
