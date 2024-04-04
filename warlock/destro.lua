@@ -173,7 +173,7 @@ local exeOnLoad = function()
 		threshhold = tonumber(threshhold) or 1
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-				if not Obj:Debuff(80240) or numbads==1 then
+				if (Obj:Debuff(80240)==false) or (numbads==1) then
 					tempTable[Obj.guid] = 1
 					for _, Obj2 in pairs(_A.OM:Get('Enemy')) do
 						if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
@@ -203,7 +203,7 @@ local exeOnLoad = function()
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
-				if not Obj:Debuff(80240) or numbads==1 then
+				if (Obj:Debuff(80240)==false) or (numbads==1) then
 					tempTable[#tempTable+1] = {
 						guid = Obj.guid,
 						health = Obj:health(),
@@ -223,7 +223,7 @@ local exeOnLoad = function()
 		local numbads = _A.numenemiesaround()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
-				if not Obj:Debuff(80240) or numbads==1 then
+				if (Obj:Debuff(80240)==false) or (numbads==1) then
 					tempTable[#tempTable+1] = {
 						guid = Obj.guid,
 						health = Obj:health(),
