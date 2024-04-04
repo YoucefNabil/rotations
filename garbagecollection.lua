@@ -22,12 +22,13 @@ local ClickthisPleasepvp = function()
 	if #tempTable > 1 then
 		table.sort(tempTable, function(a, b) return a.distance < b.distance end)
 	end
-	if tempTable[1] and tempTable[1].distance <= 8 then _A.ObjectInteract(tempTable[1].guid) end
+	if tempTable[1] and tempTable[1].distance <= 15 then _A.ObjectInteract(tempTable[1].guid) end
 end
 --
 local function MyTickerCallback(ticker)
 	ClickthisPleasepvp()
-	local newDuration = math.random(5,21)/10
+	-- local newDuration = math.random(5,15)/10
+	local newDuration = .1
 	local updatedDuration = ticker:UpdateTicker(newDuration)
 	-- print(newDuration)
 end
