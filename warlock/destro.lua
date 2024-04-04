@@ -197,9 +197,9 @@ local exeOnLoad = function()
 		-- local target = Object("target")
 		local numbads = _A.numenemiesaround()
 		-- if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
-			-- if (target:Debuff(80240)==false) or (numbads==1) then
-				-- return target and target.guid
-			-- end
+		-- if (target:Debuff(80240)==false) or (numbads==1) then
+		-- return target and target.guid
+		-- end
 		-- end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
@@ -459,12 +459,15 @@ destro.rot = {
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTARDESTRO(Shadowburn)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
-				_A.SpellStopCasting()
-				_A.SpellStopCasting()
-				_A.RunMacroText("/stopcasting")
-				_A.RunMacroText("/stopcasting")
+				if player:iscasting() then
+					_A.SpellStopCasting()
+					_A.SpellStopCasting()
+					_A.RunMacroText("/stopcasting")
+					_A.RunMacroText("/stopcasting")
+				end
 				player:cast("Dark Soul: Instability")
-				return lowest:cast("Shadowburn", true)
+				lowest:cast("Shadowburn", true)
+				return true
 			end
 		end
 	end,
@@ -477,8 +480,8 @@ destro.rot = {
 				local lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 				if lowest and lowest:exists() then
 					return lowest:cast("Chaos Bolt")
+					end
 				end
-			end
 		end
 	end,
 	
@@ -489,7 +492,7 @@ destro.rot = {
 				return lowest:cast("Conflagrate")
 			end
 		end
-		end,
+	end,
 	
 	incinerate = function()
 		if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
@@ -520,7 +523,7 @@ local inCombat = function()
 	destro.rot.caching()
 	if _A.buttondelayfunc()  then return end
 	if player:lostcontrol()  then return end 
-	if player:isCastingAny() then return end
+	-- if player:isCastingAny() then return end
 	if player:Mounted() then return end
 	--
 	destro.rot.Buffbuff()
