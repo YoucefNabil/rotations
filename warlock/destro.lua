@@ -458,7 +458,7 @@ destro.rot = {
 	--======================================
 	--AOE
 	brimstone = function()
-		if lowestaoe:exists() then
+		if lowestaoe and lowestaoe:exists() then
 			if not player:buff("Fire and Brimstone") then
 				if _A.BurningEmbers>=1 then
 					return player:cast("Fire and Brimstone")
@@ -483,11 +483,11 @@ destro.rot = {
 		end
 	end,
 	
-	incinerateaoe = function()
+	conflagrateaoe = function()
 		if player:buff("Fire and Brimstone") then
-			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
+			if player:SpellCharges("Conflagrate") >= 1 then
 				if lowestaoe:exists() then
-					return lowestaoe:cast("incinerate")
+					return lowestaoe:cast("Conflagrate")
 				end
 			end
 		end
@@ -605,12 +605,11 @@ local inCombat = function()
 	--utility
 	destro.rot.lifetap()
 	lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
+	destro.rot.brimstone()
 	if lowestaoe then
-		destro.rot.brimstone()
-		destro.rot.immolateaoe()
+		-- destro.rot.immolateaoe()
+		destro.rot.conflagrateaoe()
 		destro.rot.incinerateaoe()
-		else 
-		destro.rot.brimstone()
 	end
 	lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 	if lowest then
@@ -640,9 +639,9 @@ _A.CR:Add(267, {
 	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
 	wow_ver = "5.4.8",
 	apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })
