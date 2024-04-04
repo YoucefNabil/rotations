@@ -104,6 +104,12 @@ local function pull_location()
 	local whereimi = string.lower(select(2, GetInstanceInfo()))
 	return string.lower(select(2, GetInstanceInfo()))
 end
+local function modifier_shift()
+	local modkeyb = _A.IsShiftKeyDown()
+	if modkeyb then return true
+	end
+	return false
+end
 --============================================
 --============================================
 --============================================
@@ -148,6 +154,90 @@ end
 local GUI = {
 }
 local exeOnLoad = function()
+	_A.numenemiesaround = function()
+		local num = 0
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange("Conflagrate") and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+				num = num + 1
+			end
+		end
+		return num
+	end
+	_A.FakeUnits:Add('mostgroupedenemyDESTRO', function(num, spell_range_threshhold)
+		local tempTable = {}
+		local most, mostGuid = 0
+		local numbads = _A.numenemiesaround()
+		local spell, range, threshhold = _A.StrExplode(spell_range_threshhold)
+		if not spell then return end
+		range = tonumber(range) or 10
+		threshhold = tonumber(threshhold) or 1
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+				if not Obj:Debuff(80240) or numbads==1 then
+					tempTable[Obj.guid] = 1
+					for _, Obj2 in pairs(_A.OM:Get('Enemy')) do
+						if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
+							tempTable[Obj.guid] = tempTable[Obj.guid] + 1
+						end
+					end
+				end
+			end
+		end
+		for guid, count in pairs(tempTable) do
+			if count > most then
+				most = count
+				mostGuid = guid
+			end
+		end
+		if most>=threshhold then return mostGuid end
+	end
+	)
+	_A.FakeUnits:Add('lowestEnemyInSpellRangeDESTRO', function(num, spell)
+		local tempTable = {}
+		local target = Object("target")
+		local numbads = _A.numenemiesaround()
+		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
+			if not target:Debuff("Havoc") or numbads==1 then
+				return target and target.guid
+			end
+		end
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
+				if not Obj:Debuff(80240) or numbads==1 then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						health = Obj:health(),
+						isplayer = Obj.isplayer and 1 or 0
+					}
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end
+	)
+	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTARDESTRO', function(num, spell)
+		local tempTable = {}
+		local numbads = _A.numenemiesaround()
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
+				if not Obj:Debuff(80240) or numbads==1 then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						health = Obj:health(),
+						isplayer = Obj.isplayer and 1 or 0
+					}
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end
+	)
 end
 local exeOnUnload = function()
 end
@@ -272,7 +362,7 @@ destro.rot = {
 	--======================================
 	--AOE
 	brimstone = function()
-		local lowest = Object("mostgroupedenemy(Conflagrate,10,3)")
+		local lowest = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
 		if lowest and lowest:exists() then
 			if not player:buff("Fire and Brimstone") then
 				if _A.BurningEmbers>=1 then
@@ -289,7 +379,7 @@ destro.rot = {
 	immolateaoe = function()
 		if player:buff("Fire and Brimstone") then
 			if not player:moving() and not player:Iscasting("Immolate") then
-				local lowest = Object("mostgroupedenemy(Conflagrate,10,3)")
+				local lowest = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
 				if lowest and lowest:exists() then
 					if lowest:debuffrefreshable("Immolate") then
 						return lowest:cast("Immolate")
@@ -302,7 +392,7 @@ destro.rot = {
 	incinerateaoe = function()
 		if player:buff("Fire and Brimstone") then
 			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
-				local lowest = Object("mostgroupedenemy(Conflagrate,10,3)")
+				local lowest = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
 				if lowest and lowest:exists() then
 					return lowest:cast("incinerate")
 				end
@@ -314,8 +404,8 @@ destro.rot = {
 	--======================================
 	immolate = function()
 		if not player:moving() and not player:Iscasting("Immolate") then
-			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
-			if lowest and lowest:exists() and lowest:combat()  then
+			local lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
+			if lowest and lowest:exists() then
 				if lowest:debuffrefreshable("Immolate") then
 					return lowest:cast("Immolate")
 				end
@@ -323,10 +413,20 @@ destro.rot = {
 		end
 	end,
 	
+	havoc = function()
+		local numbads = _A.numenemiesaround()
+		if player:SpellCooldown("Havoc")<=.3 and numbads>=1 then
+			local lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
+			if lowest and lowest:exists() then
+				return lowest:cast("Havoc")
+			end
+		end
+	end,
+	
 	conflagrate = function()
 		if player:SpellCharges("Conflagrate") > 1 then
-			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
-			if lowest and lowest:exists() and lowest:combat()  then
+			local lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
+			if lowest and lowest:exists() then
 				return lowest:cast("Conflagrate")
 			end
 		end
@@ -335,8 +435,8 @@ destro.rot = {
 	shadowburn = function()
 		if _A.BurningEmbers >= 1
 			then
-			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Shadowburn)")
-			if lowest and lowest:exists() and lowest:combat() and lowest:health()<=20 then
+			local lowest = Object("lowestEnemyInSpellRangeNOTARDESTRO(Shadowburn)")
+			if lowest and lowest:exists() and lowest:health()<=20 then
 				return lowest:cast("Shadowburn")
 			end
 		end
@@ -347,8 +447,8 @@ destro.rot = {
 			(_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability"))
 			then
 			if not player:moving() and not player:Iscasting("Chaos Bolt") then
-				local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
-				if lowest and lowest:exists() and lowest:combat() then
+				local lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
+				if lowest and lowest:exists() then
 					return lowest:cast("Chaos Bolt")
 				end
 			end
@@ -357,8 +457,8 @@ destro.rot = {
 	
 	conflagrateonecharge = function()
 		if player:SpellCharges("Conflagrate") == 1 then
-			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
-			if lowest and lowest:exists() and lowest:combat()  then
+			local lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
+			if lowest and lowest:exists() then
 				return lowest:cast("Conflagrate")
 			end
 		end
@@ -366,8 +466,8 @@ destro.rot = {
 	
 	incinerate = function()
 		if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
-			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
-			if lowest and lowest:exists() and lowest:combat()  then
+			local lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
+			if lowest and lowest:exists() then
 				return lowest:cast("Incinerate")
 			end
 		end
@@ -375,8 +475,8 @@ destro.rot = {
 	
 	felflame = function()
 		if player:moving() then
-			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
-			if lowest and lowest:exists() and lowest:combat()  then
+			local lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
+			if lowest and lowest:exists() then
 				return lowest:cast("fel flame")
 			end
 		end
@@ -407,10 +507,11 @@ local inCombat = function()
 	--utility
 	destro.rot.lifetap()
 	destro.rot.brimstone()
-	destro.rot.immolateaoe()
+	-- destro.rot.immolateaoe()
 	destro.rot.incinerateaoe()
 	--
-	destro.rot.immolate()
+	-- destro.rot.immolate()
+	destro.rot.havoc()
 	destro.rot.conflagrate()
 	destro.rot.chaosbolt()
 	destro.rot.conflagrateonecharge()
