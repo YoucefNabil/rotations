@@ -474,7 +474,7 @@ destro.rot = {
 	
 	havoc = function()
 		local numbads = _A.numenemiesaround()
-		if player:SpellCooldown("Havoc")<=.3 and numbads>=1 then
+		if player:SpellCooldown("Havoc")<=.3 and numbads>=2 then
 			local lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 			if lowest and lowest:exists() then
 				return lowest:cast("Havoc")
