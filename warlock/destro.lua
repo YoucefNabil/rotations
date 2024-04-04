@@ -104,6 +104,7 @@ local function pull_location()
 	local whereimi = string.lower(select(2, GetInstanceInfo()))
 	return string.lower(select(2, GetInstanceInfo()))
 end
+_A.pull_location = pull_location()
 local function modifier_shift()
 	local modkeyb = _A.IsShiftKeyDown()
 	if modkeyb then return true
@@ -113,6 +114,10 @@ end
 --============================================
 --============================================
 --============================================
+_A.Listener:Add("destro_location", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
+	_A.pull_location = pull_location()
+	print("location successfully set to ".._A.pull_location)
+end)
 --============================================
 --============================================
 _A.casttimers = {}
@@ -163,20 +168,50 @@ local exeOnLoad = function()
 		end
 		return num
 	end
+	-- _A.FakeUnits:Add('mostgroupedenemyDESTROOLD', function(num, spell_range_threshhold)
+	-- local tempTable = {}
+	-- local most, mostGuid = 0
+	-- local numbads = _A.numenemiesaround()
+	-- local spell, range, threshhold = _A.StrExplode(spell_range_threshhold)
+	-- if not spell then return end
+	-- range = tonumber(range) or 10
+	-- threshhold = tonumber(threshhold) or 1
+	-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
+	-- if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+	-- if (Obj:Debuff(80240)==false) or (numbads==1) then
+	-- tempTable[Obj.guid] = 1
+	-- for _, Obj2 in pairs(_A.OM:Get('Enemy')) do
+	-- if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
+	-- tempTable[Obj.guid] = tempTable[Obj.guid] + 1
+	-- end
+	-- end
+	-- end
+	-- end
+	-- end
+	-- for guid, count in pairs(tempTable) do
+	-- if count > most then
+	-- most = count
+	-- mostGuid = guid
+	-- end
+	-- end
+	-- if most>=threshhold then return mostGuid end
+	-- end
+	-- )
+	
 	_A.FakeUnits:Add('mostgroupedenemyDESTRO', function(num, spell_range_threshhold)
-		local tempTable = {}
+		local tempTable, enemiesCombat, numbads = {},  _A.OM:Get('EnemyCombat'), _A.numenemiesaround()
 		local most, mostGuid = 0
-		local numbads = _A.numenemiesaround()
 		local spell, range, threshhold = _A.StrExplode(spell_range_threshhold)
 		if not spell then return end
 		range = tonumber(range) or 10
 		threshhold = tonumber(threshhold) or 1
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		for _, Obj in pairs(enemiesCombat) do
 			if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-				if (Obj:Debuff(80240)==false) or (numbads==1) then
+				if (not Obj:Debuff(80240)) or (numbads==1) then
 					tempTable[Obj.guid] = 1
-					for _, Obj2 in pairs(_A.OM:Get('Enemy')) do
-						if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
+					for _, Obj2 in pairs(enemiesCombat) do
+						if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2) -- and Obj2:los() 
+							then
 							tempTable[Obj.guid] = tempTable[Obj.guid] + 1
 						end
 					end
@@ -189,21 +224,24 @@ local exeOnLoad = function()
 				mostGuid = guid
 			end
 		end
-		if most>=threshhold then return mostGuid end
+		if most and most>=threshhold then return mostGuid end
 	end
 	)
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeDESTRO', function(num, spell)
 		local tempTable = {}
-		-- local target = Object("target")
+		
 		local numbads = _A.numenemiesaround()
-		-- if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
-		-- if (target:Debuff(80240)==false) or (numbads==1) then
-		-- return target and target.guid
-		-- end
-		-- end
+		if _A.pull_location ~= "pvp" then
+			local target = Object("target")
+			if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
+				if (target:Debuff(80240)==false) or (numbads==1) then
+					return target and target.guid
+				end
+			end
+		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
-				if (Obj:Debuff(80240)==false) or (numbads==1) then
+				if (not Obj:Debuff(80240)) or (numbads==1) then
 					tempTable[#tempTable+1] = {
 						guid = Obj.guid,
 						health = Obj:health(),
@@ -225,11 +263,11 @@ local exeOnLoad = function()
 			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
 				-- if (Obj:Debuff(80240)==false) or (numbads==1) then
 				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					health = Obj:health(),
-					isplayer = Obj.isplayer and 1 or 0
-				}
-				-- end
+				guid = Obj.guid,
+				health = Obj:health(),
+				isplayer = Obj.isplayer and 1 or 0
+			}
+			-- end
 			end
 		end
 		if #tempTable>1 then
@@ -250,7 +288,6 @@ destro.rot = {
 	end,
 	
 	caching= function()
-		_A.pull_location = pull_location()
 		_A.BurningEmbers = _A.UnitPower("player", 14)
 	end,
 	
@@ -481,8 +518,8 @@ destro.rot = {
 				local lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 				if lowest and lowest:exists() then
 					return lowest:cast("Chaos Bolt")
-					end
 				end
+			end
 		end
 	end,
 	
