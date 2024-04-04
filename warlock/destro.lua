@@ -615,7 +615,7 @@ destro.rot = {
 	
 	incinerate = function()
 		if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
-			if lowest:exists() then
+			if lowest:exists() and (lowest:health()>20 or _A.BurningEmbers<1) then
 				return lowest:cast("Incinerate")
 			end
 		end
