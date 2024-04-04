@@ -5,6 +5,7 @@ local next = next
 local player
 local lowest
 local lowestaoe
+local reflectcheck = false
 local numbads = 0
 local destro = {}
 local healerspecid = {
@@ -26,6 +27,11 @@ local healerspecid = {
 	-- [62]="Mage Arcane",
 	-- [63]="Mage Fire",
 	-- [64]="Mage Frost"
+}
+local warriorspecs = {
+	[71]=true,
+	[72]=true,
+	[73]=true
 }
 local darksimulacrumspecsBGS = {
 	[265]="Lock Affli",
@@ -382,6 +388,19 @@ destro.rot = {
 		end
 	end,
 	
+	items_intpot = function()
+		if player:ItemCooldown(76093) == 0
+			and player:ItemCount(76093) > 0
+			and player:ItemUsable(76093)
+			and player:Buff("Dark Soul: Misery")
+			and player:combat()
+			then
+			if _A.pull_location=="pvp" then
+				player:useitem("Potion of the Jade Serpent")
+			end
+		end
+	end,
+	
 	items_strflask = function()
 		if not player:isCastingAny() and player:ItemCooldown(76088) == 0
 			and player:ItemCount(76088) > 0
@@ -397,7 +416,7 @@ destro.rot = {
 	--============================================
 	--============================================
 	activetrinket = function()
-		if player:buff("Surge of Dominance") then
+		if player:buff("Surge of Dominance") and player:combat() then
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -406,6 +425,15 @@ destro.rot = {
 						end
 					end
 				end
+			end
+		end
+	end,
+	
+	critburst = function()
+		if player:combat() and player:SpellCooldown("Dark Soul: Instability")==0 and not player:buff("Dark Soul: Instability") then
+			if player:buff("Call of Dominance") then
+				player:cast("Lifeblood")
+				player:cast("Dark Soul: Instability")
 			end
 		end
 	end,
@@ -485,6 +513,27 @@ destro.rot = {
 		end
 	end,
 	
+	bloodhorror = function()
+		if reflectcheck==false and player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return player:Cast("Blood Horror")
+		end
+	end,
+	
+	bloodhorrorremoval = function() -- rework this
+		reflectcheck = false
+		if player:buff("Blood Horror") then
+	 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and warriorspecs[_A.UnitSpec(Obj.guid)] and (UnitTarget(Obj.guid)==player.guid) and (Obj:range(1)<16) and Obj:BuffAny("Spell Reflection") and Obj:los() then
+					reflectcheck = true
+				end
+			end
+			if reflectcheck == true then
+				-- print("removing")
+				_A.RunMacroText("/cancelaura Blood Horror")
+			end
+		end
+	end,
+	
 	incinerateaoe = function()
 		if player:buff("Fire and Brimstone") then
 			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
@@ -545,7 +594,7 @@ destro.rot = {
 					_A.SpellStopCasting()
 					print("stop casting")
 				end
-				player:cast("Dark Soul: Instability")
+				-- player:cast("Dark Soul: Instability")
 				lowestnotar:cast("Shadowburn", true)
 				return true
 			end
@@ -615,8 +664,12 @@ local inCombat = function()
 	destro.rot.MortalCoil() -- And Dark Regen
 	--buff
 	destro.rot.activetrinket()
+	destro.rot.critburst()
 	destro.rot.shadowburn()
 	--utility
+	destro.rot.lifetap()
+	destro.rot.bloodhorrorremoval()
+	destro.rot.bloodhorror()
 	destro.rot.lifetap()
 	lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
 	destro.rot.brimstone()
