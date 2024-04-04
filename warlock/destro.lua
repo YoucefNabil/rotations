@@ -657,7 +657,7 @@ local inCombat = function()
 	--buff
 	destro.rot.activetrinket()
 	destro.rot.critburst()
-	-- destro.rot.shadowburn()
+	destro.rot.shadowburn()
 	--utility
 	destro.rot.lifetap()
 	destro.rot.bloodhorrorremoval()
@@ -673,7 +673,7 @@ local inCombat = function()
 	lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 	if lowest then
 		destro.rot.immolate()
-		-- destro.rot.havoc()
+		destro.rot.havoc()
 		destro.rot.conflagrate()
 		destro.rot.chaosbolt()
 		destro.rot.conflagrateonecharge()
