@@ -261,12 +261,12 @@ immunedebuffs = {
 function _A.notimmune(unit) -- needs to be object
 	if unit then 
 		if unit:immune("all") then return false end
-	end
-	for _,v in ipairs(immunebuffs) do
-		if unit:BuffAny(v) then return false end
-	end
-	for _,v in ipairs(immunedebuffs) do
-		if unit:DebuffAny(v) then return false end
+		for _,v in ipairs(immunebuffs) do
+			if unit:BuffAny(v) then return false end
+		end
+		for _,v in ipairs(immunedebuffs) do
+			if unit:DebuffAny(v) then return false end
+		end
 	end
 	return true
 end
@@ -286,15 +286,15 @@ end
 
 function _A.someoneisuperlow()
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if _A.isthishuman(Obj.guid) then
-			if Obj:Health()<35 then
-				if Obj:range()<40 then
-					return true
-				end
+	if _A.isthishuman(Obj.guid) then
+		if Obj:Health()<35 then
+			if Obj:range()<40 then
+				return true
 			end
 		end
 	end
-	return false
+end
+return false
 end
 
 function _A.ceeceed(unit)
@@ -375,7 +375,7 @@ _A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		return target and target.guid
 	end
 	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
+		if Obj:spellRange(spell) and Obj:Infront() and _A.notimmune(Obj) and Obj:los() then
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
 				health = Obj:health(),
