@@ -197,7 +197,7 @@ local exeOnLoad = function()
 		local target = Object("target")
 		local numbads = _A.numenemiesaround()
 		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
-			if not target:Debuff("Havoc") or numbads==1 then
+			if (target:Debuff(80240)==false) or (numbads==1) then
 				return target and target.guid
 			end
 		end
@@ -223,13 +223,13 @@ local exeOnLoad = function()
 		local numbads = _A.numenemiesaround()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
-				if (Obj:Debuff(80240)==false) or (numbads==1) then
+				-- if (Obj:Debuff(80240)==false) or (numbads==1) then
 					tempTable[#tempTable+1] = {
 						guid = Obj.guid,
 						health = Obj:health(),
 						isplayer = Obj.isplayer and 1 or 0
 					}
-				end
+				-- end
 			end
 		end
 		if #tempTable>1 then
