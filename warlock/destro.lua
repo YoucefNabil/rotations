@@ -671,13 +671,13 @@ local inCombat = function()
 	destro.rot.bloodhorrorremoval()
 	destro.rot.bloodhorror()
 	destro.rot.lifetap()
-	lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
-	destro.rot.brimstone()
-	if lowestaoe then
-		destro.rot.immolateaoe()
-		destro.rot.conflagrateaoe()
-		destro.rot.incinerateaoe()
-	end
+	-- lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
+	-- destro.rot.brimstone()
+	-- if lowestaoe then
+		-- destro.rot.immolateaoe()
+		-- destro.rot.conflagrateaoe()
+		-- destro.rot.incinerateaoe()
+	-- end
 	lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 	if lowest then
 		destro.rot.immolate()
