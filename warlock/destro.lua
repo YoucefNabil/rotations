@@ -464,6 +464,7 @@ destro.rot = {
 					_A.SpellStopCasting()
 					_A.RunMacroText("/stopcasting")
 					_A.RunMacroText("/stopcasting")
+					print("stop casting")
 				end
 				player:cast("Dark Soul: Instability")
 				lowest:cast("Shadowburn", true)
