@@ -603,12 +603,12 @@ destro.rot = {
 	end,
 	
 	chaosbolt = function()
-		if _A.BurningEmbers >= 3 or 
-			(_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability")) or
+		if -- _A.BurningEmbers >= 3 or 
+			-- (_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability")) or
 			(_A.BurningEmbers >= 1 and modifier_ctrl())
 			then
 			if not player:moving() and not player:Iscasting("Chaos Bolt") then
-				if lowest:exists() then
+				if lowest:exists() and lowest:health()>20 then
 					return lowest:cast("Chaos Bolt")
 				end
 			end
