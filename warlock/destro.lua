@@ -121,6 +121,12 @@ local function modifier_shift()
 	end
 	return false
 end
+local function modifier_ctrl()
+	local modkeyb = _A.IsControlKeyDown()
+	if modkeyb then return true
+	end
+	return false
+end
 --============================================
 --============================================
 --============================================
@@ -595,7 +601,8 @@ destro.rot = {
 	
 	chaosbolt = function()
 		if _A.BurningEmbers >= 3 or 
-			(_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability"))
+			(_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability")) or
+			(_A.BurningEmbers >= 1 and modifier_ctrl())
 			then
 			if not player:moving() and not player:Iscasting("Chaos Bolt") then
 				if lowest:exists() then
@@ -665,6 +672,7 @@ local inCombat = function()
 	destro.rot.lifetap()
 	if (_A.pull_location ~="pvp" 
 		and _A.pull_location ~="none"
+		and _A.pull_location ~="arena"
 		) then
 		lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
 		destro.rot.brimstone()
