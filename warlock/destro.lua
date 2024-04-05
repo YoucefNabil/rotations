@@ -2,6 +2,7 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local next = next 
+local C_Timer = _A.C_Timer
 local player
 local lowest
 local lowestaoe
@@ -253,12 +254,12 @@ local exeOnLoad = function()
 	)
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeDESTRO', function(num, spell)
 		local tempTable = {}
-		if _A.pull_location ~= "pvp" then
-			local target = Object("target")
-			if target and target:enemy() and target:spellRange(spell) and target:Infront() and ((not target:Debuff(80240)) or (numbads==1)) and _A.attackable(target) and _A.notimmune(target)  and target:los() then
-				return target and target.guid
-			end
-		end
+		-- if _A.pull_location ~= "pvp" then
+			-- local target = Object("target")
+			-- if target and target:enemy() and target:spellRange(spell) and target:Infront() and ((not target:Debuff(80240)) or (numbads==1)) and _A.attackable(target) and _A.notimmune(target)  and target:los() then
+				-- return target and target.guid
+			-- end
+		-- end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj.isplayer and Obj:Infront() and ((not Obj:Debuff(80240)) or (numbads==1)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -322,6 +323,12 @@ destro.rot = {
 	
 	caching= function()
 		_A.BurningEmbers = _A.UnitPower("player", 14)
+	end,
+	
+	rainoffire = function()
+		if player:Keybind("T") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return _A.CastGround("Rain of Fire", "cursor")
+		end
 	end,
 	
 	items_healthstone = function()
@@ -641,16 +648,21 @@ destro.rot = {
 ---========================
 ---========================
 ---========================
+C_Timer.NewTicker(.1, function() 
+	player = player or Object("player")
+	if not player then return end
+	if _A.UnitSpec(player.guid)==267 then
+		destro.rot.rainoffire() 
+	end
+end, false, "destroclickground")
 local inCombat = function()	
 	-- lowestaoe = nil
 	player = player or Object("player")
 	if not player then return end
 	destro.rot.caching()
 	numbads = _A.numenemiesaround()
-	-- print(numbads)
 	if _A.buttondelayfunc()  then return end
 	if player:lostcontrol()  then return end 
-	-- if player:isCastingAny() then return end
 	if player:Mounted() then return end
 	--
 	destro.rot.Buffbuff()
@@ -673,14 +685,14 @@ local inCombat = function()
 	if (_A.pull_location ~="pvp" 
 		and _A.pull_location ~="none"
 		and _A.pull_location ~="arena"
-		) then
-		lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
-		destro.rot.brimstone()
-		if lowestaoe then
-			destro.rot.immolateaoe()
-			destro.rot.conflagrateaoe()
-			destro.rot.incinerateaoe()
-		end
+	) then
+	lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
+	destro.rot.brimstone()
+	if lowestaoe then
+		destro.rot.immolateaoe()
+		-- destro.rot.conflagrateaoe()
+		destro.rot.incinerateaoe()
+	end
 	end
 	lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 	if lowest then
@@ -712,7 +724,7 @@ _A.CR:Add(267, {
 	apep_ver = "1.1",
 	-- ids = spellIds_Loc,
 	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })
