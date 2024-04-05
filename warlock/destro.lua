@@ -254,12 +254,12 @@ local exeOnLoad = function()
 	)
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeDESTRO', function(num, spell)
 		local tempTable = {}
-		-- if _A.pull_location ~= "pvp" then
-			-- local target = Object("target")
-			-- if target and target:enemy() and target:spellRange(spell) and target:Infront() and ((not target:Debuff(80240)) or (numbads==1)) and _A.attackable(target) and _A.notimmune(target)  and target:los() then
-				-- return target and target.guid
-			-- end
-		-- end
+		if _A.pull_location ~= "pvp" then
+			local target = Object("target")
+			if target and target:enemy() and target:spellRange(spell) and target:Infront() and ((not target:Debuff(80240)) or (numbads==1)) and _A.attackable(target) and _A.notimmune(target)  and target:los() then
+				return target and target.guid
+			end
+		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj.isplayer and Obj:Infront() and ((not Obj:Debuff(80240)) or (numbads==1)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -505,13 +505,11 @@ destro.rot = {
 	end,
 	
 	immolateaoe = function()
-		if _A.pull_location ~= "pvp" then
-			if player:buff("Fire and Brimstone") then
-				if not player:moving() and not player:Iscasting("Immolate") then
-					if lowestaoe:exists() then
-						if lowestaoe:debuffrefreshable("Immolate") then
-							return lowestaoe:cast("Immolate")
-						end
+		if player:buff("Fire and Brimstone") then
+			if not player:moving() and not player:Iscasting("Immolate") then
+				if lowestaoe:exists() then
+					if lowestaoe:debuffrefreshable("Immolate") then
+						return lowestaoe:cast("Immolate")
 					end
 				end
 			end
@@ -562,12 +560,10 @@ destro.rot = {
 	--======================================
 	--======================================
 	immolate = function()
-		if _A.pull_location ~= "pvp" then
-			if not player:moving() and not player:Iscasting("Immolate") then
-				if lowest:exists() then
-					if lowest:debuffrefreshable("Immolate") then
-						return lowest:cast("Immolate")
-					end
+		if not player:moving() and not player:Iscasting("Immolate") then
+			if lowest:exists() then
+				if lowest:debuffrefreshable("Immolate") then
+					return lowest:cast("Immolate")
 				end
 			end
 		end
@@ -690,13 +686,18 @@ local inCombat = function()
 	destro.rot.brimstone()
 	if lowestaoe then
 		destro.rot.immolateaoe()
-		-- destro.rot.conflagrateaoe()
+		destro.rot.conflagrateaoe()
 		destro.rot.incinerateaoe()
 	end
 	end
 	lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
 	if lowest then
+		if (_A.pull_location ~="pvp" 
+			and _A.pull_location ~="none"
+			and _A.pull_location ~="arena"
+		) then
 		destro.rot.immolate()
+		end
 		destro.rot.havoc()
 		destro.rot.conflagrate()
 		destro.rot.chaosbolt()
@@ -724,7 +725,7 @@ _A.CR:Add(267, {
 	apep_ver = "1.1",
 	-- ids = spellIds_Loc,
 	-- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })
