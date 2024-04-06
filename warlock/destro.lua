@@ -213,64 +213,6 @@ local exeOnLoad = function()
 		return tempTable[num] and tempTable[num].mobsNear and tempTable[num].mobsNear>=min and tempTable[num].guid  
 	end
 	)
-	_A.FakeUnits:Add('lowestEnemyInSpellRangeDESTRO', function(num, spell)
-		local tempTable = {}
-		if _A.pull_location ~= "pvp" then
-			local target = Object("target")
-			if target and target:enemy() and target:spellRange(spell) and target:Infront() and ((not target:Debuff(80240)) or (numbads==1)) and _A.attackable(target) and _A.notimmune(target)  and target:los() then
-				return target and target.guid
-			end
-		end
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer and Obj:Infront() and ((not Obj:Debuff(80240)) or (numbads==1)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					health = Obj:health()
-				}
-			end
-			if next(tempTable) == nil then
-				if Obj:Infront() and ((not Obj:Debuff(80240)) or (numbads==1)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						health = Obj:health()
-					}
-				end
-			end
-		end
-		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.health < b.health) end )
-		end
-		return tempTable[num] and tempTable[num].guid
-	end
-	)
-	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTARDESTRO', function(num, spell)
-		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer and Obj:Infront() and _A.attackable(Obj) and  _A.notimmune(Obj) and Obj:los() then
-				-- if (Obj:Debuff(80240)==false) or (numbads==1) then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					health = Obj:health()
-				}
-				-- end
-			end
-			if next(tempTable) == nil then
-				if Obj:Infront() and _A.attackable(Obj) and  _A.notimmune(Obj) and Obj:los() then
-					-- if (Obj:Debuff(80240)==false) or (numbads==1) then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						health = Obj:health()
-					}
-					-- end
-				end
-			end
-		end
-		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.health < b.health) end )
-		end
-		return tempTable[num] and tempTable[num].guid
-	end
-	)
 end
 local exeOnUnload = function()
 end
@@ -283,8 +225,35 @@ destro.rot = {
 	end,
 	
 	caching= function()
+		_A.targetless = {}
+		local count = {}
+		_A.target = nil
 		_A.BurningEmbers = _A.UnitPower("player", 14)
 		numbads = destro.rot.numenemiesaround()
+		local target = Object("target")
+		if target and target:enemy() and target:spellRange("Conflagrate") and target:Infront() and ((not target:Debuff(80240)) or (numbads==1)) and _A.attackable(target) and _A.notimmune(target)  and target:los() then
+			if target then _A.target = target end
+		end
+		local enemiesCombat = _A.OM:Get('Enemy')
+		for _, Obj in pairs(enemiesCombat) do
+			if Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+				count[Obj.guid].count = 1
+				_A.targetless[#_A.targetless+1] = {
+					obj = Obj,
+					havoc = ((not Obj:Debuff(80240)) or (numbads==1)) and 1 or 0,
+					isplayer = Obj.isplayer and 1 or 0,
+					health = Obj:health()
+				}
+				for _, obj2 in pairs(enemiesCombat) do
+					if obj2.guid~=Obj.guid and Obj:rangeFrom(obj2)<=10  and _A.attackable(Obj) then
+						count[Obj.guid] = count[Obj.guid] and count[Obj.guid] + 1 or 0
+					end
+				end
+			end
+		end
+		for _,v in ipairs(_A.targetless) do
+			if count[v.guid] then v.count = count[v.guid] end
+		end
 	end,
 	
 	rainoffire = function()
@@ -302,7 +271,7 @@ destro.rot = {
 				then
 				player:useitem("Healthstone")
 			end
-		end
+			end
 	end,
 	
 	numenemiesaround = function()
@@ -461,7 +430,7 @@ destro.rot = {
 	--======================================
 	--======================================
 	--======================================
-	--AOE
+	--AOE REWORK
 	brimstone = function()
 		if lowestaoe and lowestaoe:exists() then
 			if not player:buff("Fire and Brimstone") then
@@ -532,27 +501,43 @@ destro.rot = {
 	--======================================
 	--======================================
 	immolate = function()
-		if not player:moving() and not player:Iscasting("Immolate") then
-			if lowest:exists() then
-				if lowest:debuffrefreshable("Immolate") then
-					return lowest:cast("Immolate")
-				end
+		if #_A.targetless>1 then
+			table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
+				or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
+				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+			end )
+		end
+		if _A.targetless[1] then
+			if not player:moving() and not player:Iscasting("Immolate") then
+				return _A.targetless[1].obj:cast("Immolate")
 			end
 		end
 	end,
 	
 	havoc = function()
-		if player:SpellCooldown("Havoc")<=.3 and numbads>=2 then
-			if lowest:exists() then
-				return lowest:cast("Havoc")
+		if #_A.targetless>1 then
+			table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
+				or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
+				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+			end )
+		end
+		if _A.targetless[1] then
+			if player:SpellCooldown("Havoc")<=.3 and numbads>=2 then
+				return _A.targetless[1].obj:cast("Havoc")
 			end
 		end
 	end,
 	
 	conflagrate = function()
-		if player:SpellCharges("Conflagrate") > 1 then
-			if lowest:exists() then
-				return lowest:cast("Conflagrate")
+		if #_A.targetless>1 then
+			table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
+				or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
+				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+			end )
+		end
+		if _A.targetless[1] then
+			if player:SpellCooldown("Conflagrate") == 0 then
+				return _A.targetless[1].obj:cast("Conflagrate")
 			end
 		end
 	end,
@@ -560,15 +545,20 @@ destro.rot = {
 	shadowburn = function()
 		if _A.BurningEmbers >= 1
 			then
-			local lowestnotar = Object("lowestEnemyInSpellRangeNOTARDESTRO(Conflagrate)")
-			if lowestnotar and lowestnotar:exists() and lowestnotar:health()<=20 then
+			if #_A.targetless>1 then
+				table.sort( _A.targetless, function(a,b) return  -- order by havoc check
+					( a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
+					or (a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+				end )
+			end
+			if _A.targetless[1] and _A.targetless[1].health<=20 then
 				if player:isCastingAny() then
 					_A.SpellStopCasting()
 					_A.SpellStopCasting()
 					print("stop casting")
 				end
 				-- player:cast("Dark Soul: Instability")
-				lowestnotar:cast("Shadowburn", true)
+				_A.targetless[1].obj:cast("Shadowburn", true)
 				return true
 			end
 		end
@@ -579,34 +569,44 @@ destro.rot = {
 			-- (_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability")) or
 			(_A.BurningEmbers >= 1 and modifier_ctrl())
 			then
-			if not player:moving() and not player:Iscasting("Chaos Bolt") then
-				if lowest:exists() and lowest:health()>20 then
-					return lowest:cast("Chaos Bolt")
+			if #_A.targetless>1 then
+				table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
+					or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
+					or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+				end )
+			end
+			if _A.targetless[1] and _A.targetless[1].health>20 then
+				if not player:moving() and not player:Iscasting("Chaos Bolt") then
+					return _A.targetless[1].obj:cast("Chaos Bolt")
 				end
 			end
 		end
 	end,
 	
-	conflagrateonecharge = function()
-		if player:SpellCharges("Conflagrate") == 1 then
-			if lowest and lowest:exists() then
-				return lowest:cast("Conflagrate")
-			end
-		end
-	end,
-	
 	incinerate = function()
+		if #_A.targetless>1 then
+			table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
+				or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
+				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+			end )
+		end
 		if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
-			if lowest:exists() and (lowest:health()>20 or _A.BurningEmbers<1) then
-				return lowest:cast("Incinerate")
+			if _A.targetless[1] and (_A.targetless[1].health>20 or  _A.BurningEmbers<1)  then
+				return _A.targetless[1].obj:cast("Incinerate")
 			end
 		end
 	end,
 	
 	felflame = function()
+		if #_A.targetless>1 then
+			table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
+				or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
+				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+			end )
+		end
 		if player:moving() then
-			if lowest:exists() then
-				return lowest:cast("fel flame")
+			if _A.targetless[1] then
+				return _A.targetless[1].obj:cast("fel flame")
 			end
 		end
 	end,
@@ -647,33 +647,29 @@ local inCombat = function()
 	destro.rot.bloodhorrorremoval()
 	destro.rot.bloodhorror()
 	destro.rot.lifetap()
+	-- if (_A.pull_location ~="pvp" 
+	-- and _A.pull_location ~="none"
+	-- and _A.pull_location ~="arena"
+	-- ) then
+	-- lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
+	-- destro.rot.brimstone()
+	-- if lowestaoe then
+	-- destro.rot.immolateaoe()
+	-- destro.rot.conflagrateaoe()
+	-- destro.rot.incinerateaoe()
+	-- end
+	-- end
 	if (_A.pull_location ~="pvp" 
 		and _A.pull_location ~="none"
 		and _A.pull_location ~="arena"
 	) then
-	lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
-	destro.rot.brimstone()
-	if lowestaoe then
-		destro.rot.immolateaoe()
-		destro.rot.conflagrateaoe()
-		destro.rot.incinerateaoe()
+	destro.rot.immolate()
 	end
-	end
-	lowest = Object("lowestEnemyInSpellRangeDESTRO(Conflagrate)")
-	if lowest then
-		if (_A.pull_location ~="pvp" 
-			and _A.pull_location ~="none"
-			and _A.pull_location ~="arena"
-		) then
-		destro.rot.immolate()
-		end
-		destro.rot.havoc()
-		destro.rot.conflagrate()
-		destro.rot.chaosbolt()
-		destro.rot.conflagrateonecharge()
-		destro.rot.incinerate()
-		destro.rot.felflame()
-	end
+	destro.rot.havoc()
+	destro.rot.conflagrate()
+	destro.rot.chaosbolt()
+	destro.rot.incinerate()
+	destro.rot.felflame()
 	-- soul swap
 end
 local outCombat = function()

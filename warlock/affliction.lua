@@ -283,7 +283,6 @@ local usableitems= { -- item slots
 	13, --first trinket
 	14 --second trinket
 }
-_A.temptabletbl = {}
 affliction.rot = {
 	blank = function()
 	end,
