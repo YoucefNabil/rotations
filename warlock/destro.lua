@@ -6,6 +6,7 @@ local C_Timer = _A.C_Timer
 local player
 local lowest
 local lowestaoe
+local Listener = _A.Listener
 local reflectcheck = false
 local numbads = 0
 local destro = {}
@@ -131,25 +132,33 @@ end
 --============================================
 --============================================
 --============================================
-_A.Listener:Add("destro_location", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
+--============================================
+--============================================
+_A.casttimers = {} -- doesnt work with channeled spells
+local havoctable = {}
+Listener:Add("destro_cleaning", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
 	_A.pull_location = pull_location()
+	havoctable = {}
+	_A.casttimers = {}
 	-- print("location successfully set to ".._A.pull_location)
 end)
---============================================
---============================================
-_A.casttimers = {}
-_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+Listener:Add("Destro_Havoc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 	if guidsrc == UnitGUID("player") then -- only filter by me
 		-- print(subevent.." "..idd)
-		if (idd==688) then
-			if subevent == "SPELL_CAST_SUCCESS" then
-				_A.casttimers[idd] = _A.GetTime()
+		if (idd==80240) then
+			if subevent == "SPELL_CAST_SUCCESS" or subevent=="SPELL_AURA_APPLIED" then
+				-- print("havoc "..subevent)
+				havoctable[guiddest]=true
+			end
+			if subevent=="SPELL_AURA_REMOVED" 
+				then
+				havoctable[guiddest]=nil
 			end
 		end
 	end
 end)
 _A.casttbl = {}
-_A.Listener:Add("iscasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+Listener:Add("iscasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 	if guidsrc == UnitGUID("player") then -- only filter by me
 		if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED"   then
 			_A.casttbl[idd] = nil
@@ -169,8 +178,8 @@ end
 --============================================
 --============================================
 --============================================
-_A.casttimers = {} -- doesnt work with channeled spells
-_A.Listener:Add("destrodelaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+
+Listener:Add("destrodelaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 	if guidsrc == UnitGUID("player") then
 		-- print(subevent.." "..idd)
 		if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
@@ -226,7 +235,6 @@ destro.rot = {
 	
 	caching= function()
 		_A.targetless = {}
-		local count = {}
 		_A.target = nil
 		_A.BurningEmbers = _A.UnitPower("player", 14)
 		numbads = destro.rot.numenemiesaround()
@@ -234,25 +242,15 @@ destro.rot = {
 		if target and target:enemy() and target:spellRange("Conflagrate") and target:Infront() and ((not target:Debuff(80240)) or (numbads==1)) and _A.attackable(target) and _A.notimmune(target)  and target:los() then
 			if target then _A.target = target end
 		end
-		local enemiesCombat = _A.OM:Get('Enemy')
-		for _, Obj in pairs(enemiesCombat) do
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
-				count[Obj.guid] = 1
 				_A.targetless[#_A.targetless+1] = {
 					obj = Obj,
-					havoc = ((not Obj:Debuff(80240)) or (numbads==1)) and 1 or 0,
+					havoc = ((havoctable[Obj.guid]==nil) or (numbads==1)) and 1 or 0,
 					isplayer = Obj.isplayer and 1 or 0,
 					health = Obj:health()
 				}
-				for _, obj2 in pairs(enemiesCombat) do
-					if obj2.guid~=Obj.guid and Obj:rangeFrom(obj2)<=10  and _A.attackable(Obj) then
-						count[Obj.guid] = count[Obj.guid] and count[Obj.guid] + 1 or 0
-					end
-				end
 			end
-		end
-		for _,v in ipairs(_A.targetless) do
-			if count[v.guid] then v.count = count[v.guid] end
 		end
 	end,
 	
@@ -387,11 +385,15 @@ destro.rot = {
 	--============================================
 	--============================================
 	MortalCoil = function()
-		if player:health() <= 85 then
-			if player:Talent("Mortal Coil") and player:SpellCooldown("Mortal Coil")<.3  then
-				local lowest = Object("lowestEnemyInSpellRangeNOTAR(Mortal Coil)")
-				if lowest and lowest:exists() then
-					return lowest:cast("Mortal Coil")
+		if #_A.targetless>1 then
+			table.sort( _A.targetless, function(a,b) return 
+				( a.health < b.health ) -- if same score and same isplayer, order by health
+			end )
+		end
+		if _A.targetless[1] then
+			if player:health() <= 85 then
+				if player:Talent("Mortal Coil") and player:SpellCooldown("Mortal Coil")<.3  then
+					return _A.targetless[1].obj:cast("Mortal Coil")
 				end
 			end
 		end
@@ -669,31 +671,14 @@ local inCombat = function()
 	destro.rot.lifetap()
 	destro.rot.bloodhorrorremoval()
 	destro.rot.bloodhorror()
-	destro.rot.lifetap()
-	-- if (_A.pull_location ~="pvp" 
-	-- and _A.pull_location ~="none"
-	-- and _A.pull_location ~="arena"
-	-- ) then
-	-- lowestaoe = ((modifier_shift() and Object("mostgroupedenemyDESTRO(Conflagrate,10,1)")) or Object("mostgroupedenemyDESTRO(Conflagrate,10,4)"))
-	-- destro.rot.brimstone()
-	-- if lowestaoe then
-	-- destro.rot.immolateaoe()
-	-- destro.rot.conflagrateaoe()
-	-- destro.rot.incinerateaoe()
-	-- end
-	-- end
-	if (_A.pull_location ~="pvp" 
-		and _A.pull_location ~="none"
-		and _A.pull_location ~="arena"
-	) then
-	destro.rot.immolate()
-	end
+	--rotation
+	-- destro.rot.immolate()
 	destro.rot.havoc()
 	destro.rot.chaosbolt()
-	if _A.pull_location ~="pvp" then
+	-- if _A.pull_location ~="pvp" then
 	destro.rot.conflagrate_tar()
 	destro.rot.incinerate_tar()
-	end
+	-- end
 	destro.rot.conflagrate()
 	destro.rot.incinerate()
 	destro.rot.felflame()
