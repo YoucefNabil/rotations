@@ -133,7 +133,7 @@ end
 --============================================
 _A.Listener:Add("destro_location", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
 	_A.pull_location = pull_location()
-	print("location successfully set to ".._A.pull_location)
+	-- print("location successfully set to ".._A.pull_location)
 end)
 --============================================
 --============================================
@@ -271,7 +271,7 @@ destro.rot = {
 				then
 				player:useitem("Healthstone")
 			end
-			end
+		end
 	end,
 	
 	numenemiesaround = function()
@@ -542,6 +542,7 @@ destro.rot = {
 		end
 	end,
 	
+	
 	shadowburn = function()
 		if _A.BurningEmbers >= 1
 			then
@@ -590,8 +591,8 @@ destro.rot = {
 				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
 			end )
 		end
-		if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
-			if _A.targetless[1] and (_A.targetless[1].health>20 or  _A.BurningEmbers<1)  then
+		if _A.targetless[1] and (_A.targetless[1].health>20 or  _A.BurningEmbers<1)  then
+			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
 				return _A.targetless[1].obj:cast("Incinerate")
 			end
 		end
@@ -607,6 +608,28 @@ destro.rot = {
 		if player:moving() then
 			if _A.targetless[1] then
 				return _A.targetless[1].obj:cast("fel flame")
+			end
+		end
+	end,
+	
+	--==================================================================================
+	--==================================================================================
+	--==================================================================================
+	--==================================================================================
+	--==================================================================================
+	--==================================================================================
+	incinerate_tar = function()
+		if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
+			if _A.target and (_A.target:health()>20 or  _A.BurningEmbers<1)  then
+				return _A.target:cast("Incinerate")
+			end
+		end
+	end,
+	
+	conflagrate_tar = function()
+		if _A.target and (_A.target:health()>20 or  _A.BurningEmbers<1)  then
+			if player:SpellCooldown("Conflagrate") == 0 then
+				return _A.target:cast("Conflagrate")
 			end
 		end
 	end,
@@ -666,8 +689,12 @@ local inCombat = function()
 	destro.rot.immolate()
 	end
 	destro.rot.havoc()
-	destro.rot.conflagrate()
 	destro.rot.chaosbolt()
+	if _A.pull_location ~="pvp" then
+	destro.rot.conflagrate_tar()
+	destro.rot.incinerate_tar()
+	end
+	destro.rot.conflagrate()
 	destro.rot.incinerate()
 	destro.rot.felflame()
 	-- soul swap
