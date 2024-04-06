@@ -237,7 +237,7 @@ destro.rot = {
 		local enemiesCombat = _A.OM:Get('Enemy')
 		for _, Obj in pairs(enemiesCombat) do
 			if Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
-				count[Obj.guid].count = 1
+				count[Obj.guid] = 1
 				_A.targetless[#_A.targetless+1] = {
 					obj = Obj,
 					havoc = ((not Obj:Debuff(80240)) or (numbads==1)) and 1 or 0,
