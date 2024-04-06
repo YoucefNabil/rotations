@@ -1,12 +1,12 @@
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
+local Listener = _A.Listener
 -- top of the CR
 local next = next 
 local C_Timer = _A.C_Timer
 local player
 local lowest
 local lowestaoe
-local Listener = _A.Listener
 local reflectcheck = false
 local numbads = 0
 local destro = {}
