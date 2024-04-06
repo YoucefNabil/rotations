@@ -702,13 +702,15 @@ affliction.rot = {
 _A.C_Timer.NewTicker(.1, function()
 	player = player or Object("player")
 	if not player then return end
+	if _A.UnitSpec(player.guid)==265 then
 	affliction.rot.caching()
+	end
 end, false, "caching")
 ---========================
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
-	if player:Mounted() then return end
+	-- if player:Mounted() then return end
 	-- if player:lostcontrol()  then return end 
 	--delayed lifetap
 	affliction.rot.lifetap_delayed()

@@ -190,45 +190,6 @@ end
 local GUI = {
 }
 local exeOnLoad = function()
-	_A.numenemiesaround = function()
-		local num = 0
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-				num = num + 1
-			end
-		end
-		return num
-	end
-	-- _A.FakeUnits:Add('mostgroupedenemyDESTROOLD', function(num, spell_range_threshhold)
-	-- local tempTable = {}
-	-- local most, mostGuid = 0
-	-- local numbads = _A.numenemiesaround()
-	-- local spell, range, threshhold = _A.StrExplode(spell_range_threshhold)
-	-- if not spell then return end
-	-- range = tonumber(range) or 10
-	-- threshhold = tonumber(threshhold) or 1
-	-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
-	-- if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
-	-- if (Obj:Debuff(80240)==false) or (numbads==1) then
-	-- tempTable[Obj.guid] = 1
-	-- for _, Obj2 in pairs(_A.OM:Get('Enemy')) do
-	-- if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
-	-- tempTable[Obj.guid] = tempTable[Obj.guid] + 1
-	-- end
-	-- end
-	-- end
-	-- end
-	-- end
-	-- for guid, count in pairs(tempTable) do
-	-- if count > most then
-	-- most = count
-	-- mostGuid = guid
-	-- end
-	-- end
-	-- if most>=threshhold then return mostGuid end
-	-- end
-	-- )
-	
 	_A.FakeUnits:Add('mostgroupedenemyDESTRO', function(num, spell_area_min)
 		local spell, area, min = _A.StrExplode(spell_range_min)
 		if not spell then return end
@@ -323,6 +284,7 @@ destro.rot = {
 	
 	caching= function()
 		_A.BurningEmbers = _A.UnitPower("player", 14)
+		numbads = destro.rot.numenemiesaround()
 	end,
 	
 	rainoffire = function()
@@ -341,6 +303,16 @@ destro.rot = {
 				player:useitem("Healthstone")
 			end
 		end
+	end,
+	
+	numenemiesaround = function()
+		local num = 0
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+				num = num + 1
+			end
+		end
+		return num
 	end,
 	
 	Darkregeneration = function()
@@ -397,7 +369,7 @@ destro.rot = {
 		if player:ItemCooldown(76093) == 0
 			and player:ItemCount(76093) > 0
 			and player:ItemUsable(76093)
-			and player:Buff("Dark Soul: Misery")
+			and player:Buff("Dark Soul: Instability")
 			and player:combat()
 			then
 			if _A.pull_location=="pvp" then
@@ -648,6 +620,7 @@ C_Timer.NewTicker(.1, function()
 	player = player or Object("player")
 	if not player then return end
 	if _A.UnitSpec(player.guid)==267 then
+		destro.rot.caching()
 		destro.rot.rainoffire() 
 	end
 end, false, "destroclickground")
@@ -655,16 +628,12 @@ local inCombat = function()
 	-- lowestaoe = nil
 	player = player or Object("player")
 	if not player then return end
-	destro.rot.caching()
-	numbads = _A.numenemiesaround()
 	if _A.buttondelayfunc()  then return end
-	if player:lostcontrol()  then return end 
-	if player:Mounted() then return end
-	--
 	destro.rot.Buffbuff()
 	destro.rot.petres()
 	-- HEALS AND DEFS
 	destro.rot.summ_healthstone()
+	destro.rot.items_intpot()
 	destro.rot.Darkregeneration() -- And Dark Regen
 	destro.rot.twilightward() -- And Dark Regen
 	destro.rot.items_healthstone() -- And Dark Regen
