@@ -16,6 +16,22 @@ end
 local function pull_location()
 	return string.lower(select(2, GetInstanceInfo()))
 end
+local function unitDD(unit)
+	local UnitExists = UnitExists
+	local UnitGUID = UnitGUID
+	if UnitExists(unit) then
+		return tonumber((UnitGUID(unit)):sub(-13, -9), 16)
+		else return -1
+	end
+end
+local function isActive(spellID)
+	local conda, condb = IsUsableSpell(spellID);
+	if conda ~= nil then
+		return true
+		else
+		return false
+	end
+end
 local blacklist = {
 }
 --
@@ -49,8 +65,36 @@ end
 local mw_rot = {
 	
 	caching = function()
-	_A.pull_location = pull_location()
+		_A.pull_location = pull_location()
 	end,
+	
+	turtletoss = function()
+		local castName, _, _, _, castStartTime, castEndTime, _, _, castInterruptable = UnitCastingInfo("boss1");
+		local channelName, _, _, _, channelStartTime, channelEndTime, _, channelInterruptable = UnitChannelInfo("boss1");
+		if channelName ~= nil then
+			castName = channelName
+		end
+		if unitDD("boss1") == 67977 then -- tortos id
+			if castName == GetSpellInfo(133939) then -- furious stone breath
+				if unitDD("target") == 67966 then -- turtle id
+					if isActive(134031) then -- kick shell	
+						_A.RunMacroText("/click ExtraActionButton1")
+					end
+				end
+			end
+		end
+		-- if unitDD("target") == 71604 then -- puddle id
+		-- if HP("target")<100 then --
+		-- if GetShapeshiftForm()==1 then
+		-- cast(115460) -- ORB big heal, but mana drain
+		-- castonthis("target")
+		-- stoptargeting()
+		-- return true
+		-- end
+		-- end
+		-- end
+	end,
+	
 	
 	items_intflask = function()
 		if player:ItemCooldown(76085) == 0
@@ -398,7 +442,7 @@ local mw_rot = {
 	end,
 	
 	dispellplzarena = function()
-	local temptable = {}
+		local temptable = {}
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
@@ -415,8 +459,8 @@ local mw_rot = {
 						end
 					end
 				end	
+				end
 			end
-		end
 		end
 	end,
 	
@@ -727,18 +771,19 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if player:lostcontrol()  then return end 
 	if  player:isCastingAny() then return end
-	if player:Mounted() then return end
+	-- if player:Mounted() then return end
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
+	mw_rot.turtletoss()
 	mw_rot.kick_legsweep()
 	mw_rot.dispellplzarena()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
-	mw_rot.burstdisarm()
-	mw_rot.pvp_disable()
 	mw_rot.ringofpeace()
+	mw_rot.burstdisarm()
 	mw_rot.healingsphere_shift()
+	mw_rot.pvp_disable()
 	mw_rot.chi_wave()
 	mw_rot.manatea()
 	mw_rot.chibrew()
@@ -764,24 +809,24 @@ local inCombat = function()
 	mw_rot.dpsstanceswap()
 end
 local outCombat = function()
-return inCombat()
+	return inCombat()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
 _A.CR:Add(270, {
-name = "Monk Heal EFFICIENT",
-ic = inCombat,
-ooc = outCombat,
-use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	name = "Monk Heal EFFICIENT",
+	ic = inCombat,
+	ooc = outCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })

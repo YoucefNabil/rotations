@@ -507,6 +507,7 @@ unholy.rot = {
 				and not player:BuffAny("Runic Corruption") 
 				then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 				local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
+				-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 				if lowestmelee then
 					if lowestmelee:exists() then
 						if not player:Buff("Lichborne") then
@@ -598,6 +599,7 @@ unholy.rot = {
 			and not player:BuffAny("Runic Corruption")  
 			then 
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
+			-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 			if lowestmelee and lowestmelee:exists() then
 				return lowestmelee:Cast("Death Coil")
 			end
@@ -650,12 +652,9 @@ local inCombat = function()
 	player = player or Object("player")
 	if not player then return end
 	if _A.buttondelayfunc()  then return end
-	if player:lostcontrol()  then return end 
-	if _A.ceeceed(player)  then return end 
-	if  player:isCastingAny() then return end
+	-- if player:lostcontrol()  then return end 
 	unholy.rot.GrabGrab()
 	unholy.rot.GrabGrabHunter()
-	if player:Mounted() then return end
 	-- utility
 	unholy.rot.caching()
 	-- Burst and utility
