@@ -769,9 +769,7 @@ local inCombat = function()
 	if not player then return end
 	mw_rot.caching()
 	if _A.buttondelayfunc()  then return end
-	if player:lostcontrol()  then return end 
-	if  player:isCastingAny() then return end
-	-- if player:Mounted() then return end
+	if player:isChanneling("Crackling Jade Lightning") then return end
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
@@ -808,9 +806,6 @@ local inCombat = function()
 	mw_rot.dpsstance_healstance()
 	mw_rot.dpsstanceswap()
 end
-local outCombat = function()
-	return inCombat()
-end
 local spellIds_Loc = function()
 end
 local blacklist = function()
@@ -818,7 +813,7 @@ end
 _A.CR:Add(270, {
 	name = "Monk Heal EFFICIENT",
 	ic = inCombat,
-	ooc = outCombat,
+	ooc = inCombat,
 	use_lua_engine = true,
 	gui = GUI,
 	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
