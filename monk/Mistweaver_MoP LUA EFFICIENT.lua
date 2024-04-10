@@ -381,6 +381,7 @@ local mw_rot = {
 				and _A.powerpercent()<= 92
 				and player:BuffStack("Mana Tea")>=2
 				then
+				print("casting mana tea")
 				return player:Cast("Mana Tea")
 			end
 		end
@@ -452,13 +453,13 @@ local mw_rot = {
 						and not fr:DebuffAny("Unstable Affliction")
 						and (fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease")) then
 						if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or _A.pull_location == "party" or _A.pull_location == "raid"
-						or fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
-						then
-						if fr:los() then
-							return fr:Cast("Detox")
+							or fr:DebuffAny("Entangling Roots") or  fr:DebuffAny("Freezing Trap")
+							then
+							if fr:los() then
+								return fr:Cast("Detox")
+							end
 						end
-					end
-				end	
+					end	
 				end
 			end
 		end
@@ -625,7 +626,6 @@ local mw_rot = {
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
 						if lowestmelee:exists() then
-							
 							return lowestmelee:Cast("Blackout Kick")
 						end
 					end
