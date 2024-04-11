@@ -618,7 +618,7 @@ affliction.rot = {
 			if (_A.myscore() > _A.temptabletbl[1].unstablescore) then
 				if player:buff("Soulburn") then 
 					return _A.temptabletbl[1].obj:Cast("Soul Swap")
-					else return player:combat() and player:cast("Soulburn")
+					else return player:cast("Soulburn")
 				end	
 			end	
 		end	
@@ -758,7 +758,7 @@ local inCombat = function()
 	affliction.rot.drainsoul()
 	affliction.rot.haunt()
 	affliction.rot.grasp()
-	affliction.rot.felflame()
+	-- affliction.rot.felflame()
 end
 local spellIds_Loc = function()
 end
