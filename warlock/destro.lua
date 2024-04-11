@@ -641,18 +641,12 @@ destro.rot = {
 ---========================
 ---========================
 ---========================
-C_Timer.NewTicker(.1, function() 
-	player = player or Object("player")
-	if not player then return end
-	if _A.UnitSpec(player.guid)==267 then
-		destro.rot.caching()
-		destro.rot.rainoffire() 
-	end
-end, false, "destroclickground")
 local inCombat = function()	
 	-- lowestaoe = nil
 	player = player or Object("player")
 	if not player then return end
+	destro.rot.caching()
+	destro.rot.rainoffire() 
 	if _A.buttondelayfunc()  then return end
 	if player:isCastingAny() then return end
 	destro.rot.Buffbuff()
@@ -676,10 +670,10 @@ local inCombat = function()
 	-- destro.rot.immolate()
 	destro.rot.havoc()
 	destro.rot.chaosbolt()
-	if _A.pull_location ~="pvp" then
-		destro.rot.conflagrate_tar()
-		destro.rot.incinerate_tar()
-	end
+	-- if _A.pull_location ~="pvp" then
+		-- destro.rot.conflagrate_tar()
+		-- destro.rot.incinerate_tar()
+	-- end
 	destro.rot.conflagrate()
 	destro.rot.incinerate()
 	destro.rot.felflame()
