@@ -676,10 +676,10 @@ local inCombat = function()
 	-- destro.rot.immolate()
 	destro.rot.havoc()
 	destro.rot.chaosbolt()
-	-- if _A.pull_location ~="pvp" then
-	destro.rot.conflagrate_tar()
-	destro.rot.incinerate_tar()
-	-- end
+	if _A.pull_location ~="pvp" then
+		destro.rot.conflagrate_tar()
+		destro.rot.incinerate_tar()
+	end
 	destro.rot.conflagrate()
 	destro.rot.incinerate()
 	destro.rot.felflame()

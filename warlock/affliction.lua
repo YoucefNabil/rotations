@@ -2,6 +2,7 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local player
+-- _A.Banzai = true
 local affliction = {}
 local healerspecid = {
 	-- [265]="Lock Affli",
@@ -275,6 +276,13 @@ end
 local GUI = {
 }
 local exeOnLoad = function()
+	function _A.myscore()
+		local ap = GetSpellBonusDamage(6) -- shadowdamage
+		local mastery = GetCombatRating(26)
+		local crit = GetCombatRating(9)
+		local haste = GetCombatRating(18)
+		return (ap + mastery + crit + haste)
+	end
 end
 local exeOnUnload = function()
 end
@@ -469,6 +477,7 @@ affliction.rot = {
 				end
 				if (not player:buff(74434) and player:combat() and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
+					print("Pet Soulburn")
 				end	
 			end
 		end
@@ -591,7 +600,6 @@ affliction.rot = {
 			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
 				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
 				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
-				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
 			end )
 		end
 		if _A.temptabletbl[1] and _A.myscore()>_A.temptabletbl[1].agonyscore and _A.enoughmana(980) 
@@ -601,20 +609,19 @@ affliction.rot = {
 	
 	unstablesnapinstant = function()
 		if #_A.temptabletbl>1 then
-			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
-				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
-				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
+			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score )
+				or ( a.score == b.score and a.isplayer > b.isplayer )
+				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range )
 			end )
 		end
-		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore then 
-			if player:buff(74434) then
-				return  _A.temptabletbl[1].obj:Cast(119678)
-			end
-			if  _A.shards>=1 and not player:buff(74434)--or player:buff("Shadow Trance")
-				then player:cast(74434) -- shadowburn
-			end
-		end -- improved soul swap (dots instead)
+		if _A.temptabletbl[1] then 
+			if (_A.myscore() > _A.temptabletbl[1].unstablescore) then
+				if player:buff("Soulburn") then 
+					return _A.temptabletbl[1].obj:Cast("Soul Swap")
+					else return player:combat() and player:cast("Soulburn")
+				end	
+			end	
+		end	
 	end,
 	
 	unstablesnap = function()
@@ -666,8 +673,8 @@ affliction.rot = {
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
-			return lowest:cast("Drain Soul", true)
-		end
+				return lowest:cast("Drain Soul", true)
+			end
 		end
 	end,
 	
@@ -676,7 +683,9 @@ affliction.rot = {
 			if #_A.temptabletblsoulswap > 1 then
 				table.sort( _A.temptabletblsoulswap, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
 			end
-			return _A.temptabletblsoulswap[1] and _A.temptabletblsoulswap[1].obj:Cast(86121)
+			-- return _A.temptabletblsoulswap[1] and _A.temptabletblsoulswap[1].obj:Cast(86121)
+			return  _A.temptabletblsoulswap[1] and (not player:buff(74434)) and _A.temptabletblsoulswap[1].obj:Cast("Soul Swap")
+			-- return  _A.CastSpellByID(86121, _A.temptabletblsoulswap[1].obj.guid)
 		end
 	end,
 	
@@ -690,7 +699,9 @@ affliction.rot = {
 				end
 				)
 			end
-			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
+			-- return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
+			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast("Soul Swap")
+			-- return  _A.CastSpellByID(86213, _A.temptabletblexhale[1].obj.guid)
 		end
 	end,
 }
@@ -702,71 +713,57 @@ _A.C_Timer.NewTicker(.1, function()
 	player = player or Object("player")
 	if not player then return end
 	if _A.UnitSpec(player.guid)==265 then
-	affliction.rot.caching()
+		affliction.rot.caching()
 	end
 end, false, "caching")
 ---========================
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
-	-- if player:Mounted() then return end
-	-- if player:lostcontrol()  then return end 
-	--delayed lifetap
 	affliction.rot.lifetap_delayed()
-	--exhale
-	-- affliction.rot.exhale()
-	-- affliction.rot.tablesortexhale()
 	affliction.rot.exhaleopti()
 	if _A.buttondelayfunc()  then return end
-	--stuff
 	affliction.rot.Buffbuff()
 	affliction.rot.items_intpot()
 	affliction.rot.petres()
-	affliction.rot.petres_supremacy()
+	
 	affliction.rot.summ_healthstone()
-	--bursts
+	
 	affliction.rot.activetrinket()
 	affliction.rot.hasteburst()
-	--HEALS
+	
 	affliction.rot.Darkregeneration()
 	affliction.rot.items_healthstone()
 	affliction.rot.CauterizeMaster()
 	affliction.rot.MortalCoil()
 	affliction.rot.twilightward()
-	--utility
+	
 	-- affliction.rot.bloodhorrorremoval()
 	affliction.rot.bloodhorrorremovalopti()
 	affliction.rot.bloodhorror()
 	affliction.rot.snare_curse()
-	--shift
+	
 	if modifier_shift()==true then
 		affliction.rot.drainsoul()
 		affliction.rot.haunt()
 		affliction.rot.grasp()
 		affliction.rot.felflame()
 	end
-	-- snapshots
-	-- if _A.castdelay(119678, 10) then
-	-- affliction.rot.unstablesnapinstant()
-	-- end
+	
 	affliction.rot.corruptionsnap()
 	affliction.rot.agonysnap()
 	affliction.rot.unstablesnapinstant()
 	affliction.rot.unstablesnap()
-	-- soul swap
-	-- affliction.rot.soulswap()
+	
 	affliction.rot.soulswapopti()
-	--buff
+	
 	affliction.rot.darkintent()
-	--fills
+	
 	affliction.rot.lifetap()
 	affliction.rot.drainsoul()
 	affliction.rot.haunt()
 	affliction.rot.grasp()
 	affliction.rot.felflame()
-end
-local outCombat = function()
-	return inCombat()
 end
 local spellIds_Loc = function()
 end
@@ -775,15 +772,15 @@ end
 _A.CR:Add(265, {
 	name = "Youcef's Affliction",
 	ic = inCombat,
-	ooc = outCombat,
+	ooc = inCombat,
 	use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })
