@@ -362,7 +362,7 @@ local mw_rot = {
 			and player:SpellCooldown("Chi Wave")<.3 then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
-				local lowest = Object("lowestall")
+				local lowest = Object("lowestall(Chi Wave)")
 				if lowest then
 					if  lowest:exists() and lowest:SpellRange("Chi Wave")
 						then 
@@ -470,7 +470,7 @@ local mw_rot = {
 		if player:SpellCooldown("Life Cocoon")<.3 and _A.enoughmana(116849) then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
-				local lowest = Object("lowestall")
+				local lowest = Object("lowestall(Life Cocoon)")
 				if lowest and lowest:exists() and lowest:SpellRange("Life Cocoon") then 			
 					--]]
 					if 
@@ -491,7 +491,7 @@ local mw_rot = {
 			and player:Chi() < player:ChiMax() then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
-				local lowest = Object("lowestall")
+				local lowest = Object("lowestall(Surging Mist)")
 				if lowest and lowest:SpellRange("Surging Mist") then 	
 					--]]
 					
@@ -512,7 +512,7 @@ local mw_rot = {
 		if player:SpellCooldown("Renewing Mist")<.3 and _A.enoughmana(115151) then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
-				local lowest = Object("lowestall")
+				local lowest = Object("lowestall(Renewing Mist)")
 				if lowest and lowest:exists() and lowest:SpellRange("Renewing Mist") then 
 					if lowest:los() then
 						return lowest:Cast("Renewing Mist")
@@ -538,7 +538,7 @@ local mw_rot = {
 			if player:Stance() == 1 then
 				if _A.modifier_shift() then
 					if _A.enoughmana(115460) then
-						local lowest = Object("lowestall")
+						local lowest = Object("lowestall(Renewing Mist)")
 						if lowest and lowest:exists() then
 							if (lowest:Health() < 99) then
 								if lowest:Distance() < 40 then
@@ -561,7 +561,7 @@ local mw_rot = {
 				if _A.enoughmana(115460) then
 					if _A.manaengine()==true or _A.modifier_shift() then
 						--- ORBS
-						local lowest = Object("lowestall")
+						local lowest = Object("lowestall(Renewing Mist)")
 						if lowest then
 							if lowest:exists() then
 								if (lowest:Health() < 85) then
