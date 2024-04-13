@@ -1025,46 +1025,61 @@ local badhealdebuffs =
 {"Parasitic Growth",
 	"Dissonance Field"
 }
+-- _A.FakeUnits:Add('lowestall', function(num, spell)
+-- local lowestHP, lowestHPguid = 999999
+-- local location = pull_location()
+-- for _, fr in pairs(_A.OM:Get('Friendly')) do
+-- if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
+-- if _A.nothealimmune(fr) then
+-- local hp = fr:health()
+-- if hp < lowestHP then
+-- lowestHP = hp
+-- lowestHPguid = fr.guid
+-- end
+-- end
+-- end
+-- end
+-- return lowestHPguid
+-- end)
+
 _A.FakeUnits:Add('lowestall', function(num, spell)
-	local lowestHP, lowestHPguid = 999999
+	local tempTable = {}
 	local location = pull_location()
 	for _, fr in pairs(_A.OM:Get('Friendly')) do
-		-- if fr.isplayer then
 		if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-			if _A.nothealimmune(fr) then
-				for _,v in ipairs(badhealdebuffs) do
-					if not fr:DebuffAny(v) then
-						local hp = fr:health()
-						if hp < lowestHP then
-							lowestHP = hp
-							lowestHPguid = fr.guid
-						end
-					end
+			if fr:spellRange("Renewing Mist") then
+				if _A.nothealimmune(fr) and fr:los() then
+					tempTable[#tempTable+1] = {
+						HP = fr:health(),
+						guid = fr.guid
+					}
 				end
 			end
 		end
 	end
-	return lowestHPguid
+	table.sort( tempTable, function(a,b) return ( a.HP < b.HP ) end )
+	return tempTable[1] and tempTable[1].guid
 end)
+
 
 --[[_A.FakeUnits:Add('targetingme', function()
 	for _, enemy in pairs(_A.OM:Get('Enemy')) do
 	if enemy then
 	if _A.UnitIsPlayer(enemy.guid) then
-	local tguid = UnitTarget(enemy.guid)
-	if tguid then
-	targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
-	end
-	end
-	end
-	end
-	for guid, count in pairs(targets) do
-	if count > most then
-	most = count
-	mostGuid = guid
-	end
-	end
-	return mostGuid
+local tguid = UnitTarget(enemy.guid)
+if tguid then
+targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
+end
+end
+end
+end
+for guid, count in pairs(targets) do
+if count > most then
+most = count
+mostGuid = guid
+end
+end
+return mostGuid
 end)--]]
 
 

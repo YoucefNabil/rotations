@@ -362,13 +362,11 @@ local mw_rot = {
 			and player:SpellCooldown("Chi Wave")<.3 then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
-				local lowest = Object("lowestall(Chi Wave)")
+				local lowest = Object("lowestall")
 				if lowest then
 					if  lowest:exists() and lowest:SpellRange("Chi Wave")
 						then 
-						if lowest:los() then
 							return lowest:Cast("Chi Wave")
-						end
 					end
 				end
 			end
@@ -470,16 +468,14 @@ local mw_rot = {
 		if player:SpellCooldown("Life Cocoon")<.3 and _A.enoughmana(116849) then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
-				local lowest = Object("lowestall(Life Cocoon)")
+				local lowest = Object("lowestall")
 				if lowest and lowest:exists() and lowest:SpellRange("Life Cocoon") then 			
 					--]]
 					if 
 						-- (lowest:health()<40 or (pull_location()=="pvp" and lowest:health()<40))
 						lowest:health()<40
 						then
-						if lowest:los() then
 							return lowest:Cast("Life Cocoon")
-						end
 					end
 				end
 			end
@@ -491,7 +487,7 @@ local mw_rot = {
 			and player:Chi() < player:ChiMax() then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
-				local lowest = Object("lowestall(Surging Mist)")
+				local lowest = Object("lowestall")
 				if lowest and lowest:SpellRange("Surging Mist") then 	
 					--]]
 					
@@ -499,9 +495,7 @@ local mw_rot = {
 						lowest:Health()<=85
 						
 						then
-						if lowest:los() then
 							return lowest:Cast("Surging Mist")
-						end
 					end
 				end
 			end
@@ -512,14 +506,12 @@ local mw_rot = {
 		if player:SpellCooldown("Renewing Mist")<.3 and _A.enoughmana(115151) then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
-				local lowest = Object("lowestall(Renewing Mist)")
+				local lowest = Object("lowestall")
 				if lowest and lowest:exists() and lowest:SpellRange("Renewing Mist") then 
-					if lowest:los() then
 						return lowest:Cast("Renewing Mist")
 					end
 				end
 			end
-		end
 	end,
 	
 	healstatue = function()
@@ -538,13 +530,13 @@ local mw_rot = {
 			if player:Stance() == 1 then
 				if _A.modifier_shift() then
 					if _A.enoughmana(115460) then
-						local lowest = Object("lowestall(Renewing Mist)")
+						local lowest = Object("lowestall")
 						if lowest and lowest:exists() then
 							if (lowest:Health() < 99) then
 								if lowest:Distance() < 40 then
-									if lowest:los() then
+									-- if lowest:los() then
 										return lowest:CastGround("Healing Sphere", true)
-									end
+									-- end
 								end
 							end
 						end
@@ -561,15 +553,13 @@ local mw_rot = {
 				if _A.enoughmana(115460) then
 					if _A.manaengine()==true or _A.modifier_shift() then
 						--- ORBS
-						local lowest = Object("lowestall(Renewing Mist)")
+						local lowest = Object("lowestall")
 						if lowest then
 							if lowest:exists() then
 								if (lowest:Health() < 85) then
-									if lowest:Distance() < 40 then
-										if lowest:los() then
+										-- if lowest:los() then
 											return lowest:CastGround("Healing Sphere", true)
-										end
-									end
+										-- end
 								end
 							end
 						end
