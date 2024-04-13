@@ -1047,7 +1047,6 @@ _A.FakeUnits:Add('lowestall', function(num, spell)
 	local location = pull_location()
 	for _, fr in pairs(_A.OM:Get('Friendly')) do
 		if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-			if fr:spellRange("Renewing Mist") then
 				if _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable+1] = {
 						HP = fr:health(),
@@ -1056,7 +1055,6 @@ _A.FakeUnits:Add('lowestall', function(num, spell)
 				end
 			end
 		end
-	end
 	table.sort( tempTable, function(a,b) return ( a.HP < b.HP ) end )
 	return tempTable[1] and tempTable[1].guid
 end)
