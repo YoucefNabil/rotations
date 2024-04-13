@@ -1,6 +1,7 @@
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
+_A.Banzai = true
 local function blank()
 end
 local function runthese(...)
@@ -377,12 +378,12 @@ local mw_rot = {
 	manatea = function()
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Mana Tea")<.3
-				and player:Glyph("Glyph of Mana Tea")
+				-- and player:Glyph("Glyph of Mana Tea")
 				and _A.powerpercent()<= 92
 				and player:BuffStack("Mana Tea")>=2
 				then
-				print("casting mana tea")
 				return player:Cast("Mana Tea")
+				-- _A.CastSpellByName("Mana Tea")
 			end
 		end
 	end,
@@ -762,8 +763,6 @@ local mw_rot = {
 	end,
 }
 
-
-
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
@@ -778,12 +777,12 @@ local inCombat = function()
 	mw_rot.dispellplzarena()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
+	mw_rot.manatea()
 	mw_rot.ringofpeace()
 	mw_rot.burstdisarm()
 	mw_rot.healingsphere_shift()
 	mw_rot.pvp_disable()
 	mw_rot.chi_wave()
-	mw_rot.manatea()
 	mw_rot.chibrew()
 	mw_rot.fortifyingbrew()
 	mw_rot.tigerslust()
