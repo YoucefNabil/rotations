@@ -199,10 +199,10 @@ end
 function _A.CastPredictedPos(unit, spell, distance)
 	local player = Object("player")
 	local px, py, pz = _A.pSpeed(unit, distance)
-	_A.CastSpellByName(spell)
+	_A.CallWowApi("CastSpellByName", spell)
     if player:SpellIsTargeting() then
 		_A.ClickPosition(px, py, pz)
-		_A.SpellStopTargeting()
+		_A.CallWowApi("SpellStopTargeting")
 	end
 end
 -------------------------------------------------------
