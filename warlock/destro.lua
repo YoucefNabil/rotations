@@ -392,7 +392,7 @@ destro.rot = {
 		end
 		if _A.targetless[1] then
 			if player:health() <= 85 then
-				if player:Talent("Mortal Coil") and player:SpellCooldown("Mortal Coil")<.3  then
+				if player:Talent("Mortal Coil") and player:SpellCooldown("Mortal Coil")<.3  and not player:isCastingAny() then
 					return _A.targetless[1].obj:cast("Mortal Coil")
 				end
 			end
@@ -407,7 +407,7 @@ destro.rot = {
 				-- or 
 				not _A.HasPetUI()
 				then 
-				if not player:moving() and not player:iscasting("Summon Imp") then
+				if not player:moving() and not player:iscasting("Summon Imp") and not player:isCastingAny() then
 					return player:cast("Summon Imp")
 				end
 			end
@@ -422,6 +422,7 @@ destro.rot = {
 	
 	lifetap = function()
 		if soulswaporigin == nil 
+			and not player:isCastingAny()
 			and player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
 			and player:Mana()<=45
@@ -434,7 +435,7 @@ destro.rot = {
 	--======================================
 	--AOE REWORK
 	brimstone = function()
-		if lowestaoe and lowestaoe:exists() then
+		if lowestaoe and lowestaoe:exists() and not player:isCastingAny() then
 			if not player:buff("Fire and Brimstone") then
 				if _A.BurningEmbers>=1 then
 					return player:cast("Fire and Brimstone")
@@ -448,7 +449,7 @@ destro.rot = {
 	end,
 	
 	immolateaoe = function()
-		if player:buff("Fire and Brimstone") then
+		if player:buff("Fire and Brimstone") and not player:isCastingAny() then
 			if not player:moving() and not player:Iscasting("Immolate") then
 				if lowestaoe:exists() then
 					if lowestaoe:debuffrefreshable("Immolate") then
@@ -460,7 +461,7 @@ destro.rot = {
 	end,
 	
 	bloodhorror = function()
-		if reflectcheck==false and player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if reflectcheck==false and player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") and not player:isCastingAny() then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Blood Horror")
 		end
 	end,
@@ -510,7 +511,7 @@ destro.rot = {
 			end )
 		end
 		if _A.targetless[1] then
-			if not player:moving() and not player:Iscasting("Immolate") then
+			if not player:moving() and not player:Iscasting("Immolate") and not player:isCastingAny()   then
 				return _A.targetless[1].obj:cast("Immolate")
 			end
 		end
@@ -523,7 +524,7 @@ destro.rot = {
 				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
 			end )
 		end
-		if _A.targetless[1] then
+		if _A.targetless[1] and not player:isCastingAny() then
 			if player:SpellCooldown("Havoc")<=.3 and numbads>=2 then
 				return _A.targetless[1].obj:cast("Havoc")
 			end
@@ -537,7 +538,7 @@ destro.rot = {
 				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
 			end )
 		end
-		if _A.targetless[1] then
+		if _A.targetless[1] and not player:isCastingAny() then
 			if player:SpellCooldown("Conflagrate") == 0 then
 				return _A.targetless[1].obj:cast("Conflagrate")
 			end
@@ -556,11 +557,11 @@ destro.rot = {
 			end
 			if _A.targetless[1] and _A.targetless[1].health<=20 then
 				if player:isCastingAny() then
-					_A.SpellStopCasting()
-					_A.SpellStopCasting()
+					print("stop casting")	
+					-- _A.SpellStopCasting()
+					-- _A.RunMacroText("/stopcasting")
 					_A.CallWowApi("SpellStopCasting")
-					_A.CallWowApi("SpellStopCasting")
-					print("stop casting")
+					-- _A.CallWowApi("RunMacroText", "/stopcasting")
 				end
 				-- player:cast("Dark Soul: Instability")
 				_A.targetless[1].obj:cast("Shadowburn", true)
@@ -581,7 +582,7 @@ destro.rot = {
 				end )
 			end
 			if _A.targetless[1] and _A.targetless[1].health>20 then
-				if not player:moving() and not player:Iscasting("Chaos Bolt") then
+				if not player:moving() and not player:Iscasting("Chaos Bolt") and not player:isCastingAny()   then
 					return _A.targetless[1].obj:cast("Chaos Bolt")
 				end
 			end
@@ -595,7 +596,7 @@ destro.rot = {
 				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
 			end )
 		end
-		if _A.targetless[1] and (_A.targetless[1].health>20 or  _A.BurningEmbers<1)  then
+		if _A.targetless[1] and (_A.targetless[1].health>20 or  _A.BurningEmbers<1) and not player:isCastingAny()  then
 			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
 				return _A.targetless[1].obj:cast("Incinerate")
 			end
@@ -609,7 +610,7 @@ destro.rot = {
 				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
 			end )
 		end
-		if player:moving() then
+		if player:moving() and not player:isCastingAny() then
 			if _A.targetless[1] then
 				return _A.targetless[1].obj:cast("fel flame")
 			end
@@ -650,7 +651,7 @@ local inCombat = function()
 	destro.rot.caching()
 	destro.rot.rainoffire() 
 	if _A.buttondelayfunc()  then return end
-	if player:isCastingAny() then return end
+	-- if player:isCastingAny() then return end
 	destro.rot.Buffbuff()
 	destro.rot.petres()
 	-- HEALS AND DEFS
