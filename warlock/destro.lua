@@ -443,7 +443,7 @@ destro.rot = {
 	--AOE REWORK
 	brimstone = function()
 		local lowestaoe = Object("mostgroupedenemyDESTRO(10, 3)")
-		if _A.BurningEmbers>=2 and lowestaoe and lowestaoe:exists() and not player:isCastingAny() then
+		if _A.BurningEmbers>=2 and lowestaoe and lowestaoe:exists() then
 			if not player:buff("Fire and Brimstone") then
 					return player:cast("Fire and Brimstone")
 				end
