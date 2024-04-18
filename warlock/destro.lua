@@ -556,8 +556,8 @@ destro.rot = {
 			end
 			if _A.targetless[1] and _A.targetless[1].health<=20 then
 				if player:isCastingAny() then
-					_A.SpellStopCasting()
-					_A.SpellStopCasting()
+					_A.CallWowApi("SpellStopCasting")
+					_A.CallWowApi("SpellStopCasting")
 					print("stop casting")
 				end
 				-- player:cast("Dark Soul: Instability")
