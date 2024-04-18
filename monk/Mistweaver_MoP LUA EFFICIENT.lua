@@ -760,6 +760,7 @@ local inCombat = function()
 	if not player then return end
 	mw_rot.caching()
 	if _A.buttondelayfunc()  then return end
+	if player:mounted() then return end
 	if player:isChanneling("Crackling Jade Lightning") then return end
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
