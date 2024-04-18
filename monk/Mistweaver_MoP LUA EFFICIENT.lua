@@ -536,7 +536,7 @@ local mw_rot = {
 								if lowest:Distance() < 40 then
 									-- if lowest:los() then
 										-- return lowest:CastGround("Healing Sphere")
-										return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 10)
+										return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 15)
 									-- end
 								end
 							end
@@ -560,7 +560,7 @@ local mw_rot = {
 								if (lowest:Health() < 85) then
 										-- if lowest:los() then
 											-- return lowest:CastGround("Healing Sphere", true)
-											return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 10)
+											return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 15)
 										-- end
 								end
 							end

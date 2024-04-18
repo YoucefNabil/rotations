@@ -13,8 +13,8 @@ local exeOnUnload = function()
 end
 
 local highpriority = {
-	{"Detox", "debuff.type(Poison)", "player"},
-	{"Detox", "debuff.type(Disease)", "player"},
+	-- {"Detox", "debuff.type(Poison)", "player"},
+	-- {"Detox", "debuff.type(Disease)", "player"},
 	{"Stance of the Sturdy Ox", "!stance == 1", "player"},
 	{"Legacy of the Emperor", "!buff.any && spell.range && los && exists && isplayer", "roster"},
 }
@@ -76,12 +76,12 @@ local filling = {
 }
 
 local inCombat = {
-	{highpriority},
+	-- {highpriority},
 	--{defensives},
-	{kicks},
+	-- {kicks},
 	{press_shift},
 	---- rotation
-	{keepupbuffs},
+	-- {keepupbuffs},
 	{aoeprio},
 	{comboconsumer},
 	{chibuilders},
