@@ -399,6 +399,14 @@ destro.rot = {
 		end
 	end,
 	
+	embertap = function()
+		if (_A.BurningEmbers > 2 ) and not player:isCastingAny() then
+			if player:health() <= 75 and player:SpellCooldown("Ember Tap")<.3 then
+				return player:cast("Ember Tap")
+			end
+		end
+	end,
+	
 	petres = function()
 		if player:talent("Grimoire of Sacrifice") and not player:Buff("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 then
 			if 
@@ -435,12 +443,11 @@ destro.rot = {
 	--======================================
 	--AOE REWORK
 	brimstone = function()
-		if lowestaoe and lowestaoe:exists() and not player:isCastingAny() then
+		lowestaoe = Object("mostgroupedenemyDESTRO(Conflagrate, 10, 3)")
+		if _A.BurningEmbers>=2 and lowestaoe and lowestaoe:exists() and not player:isCastingAny() then
 			if not player:buff("Fire and Brimstone") then
-				if _A.BurningEmbers>=1 then
 					return player:cast("Fire and Brimstone")
 				end
-			end
 			else
 			if player:buff("Fire and Brimstone") then
 				return _A.RunMacroText("/cancelaura Fire and Brimstone")
@@ -451,7 +458,7 @@ destro.rot = {
 	immolateaoe = function()
 		if player:buff("Fire and Brimstone") and not player:isCastingAny() then
 			if not player:moving() and not player:Iscasting("Immolate") then
-				if lowestaoe:exists() then
+				if lowestaoe and lowestaoe:exists() then
 					if lowestaoe:debuffrefreshable("Immolate") then
 						return lowestaoe:cast("Immolate")
 					end
@@ -484,7 +491,7 @@ destro.rot = {
 	incinerateaoe = function()
 		if player:buff("Fire and Brimstone") then
 			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
-				if lowestaoe:exists() then
+				if lowestaoe and lowestaoe:exists() then
 					return lowestaoe:cast("Incinerate")
 				end
 			end
@@ -494,7 +501,7 @@ destro.rot = {
 	conflagrateaoe = function()
 		if player:buff("Fire and Brimstone") then
 			if player:SpellCharges("Conflagrate") >= 1 then
-				if lowestaoe:exists() then
+				if lowestaoe and lowestaoe:exists() then
 					return lowestaoe:cast("Conflagrate")
 				end
 			end
@@ -511,7 +518,7 @@ destro.rot = {
 			end )
 		end
 		if _A.targetless[1] then
-			if not player:moving() and not player:Iscasting("Immolate") and not player:isCastingAny()   then
+			if not player:moving() and not player:Iscasting("Immolate") and not player:isCastingAny() then
 				return _A.targetless[1].obj:cast("Immolate")
 			end
 		end
@@ -645,7 +652,7 @@ destro.rot = {
 ---========================
 ---========================
 local inCombat = function()	
-	-- lowestaoe = nil
+	lowestaoe = nil
 	player = player or Object("player")
 	if not player then return end
 	destro.rot.caching()
@@ -662,6 +669,7 @@ local inCombat = function()
 	destro.rot.twilightward() -- And Dark Regen
 	destro.rot.items_healthstone() -- And Dark Regen
 	destro.rot.MortalCoil() -- And Dark Regen
+	destro.rot.embertap() -- And Dark Regen
 	--buff
 	destro.rot.activetrinket()
 	destro.rot.critburst()
@@ -675,8 +683,8 @@ local inCombat = function()
 	destro.rot.havoc()
 	destro.rot.chaosbolt()
 	-- if _A.pull_location ~="pvp" then
-		-- destro.rot.conflagrate_tar()
-		-- destro.rot.incinerate_tar()
+	-- destro.rot.conflagrate_tar()
+	-- destro.rot.incinerate_tar()
 	-- end
 	destro.rot.conflagrate()
 	destro.rot.incinerate()
