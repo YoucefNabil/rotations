@@ -199,14 +199,13 @@ end
 local GUI = {
 }
 local exeOnLoad = function()
-	_A.FakeUnits:Add('mostgroupedenemyDESTRO', function(num, spell_area_min)
-		local spell, area, min = _A.StrExplode(spell_range_min)
-		if not spell then return end
+	_A.FakeUnits:Add('mostgroupedenemyDESTRO', function(num, area_min)
+		local area, min = _A.StrExplode(area_min)
 		area = tonumber(area) or 8
 		min = tonumber(min) or 3
 		local tempTable, count, enemiesCombat = {}, {}, _A.OM:Get('EnemyCombat')
 		for _, obj in pairs(enemiesCombat) do
-			if obj:infront() and ((not obj:Debuff(80240)) or (numbads==1)) and _A.attackable(obj) and _A.notimmune(obj)  and obj:los() then
+			if obj:infront() and not obj:Debuff(80240) and _A.attackable(obj) and _A.notimmune(obj)  and obj:los() then
 				count[obj.guid] = 1
 				for _, obj2 in pairs(enemiesCombat) do
 					if obj2.guid~=obj.guid and  _A.attackable(obj) and obj:rangeFrom(obj2)<=area then
@@ -443,7 +442,7 @@ destro.rot = {
 	--======================================
 	--AOE REWORK
 	brimstone = function()
-		lowestaoe = Object("mostgroupedenemyDESTRO(Conflagrate, 10, 3)")
+		local lowestaoe = Object("mostgroupedenemyDESTRO(10, 3)")
 		if _A.BurningEmbers>=2 and lowestaoe and lowestaoe:exists() and not player:isCastingAny() then
 			if not player:buff("Fire and Brimstone") then
 					return player:cast("Fire and Brimstone")
@@ -490,6 +489,7 @@ destro.rot = {
 	
 	incinerateaoe = function()
 		if player:buff("Fire and Brimstone") then
+			local lowestaoe = Object("mostgroupedenemyDESTRO(10, 3)")
 			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
 				if lowestaoe and lowestaoe:exists() then
 					return lowestaoe:cast("Incinerate")
@@ -679,6 +679,10 @@ local inCombat = function()
 	destro.rot.bloodhorrorremoval()
 	destro.rot.bloodhorror()
 	--rotation
+	--AOE
+	destro.rot.brimstone()
+	destro.rot.incinerateaoe()
+	
 	-- destro.rot.immolate()
 	destro.rot.havoc()
 	destro.rot.chaosbolt()
