@@ -539,7 +539,7 @@ destro.rot = {
 			end )
 		end
 		if _A.targetless[1] and not player:isCastingAny() then
-			if player:SpellCooldown("Conflagrate") == 0 then
+			if player:SpellCooldown("Conflagrate") == 0 or player:spellcount("Conflagrate")>=1 then
 				return _A.targetless[1].obj:cast("Conflagrate")
 			end
 		end
