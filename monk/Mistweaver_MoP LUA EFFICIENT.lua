@@ -283,7 +283,7 @@ local mw_rot = {
 	end,
 	
 	ctrl_mode = function()
-		if _A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) then
+		if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
 			if not player:moving() then
 				local lowest = Object("lowestall")
 				if player:isChanneling("Soothing Mist") and player:Chi()>= 3 then return lowest:cast("Enveloping Mist", true) end
