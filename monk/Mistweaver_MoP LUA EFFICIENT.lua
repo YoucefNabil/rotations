@@ -287,7 +287,7 @@ local mw_rot = {
 			if not player:moving() then
 				local lowest = Object("lowestall")
 				if player:isChanneling("Soothing Mist") and player:Chi()>= 3 then return lowest:cast("Enveloping Mist", true) end
-				if player:isChanneling("Soothing Mist") and _A.enoughmana(116694) player:Chi()< 3 then return lowest:cast("Surging Mist", true) end
+				if player:isChanneling("Soothing Mist") and _A.enoughmana(116694) and player:Chi()< 3 then return lowest:cast("Surging Mist", true) end
 				if not player:isChanneling("Soothing Mist") and _A.enoughmana(115175) then return lowest:cast("Soothing Mist") end 
 			end
 			else if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
