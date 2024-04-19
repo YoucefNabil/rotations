@@ -60,6 +60,20 @@ local healerspecid = {
 local GUI = {
 }
 local exeOnLoad = function()
+	_A.casttimers = {} -- doesnt work with channeled spells
+	_A.Listener:Add("delaycasts_Monk", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+		if guidsrc == UnitGUID("player") then
+			-- print(subevent.." "..idd)
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[idd] = _A.GetTime()
+			end
+		end
+	end)
+	function _A.castdelay(idd, delay)
+		if delay == nil then return true end
+		if _A.casttimers[idd]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[idd])>=delay
+	end
 end
 local exeOnUnload = function()
 end
@@ -269,10 +283,11 @@ local mw_rot = {
 	end,
 	
 	ctrl_mode = function()
-		if _A.modifier_ctrl() and player:Chi()>= 3 then
+		if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
 			if not player:moving() then
 				local lowest = Object("lowestall")
-				if player:isChanneling("Soothing Mist") then return lowest:cast("Enveloping Mist", true) end 
+				if player:isChanneling("Soothing Mist") and player:Chi()>= 3 then return lowest:cast("Enveloping Mist", true) end
+				if player:isChanneling("Soothing Mist") and player:Chi()< 3 then return lowest:cast("Surging Mist", true) end
 				if not player:isChanneling("Soothing Mist") then return lowest:cast("Soothing Mist") end 
 			end
 			else if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
@@ -303,22 +318,22 @@ local mw_rot = {
 	end,
 	
 	kick_spear = function()
-	--if not player:LostControl() then
-	if player:SpellCooldown("Spear Hand Strik")==0 and not player:isChanneling("soothing mist") then
-		for _, obj in pairs(_A.OM:Get('Enemy')) do
-			if obj:isCastingAny()
-				and obj:SpellRange("Blackout Kick") 
-				and obj:infront()
-				and not obj:State("silence")	
-				and obj:caninterrupt() 
-				and not obj:LostControl()
-				and obj:castsecond() < 0.3 or obj:chanpercent()<=95
-				and _A.notimmune(obj)
-				then
-				obj:Cast("Spear Hand Strike")
+		--if not player:LostControl() then
+		if player:SpellCooldown("Spear Hand Strik")==0 and not player:isChanneling("soothing mist") then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj:isCastingAny()
+					and obj:SpellRange("Blackout Kick") 
+					and obj:infront()
+					and not obj:State("silence")	
+					and obj:caninterrupt() 
+					and not obj:LostControl()
+					and obj:castsecond() < 0.3 or obj:chanpercent()<=95
+					and _A.notimmune(obj)
+					then
+					obj:Cast("Spear Hand Strike")
+				end
 			end
 		end
-	end
 	end,
 	
 	pvp_disable = function()
