@@ -64,12 +64,18 @@ local exeOnLoad = function()
 	_A.casttimers = {} -- doesnt work with channeled spells
 	_A.Listener:Add("delaycasts_Monk_and_misc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if guidsrc == UnitGUID("player") then
-			-- print(subevent.." "..idd)
+			-- Delay Cast Function
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 				_A.casttimers[idd] = _A.GetTime()
-				if idd == 115175 then
-					print(guiddest)
+			end
+			-- soothing mist guid capture
+			if idd == 115175 then
+				if subevent == "SPELL_CAST_SUCCESS" then 
 					_A.SMguid = guiddest
+				end
+				if subevent == "SPELL_AURA_REMOVED" then
+					-- print("nilled")
+					 _A.SMguid = nil
 				end
 			end
 		end
@@ -288,7 +294,7 @@ local mw_rot = {
 	end,
 	
 	ctrl_mode = function()
-		if not player:isChanneling("Soothing Mist") and  _A.SMguid ~= nil then _A.SMguid = nil end
+		-- if not player:isChanneling("Soothing Mist") and  _A.SMguid ~= nil then _A.SMguid = nil end
 		if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
 			if not player:moving() then
 				local lowest = Object("lowestall")
@@ -322,8 +328,8 @@ local mw_rot = {
 						and obj:los() then
 						return obj:Cast("Grapple Weapon")
 					end
-					end
 				end
+			end
 		end
 	end,
 	
