@@ -272,7 +272,7 @@ local mw_rot = {
 		if _A.modifier_ctrl() and player:Chi()>= 3 then
 			if not player:moving() then
 				local lowest = Object("lowestall")
-				if not player:iscasting("Soothing Mist") then return lowest:cast("Soothing Mist") else return lowest:cast("Enveloping Mist") end
+				if not player:iscasting("Soothing Mist") then return lowest:cast("Soothing Mist") else return lowest:cast(124682) end
 			end
 			else if player:iscasting("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
 		end
@@ -795,15 +795,17 @@ local inCombat = function()
 	mw_rot.healingsphere()
 	if not _A.modifier_ctrl then
 		mw_rot.tigerpalm_mm()
+		mw_rot.bk_buff()
+		mw_rot.tp_buff()
 	end
-	mw_rot.bk_buff()
-	mw_rot.tp_buff()
 	mw_rot.thunderfocustea()
 	if not _A.modifier_ctrl() then
 		mw_rot.uplift()
 	end
 	mw_rot.expelharm()
-	mw_rot.tigerpalm_filler()
+	if not _A.modifier_ctrl() then
+		mw_rot.tigerpalm_filler()
+	end
 	mw_rot.jab_filler()
 	mw_rot.statbuff()
 	mw_rot.dpsstance_jab()
@@ -820,11 +822,11 @@ _A.CR:Add(270, {
 	ic = inCombat,
 	ooc = inCombat,
 	use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
 -- blacklist = blacklist,
 -- pooling = false,
 load = exeOnLoad,
