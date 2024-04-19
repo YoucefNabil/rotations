@@ -225,6 +225,15 @@ function _A.modifier_shift()
 	end
 end
 
+function _A.modifier_ctrl()
+	local modkeyb = IsControlKeyDown()
+	if modkeyb then
+		return true
+		else
+		return false
+	end
+end
+
 local function CalculateHPRAW(t)
 	local shield = select(15, _A.UnitDebuff(t, SPELL_SHIELD_LOW)) or select(15, _A.UnitDebuff(t, SPELL_SHIELD_MEDIUM)) or select(15, _A.UnitDebuff(t, SPELL_SHIELD_FULL)) or 0 -- or ((select(15, UnitDebuff(t, SPELL_SHIELD_FULL)))~=nil and UnitHealthMax(t))
 	if shield ~= 0 then return shield else return _A.UnitHealth(t) end

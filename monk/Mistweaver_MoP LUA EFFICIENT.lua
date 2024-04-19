@@ -268,6 +268,16 @@ local mw_rot = {
 		end
 	end,
 	
+	ctrl_mode = function()
+		if _A.modifier_ctrl() then
+			if player:Chi()>= 3 and not player:moving() then
+				local lowest = Object("lowestall")
+				if not player:iscasting("Soothing Mist") then return lowest:cast("Soothing Mist") else return lowest:cast("Envelopping Mist") end
+			end
+			else if player:iscasting("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
+		end
+	end,
+	
 	burstdisarm = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
@@ -366,7 +376,7 @@ local mw_rot = {
 				if lowest then
 					if  lowest:exists() and lowest:SpellRange("Chi Wave")
 						then 
-							return lowest:Cast("Chi Wave")
+						return lowest:Cast("Chi Wave")
 					end
 				end
 			end
@@ -475,7 +485,7 @@ local mw_rot = {
 						-- (lowest:health()<40 or (pull_location()=="pvp" and lowest:health()<40))
 						lowest:health()<40
 						then
-							return lowest:Cast("Life Cocoon")
+						return lowest:Cast("Life Cocoon")
 					end
 				end
 			end
@@ -495,7 +505,7 @@ local mw_rot = {
 						lowest:Health()<=85
 						
 						then
-							return lowest:Cast("Surging Mist")
+						return lowest:Cast("Surging Mist")
 					end
 				end
 			end
@@ -508,10 +518,10 @@ local mw_rot = {
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
 				if lowest and lowest:exists() and lowest:SpellRange("Renewing Mist") then 
-						return lowest:Cast("Renewing Mist")
-					end
+					return lowest:Cast("Renewing Mist")
 				end
 			end
+		end
 	end,
 	
 	healstatue = function()
@@ -535,8 +545,8 @@ local mw_rot = {
 							if (lowest:Health() < 99) then
 								if lowest:Distance() < 40 then
 									-- if lowest:los() then
-										-- return lowest:CastGround("Healing Sphere")
-										return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 15)
+									-- return lowest:CastGround("Healing Sphere")
+									return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 15)
 									-- end
 								end
 							end
@@ -558,10 +568,10 @@ local mw_rot = {
 						if lowest then
 							if lowest:exists() then
 								if (lowest:Health() < 85) then
-										-- if lowest:los() then
-											-- return lowest:CastGround("Healing Sphere", true)
-											return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 15)
-										-- end
+									-- if lowest:los() then
+									-- return lowest:CastGround("Healing Sphere", true)
+									return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 15)
+									-- end
 								end
 							end
 						end
@@ -717,7 +727,6 @@ local mw_rot = {
 	
 	dpsstance_spin = function()
 		if player:Stance() ~= 1 then
-			
 			if	player:Talent("Rushing Jade Wind") 
 				and player:SpellCooldown("Rushing Jade Wind")<.3
 				then
@@ -736,7 +745,6 @@ local mw_rot = {
 	end,
 	
 	dpsstanceswap = function()
-		
 		--if not player:LostControl() then
 		if player:Stance() ~= 2 and not _A.modifier_shift() then
 			if player:SpellCooldown("Stance of the Fierce Tiger")<.3
@@ -774,6 +782,7 @@ local inCombat = function()
 	mw_rot.ringofpeace()
 	mw_rot.burstdisarm()
 	mw_rot.healingsphere_shift()
+	mw_rot.ctrl_mode()
 	mw_rot.pvp_disable()
 	mw_rot.chi_wave()
 	mw_rot.chibrew()
@@ -784,11 +793,15 @@ local inCombat = function()
 	mw_rot.renewingmist()
 	mw_rot.healstatue()
 	mw_rot.healingsphere()
-	mw_rot.tigerpalm_mm()
+	if not _A.modifier_ctrl then
+		mw_rot.tigerpalm_mm()
+	end
 	mw_rot.bk_buff()
 	mw_rot.tp_buff()
 	mw_rot.thunderfocustea()
-	mw_rot.uplift()
+	if not _A.modifier_ctrl() then
+		mw_rot.uplift()
+	end
 	mw_rot.expelharm()
 	mw_rot.tigerpalm_filler()
 	mw_rot.jab_filler()
@@ -807,13 +820,13 @@ _A.CR:Add(270, {
 	ic = inCombat,
 	ooc = inCombat,
 	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+gui = GUI,
+gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+wow_ver = "5.4.8",
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })
