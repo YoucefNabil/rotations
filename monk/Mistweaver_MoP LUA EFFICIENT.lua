@@ -809,17 +809,17 @@ local inCombat = function()
 	mw_rot.renewingmist()
 	mw_rot.healstatue()
 	mw_rot.healingsphere()
-	if not _A.modifier_ctrl then
+	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) )then
 		mw_rot.tigerpalm_mm()
 		mw_rot.bk_buff()
 		mw_rot.tp_buff()
 	end
 	mw_rot.thunderfocustea()
-	if not _A.modifier_ctrl() then
+	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) )then
 		mw_rot.uplift()
 	end
 	mw_rot.expelharm()
-	if not _A.modifier_ctrl() then
+	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) )then
 		mw_rot.tigerpalm_filler()
 	end
 	mw_rot.jab_filler()
