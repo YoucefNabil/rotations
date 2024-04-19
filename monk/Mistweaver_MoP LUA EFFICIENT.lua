@@ -283,12 +283,12 @@ local mw_rot = {
 	end,
 	
 	ctrl_mode = function()
-		if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
+		if _A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) then
 			if not player:moving() then
 				local lowest = Object("lowestall")
 				if player:isChanneling("Soothing Mist") and player:Chi()>= 3 then return lowest:cast("Enveloping Mist", true) end
-				if player:isChanneling("Soothing Mist") and player:Chi()< 3 then return lowest:cast("Surging Mist", true) end
-				if not player:isChanneling("Soothing Mist") then return lowest:cast("Soothing Mist") end 
+				if player:isChanneling("Soothing Mist") and _A.enoughmana(116694) player:Chi()< 3 then return lowest:cast("Surging Mist", true) end
+				if not player:isChanneling("Soothing Mist") and _A.enoughmana(115175) then return lowest:cast("Soothing Mist") end 
 			end
 			else if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
 		end
@@ -809,17 +809,17 @@ local inCombat = function()
 	mw_rot.renewingmist()
 	mw_rot.healstatue()
 	mw_rot.healingsphere()
-	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) )then
+	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
 		mw_rot.tigerpalm_mm()
 		mw_rot.bk_buff()
 		mw_rot.tp_buff()
 	end
 	mw_rot.thunderfocustea()
-	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) )then
+	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
 		mw_rot.uplift()
 	end
 	mw_rot.expelharm()
-	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) )then
+	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
 		mw_rot.tigerpalm_filler()
 	end
 	mw_rot.jab_filler()
