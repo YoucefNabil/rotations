@@ -60,12 +60,17 @@ local healerspecid = {
 local GUI = {
 }
 local exeOnLoad = function()
+	_A.SMguid = nil
 	_A.casttimers = {} -- doesnt work with channeled spells
-	_A.Listener:Add("delaycasts_Monk", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+	_A.Listener:Add("delaycasts_Monk_and_misc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if guidsrc == UnitGUID("player") then
 			-- print(subevent.." "..idd)
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 				_A.casttimers[idd] = _A.GetTime()
+				if idd == 115175 then
+					print(guiddest)
+					_A.SMguid = guiddest
+				end
 			end
 		end
 	end)
@@ -283,11 +288,15 @@ local mw_rot = {
 	end,
 	
 	ctrl_mode = function()
+		if not player:isChanneling("Soothing Mist") and  _A.SMguid ~= nil then _A.SMguid = nil end
 		if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
 			if not player:moving() then
 				local lowest = Object("lowestall")
-				if player:isChanneling("Soothing Mist") and player:Chi()>= 3 then return lowest:cast("Enveloping Mist", true) end
-				if player:isChanneling("Soothing Mist") and _A.enoughmana(116694) and player:Chi()< 3 then return lowest:cast("Surging Mist", true) end
+				if player:isChanneling("Soothing Mist") and _A.SMguid then
+					local SMobj = Object(_A.SMguid)
+					if player:Chi()>= 3 and SMobj and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
+					if _A.enoughmana(116694) and player:Chi()< 3 and SMobj and SMobj:los() then return SMobj:cast("Surging Mist", true) end
+				end
 				if not player:isChanneling("Soothing Mist") and _A.enoughmana(115175) then return lowest:cast("Soothing Mist") end 
 			end
 			else if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
@@ -312,8 +321,8 @@ local mw_rot = {
 						and obj:los() then
 						return obj:Cast("Grapple Weapon")
 					end
+					end
 				end
-			end
 		end
 	end,
 	
@@ -826,25 +835,25 @@ local inCombat = function()
 	mw_rot.statbuff()
 	mw_rot.dpsstance_jab()
 	mw_rot.dpsstance_spin()
-	mw_rot.dpsstance_healstance()
-	mw_rot.dpsstanceswap()
+mw_rot.dpsstance_healstance()
+mw_rot.dpsstanceswap()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
 _A.CR:Add(270, {
-	name = "Monk Heal EFFICIENT",
-	ic = inCombat,
-	ooc = inCombat,
-	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+name = "Monk Heal EFFICIENT",
+ic = inCombat,
+ooc = inCombat,
+use_lua_engine = true,
+gui = GUI,
+gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+wow_ver = "5.4.8",
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })

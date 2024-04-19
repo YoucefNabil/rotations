@@ -245,20 +245,6 @@ end)
 --============================================
 --============================================
 --============================================
-_A.casttimers = {} -- doesnt work with channeled spells
-_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-	if guidsrc == UnitGUID("player") then
-		-- print(subevent.." "..idd)
-		if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-			_A.casttimers[idd] = _A.GetTime()
-		end
-	end
-end)
-function _A.castdelay(idd, delay)
-	if delay == nil then return true end
-	if _A.casttimers[idd]==nil then return true end
-	return (_A.GetTime() - _A.casttimers[idd])>=delay
-end
 --============================================
 --============================================
 --============================================
@@ -275,6 +261,20 @@ end
 local GUI = {
 }
 local exeOnLoad = function()
+	_A.casttimers = {} -- doesnt work with channeled spells
+	_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+		if guidsrc == UnitGUID("player") then
+			-- print(subevent.." "..idd)
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[idd] = _A.GetTime()
+			end
+		end
+	end)
+	function _A.castdelay(idd, delay)
+		if delay == nil then return true end
+		if _A.casttimers[idd]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[idd])>=delay
+	end
 end
 local exeOnUnload = function()
 end
@@ -469,7 +469,7 @@ affliction.rot = {
 					return player:cast(112866)
 				end
 				if (not player:buff(74434) and player:combat() and _A.shards>=1 ) --or player:buff("Shadow Trance") 
-					then player:cast(74434) -- shadowburn
+					then return player:cast(74434) -- shadowburn
 				end	
 			end
 		end
@@ -613,7 +613,7 @@ affliction.rot = {
 				return  _A.temptabletbl[1].obj:Cast(119678)
 			end
 			if  _A.shards>=1 and not player:buff(74434)--or player:buff("Shadow Trance")
-				then player:cast(74434) -- shadowburn
+				then return player:cast(74434) -- shadowburn
 			end
 		end -- improved soul swap (dots instead)
 	end,
@@ -667,8 +667,8 @@ affliction.rot = {
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
-			return lowest:cast("Drain Soul", true)
-		end
+				return lowest:cast("Drain Soul", true)
+			end
 		end
 	end,
 	
@@ -705,6 +705,7 @@ local inCombat = function()
 	if not player then return end
 	affliction.rot.caching()
 	if player:Mounted() then return end
+	if _A.buttondelayfunc()  then return end
 	-- if player:lostcontrol()  then return end 
 	--delayed lifetap
 	affliction.rot.lifetap_delayed()
@@ -712,7 +713,6 @@ local inCombat = function()
 	-- affliction.rot.exhale()
 	-- affliction.rot.tablesortexhale()
 	affliction.rot.exhaleopti()
-	if _A.buttondelayfunc()  then return end
 	--stuff
 	affliction.rot.Buffbuff()
 	affliction.rot.items_intpot()
@@ -768,10 +768,10 @@ end
 local blacklist = function()
 end
 _A.CR:Add(265, {
-	name = "Youcef's Affliction",
-	ic = inCombat,
-	ooc = outCombat,
-	use_lua_engine = true,
+name = "Youcef's Affliction",
+ic = inCombat,
+ooc = outCombat,
+use_lua_engine = true,
 gui = GUI,
 gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
 wow_ver = "5.4.8",
