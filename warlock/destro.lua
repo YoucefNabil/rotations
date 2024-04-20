@@ -205,7 +205,7 @@ local exeOnLoad = function()
 		min = tonumber(min) or 3
 		local tempTable, count, enemiesCombat = {}, {}, _A.OM:Get('EnemyCombat')
 		for _, obj in pairs(enemiesCombat) do
-			if obj:infront() and not obj:Debuff(80240) and _A.attackable(obj) and _A.notimmune(obj)  and obj:los() then
+			if obj:infront() and not obj:Debuff(80240) and _A.attackable(obj) and _A.notimmune(obj)  and obj:los() then -- 80240 = HAVOC
 				count[obj.guid] = 1
 				for _, obj2 in pairs(enemiesCombat) do
 					if obj2.guid~=obj.guid and  _A.attackable(obj) and obj:rangeFrom(obj2)<=area then
