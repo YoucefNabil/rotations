@@ -98,7 +98,7 @@ local exeOnLoad = function()
 	_A.Listener:Add("delaycasts_Monk_and_misc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
 		-- Testing
 		-- if subevent == "SWING_DAMAGE" or subevent == "RANGE_DAMAGE" or subevent == "SPELL_PERIODIC_DAMAGE" or subevent == "SPELL_BUILDING_DAMAGE" or subevent == "ENVIRONMENTAL_DAMAGE"  then
-			-- print(subevent.." "..amount) -- too much voodoo
+		-- print(subevent.." "..amount) -- too much voodoo
 		-- end
 		if guidsrc == UnitGUID("player") then
 			-- Delay Cast Function
@@ -160,7 +160,7 @@ local mw_rot = {
 	
 	
 	items_intflask = function()
-		if player:ItemCooldown(76085) == 0 and not player:isChanneling("soothing mist")
+		if player:ItemCooldown(76085) == 0  
 			and player:ItemCount(76085) > 0
 			and player:ItemUsable(76085)
 			and not player:Buff(105691)
@@ -172,7 +172,7 @@ local mw_rot = {
 	end,
 	
 	items_healthstone = function()
-		if player:health() <= 35  and not player:isChanneling("soothing mist") then
+		if player:health() <= 35    then
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) then
@@ -182,7 +182,7 @@ local mw_rot = {
 	end,
 	
 	items_noggenfogger = function()
-		if player:ItemCooldown(8529) == 0 and not player:isChanneling("soothing mist")
+		if player:ItemCooldown(8529) == 0  
 			and player:ItemCount(8529) > 0
 			and player:ItemUsable(8529)
 			and (not player:BuffAny(16591) or not player:BuffAny(16595))
@@ -195,7 +195,7 @@ local mw_rot = {
 	
 	kick_legsweep = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj:isCastingAny()
@@ -213,7 +213,7 @@ local mw_rot = {
 	arena_legsweep = function()
 		local arenatar = 0
 		--if not player:LostControl() then
-		if player:Stance() == 1  and not player:isChanneling("soothing mist")then
+		if player:Stance() == 1   then
 			if pull_location()=="arena" then
 				if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 then
 					for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -233,7 +233,7 @@ local mw_rot = {
 	
 	statbuff = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			local roster = Object("roster")
 			-- BUFFS
 			if roster then
@@ -257,7 +257,7 @@ local mw_rot = {
 	
 	statbuff_noarena = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and pull_location()~="arena" and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1 and pull_location()~="arena"   then
 			local roster = Object("roster")
 			-- BUFFS
 			if roster then
@@ -282,7 +282,7 @@ local mw_rot = {
 	kick_legsweep = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
-			if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 and not player:isChanneling("soothing mist") then
+			if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3   then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj:isCastingAny()
 						and obj:range()<5
@@ -298,7 +298,7 @@ local mw_rot = {
 	kick_chargingox = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1 then
-			if player:Talent("Charging Ox Wave") and player:SpellCooldown("Charging Ox Wave")<0.3 and not player:isChanneling("soothing mist") then
+			if player:Talent("Charging Ox Wave") and player:SpellCooldown("Charging Ox Wave")<0.3   then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj:isCastingAny()
 						and obj:range()<30
@@ -314,7 +314,7 @@ local mw_rot = {
 	
 	kick_paralysis = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if player:SpellCooldown("Paralysis")<.3 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer 
@@ -339,7 +339,7 @@ local mw_rot = {
 				if player:isChanneling("Soothing Mist") and _A.SMguid then
 					local SMobj = Object(_A.SMguid)
 					if SMobj and SMobj:SpellRange("Renewing Mist") then
-						if SMobj:buff(132120) then return _A.CallWowApi("SpellStopCasting") end
+						if SMobj:buff(132120) then _A.CallWowApi("SpellStopCasting") end
 						if player:Chi()>= 3 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
 						if _A.enoughmana(116694) and player:Chi()< 3 and SMobj:los() then return SMobj:cast("Surging Mist", true) end
 					end
@@ -352,7 +352,7 @@ local mw_rot = {
 	
 	burstdisarm = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if player:SpellCooldown("Grapple Weapon")<.3 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer 
@@ -375,7 +375,7 @@ local mw_rot = {
 	
 	kick_spear = function()
 		--if not player:LostControl() then
-		if player:SpellCooldown("Spear Hand Strik")==0 and not player:isChanneling("soothing mist") then
+		if player:SpellCooldown("Spear Hand Strik")==0   then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj:isCastingAny()
 					and obj:SpellRange("Blackout Kick") 
@@ -394,7 +394,7 @@ local mw_rot = {
 	
 	pvp_disable = function()
 		local target = Object("target")
-		if not _A.modifier_shift() and not player:isChanneling("soothing mist") then
+		if not _A.modifier_shift()   then
 			if player:Stance() == 1 --and pull_location()=="arena" 
 				then
 				if target then
@@ -423,7 +423,7 @@ local mw_rot = {
 	
 	ringofpeace = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<0.3 then
 				local peacetarget = Object("mostTargetedRosterPVP")
 				if peacetarget and peacetarget:exists()  then
@@ -440,7 +440,7 @@ local mw_rot = {
 	end,
 	
 	chi_wave = function()
-		if player:Talent("Chi Wave") and not player:isChanneling("soothing mist")
+		if player:Talent("Chi Wave")  
 			and player:SpellCooldown("Chi Wave")<.3 then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
@@ -456,7 +456,7 @@ local mw_rot = {
 	end,
 	
 	manatea = function()
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if player:SpellCooldown("Mana Tea")<.3
 				-- and player:Glyph("Glyph of Mana Tea")
 				and _A.powerpercent()<= 92
@@ -470,7 +470,7 @@ local mw_rot = {
 	
 	chibrew = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			
 			if player:Talent("Chi Brew")
 				and player:SpellCooldown("Chi Brew")==0
@@ -482,7 +482,7 @@ local mw_rot = {
 	end,
 	
 	fortifyingbrew = function()
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if	player:SpellCooldown("Fortifying Brew")==0
 				and player:Health()<50
 				then
@@ -492,7 +492,7 @@ local mw_rot = {
 	end,
 	
 	thunderfocustea = function()
-		if player:Stance() == 1 and player:Chi()>=1 and not player:isChanneling("soothing mist") and not player:buff(116680) then
+		if player:Stance() == 1 and player:Chi()>=1   and not player:buff(116680) then
 			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea")
 				then
 				player:Cast("Thunder Focus Tea")
@@ -501,7 +501,7 @@ local mw_rot = {
 	end,
 	
 	tigerslust = function()
-		if  player:Talent("Tiger's Lust") and player:SpellCooldown("Tiger's Lust")<.3 and not player:isChanneling("soothing mist") then
+		if  player:Talent("Tiger's Lust") and player:SpellCooldown("Tiger's Lust")<.3   then
 			if player:Stance() == 1 then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr:SpellRange("Tiger's Lust") then
@@ -525,7 +525,7 @@ local mw_rot = {
 	
 	dispellplzarena = function()
 		local temptable = {}
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer
@@ -547,7 +547,7 @@ local mw_rot = {
 	end,
 	
 	lifecocoon = function()
-		if player:SpellCooldown("Life Cocoon")<.3 and _A.enoughmana(116849) and not player:isChanneling("soothing mist") then
+		if player:SpellCooldown("Life Cocoon")<.3 and _A.enoughmana(116849)   then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
@@ -565,7 +565,7 @@ local mw_rot = {
 	end,
 	
 	surgingmist = function()
-		if player:BuffStack("Vital Mists")>=5 and not player:isChanneling("soothing mist")
+		if player:BuffStack("Vital Mists")>=5  
 			and player:Chi() < player:ChiMax() then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
@@ -585,7 +585,7 @@ local mw_rot = {
 	end,
 	
 	renewingmist = function()
-		if player:SpellCooldown("Renewing Mist")<.3 and _A.enoughmana(115151) and not player:isChanneling("soothing mist") then
+		if player:SpellCooldown("Renewing Mist")<.3 and _A.enoughmana(115151)   then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
@@ -598,7 +598,7 @@ local mw_rot = {
 	
 	healstatue = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			
 			if	player:SpellCooldown("Summon Jade Serpent Statue")<.3
 				then
@@ -608,7 +608,7 @@ local mw_rot = {
 	end,
 	
 	healingsphere_shift = function()
-		if player:SpellCooldown("Healing Sphere")<.3 and not player:isChanneling("soothing mist") then
+		if player:SpellCooldown("Healing Sphere")<.3   then
 			if player:Stance() == 1 then
 				if _A.modifier_shift() then
 					if _A.enoughmana(115460) then
@@ -631,7 +631,7 @@ local mw_rot = {
 	
 	healingsphere = function()
 		--if not player:LostControl() then
-		if player:SpellCooldown("Healing Sphere")<.3 and not player:isChanneling("soothing mist") then
+		if player:SpellCooldown("Healing Sphere")<.3   then
 			if player:Stance() == 1 then
 				if _A.enoughmana(115460) then
 					if _A.manaengine()==true or _A.modifier_shift() then
@@ -655,7 +655,7 @@ local mw_rot = {
 	
 	blackout_mm = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if player:Chi()>=2 then
 				if player:Buff("Muscle Memory") then
 					---------------------------------- 
@@ -674,7 +674,7 @@ local mw_rot = {
 	
 	tigerpalm_mm = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if player:Chi()>=1 then
 				if player:Buff("Muscle Memory") then
 					---------------------------------- 
@@ -693,7 +693,7 @@ local mw_rot = {
 	
 	bk_buff = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory") 
 				if player:Chi()>= 2
 					and not player:Buff("Serpent's Zeal") -- and player:Buff("Muscle Memory") 
@@ -711,7 +711,7 @@ local mw_rot = {
 	
 	tp_buff = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory") 
 				if player:Chi()>= 1
 					and not player:Buff("Tiger Power")
@@ -729,7 +729,7 @@ local mw_rot = {
 	
 	uplift = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if	player:SpellUsable("Uplift")
 				and player:Chi()>= 2 
 				then
@@ -740,7 +740,7 @@ local mw_rot = {
 	
 	expelharm = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if	player:Chi()<player:ChiMax()
 				and player:SpellCooldown("Expel Harm")<.3
 				and _A.enoughmana(115072)
@@ -752,7 +752,7 @@ local mw_rot = {
 	
 	tigerpalm_filler = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if player:Chi() == 1 then
 				if player:Buff("Muscle Memory") then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
@@ -768,7 +768,7 @@ local mw_rot = {
 	
 	jab_filler = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1   then
 			if _A.manaengine() then
 				if player:Buff("Rushing Jade Wind") and not player:Buff("Muscle Memory") then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
@@ -818,7 +818,7 @@ local mw_rot = {
 	
 	dpsstanceswap = function()
 		--if not player:LostControl() then
-		if player:Stance() ~= 2 and not _A.modifier_shift() and not player:isChanneling("soothing mist") then
+		if player:Stance() ~= 2 and not _A.modifier_shift()   then
 			if player:SpellCooldown("Stance of the Fierce Tiger")<.3
 				and not player:Buff("Rushing Jade Wind") then
 				if player:Talent("Rushing Jade Wind") then
@@ -865,22 +865,13 @@ local inCombat = function()
 	mw_rot.ctrl_mode()
 	mw_rot.healstatue()
 	mw_rot.healingsphere()
-	-- if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
-	if not (_A.modifier_ctrl() and _A.enoughmana(115175) )then
-		mw_rot.tigerpalm_mm()
-		mw_rot.bk_buff()
-		mw_rot.tp_buff()
-	end
+	mw_rot.tigerpalm_mm()
+	mw_rot.bk_buff()
+	mw_rot.tp_buff()
 	mw_rot.thunderfocustea()
-	-- if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
-	if not (_A.modifier_ctrl() and _A.enoughmana(115175) )then
-		mw_rot.uplift()
-	end
+	mw_rot.uplift()
 	mw_rot.expelharm()
-	-- if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
-	if not (_A.modifier_ctrl() and _A.enoughmana(115175) )then
-		mw_rot.tigerpalm_filler()
-	end
+	mw_rot.tigerpalm_filler()
 	mw_rot.jab_filler()
 	mw_rot.statbuff()
 	mw_rot.dpsstance_jab()
