@@ -93,6 +93,22 @@ local exeOnLoad = function()
 		table.sort( tempTable, function(a,b) return ( a.HP < b.HP ) end )
 		return tempTable[1] and tempTable[1].guid
 	end)
+	_A.FakeUnits:Add('lowestEnemyInSpellRangeMINIMAL', function(num, spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if _A.notimmune(Obj) then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
 	_A.SMguid = nil
 	_A.casttimers = {} -- doesnt work with channeled spells
 	_A.Listener:Add("delaycasts_Monk_and_misc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
@@ -902,22 +918,21 @@ local mw_rot = {
 			if not player:isChanneling("Crackling Jade Lightning") then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
 				if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Crackling Jade Lightning")
-			end
+					return lowestmelee:Cast("Crackling Jade Lightning")
+				end
 			end
 			else if player:isChanneling("Crackling Jade Lightning") then _A.CallWowApi("SpellStopCasting") end
 		end
 	end,
 	
 	autotarget = function()
-		if player:Stance() == 1 and player:Keybind("R") and player:mana()>=9 and not player:moving() then
-			if not player:isChanneling("Crackling Jade Lightning") then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
-				if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Crackling Jade Lightning")
+		if _A.UnitExists("pet") then
+			local _target = Object("target")
+			local lowestmelee = Object("lowestEnemyInSpellRangeMINIMAL(Crackling Jade Lightning)")
+			if lowestmelee and lowestmelee:exists() then
+				if _target and _target.guid ~= lowestmelee.guid  then _A.CallWowApi("TargetUnit", lowestmelee.guid) end
+				if not _target then _A.CallWowApi("TargetUnit", lowestmelee.guid) end
 			end
-			end
-			else if player:isChanneling("Crackling Jade Lightning") then _A.CallWowApi("SpellStopCasting") end
 		end
 	end,
 	
@@ -967,6 +982,7 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
 	-- if player:isChanneling("Crackling Jade Lightning") then return end
+	mw_rot.autotarget()
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
