@@ -492,7 +492,7 @@ local mw_rot = {
 	end,
 	
 	thunderfocustea = function()
-		if player:Stance() == 1 and player:Chi()>=1 and not player:isChanneling("soothing mist") then
+		if player:Stance() == 1 and player:Chi()>=1 and not player:isChanneling("soothing mist") and not player:buff(116680) then
 			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea")
 				then
 				player:Cast("Thunder Focus Tea")
