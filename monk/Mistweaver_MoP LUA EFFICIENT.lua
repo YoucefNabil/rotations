@@ -725,7 +725,7 @@ local mw_rot = {
 	
 	tigerpalm_mm = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1  and not player:Keybind("R") then
+		if player:Stance() == 1 then
 			if player:Chi()>=1 then
 				if player:Buff("Muscle Memory") then
 					---------------------------------- 
@@ -993,16 +993,16 @@ local inCombat = function()
 	mw_rot.healstatue()
 	mw_rot.healingsphere()
 	mw_rot.pvp_disable()
+	mw_rot.spin_keybind()
+	mw_rot.blackout_keybind()
+	mw_rot.lightning_keybind()
+	mw_rot.jab_keybind()
 	mw_rot.tigerpalm_mm()
 	mw_rot.bk_buff()
 	mw_rot.tp_buff()
 	mw_rot.thunderfocustea()
-	mw_rot.spin_keybind()
-	mw_rot.blackout_keybind()
 	mw_rot.uplift()
 	mw_rot.expelharm()
-	mw_rot.jab_keybind()
-	mw_rot.lightning_keybind()
 	mw_rot.tigerpalm_filler()
 	mw_rot.jab_filler()
 	mw_rot.statbuff()
