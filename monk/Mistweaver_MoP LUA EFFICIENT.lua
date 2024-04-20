@@ -344,7 +344,7 @@ local mw_rot = {
 						if _A.enoughmana(116694) and player:Chi()< 3 and SMobj:los() then return SMobj:cast("Surging Mist", true) end
 					end
 				end
-				if not player:isChanneling("Soothing Mist") and _A.enoughmana(115175) then return lowest:cast("Soothing Mist") end 
+				if not player:isChanneling("Soothing Mist") and _A.enoughmana(115175) and lowest and lowest:exists() then return lowest:cast("Soothing Mist") end 
 			end
 			else if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
 		end
