@@ -771,8 +771,8 @@ local mw_rot = {
 		if player:Stance() == 1   then
 			if player:Chi()>=2 then
 				-- if player:Buff("Muscle Memory") then
-				if player:Keybind("R") and player:Buff("Muscle Memory")  
-				then
+				-- if player:Keybind("R") and player:Buff("Muscle Memory") then
+				if player:Keybind("R") 	then
 					
 					---------------------------------- 
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
