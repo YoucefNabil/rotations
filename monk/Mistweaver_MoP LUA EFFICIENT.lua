@@ -838,7 +838,6 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
 	if player:isChanneling("Crackling Jade Lightning") then return end
-	mw_rot.ctrl_mode()
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
@@ -859,6 +858,7 @@ local inCombat = function()
 	mw_rot.lifecocoon()
 	mw_rot.surgingmist()
 	mw_rot.renewingmist()
+	mw_rot.ctrl_mode()
 	mw_rot.healstatue()
 	mw_rot.healingsphere()
 	-- if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
