@@ -60,6 +60,39 @@ local healerspecid = {
 local GUI = {
 }
 local exeOnLoad = function()
+	_A.FakeUnits:Add('lowestall', function(num, spell)
+		local tempTable = {}
+		local location = pull_location()
+		for _, fr in pairs(_A.OM:Get('Friendly')) do
+			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
+				if _A.nothealimmune(fr) and fr:los() then
+					tempTable[#tempTable+1] = {
+						HP = fr:health(),
+						guid = fr.guid
+					}
+				end
+			end
+		end
+		table.sort( tempTable, function(a,b) return ( a.HP < b.HP ) end )
+		return tempTable[1] and tempTable[1].guid
+	end)
+	_A.FakeUnits:Add('lowestallNOHOT', function(num, spell)
+		local tempTable = {}
+		local location = pull_location()
+		for _, fr in pairs(_A.OM:Get('Friendly')) do
+			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
+				if not fr:Buff(132120) 
+				and _A.nothealimmune(fr) and fr:los() then
+					tempTable[#tempTable+1] = {
+						HP = fr:health(),
+						guid = fr.guid
+					}
+				end
+			end
+		end
+		table.sort( tempTable, function(a,b) return ( a.HP < b.HP ) end )
+		return tempTable[1] and tempTable[1].guid
+	end)
 	_A.SMguid = nil
 	_A.casttimers = {} -- doesnt work with channeled spells
 	_A.Listener:Add("delaycasts_Monk_and_misc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
@@ -75,7 +108,7 @@ local exeOnLoad = function()
 				end
 				if subevent == "SPELL_AURA_REMOVED" then
 					-- print("nilled")
-					 _A.SMguid = nil
+					_A.SMguid = nil
 				end
 			end
 		end
@@ -294,15 +327,18 @@ local mw_rot = {
 	end,
 	
 	ctrl_mode = function()
-		-- if not player:isChanneling("Soothing Mist") and  _A.SMguid ~= nil then _A.SMguid = nil end
-		if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
+		-- if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
+		if _A.modifier_ctrl() then
 			if not player:moving() then
-				local lowest = Object("lowestall")
+				-- local lowest = Object("lowestall")
+				local lowest = Object("lowestallNOHOT")
 				if player:isChanneling("Soothing Mist") and _A.SMguid then
 					local SMobj = Object(_A.SMguid)
-					if player:Chi()>= 3 then return SMobj:cast("Enveloping Mist", true) end
-					if _A.enoughmana(116694) and player:Chi()< 3 then return SMobj:cast("Surging Mist", true) end
-					-- if SMobj and not SMobj:los() then _A.CallWowApi("SpellStopCasting") end
+					if SMobj and SMobj:SpellRange("Renewing Mist") then
+						if SMobj:buff(132120) then return _A.CallWowApi("SpellStopCasting") end
+						if player:Chi()>= 3 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
+						if _A.enoughmana(116694) and player:Chi()< 3 and SMobj:los() then return SMobj:cast("Surging Mist", true) end
+					end
 				end
 				if not player:isChanneling("Soothing Mist") and _A.enoughmana(115175) then return lowest:cast("Soothing Mist") end 
 			end
@@ -802,6 +838,7 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
 	if player:isChanneling("Crackling Jade Lightning") then return end
+	mw_rot.ctrl_mode()
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
@@ -814,7 +851,6 @@ local inCombat = function()
 	mw_rot.ringofpeace()
 	mw_rot.burstdisarm()
 	mw_rot.healingsphere_shift()
-	mw_rot.ctrl_mode()
 	mw_rot.pvp_disable()
 	mw_rot.chi_wave()
 	mw_rot.chibrew()
@@ -825,42 +861,45 @@ local inCombat = function()
 	mw_rot.renewingmist()
 	mw_rot.healstatue()
 	mw_rot.healingsphere()
-	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
+	-- if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
+	if not (_A.modifier_ctrl() and _A.enoughmana(115175) )then
 		mw_rot.tigerpalm_mm()
 		mw_rot.bk_buff()
 		mw_rot.tp_buff()
 	end
 	mw_rot.thunderfocustea()
-	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
+	-- if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
+	if not (_A.modifier_ctrl() and _A.enoughmana(115175) )then
 		mw_rot.uplift()
 	end
 	mw_rot.expelharm()
-	if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
+	-- if not (_A.modifier_ctrl() and _A.castdelay(124682, 6) and _A.enoughmana(115175) )then
+	if not (_A.modifier_ctrl() and _A.enoughmana(115175) )then
 		mw_rot.tigerpalm_filler()
 	end
 	mw_rot.jab_filler()
 	mw_rot.statbuff()
 	mw_rot.dpsstance_jab()
 	mw_rot.dpsstance_spin()
-mw_rot.dpsstance_healstance()
-mw_rot.dpsstanceswap()
+	mw_rot.dpsstance_healstance()
+	mw_rot.dpsstanceswap()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
 _A.CR:Add(270, {
-name = "Monk Heal EFFICIENT",
-ic = inCombat,
-ooc = inCombat,
-use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	name = "Monk Heal EFFICIENT",
+	ic = inCombat,
+	ooc = inCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })

@@ -465,7 +465,7 @@ affliction.rot = {
 				or _A.UnitIsDeadOrGhost("pet")
 				or not _A.HasPetUI()
 				then 
-				if player:buff(74434) or ( not player:moving() and not player:combat() ) then
+				if player:buff(74434) or ( not player:moving() ) then
 					return player:cast(112866)
 				end
 				if (not player:buff(74434) and player:combat() and _A.shards>=1 ) --or player:buff("Shadow Trance") 
