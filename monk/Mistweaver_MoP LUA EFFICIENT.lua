@@ -779,7 +779,7 @@ local mw_rot = {
 					if lowestmelee then
 						if lowestmelee:exists() then
 							---------------------------------- 
-							return lowestmelee:Cast("Blackout Kick")
+							return lowestmelee:Cast("Blackout Kick", true)
 						end
 					end
 					--------------------------------- damage based
@@ -825,7 +825,12 @@ local mw_rot = {
 				and player:SpellCooldown("Rushing Jade Wind")<.3
 				and _A.enoughmana(116847)
 				then
-				return player:Cast("Rushing Jade Wind")
+				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+				if lowestmelee then
+					if lowestmelee:exists() then
+						return player:Cast("Rushing Jade Wind")
+					end
+				end
 			end
 		end
 	end,
@@ -835,9 +840,21 @@ local mw_rot = {
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee then
 				if lowestmelee:exists() then
-					return lowestmelee:Cast("Jab")
+					return lowestmelee:Cast("Jab", true)
 				end
 			end
+		end
+	end,
+	
+	lightning_keybind = function()
+		if player:Stance() == 1 and player:Keybind("R") and player:mana()>=9 and not player:moving() then
+			if not player:isChanneling("Crackling Jade Lightning") then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
+				if lowestmelee and lowestmelee:exists() and lowestmelee:los() then
+				return lowestmelee:Cast("Crackling Jade Lightning")
+			end
+			end
+			else if player:isChanneling("Crackling Jade Lightning") then _A.CallWowApi("SpellStopCasting") end
 		end
 	end,
 	
@@ -885,7 +902,7 @@ local inCombat = function()
 	mw_rot.caching()
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
-	if player:isChanneling("Crackling Jade Lightning") then return end
+	-- if player:isChanneling("Crackling Jade Lightning") then return end
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
@@ -918,6 +935,7 @@ local inCombat = function()
 	mw_rot.uplift()
 	mw_rot.expelharm()
 	mw_rot.jab_keybind()
+	mw_rot.lightning_keybind()
 	mw_rot.tigerpalm_filler()
 	mw_rot.jab_filler()
 	mw_rot.statbuff()
