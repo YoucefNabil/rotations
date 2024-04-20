@@ -766,6 +766,28 @@ local mw_rot = {
 		end
 	end,
 	
+	blackout_keybind = function()
+		--if not player:LostControl() then
+		if player:Stance() == 1   then
+			if player:Chi()>=2 then
+				-- if player:Buff("Muscle Memory") then
+				if player:Keybind("R") then
+					
+					---------------------------------- 
+					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					if lowestmelee then
+						if lowestmelee:exists() then
+							---------------------------------- 
+							print("WORKING WORKING")
+							return lowestmelee:Cast("Blackout Kick")
+						end
+					end
+					--------------------------------- damage based
+				end
+			end
+		end
+	end,
+	
 	jab_filler = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1   then
@@ -792,6 +814,28 @@ local mw_rot = {
 					if lowestmelee:exists() then
 						return lowestmelee:Cast("Jab")
 					end
+				end
+			end
+		end
+	end,
+	
+	spin_keybind = function()
+		if player:Stance() == 1 and player:Keybind("R") then
+			if	player:Talent("Rushing Jade Wind") 
+				and player:SpellCooldown("Rushing Jade Wind")<.3
+				and _A.enoughmana(116847)
+				then
+				return player:Cast("Rushing Jade Wind")
+			end
+		end
+	end,
+	
+	jab_keybind = function()
+		if player:Stance() == 1 and player:Keybind("R") and player:mana()>=9 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					return lowestmelee:Cast("Jab")
 				end
 			end
 		end
@@ -869,8 +913,11 @@ local inCombat = function()
 	mw_rot.bk_buff()
 	mw_rot.tp_buff()
 	mw_rot.thunderfocustea()
+	mw_rot.blackout_keybind()
+	mw_rot.spin_keybind()
 	mw_rot.uplift()
 	mw_rot.expelharm()
+	mw_rot.jab_keybind()
 	mw_rot.tigerpalm_filler()
 	mw_rot.jab_filler()
 	mw_rot.statbuff()
