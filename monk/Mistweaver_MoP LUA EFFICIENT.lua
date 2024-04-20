@@ -82,7 +82,7 @@ local exeOnLoad = function()
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
 				if not fr:Buff(132120) 
-				and _A.nothealimmune(fr) and fr:los() then
+					and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable+1] = {
 						HP = fr:health(),
 						guid = fr.guid
@@ -95,7 +95,11 @@ local exeOnLoad = function()
 	end)
 	_A.SMguid = nil
 	_A.casttimers = {} -- doesnt work with channeled spells
-	_A.Listener:Add("delaycasts_Monk_and_misc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+	_A.Listener:Add("delaycasts_Monk_and_misc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+		-- Testing
+		-- if subevent == "SWING_DAMAGE" or subevent == "RANGE_DAMAGE" or subevent == "SPELL_PERIODIC_DAMAGE" or subevent == "SPELL_BUILDING_DAMAGE" or subevent == "ENVIRONMENTAL_DAMAGE"  then
+			-- print(subevent.." "..amount) -- too much voodoo
+		-- end
 		if guidsrc == UnitGUID("player") then
 			-- Delay Cast Function
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
