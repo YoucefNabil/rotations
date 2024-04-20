@@ -125,6 +125,33 @@ local exeOnLoad = function()
 end
 local exeOnUnload = function()
 end
+local usableitems= { -- item slots
+	13, --first trinket
+	14 --second trinket
+}
+local function cditemRemains(itemid)
+	local itempointerpoint;
+	if itemid ~= nil
+		then 
+		if tonumber(itemid)~=nil
+			then 
+			if itemid<=23
+				then itempointerpoint = (select(1, GetInventoryItemID("player", itemid)))
+			end
+			if itemid>23
+				then itempointerpoint = itemid
+			end
+		end
+	end
+	local startcast1 = (select(2, GetItemCooldown(itempointerpoint)))
+	local endcast1 = (select(1, GetItemCooldown(itempointerpoint)))
+	local gettm1 = GetTime()
+	if startcast1 + (endcast1 - gettm1) > 0 then
+		return startcast1 + (endcast1 - gettm1)
+		else
+		return 0
+	end
+end
 local mw_rot = {
 	
 	caching = function()
@@ -156,6 +183,30 @@ local mw_rot = {
 		-- end
 		-- end
 		-- end
+	end,
+	
+	activetrinket = function()
+		if player:combat() and player:buff("Surge of Dominance") then
+			for i=1, #usableitems do
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
+							_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+						end
+					end
+				end
+			end
+		end
+	end,
+	
+	Xuen = function()
+		if player:combat() and player:SpellCooldown("Invoke Xuen, the White Tiger")==0 then
+			if player:buff("Call of Dominance") then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
+				if lowestmelee and lowestmelee:exists() then
+				return	lowestmelee:cast("Invoke Xuen, the White Tiger") end
+			end
+		end
 	end,
 	
 	
@@ -850,7 +901,7 @@ local mw_rot = {
 		if player:Stance() == 1 and player:Keybind("R") and player:mana()>=9 and not player:moving() then
 			if not player:isChanneling("Crackling Jade Lightning") then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
-				if lowestmelee and lowestmelee:exists() and lowestmelee:los() then
+				if lowestmelee and lowestmelee:exists() then
 				return lowestmelee:Cast("Crackling Jade Lightning")
 			end
 			end
@@ -906,16 +957,17 @@ local inCombat = function()
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
+	mw_rot.activetrinket()
+	mw_rot.Xuen()
 	mw_rot.turtletoss()
 	mw_rot.kick_legsweep()
 	mw_rot.dispellplzarena()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
-	mw_rot.manatea()
+	-- mw_rot.manatea()
 	mw_rot.ringofpeace()
 	mw_rot.burstdisarm()
 	mw_rot.healingsphere_shift()
-	mw_rot.pvp_disable()
 	mw_rot.chi_wave()
 	mw_rot.chibrew()
 	mw_rot.fortifyingbrew()
@@ -923,9 +975,11 @@ local inCombat = function()
 	mw_rot.lifecocoon()
 	mw_rot.surgingmist()
 	mw_rot.renewingmist()
+	mw_rot.manatea()
 	mw_rot.ctrl_mode()
 	mw_rot.healstatue()
 	mw_rot.healingsphere()
+	mw_rot.pvp_disable()
 	mw_rot.tigerpalm_mm()
 	mw_rot.bk_buff()
 	mw_rot.tp_buff()

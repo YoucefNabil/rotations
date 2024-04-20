@@ -423,7 +423,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
-							_A.RunMacroText(string.format(("/use %s "), usableitems[i]))
+							_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 						end
 					end
 				end
