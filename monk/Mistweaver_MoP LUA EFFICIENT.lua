@@ -909,6 +909,19 @@ local mw_rot = {
 		end
 	end,
 	
+	autotarget = function()
+		if player:Stance() == 1 and player:Keybind("R") and player:mana()>=9 and not player:moving() then
+			if not player:isChanneling("Crackling Jade Lightning") then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
+				if lowestmelee and lowestmelee:exists() then
+				return lowestmelee:Cast("Crackling Jade Lightning")
+			end
+			end
+			else if player:isChanneling("Crackling Jade Lightning") then _A.CallWowApi("SpellStopCasting") end
+		end
+	end,
+	
+	
 	dpsstance_spin = function()
 		if player:Stance() ~= 1 then
 			if	player:Talent("Rushing Jade Wind") 
