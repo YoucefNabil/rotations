@@ -674,7 +674,7 @@ local mw_rot = {
 	
 	tigerpalm_mm = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1   then
+		if player:Stance() == 1  and not player:Keybind("R") then
 			if player:Chi()>=1 then
 				if player:Buff("Muscle Memory") then
 					---------------------------------- 
@@ -771,14 +771,14 @@ local mw_rot = {
 		if player:Stance() == 1   then
 			if player:Chi()>=2 then
 				-- if player:Buff("Muscle Memory") then
-				if player:Keybind("R") then
+				if player:Keybind("R") and player:Buff("Muscle Memory")  
+				then
 					
 					---------------------------------- 
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
 						if lowestmelee:exists() then
 							---------------------------------- 
-							print("WORKING WORKING")
 							return lowestmelee:Cast("Blackout Kick")
 						end
 					end
@@ -913,8 +913,8 @@ local inCombat = function()
 	mw_rot.bk_buff()
 	mw_rot.tp_buff()
 	mw_rot.thunderfocustea()
-	mw_rot.blackout_keybind()
 	mw_rot.spin_keybind()
+	mw_rot.blackout_keybind()
 	mw_rot.uplift()
 	mw_rot.expelharm()
 	mw_rot.jab_keybind()
