@@ -212,7 +212,8 @@ local exeOnLoad = function()
 	end
 	
 	local function channelinfo(unit)
-		return _A.UnitChannelInfo(unit) and string.lower((select(1, _A.UnitChannelInfo(unit)))) or " "
+		local channeling = _A.UnitChannelInfo(unit)
+		return channeling and string.lower((select(1, channeling))) or " "
 	end
 	
 	
@@ -373,11 +374,13 @@ arms.rot = {
 		end
 	end,
 	
-	overpower = function()
-		if  player:SpellUsable("Overpower") then
+	Execute = function()
+		if  player:SpellCooldown("Execute")<.3 and player:SpellUsable("Execute") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Overpower")
+				if player:buff(1719) or (player:rage()>80) or (lowestmelee:debuff("Colossus Smash")) then
+					return lowestmelee:Cast("Execute")
+				end
 			end
 		end
 	end,
@@ -386,7 +389,19 @@ arms.rot = {
 		if  player:SpellCooldown("Slam")<.3 and player:SpellUsable("Slam") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Slam")
+				if player:buff(1719) or (player:rage()>80 and player:buffstack(60503)<3) or (lowestmelee:debuff("Colossus Smash") and player:rage()>=40) then
+					return lowestmelee:Cast("Slam")
+				end
+			end
+		end
+	end,
+	
+	
+	overpower = function()
+		if  player:SpellUsable("Overpower") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			if lowestmelee and lowestmelee:exists() then
+				return lowestmelee:Cast("Overpower")
 			end
 		end
 	end,
@@ -410,9 +425,10 @@ local inCombat = function()
 	arms.rot.Pummel()
 	arms.rot.Disruptingshout()
 	arms.rot.colossussmash()
+	arms.rot.Execute()
 	arms.rot.Mortalstrike()
-	arms.rot.overpower()
 	arms.rot.slam()
+	arms.rot.overpower()
 end
 local spellIds_Loc = function()
 end
