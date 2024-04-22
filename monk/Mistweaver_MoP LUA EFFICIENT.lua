@@ -741,7 +741,7 @@ local mw_rot = {
 	
 	tigerpalm_mm = function()
 		--if not player:LostControl() then
-		if player:Stance() == 1 then
+		if player:Stance() == 1 and not player:Keybind("R") then
 			if player:Chi()>=1 then
 				if player:Buff("Muscle Memory") then
 					---------------------------------- 
@@ -913,13 +913,27 @@ local mw_rot = {
 		end
 	end,
 	
+	jab_keybind_buff = function()
+		if player:Stance() == 1 and player:Keybind("R") and player:mana()>=9 and not player:buff("Muscle Memory") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					return lowestmelee:Cast("Jab", true)
+				end
+			end
+		end
+	end,
+	
 	lightning_keybind = function()
 		if player:Stance() == 1 and player:Keybind("R") and player:mana()>=9 and not player:moving() then
 			if not player:isChanneling("Crackling Jade Lightning") then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+				if not lowestmelee then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
 				if lowestmelee and lowestmelee:exists() then
 					return lowestmelee:Cast("Crackling Jade Lightning")
 				end
+			end
 			end
 			else if player:isChanneling("Crackling Jade Lightning") then _A.CallWowApi("SpellStopCasting") end
 		end
@@ -981,7 +995,7 @@ local inCombat = function()
 	mw_rot.caching()
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
-	-- if player:isChanneling("Crackling Jade Lightning") then return end
+	if player:isChanneling("Crackling Jade Lightning") then return end
 	mw_rot.autotarget()
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
@@ -990,7 +1004,7 @@ local inCombat = function()
 	mw_rot.Xuen()
 	mw_rot.turtletoss()
 	mw_rot.kick_legsweep()
-	mw_rot.dispellplzarena()
+	-- mw_rot.dispellplzarena()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
 	-- mw_rot.manatea()
@@ -1011,14 +1025,15 @@ local inCombat = function()
 	mw_rot.pvp_disable()
 	mw_rot.spin_keybind()
 	mw_rot.blackout_keybind()
+	mw_rot.jab_keybind_buff()
 	mw_rot.lightning_keybind()
-	mw_rot.jab_keybind()
 	mw_rot.tigerpalm_mm()
 	mw_rot.bk_buff()
 	mw_rot.tp_buff()
 	mw_rot.thunderfocustea()
 	mw_rot.uplift()
 	mw_rot.expelharm()
+	mw_rot.jab_keybind()
 	mw_rot.tigerpalm_filler()
 	mw_rot.jab_filler()
 	mw_rot.statbuff()
