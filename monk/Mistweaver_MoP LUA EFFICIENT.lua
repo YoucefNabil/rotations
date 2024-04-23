@@ -60,6 +60,8 @@ local healerspecid = {
 local GUI = {
 }
 local exeOnLoad = function()
+	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
+	_A.interrupttreshhold = math.max(_A.latency, .1)
 	_A.FakeUnits:Add('lowestall', function(num, spell)
 		local tempTable = {}
 		local location = pull_location()
@@ -450,7 +452,7 @@ local mw_rot = {
 					and not obj:State("silence")	
 					and obj:caninterrupt() 
 					and not obj:LostControl()
-					and obj:castsecond() < 0.3 or obj:chanpercent()<=95
+					and obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=95
 					and _A.notimmune(obj)
 					then
 					obj:Cast("Spear Hand Strike")
@@ -992,6 +994,8 @@ local mw_rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
+	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
+	_A.interrupttreshhold = math.max(_A.latency, .1)
 	mw_rot.caching()
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end

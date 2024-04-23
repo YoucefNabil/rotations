@@ -2,7 +2,7 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local player
-local arms = {}
+local frost = {}
 local immunebuffs = {
 	"Deterrence",
 	-- "Anti-Magic Shell",
@@ -93,6 +93,31 @@ local function power(unit)
 	end
 	intel2=nil
 end
+
+local function cditemRemains(itemid)
+	local itempointerpoint;
+	if itemid ~= nil
+		then 
+		if tonumber(itemid)~=nil
+			then 
+			if itemid<=23
+				then itempointerpoint = (select(1, GetInventoryItemID("player", itemid)))
+			end
+			if itemid>23
+				then itempointerpoint = itemid
+			end
+		end
+	end
+	local startcast1 = (select(2, GetItemCooldown(itempointerpoint)))
+	local endcast1 = (select(1, GetItemCooldown(itempointerpoint)))
+	local gettm1 = GetTime()
+	if startcast1 + (endcast1 - gettm1) > 0 then
+		return startcast1 + (endcast1 - gettm1)
+		else
+		return 0
+	end
+end
+
 local function pull_location()
 	local whereimi = string.lower(select(2, GetInstanceInfo()))
 	return string.lower(select(2, GetInstanceInfo()))
@@ -100,6 +125,19 @@ end
 --
 --
 
+local frozen_debuffs = {
+	"frost nova",
+	"freeze",
+	"deep freeze",
+	"ring of frost",
+	"frostjaw",
+	"ice ward"
+}
+
+local usableitems = { -- item slots
+	13, --first trinket
+	14 --second trinket
+}
 
 local GUI = {
 }
@@ -152,6 +190,21 @@ local exeOnLoad = function()
 		if player and player:stance()==1 then
 		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end end
 		return false
+	end
+	
+	_A.casttimers = {} -- doesnt work with channeled spells
+	_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+		if guidsrc == UnitGUID("player") then
+			-- print(subevent.." "..idd)
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[idd] = _A.GetTime()
+			end
+		end
+	end)
+	function _A.castdelay(idd, delay)
+		if delay == nil then return true end
+		if _A.casttimers[idd]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[idd])>=delay
 	end
 	
 	function _A.notimmune(unit) -- needs to be object
@@ -238,6 +291,82 @@ local exeOnLoad = function()
 		return tempTable[num] and tempTable[num].guid
 	end)
 	
+	_A.FakeUnits:Add('lowestEnemyFrozen', function(num, spell)
+		local tempTable = {}
+		local player = player or Object("player")
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and  Obj:Infront() and Obj:SpellUsable("Deep Freeze") and _A.notimmune(Obj)  and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	
+	_A.FakeUnits:Add('lowestEnemyNONFrozen', function(num, spell)
+		local tempTable = {}
+		local player = player or Object("player")
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and  Obj:Infront() and (not Obj:SpellUsable("Deep Freeze")) and _A.notimmune(Obj)  and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	
+	_A.FakeUnits:Add('lowestEnemyInRangeNONFrozen', function(num, range_target)
+		local tempTable = {}
+		local range, target = _A.StrExplode(range_target)
+		range = tonumber(range) or 40
+		target = target or "player"
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:rangefrom(target)<=range and (not Obj:SpellUsable("Deep Freeze")) and  _A.notimmune(Obj)  and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	
+	_A.FakeUnits:Add('lowestEnemyInRange', function(num, range_target)
+		local tempTable = {}
+		local range, target = _A.StrExplode(range_target)
+		range = tonumber(range) or 40
+		target = target or "player"
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:rangefrom(target)<=range and Obj:Infront() and  _A.notimmune(Obj)  and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	
 	_A.DSL:Register('caninterrupt', function(unit)
 		return interruptable(unit)
 	end)
@@ -257,7 +386,7 @@ end
 local exeOnUnload = function()
 end
 
-arms.rot = {
+frost.rot = {
 	items_healthstone = function()
 		if player:health() <= 35 then
 			if player:ItemCooldown(5512) == 0
@@ -304,51 +433,13 @@ arms.rot = {
 		end
 	end,
 	
-	Charge = function()
-		if player:SpellCooldown("Charge")==0 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Charge") and obj:infront()
-					and obj:caninterrupt() and healerspecid[_A.UnitSpec(obj.guid)]
-					and obj:channame()~="mind sear"
-					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
-					)
-					and _A.notimmune(obj)
-					and obj:los()
-					then
-					obj:Cast("Charge")
-				end
-			end
-		end
-	end,
-	
-	Pummel = function()
-		if player:SpellCooldown("Pummel")==0 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Mortal Strike") and obj:infront()
-					and obj:caninterrupt() 
-					and obj:channame()~="mind sear"
-					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
-					)
-					and _A.notimmune(obj)
-					then
-					obj:Cast("Pummel")
-				end
-			end
-		end
-	end,
-	
-	Disruptingshout = function()
-		if player:talent("Disrupting Shout") and player:SpellCooldown("Disrupting Shout")==0 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and  obj:isCastingAny() and obj:range()<=10 then
-					if player:SpellCooldown("Pummel")>0 or (not obj:SpellRange("Mortal Strike")) or (obj:SpellRange("Mortal Strike") and not obj:infront()) then
-						if obj:caninterrupt() and healerspecid[_A.UnitSpec(obj.guid)]
-							and obj:channame()~="mind sear"
-							and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=92
-							)
-							and _A.notimmune(obj)
-							then
-							obj:Cast("Disrupting Shout")
+	activetrinket = function()
+		if player:buff("Surge of Dominance") and player:combat() then
+			for i=1, #usableitems do
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
+							_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 						end
 					end
 				end
@@ -356,52 +447,138 @@ arms.rot = {
 		end
 	end,
 	
-	colossussmash = function()
-		if  player:SpellCooldown("Colossus Smash")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() and not lowestmelee:debuff("Colossus Smash") then
-				return lowestmelee:Cast("Colossus Smash")
-			end
-		end
-	end,
-	
-	Mortalstrike = function()
-		if  player:SpellCooldown("Mortal Strike")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Mortal Strike")
-			end
-		end
-	end,
-	
-	Execute = function()
-		if  player:SpellCooldown("Execute")<.3 and player:SpellUsable("Execute") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
-				if player:buff(1719) or (player:rage()>80) or (lowestmelee:debuff("Colossus Smash")) then
-					return lowestmelee:Cast("Execute")
+	OrbOrb = function()
+		if player:combat() and player:SpellCooldown("Frozen Orb")<.3 then
+			if player:buff("Call of Dominance") then
+				player:cast("Frozen Orb")
+				if _A.castdelay(84714, 6) then
+					player:cast("Alter Time")
 				end
 			end
 		end
 	end,
 	
-	slam = function()
-		if  player:SpellCooldown("Slam")<.3 and player:SpellUsable("Slam") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
-				if player:buff(1719) or (player:rage()>80 and player:buffstack(60503)<3) or (lowestmelee:debuff("Colossus Smash") and player:rage()>=40) then
-					return lowestmelee:Cast("Slam")
+	IcyVeins = function()
+		if player:combat() and player:SpellCooldown("Icy Veins")==0 then
+			if player:buff("Call of Dominance") then
+				player:cast("Icy Veins")
+				if _A.castdelay(84714, 6) then
+					player:cast("Alter Time")
 				end
 			end
 		end
 	end,
 	
+	MirrorImage = function()
+		if player:combat() and player:SpellCooldown("Mirror Image")==0 then
+			if player:buff("Mirror Image") then
+				player:cast("Icy Veins")
+				if _A.castdelay(84714, 6) then
+					player:cast("Alter Time")
+				end
+			end
+		end
+	end,
 	
-	overpower = function()
-		if  player:SpellUsable("Overpower") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+	Silencing = function()
+		if player:SpellCooldown("Counterspell")==0 then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Counterspell") and obj:infront()
+					and obj:caninterrupt() 
+					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
+					)
+					and _A.notimmune(obj)
+					then
+					obj:Cast("Counterspell")
+				end
+			end
+		end
+	end,
+	
+	frostfirebolt_proc = function()
+		if player:buff("Brain Freeze") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
 			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Overpower")
+				return lowestmelee:Cast("frostfire bolt")
+			end
+		end
+	end,
+	
+	deepfreeze_frozen = function()
+		if player:SpellCooldown("Deep Freeze")<.3 then
+			local lowestmelee = Object("lowestEnemyFrozen(Deep Freeze)")
+			if lowestmelee and lowestmelee:exists()  then
+				return lowestmelee:cast("Deep Freeze")
+			end
+		end
+	end,
+	
+	
+	icelance_frozen = function()
+			local lowestmelee = Object("lowestEnemyFrozen(Ice Lance)")
+			if lowestmelee and lowestmelee:exists()  then
+			-- if (lowestmelee:SpellUsable("Deep Freeze") and player:buff("Call of Dominance")) or (not player:keybind("E")) then
+				return lowestmelee:cast("ice lance")
+			-- end
+		end
+	end,
+	
+	magedot = function()
+		local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
+		if lowestmelee and lowestmelee:exists() then
+			if player:Talent("Nether Tempest") and not lowestmelee:debuff("Nether Tempest") then
+				return lowestmelee:Cast("Nether Tempest")
+				elseif player:Talent("living bomb") and not lowestmelee:debuff("living bomb") then
+				return lowestmelee:Cast("living bomb")
+			end
+		end
+	end,
+	
+	frostbolt = function()
+		if player:keybind("E") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
+			if lowestmelee and lowestmelee:exists() then
+				return lowestmelee:Cast("frostbolt")
+			end
+		end
+	end,
+	
+	icelance = function()
+		if not player:keybind("E") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
+			if lowestmelee and lowestmelee:exists() then
+				return lowestmelee:Cast("Ice Lance")
+			end
+		end
+	end,
+	
+	playerfreeze = function()
+		if player:SpellCooldown("Frost Nova")<.3 then
+			local lowestmelee = Object("lowestEnemyInRangeNONFrozen(12)")
+			if lowestmelee and lowestmelee:exists()  then
+				return lowestmelee:cast("Frost Nova")
+			end
+		end
+	end,
+	
+	coneofcold = function()
+		if player:SpellCooldown("Cone of Cold")<.3 then
+			local lowestmelee = Object("lowestEnemyInRange(8)")
+			if lowestmelee and lowestmelee:exists()  then
+				return lowestmelee:cast("Cone of Cold")
+			end
+		end
+	end,
+	
+	pet_freeze = function()
+		if _A.UnitExists("pet")
+			and not _A.UnitIsDeadOrGhost("pet") then
+			local pet = Object("pet")
+			if pet and pet:SpellCooldown("Freeze")==0 then
+				local lowestmelee = Object("lowestEnemyNONFrozen(Ice Lance)")
+				if pet:rangefrom(lowestmelee)<=40 and not lowestmelee:Spellusable("Deep Freeze") and pet:losfrom(lowestmelee)  then
+					lowestmelee:castground(33395)
+				end
 			end
 		end
 	end,
@@ -417,25 +594,29 @@ local inCombat = function()
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .1) 
 	if _A.buttondelayfunc()  then return end
-	if  player:isCastingAny() then return end
 	if player:mounted() then return end
-	-- if player:lostcontrol()  then return end 
-	-- Interrupts
-	arms.rot.Charge()
-	arms.rot.Pummel()
-	arms.rot.Disruptingshout()
-	arms.rot.colossussmash()
-	arms.rot.Execute()
-	arms.rot.Mortalstrike()
-	arms.rot.slam()
-	arms.rot.overpower()
+	frost.rot.pet_freeze()
+	if player:isCastingAny() then return end
+	frost.rot.Silencing()
+	frost.rot.activetrinket()
+	frost.rot.OrbOrb()
+	frost.rot.IcyVeins()
+	frost.rot.MirrorImage()
+	frost.rot.playerfreeze()
+	frost.rot.deepfreeze_frozen()
+	frost.rot.icelance_frozen()
+	frost.rot.coneofcold()
+	frost.rot.frostfirebolt_proc()
+	frost.rot.magedot()
+	frost.rot.frostbolt()
+	frost.rot.icelance()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
-_A.CR:Add(71, {
-	name = "Youcef's Arms Warrior",
+_A.CR:Add(64, {
+	name = "Youcef's frost mage",
 	ic = inCombat,
 	ooc = inCombat,
 	use_lua_engine = true,
