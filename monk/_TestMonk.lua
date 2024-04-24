@@ -97,23 +97,7 @@ local function testkeys(self, key)
 	-- end
 	-- end
 	if key=="E" then
-		local player = Object("player")
-		if GetSpecialization()==1 then
-			if player:SpellReady("Dizzying Haze") and player:SpellUsable("Dizzying Haze") and _A.GetShapeshiftForm() == 1
-				then
-				local mouseover = Object("mouseover")
-				if mouseover then
-					if mouseover:exists() then
-						if mouseover:enemy() then
-							if mouseover:alive() then
-								return mouseover:CastGround("Dizzying Haze")
-							end
-						end
-					end
-				end
-				return _A.CastGround("Dizzying haze", "cursor")
-			end
-		end		
+		local player = Object("player")	
 		if GetSpecialization()==2 then
 			if _A.enoughmana("Healing Sphere") and _A.GetShapeshiftForm() == 1
 				then

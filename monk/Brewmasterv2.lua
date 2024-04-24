@@ -2,7 +2,7 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local player
-local arms = {}
+local brewmaster = {}
 local immunebuffs = {
 	"Deterrence",
 	-- "Anti-Magic Shell",
@@ -97,6 +97,33 @@ local function pull_location()
 	local whereimi = string.lower(select(2, GetInstanceInfo()))
 	return string.lower(select(2, GetInstanceInfo()))
 end
+local function manaregen()
+	local intel3 = (select(1, GetPowerRegen()))
+	if intel3 == 0
+		or intel3 == nil
+		then return 0
+		else return intel3
+	end
+end
+
+local function cdRemains(spellid)
+	local endcast, startcast = GetSpellCooldown(spellid)
+	local gettm = GetTime()
+	if startcast + (endcast - gettm) > 0 then
+		return startcast + (endcast - gettm)
+		else
+		return 0
+	end
+end
+local function power(unit)
+	local intel2 = UnitPower(unit)
+	if intel2 == 0
+		or intel2 == nil
+		then return 0
+		else return intel2
+	end
+	intel2=nil
+end
 --
 --
 
@@ -104,13 +131,10 @@ end
 local GUI = {
 }
 local exeOnLoad = function()
-	local STARTSLOT = 1
-	local STOPSLOT = 8
+	local STARTSLOT = 85
+	local STOPSLOT = 92
 	_A.pressedbuttonat = 0
 	_A.buttondelay = 0.6
-	--
-	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
-	_A.interrupttreshhold = math.max(_A.latency, .1)
 	Listener:Add("warrior_stuff", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
 		_A.pull_location = pull_location()
 	end)
@@ -238,6 +262,53 @@ local exeOnLoad = function()
 		return tempTable[num] and tempTable[num].guid
 	end)
 	
+	function _A.enemiesinrangeofspin()
+		local tempnumber = 0
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			--if Obj:los() then
+			if Obj:range()<=8 and Obj:alive() then
+				if _A.notimmune(Obj) then
+					tempnumber = tempnumber + 1
+				end
+			end
+			--end
+		end
+		return tempnumber
+	end
+	
+	function _A.pSpeed(unit, maxDistance)
+		local munit = Object(unit)
+		--local unitGUID = unit.guid
+		local x, y, z = _A.ObjectPosition(unit)
+		local facing = _A.ObjectFacing(unit)
+		local speed = _A.GetUnitSpeed(unit)
+		-- Check if the unit is standing still or moving backward
+		if not munit:Moving() or _A.UnitIsMovingBackward(unit) then
+			return x, y, z
+		end 
+		-- Determine the dynamic distance, with a minimum of 2 units for moving units
+		local distance = math.max(2, math.min(maxDistance, speed - 4.5))
+		-- Adjust facing based on strafing or moving forward
+		if _A.UnitIsStrafeLeft(unit) then
+			facing = facing + math.pi / 2 -- 90 degrees to the right for strafe left
+			elseif _A.UnitIsStrafeRight(unit) then
+			facing = facing - math.pi / 2 -- 90 degrees to the left for strafe right
+		end
+		-- Calculate and return the new position
+		local newX = x + distance * math.cos(facing)
+		local newY = y + distance * math.sin(facing)
+		return newX, newY, z
+	end
+	function _A.CastPredictedPos(unit, spell, distance)
+		local player = Object("player")
+		local px, py, pz = _A.pSpeed(unit, distance)
+		_A.CallWowApi("CastSpellByName", spell)
+		if player:SpellIsTargeting() then
+			_A.ClickPosition(px, py, pz)
+			_A.CallWowApi("SpellStopTargeting")
+		end
+	end
+	
 	_A.DSL:Register('caninterrupt', function(unit)
 		return interruptable(unit)
 	end)
@@ -253,11 +324,24 @@ local exeOnLoad = function()
 	_A.DSL:Register('channame', function(unit)
 		return channelinfo(unit)
 	end)
+	
+	_A.DSL:Register('chifix', function()
+		return _A.UnitPower("player", 12)
+	end)
+	_A.DSL:Register('chifixmax', function()
+		return _A.UnitPowerMax("player", 12)
+	end)
+	_A.DSL:Register('kegcheck', function()
+		return (power("player")+(manaregen()*cdRemains(121253)))>=80
+	end)
+	_A.DSL:Register('spinnumber', function()
+		return _A.enemiesinrangeofspin()
+	end)
 end
 local exeOnUnload = function()
 end
 
-arms.rot = {
+brewmaster.rot = {
 	items_healthstone = function()
 		if player:health() <= 35 then
 			if player:ItemCooldown(5512) == 0
@@ -304,107 +388,141 @@ arms.rot = {
 		end
 	end,
 	
-	Charge = function()
-		if player:SpellCooldown("Charge")==0 then
+	spear = function()
+		if player:SpellCooldown("Spear Hand Strike")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Charge") and obj:infront()
-					and obj:caninterrupt() and healerspecid[_A.UnitSpec(obj.guid)]
-					and obj:channame()~="mind sear"
-					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
-					)
-					and _A.notimmune(obj)
-					and obj:los()
-					then
-					obj:Cast("Charge")
-				end
-			end
-		end
-	end,
-	
-	Pummel = function()
-		if player:SpellCooldown("Pummel")==0 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Mortal Strike") and obj:infront()
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" or _A.pull_location == "none" ) and obj:isCastingAny() and obj:SpellRange("Spear Hand Strike") and obj:infront()
 					and obj:caninterrupt() 
-					and obj:channame()~="mind sear"
 					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
 					)
 					and _A.notimmune(obj)
 					then
-					obj:Cast("Pummel")
+					obj:Cast("Spear Hand Strike")
 				end
 			end
 		end
 	end,
 	
-	Disruptingshout = function()
-		if player:talent("Disrupting Shout") and player:SpellCooldown("Disrupting Shout")==0 then
+	stun_kick = function()
+		if player:talent("Leg Sweep") and  player:SpellCooldown("Leg Sweep")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and  obj:isCastingAny() and obj:range()<=10 then
-					if player:SpellCooldown("Pummel")>0 or player:buff("Bladestorm") or (not obj:SpellRange("Mortal Strike")) or (obj:SpellRange("Mortal Strike") and not obj:infront()) then
-						if obj:caninterrupt() and healerspecid[_A.UnitSpec(obj.guid)]
-							and obj:channame()~="mind sear"
-							and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=92
-							)
-							and _A.notimmune(obj)
-							then
-							obj:Cast("Disrupting Shout")
-						end
-					end
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" or _A.pull_location == "none" ) and obj:isCastingAny() and obj:range()<5
+					and _A.notimmune(obj)
+					and not obj:state("silence")
+					then
+					obj:Cast("Leg Sweep")
 				end
 			end
 		end
 	end,
 	
-	colossussmash = function()
-		if  player:SpellCooldown("Colossus Smash")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() and not lowestmelee:debuff("Colossus Smash") then
-				return lowestmelee:Cast("Colossus Smash")
+	blackoutkick = function()
+		if  player:chi()>=2 and player:buffduration("Shuffle")<=1.5 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			if lowestmelee and lowestmelee:exists()  then
+				return lowestmelee:Cast("Blackout Kick")
 			end
 		end
 	end,
 	
-	Mortalstrike = function()
-		if  player:SpellCooldown("Mortal Strike")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Mortal Strike")
+	guard = function()
+		if  player:chi()>=2 and player:SpellCooldown("Guard")<.3 and player:buff("Power Guard") and not player:buff("Guard") then
+			return player:Cast("Guard")
+		end
+	end,
+	
+	purifyingbrew = function()
+		if  player:chi()>=1 and player:SpellCooldown("Purifying Brew")==0 and  
+			( player:debuff("Heavy Stagger") or ( player:debuff("Moderate Stagger") and player:buffduration("Shuffle")>1.5 ) )
+			then
+			return player:Cast("Purifying Brew")
+		end
+	end,
+
+	elusivebrew = function()
+		if player:SpellCooldown("Elusive Brew")==0 and  player:BuffStack("Elusive Brew")>=8 and player:Health()<=40
+			and player:debuff("Heavy Stagger") 
+			then
+			return player:Cast("elusive brew")
+		end
+	end,
+
+	
+	kegsmash = function()
+		if  (player:chi())<(player:chifixmax()-1) and player:SpellCooldown("Keg Smash")<.3 and _A.UnitPower("player")>=40  then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Keg Smash)")
+			if lowestmelee and lowestmelee:exists()  then
+				return lowestmelee:Cast("Keg Smash")
 			end
 		end
 	end,
 	
-	Execute = function()
-		if  player:SpellCooldown("Execute")<.3 and player:SpellUsable("Execute") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
-				if player:buff(1719) or (player:rage()>80) or (lowestmelee:debuff("Colossus Smash")) then
-					return lowestmelee:Cast("Execute")
-				end
+	jab = function()
+		if  player:chi()<player:chifixmax() and _A.UnitPower("player")>=40  then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			if lowestmelee and lowestmelee:exists()  then
+				return lowestmelee:Cast("Jab")
 			end
 		end
 	end,
 	
-	slam = function()
-		if  player:SpellCooldown("Slam")<.3 and player:SpellUsable("Slam") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
-				if player:buff(1719) or (player:rage()>80 and player:buffstack(60503)<3) or (lowestmelee:debuff("Colossus Smash") and player:rage()>=40) then
-					return lowestmelee:Cast("Slam")
-				end
+	chiwave = function()
+		if  player:talent("Chi Wave") and player:SpellCooldown("Chi Wave")<.3  then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Chi Wave)")
+			if lowestmelee and lowestmelee:exists()  then
+				return lowestmelee:Cast("Chi Wave")
+			end
+		end
+	end,
+	--=============================
+	RS_shift = function()
+		if  player:talent("Rushing Jade Wind") and _A.UnitPower("player")>=40 and player:SpellCooldown("Rushing Jade Wind")<.3 and player:keybind("Shift") then
+			return player:Cast("Rushing Jade Wind")
+		end
+	end,
+	stun_shift = function()
+		if  player:talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<.3 and player:keybind("Shift") then
+			return player:Cast("Leg Sweep")
+		end
+	end,
+	BR_shift = function()
+		if  player:Glyph("Glyph of Breath of Fire") and player:chi()>=2 and player:keybind("Shift") then
+			return player:Cast("Breath of Fire")
+		end
+	end,
+	--=============================
+	RS_AOEPrio = function()
+		if  player:talent("Rushing Jade Wind") and _A.UnitPower("player")>=40 and player:SpellCooldown("Rushing Jade Wind")<.3 and player:spinnumber()>=3  then
+			return player:Cast("Rushing Jade Wind")
+		end
+	end,
+	
+	RS_Fill = function()
+		if  player:talent("Rushing Jade Wind") and _A.UnitPower("player")>=40 and player:SpellCooldown("Rushing Jade Wind")<.3 and player:kegcheck()  then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			if lowestmelee and lowestmelee:exists()  then
+				return player:Cast("Rushing Jade Wind")
+			end
+		end
+	end,
+	
+	tigerpalm = function()
+		local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+		if lowestmelee and lowestmelee:exists()  then
+			return lowestmelee:Cast(100787)
+		end
+	end,
+	
+	healingsphere = function()
+		if player:Health()<90 and _A.UnitPower("player")>=40 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			if not lowestmelee  then
+				return _A.CastPredictedPos(player.guid, "Healing Sphere", 10)
 			end
 		end
 	end,
 	
 	
-	overpower = function()
-		if  player:SpellUsable("Overpower") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Overpower")
-			end
-		end
-	end,
 }
 ---========================
 ---========================
@@ -415,27 +533,38 @@ local inCombat = function()
 	player = player or Object("player")
 	if not player then return end
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
-	_A.interrupttreshhold = math.max(_A.latency, .1) 
+	_A.interrupttreshhold = math.max(_A.latency, .2) 
 	if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end
 	-- if player:lostcontrol()  then return end 
-	-- Interrupts
-	arms.rot.Charge()
-	arms.rot.Pummel()
-	arms.rot.Disruptingshout()
-	arms.rot.colossussmash()
-	arms.rot.Execute()
-	arms.rot.Mortalstrike()
-	arms.rot.slam()
-	arms.rot.overpower()
+	--interrupts
+	brewmaster.rot.spear()
+	-- brewmaster.rot.stun_kick()
+	--Shift mode
+	brewmaster.rot.RS_shift()
+	brewmaster.rot.stun_shift()
+	brewmaster.rot.BR_shift()
+	-- Aoe
+	brewmaster.rot.RS_AOEPrio()
+	-- Combo Consumer
+	brewmaster.rot.blackoutkick()
+	brewmaster.rot.guard()
+	brewmaster.rot.purifyingbrew()
+	-- Combo Builder
+	brewmaster.rot.kegsmash()
+	brewmaster.rot.jab()
+	-- Fills
+	brewmaster.rot.RS_Fill()
+	brewmaster.rot.tigerpalm()
+	brewmaster.rot.healingsphere()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
-_A.CR:Add(71, {
-	name = "Youcef's Arms Warrior",
+_A.CR:Add(268, {
+	name = "Youcef's LUA brewmaster",
 	ic = inCombat,
 	ooc = inCombat,
 	use_lua_engine = true,
