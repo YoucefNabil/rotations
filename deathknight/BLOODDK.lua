@@ -1,9 +1,13 @@
+local _, class = UnitClass("player");
+if class ~= "DEATHKNIGHT" then return end;
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
+
 -- top of the CR
 local player
-local unholy = {}
+local blood = {}
+local hooksecurefunc = _A.hooksecurefunc
 local healerspecid = {
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",
@@ -14,15 +18,15 @@ local healerspecid = {
 	-- [65]="Paladin Holy",
 	-- [66]="Paladin prot",
 	-- [70]="Paladin retri",
-	[257]="Priest Holy",
-	[256]="Priest discipline",
-	-- [258]="Priest shadow",
-	[264]="Sham Resto",
-	-- [262]="Sham Elem",
-	-- [263]="Sham enh",
-	-- [62]="Mage Arcane",
-	-- [63]="Mage Fire",
-	-- [64]="Mage Frost"
+[257]="Priest Holy",
+[256]="Priest discipline",
+-- [258]="Priest shadow",
+[264]="Sham Resto",
+-- [262]="Sham Elem",
+-- [263]="Sham enh",
+-- [62]="Mage Arcane",
+-- [63]="Mage Fire",
+-- [64]="Mage Frost"
 }
 local darksimulacrumspecsBGS = {
 	[265]="Lock Affli",
@@ -220,12 +224,13 @@ end
 local GUI = {
 }
 local exeOnLoad = function()
-	
-	_A.pressedbuttonat = 0
-	_A.buttondelay = 0.5
-	_A.STARTSLOT = 1
-	_A.STOPSLOT = 8
-	_A.GRABKEY = "R"
+
+_A.pressedbuttonat = 0
+_A.buttondelay = 0.5
+_A.STARTSLOT = 1
+_A.STOPSLOT = 8
+_A.GRABKEY = "R"
+
 	function _A.enoughmana(id)
 		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
 		if powertype then
@@ -244,40 +249,6 @@ local exeOnLoad = function()
 		return false
 	end
 	--
-	_A.hooksecurefunc("UseAction", function(...)
-		local slot, target, clickType = ...
-		local Type, id, subType, spellID
-		--print(slot)
-		local player = Object("player")
-		if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
-			then
-			Type, id, subType = _A.GetActionInfo(slot)
-			
-			if Type == "spell" or Type == "macro" -- remove macro?
-				then
-				if player then
-					if (id == 48263 and player:Stance() == 1) or (id == 48266 and player:Stance() == 2) or (id == 48265 and player:Stance() == 3) -- stances
-						then return 
-						else
-						_A.pressedbuttonat = _A.GetTime() 
-					end
-				end
-			end
-		end
-		if slot==_A.STARTSLOT then 
-			_A.pressedbuttonat = 0
-			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
-				_A.Interface:toggleToggle("mastertoggle", true)
-				-- _A.print("ON")
-			end
-		end
-		if slot==_A.STOPSLOT then 
-			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
-				_A.Interface:toggleToggle("mastertoggle", false)
-				-- _A.print("OFF")
-			end
-		end
-	end)
 	_A.buttondelayfunc = function()
 		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end
 		return false
@@ -335,50 +306,6 @@ local exeOnLoad = function()
 		--return (mastery + crit + haste)
 	end
 	
-	
-	-- dot snapshorring
-	_A.enemyguidtab = {}
-	local ijustdidthatthing = false
-	local ijustdidthatthingtime = 0
-	Listener:Add("DK_STUFF", {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED"} ,function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-		if event == "PLAYER_ENTERING_WORLD"
-			or event == "PLAYER_REGEN_ENABLED"
-			then
-			if next(_A.enemyguidtab)~=nil then
-				for k in pairs(_A.enemyguidtab) do
-					_A.enemyguidtab[k]=nil
-				end
-			end
-		end
-		if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT"
-			then
-			if guidsrc == UnitGUID("player") then -- only filter by me
-				if subevent =="SPELL_CAST_SUCCESS" then
-					if idd==85948 then --festering strike, refreshes dot duration but not stats
-						ijustdidthatthing = true -- when true, means I just used FS
-						ijustdidthatthingtime = GetTime()
-						print(ijustdidthatthingtime)
-					end
-				end
-				if (idd==45462) or (idd==77575) -- or (idd==50842) -- outbreak -- Plague Strike -- pestilence(doesnt work because it only works on the target, and not on everyone else)
-					or 
-					(idd==55078) or (idd==55095)  -- debuffs, I think
-					then 
-					if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS" and not idd==85948) or (subevent=="SPELL_PERIODIC_DAMAGE" and _A.enemyguidtab[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
-						-- every spell aura refresh of dk refreshes both stats and duration, EXCEPT festering strike (only duration), that's what that check is for
-						then
-						_A.enemyguidtab[guiddest]=_A.myscore()
-						print(_A.enemyguidtab[guiddest])
-					end
-					if subevent=="SPELL_AURA_REMOVED" 
-						then
-						_A.enemyguidtab[guiddest]=nil
-					end
-				end	
-			end
-		end
-	end)
-	
 	function _A.usablelite(spellid)
 		if spellcost(spellid)~=nil then
 			if power("player")>=spellcost(spellid)
@@ -388,47 +315,6 @@ local exeOnLoad = function()
 			else return false
 		end
 	end
-	
-	
-	
-	function _A.isthisahealer(unit)
-		if unit then
-			if healerspecid[_A.UnitSpec(unit.guid)] then
-				return true
-			end
-		end
-		return false
-	end
-	
-	function _A.istereahealer()
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:range()<=40 then
-				if healerspecid[_A.UnitSpec(Obj.guid)] then
-					return true
-				end
-			end
-		end
-		return false
-	end
-	
-	_A.FakeUnits:Add('EnemyHealer', function(num, spell)
-		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer  and Obj:spellRange(spell) and Obj:Infront() and _A.isthisahealer(Obj) and _A.notimmune(Obj) and Obj:los() then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					health = Obj:health()
-				}
-			end
-		end
-		if #tempTable>=1 then
-			table.sort( tempTable, function(a,b) return a.health < b.health end )
-		end
-		return tempTable[num] and tempTable[num].guid
-	end)
-	
-	
-	--
 	_A.FakeUnits:Add('lowestEnemyInRange', function(num, range_target)
 		local tempTable = {}
 		local ttt = Object("target")
@@ -575,22 +461,6 @@ local exeOnLoad = function()
 		return false
 	end
 	
-	function _A.ceeceed(unit)
-		if unit and unit:State("fear || sleep || charm || disorient || incapacitate || misc || stun")
-			then return true
-		end
-		return false
-	end
-	
-	function _A.breakableceecee(unit)
-		if unit and unit:State("fear || sleep || charm || disorient || incapacitate")
-			then return true
-		end
-		return false
-	end
-	
-	
-	
 	_A.DSL:Register('UnitCastID', function(t)
 		if t=="player" then
 			t = U.playerGUID
@@ -631,10 +501,6 @@ local exeOnLoad = function()
 	--=======================
 	--=======================
 	local function MyTickerCallback(ticker)
-		if GetTime()-ijustdidthatthingtime>=.2 then
-			ijustdidthatthing=false
-		end
-		--
 		local player = player or Object("player")
 		
 		if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip") and player:Keybind("R")
@@ -660,11 +526,46 @@ local exeOnLoad = function()
 		-- print(newDuration)
 	end
 	C_Timer.NewTicker(.1, MyTickerCallback, false, "dkstuff")
+	
+	hooksecurefunc("UseAction", function(...)
+		local slot, target, clickType = ...
+		local Type, id, subType, spellID
+		-- print(slot)
+		local player = Object("player")
+		if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
+			then
+			Type, id, subType = _A.GetActionInfo(slot)
+			
+			if Type == "spell" or Type == "macro" -- remove macro?
+				then
+				if player then
+					if (id == 48263 and player:Stance() == 1) or (id == 48266 and player:Stance() == 2) or (id == 48265 and player:Stance() == 3) -- stances
+						then return 
+						else
+						_A.pressedbuttonat = _A.GetTime() 
+					end
+				end
+			end
+		end
+		if slot==_A.STARTSLOT then 
+			_A.pressedbuttonat = 0
+			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
+				_A.Interface:toggleToggle("mastertoggle", true)
+				_A.print("ON")
+			end
+		end
+		if slot==_A.STOPSLOT then 
+			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
+				_A.Interface:toggleToggle("mastertoggle", false)
+				_A.print("OFF")
+			end
+		end
+	end)
 end
 local exeOnUnload = function()
 end
 
-unholy.rot = {
+blood.rot = {
 	blank = function()
 	end,
 	
@@ -726,26 +627,6 @@ unholy.rot = {
 			if _A.pull_location=="pvp" then
 				player:useitem("Flask of Winter's Bite")
 			end
-		end
-	end,
-	
-	gargoyle = function()
-		if (player:Buff("Unholy Frenzy")) 
-			and player:SpellCooldown("Summon Gargoyle")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Summon Gargoyle)")
-			if lowestmelee 
-				and lowestmelee:exists() 
-				then 
-				return lowestmelee:Cast("Summon Gargoyle")
-			end
-		end
-	end,
-	
-	hasteburst = function()
-		if (player:Buff("Unholy Frenzy")) 
-			and player:SpellCooldown("Lifeblood")==0
-			then 
-			player:Cast("Lifeblood", true)
 		end
 	end,
 	
@@ -907,43 +788,6 @@ unholy.rot = {
 		end
 	end,
 	
-	dotsnapshotOutBreak = function()
-		local target = Object("target")
-		if player:SpellCooldown("Outbreak")<.3 then 
-			if target and target:exists()
-				and target:enemy()
-				and target:SpellRange("Outbreak")
-				and target:infront()
-				and _A.notimmune(target)
-				then
-				if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
-					if  target:los() then
-						-- print("refreshing dot")
-						return target:Cast("Outbreak")
-					end
-				end
-			end
-		end
-	end,
-	
-	dotsnapshotPS = function()
-		local target = Object("target")
-		if  player:SpellCooldown("Plague Strike")<.3 then 
-			if target and target:exists()
-				and target:enemy()
-				and target:SpellRange("Plague Strike")
-				and target:infront()
-				and _A.notimmune(target)
-				then
-				if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
-					if target:los() then
-						-- print("refreshing dot")
-						return target:Cast("Plague Strike")
-					end
-				end
-			end
-		end
-	end,
 	
 	petres = function()
 		if player:SpellCooldown("Raise Dead")<.3 then
@@ -990,39 +834,6 @@ unholy.rot = {
 		end
 	end,
 	
-	dkuhaoe = function()
-		local pestcheck = false
-		if _A.blood>=1 or _A.death>=1 then
-			if player:Talent("Roiling Blood") then
-				for _, Obj in pairs(_A.OM:Get('Enemy')) do
-					if Obj:range()<=10 then
-						if _A.modifier_shift() then
-							return player:Cast("Blood Boil")
-						end
-						if (Obj:Debuff("Frost Fever") and Obj:Debuff("Blood Plague")) then
-							if  _A.notimmune(Obj) then
-								pestcheck = true
-							end
-						end
-					end
-				end
-				if pestcheck == true then
-					for _, Obj in pairs(_A.OM:Get('Enemy')) do
-						if (Obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid") and Obj:range()<10 then
-							-- if  Obj:range()<10 then
-							if (not Obj:Debuff("Frost Fever") and not Obj:Debuff("Blood Plague")) then
-								if not _A.notimmune(Obj) then
-									return player:Cast("Blood Boil")
-								end
-							end
-						end
-					end
-				end
-				
-			end
-		end
-	end,
-	
 	outbreak = function()
 		if player:SpellCooldown("Outbreak")<.3 --OUTBREAK
 			and _A.enoughmana(77575)
@@ -1051,6 +862,41 @@ unholy.rot = {
 		end
 	end,
 	
+	DeathStrike = function()
+		if player:SpellCooldown("Death Strike")<.3
+			then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					return lowestmelee:Cast("Death Strike")
+				end
+			end
+		end
+	end,
+	
+	Deathcoil = function()
+		if _A.dkenergy>=40
+			then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					return lowestmelee:Cast("Death Coil")
+				end
+			end
+		end
+	end,
+	
+	Bloodboil = function()
+		if _A.blood >=1 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					return player:Cast("Blood Boil")
+				end
+			end
+		end
+	end,
+	
 	dotapplication = function()
 		if player:SpellCooldown("Plague Strike")<.3
 			then 
@@ -1061,43 +907,6 @@ unholy.rot = {
 						return lowestmelee:Cast("Plague Strike")
 					end
 				end
-			end
-		end
-	end,
-	
-	pettransform = function()
-		if player:BuffStack("Shadow Infusion")==5
-			and (_A.unholy>=1 or _A.death>=1) -- default just unholy check
-			and HasPetUI()
-			then player:cast("Dark Transformation") -- pet transform -- NEED DOING
-		end
-	end,
-	
-	DeathcoilDump = function()
-		if _A.dkenergy >= 85 then
-			if player:SpellCooldown("Death Coil")<.3 
-				and not player:BuffAny("Runic Corruption") 
-				then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
-				local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
-				-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
-				if lowestmelee then
-					if lowestmelee:exists() then
-						if not player:Buff("Lichborne") then
-							return lowestmelee:Cast("Death Coil")
-							else return player:Cast("Death Coil")
-						end
-					end
-				end
-			end
-		end
-	end,
-	
-	DeathcoilHEAL = function()
-		if player:SpellCooldown("Death Coil")<.3 and player:Buff("Lichborne") 
-			-- and not player:BuffAny("Runic Corruption") 
-			then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
-			if _A.enoughmana(47541) then
-				return player:Cast("Death Coil")
 			end
 		end
 	end,
@@ -1116,98 +925,6 @@ unholy.rot = {
 		end
 	end,
 	
-	NecroStrike = function()
-		if  _A.death>=1
-			then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if lowestmelee then
-				if lowestmelee:exists() then
-					if lowestmelee.isplayer then
-						return lowestmelee:Cast("Necrotic Strike")
-						else return lowestmelee:Cast("Scourge Strike")
-					end
-				end
-			end
-		end
-	end,
-	
-	icytouch = function()
-		-- if (_A.frost>_A.blood and _A.frost>=1) then
-		if _A.frost>=1 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
-			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Icy Touch")
-			end
-		end
-	end,
-	
-	bloodboilorphanblood = function()
-		-- if ((_A.blood>_A.frost and _A.blood>=1))
-		if _A.blood>=1
-			then
-			local lowestmelee = Object("lowestEnemyInRangeNOTARNOFACE(9)")
-			if lowestmelee and lowestmelee:exists() then
-				return player:Cast("Blood Boil")
-			end
-		end
-	end,
-	
-	festeringstrike = function()
-		if player:SpellCooldown("Festering Strike")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if lowestmelee then
-				if not lowestmelee.isplayer then
-					if lowestmelee:exists() then
-						return lowestmelee:Cast("Festering Strike")
-					end
-				end
-			end
-		end
-	end,
-	
-	
-	Deathcoil = function()
-		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or _A.dkenergy>=32)
-			and not player:BuffAny("Runic Corruption")  
-			then 
-			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
-			-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
-			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Death Coil")
-			end
-		end
-	end,
-	
-	DeathcoilRefund = function()
-		if _A.dkenergy<=80 
-			and not player:BuffAny("Runic Corruption") 
-			then
-			if player:Glyph("Glyph of Death's Embrace") and player:SpellCooldown("Death Coil")<.3 and player:buff("Sudden Doom") then 
-				if  _A.UnitExists("pet")
-					and not _A.UnitIsDeadOrGhost("pet")
-					and _A.HasPetUI() then
-					local lowestmelee = Object("pet")
-					if lowestmelee and lowestmelee:exists() and lowestmelee:SpellRange("Death Coil") and lowestmelee:los() then
-						return lowestmelee:Cast("Death Coil")
-					end
-				end
-			end
-		end
-	end,
-	
-	scourgestrike = function()
-		if _A.unholy>=1 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if lowestmelee then
-				if lowestmelee:exists() then
-					if lowestmelee:health()>35
-						then
-						return lowestmelee:Cast("Scourge Strike")
-					end
-				end
-			end
-		end
-	end,
 	
 	Buffbuff = function()
 		if player:SpellCooldown("Horn of Winter")<.3 and _A.dkenergy <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
@@ -1223,72 +940,25 @@ unholy.rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
+	blood.rot.caching()
 	if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end
 	-- if player:lostcontrol()  then return end 
-	unholy.rot.GrabGrab()
-	unholy.rot.GrabGrabHunter()
-	-- utility
-	unholy.rot.caching()
-	-- Burst and utility
-	unholy.rot.items_strpot()
-	unholy.rot.items_strflask()
-	unholy.rot.hasteburst()
-	unholy.rot.items_healthstone()
-	unholy.rot.gargoyle()
-	unholy.rot.Empowerruneweapon()
-	-- PVP INTERRUPTS AND CC
-	unholy.rot.MindFreeze()
-	unholy.rot.strangulatesnipe()
-	unholy.rot.Asphyxiatesnipe()
-	unholy.rot.AsphyxiateBurst()
-	unholy.rot.darksimulacrum()
-	unholy.rot.root()
-	-- DEFS
-	unholy.rot.antimagicshell()
-	unholy.rot.petres()
-	unholy.rot.deathpact()
-	unholy.rot.Lichborne()
-	-- rotation
-	unholy.rot.DeathcoilDump()
-	unholy.rot.dkuhaoe()
-	unholy.rot.outbreak()
-	unholy.rot.dotapplication()
-	unholy.rot.pettransform()
-	unholy.rot.BonusDeathStrike()
-	unholy.rot.DeathcoilHEAL()
-	unholy.rot.SoulReaper()
-	----pve part
-	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		unholy.rot.dotsnapshotOutBreak()
-		unholy.rot.dotsnapshotPS()
-		unholy.rot.festeringstrike()
-	end
-	----pvp part
-	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		unholy.rot.NecroStrike()
-		unholy.rot.bloodboilorphanblood()
-		unholy.rot.icytouch()
-	end
-	----filler
-	unholy.rot.Deathcoil()
-	unholy.rot.festeringstrike()
-	unholy.rot.scourgestrike()
-	unholy.rot.Buffbuff()
-	unholy.rot.blank()
-end
-local outCombat = function()
-	return inCombat()
+	-- blood.rot.GrabGrab()
+	blood.rot.BonusDeathStrike()
+	blood.rot.DeathStrike()
+	blood.rot.Bloodboil()
+	blood.rot.Deathcoil()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
-_A.CR:Add(252, {
-	name = "Youcef's Unholy DK",
+_A.CR:Add(250, {
+	name = "Youcef's Blood dk",
 	ic = inCombat,
-	ooc = outCombat,
+	ooc = inCombat,
 	use_lua_engine = true,
 	gui = GUI,
 	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},

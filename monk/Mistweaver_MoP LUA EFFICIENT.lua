@@ -995,7 +995,7 @@ local inCombat = function()
 	player = player or Object("player")
 	if not player then return end
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
-	_A.interrupttreshhold = math.max(_A.latency, .1)
+	_A.interrupttreshhold = math.max(_A.latency, .3)
 	mw_rot.caching()
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
@@ -1008,7 +1008,7 @@ local inCombat = function()
 	mw_rot.Xuen()
 	mw_rot.turtletoss()
 	mw_rot.kick_legsweep()
-	-- mw_rot.dispellplzarena()
+	mw_rot.dispellplzarena()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
 	-- mw_rot.manatea()

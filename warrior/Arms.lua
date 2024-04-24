@@ -1,5 +1,8 @@
+local _, class = UnitClass("player");
+if class ~= "WARRIOR" then return end;
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
+local hooksecurefunc =_A.hooksecurefunc
 -- top of the CR
 local player
 local arms = {}
@@ -115,7 +118,7 @@ local exeOnLoad = function()
 		_A.pull_location = pull_location()
 	end)
 	--
-	_A.hooksecurefunc("UseAction", function(...)
+	hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		-- print(slot)

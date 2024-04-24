@@ -1,6 +1,9 @@
+local _, class = UnitClass("player");
+if class ~= "MONK" then return end;
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
+local hooksecurefunc =_A.hooksecurefunc
 local player
 local brewmaster = {}
 local immunebuffs = {
@@ -139,7 +142,7 @@ local exeOnLoad = function()
 		_A.pull_location = pull_location()
 	end)
 	--
-	_A.hooksecurefunc("UseAction", function(...)
+	hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		-- print(slot)
@@ -449,7 +452,7 @@ brewmaster.rot = {
 
 	
 	kegsmash = function()
-		if  (player:chi())<(player:chifixmax()-1) and player:SpellCooldown("Keg Smash")<.3 and _A.UnitPower("player")>=40  then
+		if  (player:chi())<(player:chifixmax()-1) and player:SpellCooldown("Keg Smash")<.3 and player:energy()>=40  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Keg Smash)")
 			if lowestmelee and lowestmelee:exists()  then
 				return lowestmelee:Cast("Keg Smash")
@@ -458,7 +461,7 @@ brewmaster.rot = {
 	end,
 	
 	jab = function()
-		if  player:chi()<player:chifixmax() and _A.UnitPower("player")>=40  then
+		if  player:chi()<player:chifixmax() and player:energy()>=40  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee and lowestmelee:exists()  then
 				return lowestmelee:Cast("Jab")
@@ -476,7 +479,7 @@ brewmaster.rot = {
 	end,
 	--=============================
 	RS_shift = function()
-		if  player:talent("Rushing Jade Wind") and _A.UnitPower("player")>=40 and player:SpellCooldown("Rushing Jade Wind")<.3 and player:keybind("Shift") then
+		if  player:talent("Rushing Jade Wind") and player:energy()>=40 and player:SpellCooldown("Rushing Jade Wind")<.3 and player:keybind("Shift") then
 			return player:Cast("Rushing Jade Wind")
 		end
 	end,
@@ -492,13 +495,13 @@ brewmaster.rot = {
 	end,
 	--=============================
 	RS_AOEPrio = function()
-		if  player:talent("Rushing Jade Wind") and _A.UnitPower("player")>=40 and player:SpellCooldown("Rushing Jade Wind")<.3 and player:spinnumber()>=3  then
+		if  player:talent("Rushing Jade Wind") and player:energy()>=40 and player:SpellCooldown("Rushing Jade Wind")<.3 and player:spinnumber()>=3  then
 			return player:Cast("Rushing Jade Wind")
 		end
 	end,
 	
 	RS_Fill = function()
-		if  player:talent("Rushing Jade Wind") and _A.UnitPower("player")>=40 and player:SpellCooldown("Rushing Jade Wind")<.3 and player:kegcheck()  then
+		if  player:talent("Rushing Jade Wind") and player:energy()>=40 and player:SpellCooldown("Rushing Jade Wind")<.3 and player:kegcheck()  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee and lowestmelee:exists()  then
 				return player:Cast("Rushing Jade Wind")
@@ -514,7 +517,7 @@ brewmaster.rot = {
 	end,
 	
 	healingsphere = function()
-		if player:Health()<90 and _A.UnitPower("player")>=40 then
+		if player:Health()<90 and player:energy()>=40 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if not lowestmelee  then
 				return _A.CastPredictedPos(player.guid, "Healing Sphere", 10)
