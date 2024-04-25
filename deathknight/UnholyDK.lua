@@ -1,6 +1,8 @@
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
+local C_Timer = _A.C_Timer
+local looping = C_Timer.NewTicker
 -- top of the CR
 local player
 local unholy = {}

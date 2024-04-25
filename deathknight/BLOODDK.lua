@@ -3,7 +3,15 @@ if class ~= "DEATHKNIGHT" then return end;
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
+local C_Timer = _A.C_Timer
 
+
+
+local pressedbuttonat = 0
+local buttondelay = 0.5
+local STARTSLOT = 1
+local STOPSLOT = 8
+local GRABKEY = "R"
 -- top of the CR
 local player
 local blood = {}
@@ -18,15 +26,15 @@ local healerspecid = {
 	-- [65]="Paladin Holy",
 	-- [66]="Paladin prot",
 	-- [70]="Paladin retri",
-[257]="Priest Holy",
-[256]="Priest discipline",
--- [258]="Priest shadow",
-[264]="Sham Resto",
--- [262]="Sham Elem",
--- [263]="Sham enh",
--- [62]="Mage Arcane",
--- [63]="Mage Fire",
--- [64]="Mage Frost"
+	[257]="Priest Holy",
+	[256]="Priest discipline",
+	-- [258]="Priest shadow",
+	[264]="Sham Resto",
+	-- [262]="Sham Elem",
+	-- [263]="Sham enh",
+	-- [62]="Mage Arcane",
+	-- [63]="Mage Fire",
+	-- [64]="Mage Frost"
 }
 local darksimulacrumspecsBGS = {
 	[265]="Lock Affli",
@@ -224,13 +232,6 @@ end
 local GUI = {
 }
 local exeOnLoad = function()
-
-_A.pressedbuttonat = 0
-_A.buttondelay = 0.5
-_A.STARTSLOT = 1
-_A.STOPSLOT = 8
-_A.GRABKEY = "R"
-
 	function _A.enoughmana(id)
 		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
 		if powertype then
@@ -250,7 +251,7 @@ _A.GRABKEY = "R"
 	end
 	--
 	_A.buttondelayfunc = function()
-		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end
+		if _A.GetTime() - pressedbuttonat < buttondelay then return true end
 		return false
 	end
 	
@@ -496,12 +497,42 @@ _A.GRABKEY = "R"
 	_A.DSL:Register('unitisimmobile', function()
 		return GetUnitSpeed(unit)==0 
 	end)
+	
+	
+	
+	hooksecurefunc("UseAction", function(...)
+		local slot, target, clickType = ...
+		local Type, id, subType, spellID
+		-- print(slot)
+		player = player or Object("player")
+		if slot==STARTSLOT then 
+			pressedbuttonat = 0
+			if DSL("toggle")(_,"MasterToggle")~=true then
+				_A.Interface:toggleToggle("mastertoggle", true)
+				_A.print("ON")
+			end
+		end
+		if slot==STOPSLOT then 
+			if DSL("toggle")(_,"MasterToggle")~=false then
+				_A.Interface:toggleToggle("mastertoggle", false)
+				_A.print("OFF")
+			end
+		end
+		--
+		if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
+			Type, id, subType = _A.GetActionInfo(slot)
+			if Type == "spell" or Type == "macro" -- remove macro?
+				then
+				pressedbuttonat = _A.GetTime()
+			end
+		end
+	end)
 	--=======================
 	--=======================
 	--=======================
 	--=======================
 	local function MyTickerCallback(ticker)
-		local player = player or Object("player")
+		player = player or Object("player")
 		
 		if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip") and player:Keybind("R")
 			then
@@ -526,41 +557,6 @@ _A.GRABKEY = "R"
 		-- print(newDuration)
 	end
 	C_Timer.NewTicker(.1, MyTickerCallback, false, "dkstuff")
-	
-	hooksecurefunc("UseAction", function(...)
-		local slot, target, clickType = ...
-		local Type, id, subType, spellID
-		-- print(slot)
-		local player = Object("player")
-		if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
-			then
-			Type, id, subType = _A.GetActionInfo(slot)
-			
-			if Type == "spell" or Type == "macro" -- remove macro?
-				then
-				if player then
-					if (id == 48263 and player:Stance() == 1) or (id == 48266 and player:Stance() == 2) or (id == 48265 and player:Stance() == 3) -- stances
-						then return 
-						else
-						_A.pressedbuttonat = _A.GetTime() 
-					end
-				end
-			end
-		end
-		if slot==_A.STARTSLOT then 
-			_A.pressedbuttonat = 0
-			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
-				_A.Interface:toggleToggle("mastertoggle", true)
-				_A.print("ON")
-			end
-		end
-		if slot==_A.STOPSLOT then 
-			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
-				_A.Interface:toggleToggle("mastertoggle", false)
-				_A.print("OFF")
-			end
-		end
-	end)
 end
 local exeOnUnload = function()
 end
@@ -862,8 +858,21 @@ blood.rot = {
 		end
 	end,
 	
+	DeathSiphon = function()
+		if player:talent("Death Siphon") and _A.death >= 1
+			then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Siphon)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					return lowestmelee:Cast("Death Siphon")
+				end
+			end
+		end
+	end,
+	
 	DeathStrike = function()
-		if player:SpellCooldown("Death Strike")<.3
+		-- if player:SpellCooldown("Death Strike")<.3
+		if _A.death>=2 or ( _A.unholy>=1 and _A.frost>=1)
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
@@ -947,6 +956,7 @@ local inCombat = function()
 	-- if player:lostcontrol()  then return end 
 	-- blood.rot.GrabGrab()
 	blood.rot.BonusDeathStrike()
+	blood.rot.DeathSiphon()
 	blood.rot.DeathStrike()
 	blood.rot.Bloodboil()
 	blood.rot.Deathcoil()
