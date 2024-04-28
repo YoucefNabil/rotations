@@ -127,6 +127,22 @@ local function power(unit)
 	end
 	intel2=nil
 end
+local function unitDD(unit)
+	local UnitExists = UnitExists
+	local UnitGUID = UnitGUID
+	if UnitExists(unit) then
+		return tonumber((UnitGUID(unit)):sub(-13, -9), 16)
+		else return -1
+	end
+end
+local function isActive(spellID)
+	local conda, condb = IsUsableSpell(spellID);
+	if conda ~= nil then
+		return true
+		else
+		return false
+	end
+end
 --
 --
 
@@ -391,6 +407,33 @@ brewmaster.rot = {
 		end
 	end,
 	
+	turtletoss = function()
+		local castName, _, _, _, castStartTime, castEndTime, _, _, castInterruptable = UnitCastingInfo("boss1");
+		local channelName, _, _, _, channelStartTime, channelEndTime, _, channelInterruptable = UnitChannelInfo("boss1");
+		if channelName ~= nil then
+			castName = channelName
+		end
+		if unitDD("boss1") == 67977 then -- tortos id
+			if castName == GetSpellInfo(133939) then -- furious stone breath
+				if unitDD("target") == 67966 then -- turtle id
+					if isActive(134031) then -- kick shell	
+						_A.CallWowApi("RunMacroText", "/click ExtraActionButton1")
+					end
+				end
+			end
+		end
+		-- if unitDD("target") == 71604 then -- puddle id
+		-- if HP("target")<100 then --
+		-- if GetShapeshiftForm()==1 then
+		-- cast(115460) -- ORB big heal, but mana drain
+		-- castonthis("target")
+		-- stoptargeting()
+		-- return true
+		-- end
+		-- end
+		-- end
+	end,
+	
 	spear = function()
 		if player:SpellCooldown("Spear Hand Strike")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -520,7 +563,7 @@ brewmaster.rot = {
 		if player:Health()<90 and player:energy()>=40 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if not lowestmelee  then
-				return _A.CastPredictedPos(player.guid, "Healing Sphere", 10)
+				return _A.CastPredictedPos(player.guid, "Healing Sphere", 20)
 			end
 		end
 	end,
@@ -542,6 +585,7 @@ local inCombat = function()
 	if player:mounted() then return end
 	-- if player:lostcontrol()  then return end 
 	--interrupts
+	brewmaster.rot.turtletoss()
 	brewmaster.rot.spear()
 	-- brewmaster.rot.stun_kick()
 	--Shift mode
