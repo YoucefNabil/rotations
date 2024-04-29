@@ -65,6 +65,7 @@ local types_i_dont_need = {
 	[13] = true -- gas cloud
 }
 function _A.attackable(unit)
+	if _A.pull_location and _A.pull_location ~= "arena" and _A.pull_location ~= "pvp" then return true end
 	if unit then 
 		if unit:CreatureType()==nil then return false end
 		if types_i_dont_need[unit:CreatureType()] then return false end
