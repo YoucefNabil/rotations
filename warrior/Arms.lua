@@ -27,7 +27,7 @@ local healerspecid = {
 	-- [266]="Lock Demono",
 	-- [267]="Lock Destro",
 	[105]="Druid Resto",
-	[102]="Druid Balance",
+	-- [102]="Druid Balance",
 	[270]="monk mistweaver",
 	-- [65]="Paladin Holy",
 	-- [66]="Paladin prot",
@@ -241,6 +241,23 @@ local exeOnLoad = function()
 		return tempTable[num] and tempTable[num].guid
 	end)
 	
+	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and  Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	
 	_A.DSL:Register('caninterrupt', function(unit)
 		return interruptable(unit)
 	end)
@@ -340,6 +357,16 @@ arms.rot = {
 		end
 	end,
 	
+	thunderclap = function()
+		if player:SpellCooldown("Thunder Clap")<.3 and player:SpellUsable("thunder clap") then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:range()<=7 and _A.notimmune(obj) and obj:debuffduration("Weakened Blows")<1 and obj:los() then
+					return player:cast("thunder clap")
+				end
+			end
+		end
+	end
+	
 	hamstringpvp = function()
 		if player:SpellCooldown("Hamstring")<.3 and player:spellusable("Hamstring") then
 			local target = Object("target")
@@ -374,7 +401,7 @@ arms.rot = {
 	colossussmash = function()
 		if  player:SpellCooldown("Colossus Smash")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() and not lowestmelee:debuff("Colossus Smash") then
+			if lowestmelee and lowestmelee:exists() and lowestmelee:debuffduration("Colossus Smash")<1 then
 				return lowestmelee:Cast("Colossus Smash")
 			end
 		end
@@ -390,13 +417,18 @@ arms.rot = {
 	end,
 	
 	Execute = function()
-		if  player:SpellCooldown("Execute")<.3 and player:SpellUsable("Execute") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
-				if player:buff(1719) or (player:rage()>80) or (lowestmelee:debuff("Colossus Smash")) then
+		if  player:SpellCooldown("Execute")<.3 and player:rage()>=30 then
+			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
+			if lowestmelee and lowestmelee:exists() and lowestmelee:health()<=20 then
+				if player:buff(1719) or (player:rage()>=80) or (lowestmelee:debuff("Colossus Smash")) or lowestmelee:health()<=15 then
 					return lowestmelee:Cast("Execute")
 				end
 			end
+		end
+	end,
+	
+	battleshout = function ()
+		if player:SpellCooldown("battle shout")<.3 and player:rage()<=75 then return player:cast("battle shout")
 		end
 	end,
 	
@@ -406,6 +438,27 @@ arms.rot = {
 			if lowestmelee and lowestmelee:exists() then
 				if player:buff(1719) or (player:rage()>80 and player:buffstack(60503)<3) or (lowestmelee:debuff("Colossus Smash") and player:rage()>=40) then
 					return lowestmelee:Cast("Slam")
+				end
+			end
+		end
+	end,
+	
+	burstdisarm = function()
+		if player:SpellCooldown("Disarm")<.3 then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer 
+					and obj:SpellRange("Disarm") 
+					and obj:Infront()
+					and not healerspecid[_A.UnitSpec(obj.guid)] 
+					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest") or obj:BuffAny("Call of Dominance"))
+					and not obj:BuffAny("Bladestorm")
+					and not obj:LostControl()
+					and not obj:state("disarm")
+					and not obj:debuffany("Disarm") and not obj:debuffany("Grapple Weapon")
+					and (obj:drState("Disarm") == 1 or obj:drState("Disarm")==-1)
+					and _A.notimmune(obj)
+					and obj:los() then
+					return obj:Cast("Disarm")
 				end
 			end
 		end
@@ -437,11 +490,14 @@ local inCombat = function()
 	-- if player:lostcontrol()  then return end 
 	-- Interrupts
 	arms.rot.Charge()
+	arms.rot.Execute()
 	arms.rot.Pummel()
+	arms.rot.thunderclap()
+	arms.rot.burstdisarm()
+	arms.rot.battleshout()
 	arms.rot.Disruptingshout()
 	arms.rot.hamstringpvp()
 	arms.rot.colossussmash()
-	arms.rot.Execute()
 	arms.rot.Mortalstrike()
 	arms.rot.slam()
 	arms.rot.overpower()
