@@ -360,7 +360,7 @@ arms.rot = {
 	thunderclap = function()
 		if player:SpellCooldown("Thunder Clap")<.3 and player:SpellUsable("thunder clap") then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:range()<=7 and _A.notimmune(obj) and obj:debuffduration("Weakened Blows")<1 and obj:los() then
+				if obj.isplayer and obj:range()<=7 and  not healerspecid[_A.UnitSpec(obj.guid)] and _A.notimmune(obj) and obj:debuffduration("Weakened Blows")<1 and obj:los() then
 					return player:cast("thunder clap")
 				end
 			end
