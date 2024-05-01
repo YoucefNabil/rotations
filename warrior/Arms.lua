@@ -365,7 +365,7 @@ arms.rot = {
 				end
 			end
 		end
-	end
+	end,
 	
 	hamstringpvp = function()
 		if player:SpellCooldown("Hamstring")<.3 and player:spellusable("Hamstring") then
