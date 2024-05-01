@@ -340,6 +340,18 @@ arms.rot = {
 		end
 	end,
 	
+	hamstringpvp = function()
+		if player:SpellCooldown("Hamstring")<.3 and player:spellusable("Hamstring") then
+			local target = Object("target")
+			if target and target.isplayer and target:enemy() 
+				and target:debuffduration("Hamstring")<1
+				and _A.notimmune(target)
+				and not target:buff("Hand of Freedom") then
+				return target:cast("Hamstring")
+			end
+		end
+	end,
+	
 	Disruptingshout = function()
 		if player:talent("Disrupting Shout") and player:SpellCooldown("Disrupting Shout")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -427,6 +439,7 @@ local inCombat = function()
 	arms.rot.Charge()
 	arms.rot.Pummel()
 	arms.rot.Disruptingshout()
+	arms.rot.hamstringpvp()
 	arms.rot.colossussmash()
 	arms.rot.Execute()
 	arms.rot.Mortalstrike()
