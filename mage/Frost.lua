@@ -5,7 +5,8 @@ local player
 local frost = {}
 local immunebuffs = {
 	"Deterrence",
-	-- "Anti-Magic Shell",
+	"Anti-Magic Shell",
+	"Cloak of Shadows",
 	"Hand of Protection",
 	-- "Spell Reflection",
 	-- "Mass Spell Reflection",
@@ -326,10 +327,10 @@ local exeOnLoad = function()
 		local player = player or Object("player")
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj:spellRange(spell) and  Obj:Infront() and (Obj:SpellUsable("Deep Freeze") or player:BuffAny(44544) or Obj:DebuffAny(33395) or Obj:DebuffAny(122)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
-			if Obj:spellRange(spell) and  Obj:Infront() and _A.unitfrozen(Obj) and _A.attackable(Obj) and not Obj:BuffAny("Anti-Magic Shell")
-			and ((_A.pull_location=="pvp" and Obj.isplayer) or _A.pull_location~="pvp")
-			and _A.notimmune(Obj)  and Obj:los() then
-			-- if Obj:spellRange(spell) and  Obj:Infront() and Obj:SpellUsable("Deep Freeze") and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:Infront() and _A.unitfrozen(Obj) and _A.attackable(Obj)
+				and ((_A.pull_location=="pvp" and Obj.isplayer) or _A.pull_location~="pvp")
+				and _A.notimmune(Obj)  and Obj:los() then
+				-- if Obj:spellRange(spell) and  Obj:Infront() and Obj:SpellUsable("Deep Freeze") and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -347,8 +348,8 @@ local exeOnLoad = function()
 		local tempTable = {}
 		local player = player or Object("player")
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do --Enemy
-			if Obj:spellRange(spell) and  Obj:Infront() and (not _A.unitfrozen(Obj)) and _A.attackable(Obj) and not Obj:BuffAny("Anti-Magic Shell") and _A.notimmune(Obj)  and Obj:los() then
-			-- if Obj:spellRange(spell) and  Obj:Infront() and (not Obj:SpellUsable("Deep Freeze") and not player:BuffAny(44544)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:Infront() and (not _A.unitfrozen(Obj)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+				-- if Obj:spellRange(spell) and  Obj:Infront() and (not Obj:SpellUsable("Deep Freeze") and not player:BuffAny(44544)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -368,10 +369,10 @@ local exeOnLoad = function()
 		range = tonumber(range) or 40
 		target = target or "player"
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:rangefrom(target)<=range and (not _A.unitfrozen(Obj)) and _A.attackable(Obj) and not Obj:BuffAny("Anti-Magic Shell") and  
-			((_A.pull_location=="pvp" and Obj.isplayer) or _A.pull_location~="pvp")
-			and _A.notimmune(Obj)  and Obj:los() then
-			-- if Obj:rangefrom(target)<=range and (not Obj:SpellUsable("Deep Freeze") and not player:BuffAny(44544)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
+			if Obj:rangefrom(target)<=range and (not _A.unitfrozen(Obj)) and _A.attackable(Obj) and  
+				((_A.pull_location=="pvp" and Obj.isplayer) or _A.pull_location~="pvp")
+				and _A.notimmune(Obj)  and Obj:los() then
+				-- if Obj:rangefrom(target)<=range and (not Obj:SpellUsable("Deep Freeze") and not player:BuffAny(44544)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -528,10 +529,11 @@ frost.rot = {
 			end
 		end
 	end,
+	
 	iceward = function()
-	if player:talent("Ice Ward") and player:SpellCooldown("Ice Ward")<.3 and not player:buffany("Ice Ward") then
-	return player:cast("Ice Ward")
-	end
+		if player:talent("Ice Ward") and player:SpellCooldown("Ice Ward")<.3 and not player:buffany("Ice Ward") then
+			return player:cast("Ice Ward")
+		end
 	end,
 	
 	Silencing = function()
@@ -591,10 +593,10 @@ frost.rot = {
 	frostbolt = function()
 		--if player:keybind("E") then
 		if not player:Moving() then
-		local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
-		if lowestmelee  then
-			return lowestmelee:Cast("frostbolt")
-		end
+			local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
+			if lowestmelee  then
+				return lowestmelee:Cast("frostbolt")
+			end
 		end
 		--end
 	end,
