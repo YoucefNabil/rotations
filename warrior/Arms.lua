@@ -417,7 +417,7 @@ arms.rot = {
 	end,
 	
 	Execute = function()
-		if  player:SpellCooldown("Execute")<.3 and player:rage()>=30 then
+		if player:rage()>=30 then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
 			if lowestmelee and lowestmelee:exists() and lowestmelee:health()<=20 then
 				return lowestmelee:Cast("Execute")
