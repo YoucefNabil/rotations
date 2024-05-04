@@ -276,7 +276,7 @@ local exeOnLoad = function()
 		if target and target:enemy() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
 			return target and target.guid
 		end
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
 			if Obj:spellRange(spell) and  Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -294,8 +294,8 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyFrozen', function(num, spell)
 		local tempTable = {}
 		local player = player or Object("player")
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:Infront() and Obj:SpellUsable("Deep Freeze") and _A.notimmune(Obj)  and Obj:los() then
+		for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
+			if Obj:spellRange(spell) and  Obj:Infront() and (Obj:SpellUsable("Deep Freeze") or player:BuffAny(44544) or Obj:DebuffAny(33395) or Obj:DebuffAny(122)) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -312,7 +312,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyNONFrozen', function(num, spell)
 		local tempTable = {}
 		local player = player or Object("player")
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do --Enemy
 			if Obj:spellRange(spell) and  Obj:Infront() and (not Obj:SpellUsable("Deep Freeze")) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -447,13 +447,22 @@ frost.rot = {
 		end
 	end,
 	
+	icebarrier = function()
+		if not player:buffany("Ice Barrier") and not player:buff("Ice Barrier") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return player:Cast("Ice Barrier")
+		end
+	end,
+	
+	incanters = function()
+		if player:SpellCooldown("Incanter's Ward")<.3 and player:combat() and player:health()<=80 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return player:Cast("Incanter's Ward")
+		end
+	end,
+	
 	OrbOrb = function()
 		if player:combat() and player:SpellCooldown("Frozen Orb")<.3 then
 			if player:buff("Call of Dominance") then
 				player:cast("Frozen Orb")
-				if _A.castdelay(84714, 6) then
-					player:cast("Alter Time")
-				end
 			end
 		end
 	end,
@@ -462,20 +471,22 @@ frost.rot = {
 		if player:combat() and player:SpellCooldown("Icy Veins")==0 then
 			if player:buff("Call of Dominance") then
 				player:cast("Icy Veins")
-				if _A.castdelay(84714, 6) then
-					player:cast("Alter Time")
-				end
 			end
 		end
 	end,
 	
 	MirrorImage = function()
 		if player:combat() and player:SpellCooldown("Mirror Image")==0 then
-			if player:buff("Mirror Image") then
-				player:cast("Icy Veins")
-				if _A.castdelay(84714, 6) then
-					player:cast("Alter Time")
-				end
+			if player:buff("Call of Dominance") then
+				player:cast("Mirror Image")
+			end
+		end
+	end,
+	
+	AlterTime = function()
+		if player:buff("Call of Dominance") and player:buffstack("Fingers of Frost")>=2 then 
+			if player:SpellCooldown("Alter Time")<.3 then
+				player:cast("Alter Time")
 			end
 		end
 	end,
@@ -515,10 +526,10 @@ frost.rot = {
 	
 	
 	icelance_frozen = function()
-			local lowestmelee = Object("lowestEnemyFrozen(Ice Lance)")
-			if lowestmelee and lowestmelee:exists()  then
+		local lowestmelee = Object("lowestEnemyFrozen(Ice Lance)")
+		if lowestmelee and lowestmelee:exists()  then
 			-- if (lowestmelee:SpellUsable("Deep Freeze") and player:buff("Call of Dominance")) or (not player:keybind("E")) then
-				return lowestmelee:cast("ice lance")
+			return lowestmelee:cast("ice lance")
 			-- end
 		end
 	end,
@@ -526,21 +537,21 @@ frost.rot = {
 	magedot = function()
 		local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
 		if lowestmelee and lowestmelee:exists() then
-			if player:Talent("Nether Tempest") and not lowestmelee:debuff("Nether Tempest") then
-				return lowestmelee:Cast("Nether Tempest")
-				elseif player:Talent("living bomb") and not lowestmelee:debuff("living bomb") then
-				return lowestmelee:Cast("living bomb")
+			--if player:Talent("Nether Tempest") and not lowestmelee:debuff("Nether Tempest") then
+			--return lowestmelee:Cast("Nether Tempest")
+			if  not lowestmelee:debuff("Living Bomb") then --player:Talent("Living Bomb") and
+				return lowestmelee:Cast("Living Bomb")
 			end
 		end
 	end,
 	
 	frostbolt = function()
-		if player:keybind("E") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
-			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("frostbolt")
-			end
+		--if player:keybind("E") then
+		local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
+		if lowestmelee and lowestmelee:exists() and not player:Moving() then
+			return lowestmelee:Cast("frostbolt")
 		end
+		--end
 	end,
 	
 	icelance = function()
@@ -599,6 +610,9 @@ local inCombat = function()
 	if player:isCastingAny() then return end
 	frost.rot.Silencing()
 	frost.rot.activetrinket()
+	frost.rot.AlterTime()
+	frost.rot.icebarrier()
+	frost.rot.incanters()
 	frost.rot.OrbOrb()
 	frost.rot.IcyVeins()
 	frost.rot.MirrorImage()
