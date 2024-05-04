@@ -420,9 +420,7 @@ arms.rot = {
 		if  player:SpellCooldown("Execute")<.3 and player:rage()>=30 then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
 			if lowestmelee and lowestmelee:exists() and lowestmelee:health()<=20 then
-				if player:buff(1719) or (player:rage()>=80) or (lowestmelee:debuff("Colossus Smash")) or lowestmelee:health()<=15 then
-					return lowestmelee:Cast("Execute")
-				end
+				return lowestmelee:Cast("Execute")
 			end
 		end
 	end,
@@ -490,6 +488,7 @@ local inCombat = function()
 	-- if player:lostcontrol()  then return end 
 	-- Interrupts
 	arms.rot.Charge()
+	arms.rot.colossussmash()
 	arms.rot.Execute()
 	arms.rot.Pummel()
 	arms.rot.thunderclap()
@@ -497,7 +496,6 @@ local inCombat = function()
 	arms.rot.battleshout()
 	arms.rot.Disruptingshout()
 	arms.rot.hamstringpvp()
-	arms.rot.colossussmash()
 	arms.rot.Mortalstrike()
 	arms.rot.slam()
 	arms.rot.overpower()
