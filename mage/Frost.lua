@@ -133,12 +133,14 @@ end
 --
 
 local frozen_debuffs = {
-	"frost nova",
-	"freeze",
-	"deep freeze",
-	"ring of frost",
-	"frostjaw",
-	"ice ward"
+	"Frost Nova",
+	"Freeze",
+	"Deep Freeze",
+	"Ring of Frost",
+	"Frostjaw",
+	"Ice Ward",
+	33395,
+	122
 }
 
 local usableitems = { -- item slots
@@ -168,6 +170,18 @@ local exeOnLoad = function()
 			return true
 		end	
 	end	
+	
+	function _A.unitfrozen(unit)
+		local player = player or Object("player")
+		if player and player:BuffAny(44544) then return true end
+		if unit then 
+			for _,debuffs in ipairs(frozen_debuffs) do
+				if unit:DebuffAny(debuffs) then return true
+				end
+			end
+		end
+		return false
+	end
 	--
 	_A.hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
@@ -292,7 +306,7 @@ local exeOnLoad = function()
 		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable(target) and  _A.notimmune(target) and target:los() then
 			return target and target.guid
 		end
-		for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -310,8 +324,10 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyFrozen', function(num, spell)
 		local tempTable = {}
 		local player = player or Object("player")
-		for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
-			if Obj:spellRange(spell) and  Obj:Infront() and (Obj:SpellUsable("Deep Freeze") or player:BuffAny(44544) or Obj:DebuffAny(33395) or Obj:DebuffAny(122)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			-- if Obj:spellRange(spell) and  Obj:Infront() and (Obj:SpellUsable("Deep Freeze") or player:BuffAny(44544) or Obj:DebuffAny(33395) or Obj:DebuffAny(122)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:Infront() and _A.unitfrozen(Obj) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+			-- if Obj:spellRange(spell) and  Obj:Infront() and Obj:SpellUsable("Deep Freeze") and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -328,8 +344,9 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyNONFrozen', function(num, spell)
 		local tempTable = {}
 		local player = player or Object("player")
-		for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do --Enemy
-			if Obj:spellRange(spell) and  Obj:Infront() and (not Obj:SpellUsable("Deep Freeze")) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do --Enemy
+			if Obj:spellRange(spell) and  Obj:Infront() and (not _A.unitfrozen(Obj)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+			-- if Obj:spellRange(spell) and  Obj:Infront() and (not Obj:SpellUsable("Deep Freeze") and not player:BuffAny(44544)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -349,7 +366,8 @@ local exeOnLoad = function()
 		range = tonumber(range) or 40
 		target = target or "player"
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:rangefrom(target)<=range and (not Obj:SpellUsable("Deep Freeze")) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
+			if Obj:rangefrom(target)<=range and (not _A.unitfrozen(Obj)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
+			-- if Obj:rangefrom(target)<=range and (not Obj:SpellUsable("Deep Freeze") and not player:BuffAny(44544)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -525,7 +543,7 @@ frost.rot = {
 	frostfirebolt_proc = function()
 		if player:buff("Brain Freeze") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee then
 				return lowestmelee:Cast("frostfire bolt")
 			end
 		end
@@ -534,7 +552,7 @@ frost.rot = {
 	deepfreeze_frozen = function()
 		if player:SpellCooldown("Deep Freeze")<.3 then
 			local lowestmelee = Object("lowestEnemyFrozen(Deep Freeze)")
-			if lowestmelee and lowestmelee:exists()  then
+			if lowestmelee then
 				return lowestmelee:cast("Deep Freeze")
 			end
 		end
@@ -543,7 +561,7 @@ frost.rot = {
 	
 	icelance_frozen = function()
 		local lowestmelee = Object("lowestEnemyFrozen(Ice Lance)")
-		if lowestmelee and lowestmelee:exists()  then
+		if lowestmelee then
 			-- if (lowestmelee:SpellUsable("Deep Freeze") and player:buff("Call of Dominance")) or (not player:keybind("E")) then
 			return lowestmelee:cast("ice lance")
 			-- end
@@ -552,7 +570,7 @@ frost.rot = {
 	
 	magedot = function()
 		local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
-		if lowestmelee and lowestmelee:exists() then
+		if lowestmelee then
 			--if player:Talent("Nether Tempest") and not lowestmelee:debuff("Nether Tempest") then
 			--return lowestmelee:Cast("Nether Tempest")
 			if not lowestmelee:debuff("Living Bomb") then --player:Talent("Living Bomb") and
@@ -563,9 +581,11 @@ frost.rot = {
 	
 	frostbolt = function()
 		--if player:keybind("E") then
+		if not player:Moving() then
 		local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
-		if lowestmelee and lowestmelee:exists() and not player:Moving() then
+		if lowestmelee  then
 			return lowestmelee:Cast("frostbolt")
+		end
 		end
 		--end
 	end,
@@ -573,7 +593,7 @@ frost.rot = {
 	icelance = function()
 		if not player:keybind("E") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee then
 				return lowestmelee:Cast("Ice Lance")
 			end
 		end
@@ -582,7 +602,7 @@ frost.rot = {
 	playerfreeze = function()
 		if player:SpellCooldown("Frost Nova")<.3 then
 			local lowestmelee = Object("lowestEnemyInRangeNONFrozen(12)")
-			if lowestmelee and lowestmelee:exists()  then
+			if lowestmelee then
 				return lowestmelee:cast("Frost Nova")
 			end
 		end
@@ -591,7 +611,7 @@ frost.rot = {
 	coneofcold = function()
 		if player:SpellCooldown("Cone of Cold")<.3 then
 			local lowestmelee = Object("lowestEnemyInRange(8)")
-			if lowestmelee and lowestmelee:exists()  then
+			if lowestmelee then
 				return lowestmelee:cast("Cone of Cold")
 			end
 		end
@@ -603,7 +623,7 @@ frost.rot = {
 			local pet = Object("pet")
 			if pet and pet:SpellCooldown("Freeze")==0 then
 				local lowestmelee = Object("lowestEnemyNONFrozen(Ice Lance)")
-				if pet:rangefrom(lowestmelee)<=40 and not lowestmelee:Spellusable("Deep Freeze") and pet:losfrom(lowestmelee)  then
+				if pet:rangefrom(lowestmelee)<=40 and pet:losfrom(lowestmelee)  then
 					lowestmelee:castground(33395)
 				end
 			end
@@ -626,7 +646,7 @@ local inCombat = function()
 	if player:isCastingAny() then return end
 	frost.rot.Silencing()
 	frost.rot.activetrinket()
-	frost.rot.AlterTime()
+	-- frost.rot.AlterTime()
 	frost.rot.icebarrier()
 	frost.rot.incanters()
 	frost.rot.OrbOrb()
