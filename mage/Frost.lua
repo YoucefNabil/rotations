@@ -148,7 +148,8 @@ local usableitems = { -- item slots
 	13, --first trinket
 	14 --second trinket
 }
-
+local magedots = {
+}
 local GUI = {
 }
 local exeOnLoad = function()
@@ -171,6 +172,41 @@ local exeOnLoad = function()
 			return true
 		end	
 	end	
+	
+	function _A.myscore()
+		local ap = GetSpellBonusDamage(6) -- shadowdamage
+		local mastery = GetCombatRating(26)
+		local crit = GetCombatRating(9)
+		local haste = GetCombatRating(18)
+		return (ap + mastery + crit + haste)
+	end
+	
+	
+	_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+		if guidsrc == UnitGUID("player") then -- only filter by me
+			-- testing
+			-- if (idd==27243) then
+			-- print(subevent.." "..idd)
+			-- end
+			--
+			if (idd==44457) then -- Corruption
+				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+					then
+					magedots[guiddest]=_A.myscore() 
+				end
+				-- if ( subevent=="SPELL_AURA_REFRESH" and ijustexhaled == false ) -- Incase you use soulburn seed of corruption
+				-- then
+				-- print("that thing fired")
+				-- corruptiontbl[guiddest]=_A.myscore() 
+				-- end
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					magedots[guiddest]=nil
+				end
+			end
+		end
+	end
+	)
 	
 	function _A.unitfrozen(unit)
 		local player = player or Object("player")
@@ -327,8 +363,7 @@ local exeOnLoad = function()
 		local player = player or Object("player")
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj:spellRange(spell) and  Obj:Infront() and (Obj:SpellUsable("Deep Freeze") or player:BuffAny(44544) or Obj:DebuffAny(33395) or Obj:DebuffAny(122)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
-			if Obj:spellRange(spell) and  Obj:Infront() and _A.unitfrozen(Obj) and _A.attackable(Obj)
-				and ((_A.pull_location=="pvp" and Obj.isplayer) or _A.pull_location~="pvp")
+			if ((_A.pull_location=="pvp" and Obj.isplayer) or _A.pull_location~="pvp") and Obj:spellRange(spell) and  Obj:Infront() and _A.unitfrozen(Obj) and _A.attackable(Obj)
 				and _A.notimmune(Obj)  and Obj:los() then
 				-- if Obj:spellRange(spell) and  Obj:Infront() and Obj:SpellUsable("Deep Freeze") and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -369,8 +404,7 @@ local exeOnLoad = function()
 		range = tonumber(range) or 40
 		target = target or "player"
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:rangefrom(target)<=range and (not _A.unitfrozen(Obj)) and _A.attackable(Obj) and  
-				((_A.pull_location=="pvp" and Obj.isplayer) or _A.pull_location~="pvp")
+			if ((_A.pull_location=="pvp" and Obj.isplayer) or _A.pull_location~="pvp") and Obj:rangefrom(target)<=range and (not _A.unitfrozen(Obj)) and _A.attackable(Obj)
 				and _A.notimmune(Obj)  and Obj:los() then
 				-- if Obj:rangefrom(target)<=range and (not Obj:SpellUsable("Deep Freeze") and not player:BuffAny(44544)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -523,9 +557,14 @@ frost.rot = {
 	end,
 	
 	AlterTime = function()
-		if player:buff("Call of Dominance") and player:buffstack("Fingers of Frost")>=2 then 
-			if player:SpellCooldown("Alter Time")<.3 then
-				player:cast("Alter Time")
+		if player:SpellCooldown(108978)<.3 and _A.castdelay(108978,6) then
+			if player:buff("Call of Dominance") or player:buff("Surge of Dominance") or player:buff("Icy Veins") then 
+				local Dominance =  (player:buffduration("Call of Dominance")~= 0) and player:buffduration("Call of Dominance") or 9999
+				local Surge = (player:buffduration("Surge of Dominance")~= 0) and player:buffduration("Surge of Dominance") or 9999
+				local ic = (player:buffduration("Icy Veins")~= 0) and player:buffduration("Icy Veins") or 9999
+				if math.min(Dominance, Surge, ic)<=6 then
+					player:cast(108978)
+				end
 			end
 		end
 	end,
@@ -546,19 +585,19 @@ frost.rot = {
 					and _A.notimmune(obj)
 					then
 					obj:Cast("Counterspell")
+					end
 				end
 			end
-		end
-	end,
-	
-	frostfirebolt_proc = function()
-		if player:buff("Brain Freeze") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
-			if lowestmelee then
-				return lowestmelee:Cast("frostfire bolt")
-			end
-		end
-	end,
+		end,
+		
+		frostfirebolt_proc = function()
+			if player:buff("Brain Freeze") then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Ice Lance)")
+				if lowestmelee then
+					return lowestmelee:Cast("frostfire bolt")
+				end
+				end
+			end,
 	
 	deepfreeze_frozen = function()
 		if player:SpellCooldown("Deep Freeze")<.3 then
@@ -584,7 +623,7 @@ frost.rot = {
 		if lowestmelee then
 			--if player:Talent("Nether Tempest") and not lowestmelee:debuff("Nether Tempest") then
 			--return lowestmelee:Cast("Nether Tempest")
-			if not lowestmelee:debuff("Living Bomb") then --player:Talent("Living Bomb") and
+			if not lowestmelee:debuff("Living Bomb") or (magedots[lowestmelee.guid] and _A.myscore()>magedots[lowestmelee.guid]) then --player:Talent("Living Bomb") and
 				return lowestmelee:Cast("Living Bomb")
 			end
 		end
@@ -657,7 +696,7 @@ local inCombat = function()
 	if player:isCastingAny() then return end
 	frost.rot.Silencing()
 	frost.rot.activetrinket()
-	-- frost.rot.AlterTime()
+	frost.rot.AlterTime()
 	frost.rot.icebarrier()
 	frost.rot.incanters()
 	frost.rot.OrbOrb()
