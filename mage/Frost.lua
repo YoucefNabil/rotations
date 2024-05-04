@@ -326,7 +326,9 @@ local exeOnLoad = function()
 		local player = player or Object("player")
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj:spellRange(spell) and  Obj:Infront() and (Obj:SpellUsable("Deep Freeze") or player:BuffAny(44544) or Obj:DebuffAny(33395) or Obj:DebuffAny(122)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
-			if Obj:spellRange(spell) and  Obj:Infront() and _A.unitfrozen(Obj) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:Infront() and _A.unitfrozen(Obj) and _A.attackable(Obj) 
+			and ((_A.pull_location=="pvp" and Obj.isplayer) or _A.pull_location~="pvp")
+			and _A.notimmune(Obj)  and Obj:los() then
 			-- if Obj:spellRange(spell) and  Obj:Infront() and Obj:SpellUsable("Deep Freeze") and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -366,7 +368,9 @@ local exeOnLoad = function()
 		range = tonumber(range) or 40
 		target = target or "player"
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:rangefrom(target)<=range and (not _A.unitfrozen(Obj)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
+			if Obj:rangefrom(target)<=range and (not _A.unitfrozen(Obj)) and _A.attackable(Obj) and  
+			((_A.pull_location=="pvp" and Obj.isplayer) or _A.pull_location~="pvp")
+			and _A.notimmune(Obj)  and Obj:los() then
 			-- if Obj:rangefrom(target)<=range and (not Obj:SpellUsable("Deep Freeze") and not player:BuffAny(44544)) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -524,6 +528,11 @@ frost.rot = {
 			end
 		end
 	end,
+	iceward = function()
+	if player:talent("Ice Ward") and player:SpellCooldown("Ice Ward")<.3 and not player:buffany("Ice Ward") then
+	return player:cast("Ice Ward")
+	end
+	end,
 	
 	Silencing = function()
 		if player:SpellCooldown("Counterspell")==0 then
@@ -655,6 +664,7 @@ local inCombat = function()
 	frost.rot.playerfreeze()
 	frost.rot.deepfreeze_frozen()
 	frost.rot.icelance_frozen()
+	frost.rot.iceward()
 	frost.rot.coneofcold()
 	frost.rot.frostfirebolt_proc()
 	frost.rot.magedot()
