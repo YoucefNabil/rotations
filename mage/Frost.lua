@@ -19,6 +19,13 @@ local immunedebuffs = {
 	"Cyclone",
 	-- "Smoke Bomb"
 }
+local types_i_dont_need = {
+	[0] = true, -- unknown
+	[10] = true, -- not specified
+	[11] = true, -- totems
+	[12] = true, -- non combat pets
+	[13] = true -- gas cloud
+}
 local healerspecid = {
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",
@@ -152,6 +159,15 @@ local exeOnLoad = function()
 	Listener:Add("warrior_stuff", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
 		_A.pull_location = pull_location()
 	end)
+	
+	function _A.attackable(unit)
+		if _A.pull_location and _A.pull_location ~= "arena" and _A.pull_location ~= "pvp" then return true end
+		if unit then 
+			if unit:CreatureType()==nil then return false end
+			if types_i_dont_need[unit:CreatureType()] then return false end
+			return true
+		end	
+	end	
 	--
 	_A.hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
@@ -273,11 +289,11 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
+		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable(target) and  _A.notimmune(target) and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
-			if Obj:spellRange(spell) and  Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -295,7 +311,7 @@ local exeOnLoad = function()
 		local tempTable = {}
 		local player = player or Object("player")
 		for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do
-			if Obj:spellRange(spell) and  Obj:Infront() and (Obj:SpellUsable("Deep Freeze") or player:BuffAny(44544) or Obj:DebuffAny(33395) or Obj:DebuffAny(122)) and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:Infront() and (Obj:SpellUsable("Deep Freeze") or player:BuffAny(44544) or Obj:DebuffAny(33395) or Obj:DebuffAny(122)) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -313,7 +329,7 @@ local exeOnLoad = function()
 		local tempTable = {}
 		local player = player or Object("player")
 		for _, Obj in pairs(_A.OM:Get('EnemyCombat')) do --Enemy
-			if Obj:spellRange(spell) and  Obj:Infront() and (not Obj:SpellUsable("Deep Freeze")) and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:Infront() and (not Obj:SpellUsable("Deep Freeze")) and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -333,7 +349,7 @@ local exeOnLoad = function()
 		range = tonumber(range) or 40
 		target = target or "player"
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:rangefrom(target)<=range and (not Obj:SpellUsable("Deep Freeze")) and  _A.notimmune(Obj)  and Obj:los() then
+			if Obj:rangefrom(target)<=range and (not Obj:SpellUsable("Deep Freeze")) and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -353,7 +369,7 @@ local exeOnLoad = function()
 		range = tonumber(range) or 40
 		target = target or "player"
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:rangefrom(target)<=range and Obj:Infront() and  _A.notimmune(Obj)  and Obj:los() then
+			if Obj:rangefrom(target)<=range and Obj:Infront() and _A.attackable(Obj) and  _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -539,7 +555,7 @@ frost.rot = {
 		if lowestmelee and lowestmelee:exists() then
 			--if player:Talent("Nether Tempest") and not lowestmelee:debuff("Nether Tempest") then
 			--return lowestmelee:Cast("Nether Tempest")
-			if  not lowestmelee:debuff("Living Bomb") then --player:Talent("Living Bomb") and
+			if not lowestmelee:debuff("Living Bomb") then --player:Talent("Living Bomb") and
 				return lowestmelee:Cast("Living Bomb")
 			end
 		end
