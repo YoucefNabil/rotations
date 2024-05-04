@@ -254,7 +254,7 @@ local exeOnLoad = function()
 	end)
 	_A.buttondelayfunc = function()
 		local player = Object("player")
-		if player and player:stance()==1 then
+		if player then
 		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end end
 		return false
 	end
