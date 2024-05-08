@@ -1,7 +1,7 @@
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
-_A.Banzai = true
+local bossestoavoid = { 69427, 68065, 69017, 69465, 71454 }
 local function blank()
 end
 local function runthese(...)
@@ -33,6 +33,20 @@ local function isActive(spellID)
 		return false
 	end
 end
+local SPELL_SHIELD_LOW    = GetSpellInfo(142863)
+local SPELL_SHIELD_MEDIUM = GetSpellInfo(142864)
+local SPELL_SHIELD_FULL   = GetSpellInfo(142865)
+
+local function CalculateHPRAW(t)
+	local shield = select(15, _A.UnitDebuff(t, SPELL_SHIELD_LOW)) or select(15, _A.UnitDebuff(t, SPELL_SHIELD_MEDIUM)) or select(15, _A.UnitDebuff(t, SPELL_SHIELD_FULL)) or 0 -- or ((select(15, UnitDebuff(t, SPELL_SHIELD_FULL)))~=nil and UnitHealthMax(t))
+	if shield ~= 0 then return shield else return _A.UnitHealth(t) end
+end
+local function CalculateHPRAWMAX(t)
+	return ( _A.UnitHealthMax(t) )
+end
+local function CalculateHP(t)
+	return 100 * ( CalculateHPRAW(t) ) / CalculateHPRAWMAX(t)
+end
 local blacklist = {
 }
 --
@@ -62,6 +76,95 @@ local GUI = {
 local exeOnLoad = function()
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .1)
+	_A.pressedbuttonat = 0
+	_A.buttondelay = 0.6
+	local STARTSLOT = 97
+	local STOPSLOT = 104
+	_A.hooksecurefunc("UseAction", function(...)
+		local slot, target, clickType = ...
+		local Type, id, subType, spellID
+		-- print(slot)
+		local player = Object("player")
+		if slot==STARTSLOT then 
+			_A.pressedbuttonat = 0
+			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
+				_A.Interface:toggleToggle("mastertoggle", true)
+				_A.print("ON")
+			end
+		end
+		if slot==STOPSLOT then 
+			-- TEST STUFF
+			-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
+			-- TEST STUFF
+			-- local target = Object("target")
+			-- if target and target:exists() then print(target:creatureType()) end
+			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
+				_A.Interface:toggleToggle("mastertoggle", false)
+				_A.print("OFF")
+			end
+		end
+		--
+		if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
+			Type, id, subType = _A.GetActionInfo(slot)
+			if Type == "spell" or Type == "macro" -- remove macro?
+				then
+				_A.pressedbuttonat = _A.GetTime()
+			end
+		end
+	end)
+	-----------------------------------
+	-----------------------------------
+	-----------------------------------
+	immunebuffs = {
+		"Deterrence",
+		"Hand of Protection",
+		"Dematerialize",
+		-- "Smoke Bomb",
+		"Cloak of Shadows",
+		"Ice Block",
+		"Divine Shield"
+	}
+	immunedebuffs = {
+		"Cyclone"
+		-- "Smoke Bomb"
+	}
+	
+	healimmunebuffs = {
+	}
+	healimmunedebuffs = {
+		"Cyclone"
+	}
+	
+	function _A.notimmune(unit) -- needs to be object
+		if unit then 
+			if unit:immune("all") then return false end
+		end
+		for _,v in ipairs(immunebuffs) do
+			if unit:BuffAny(v) then return false end
+		end
+		for _,v in ipairs(immunedebuffs) do
+			if unit:DebuffAny(v) then return false end
+		end
+		return true
+	end
+	
+	
+	function _A.nothealimmune(unit)
+		local player = Object("player")
+		if unit then 
+			if unit:DebuffAny("Cyclone") then return false end
+		end
+		return true
+	end
+	-----------------------------------
+	-----------------------------------
+	-----------------------------------
+	_A.buttondelayfunc = function()
+		local player = Object("player")
+		if player and player:stance()==1 then
+		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end end
+		return false
+	end
 	_A.FakeUnits:Add('lowestall', function(num, spell)
 		local tempTable = {}
 		local location = pull_location()
@@ -111,6 +214,47 @@ local exeOnLoad = function()
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
+	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
+		local tempTable = {}
+		local target = Object("target")
+		if target and target:enemy() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
+			return target and target.guid
+		end
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and _A.notimmune(Obj) and  Obj:Infront() and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	_A.FakeUnits:Add('mostTargetedRosterPVP', function()
+		local targets = {}
+		local most, mostGuid = 0
+		for _, enemy in pairs(_A.OM:Get('Enemy')) do
+			if enemy then
+				if enemy.isplayer then
+					local tguid = UnitTarget(enemy.guid)
+					if tguid then
+						targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
+					end
+				end
+			end
+		end
+		for guid, count in pairs(targets) do
+			if count > most then
+				most = count
+				mostGuid = guid
+			end
+		end
+		return mostGuid
+	end)
 	_A.SMguid = nil
 	_A.casttimers = {} -- doesnt work with channeled spells
 	_A.Listener:Add("delaycasts_Monk_and_misc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
@@ -140,6 +284,273 @@ local exeOnLoad = function()
 		if _A.casttimers[idd]==nil then return true end
 		return (_A.GetTime() - _A.casttimers[idd])>=delay
 	end
+	
+	-- ====
+	local MW_HealthUsedData = {}
+	local MW_LastHealth = {}
+	--====================================================== MANA
+	local MW_ManaUsedData = {}
+	local MW_LastMana = UnitPower("player", 0)
+	local ManaWatchFrame = CreateFrame("Frame")
+	local MW_AnalyzedTimespan = 30
+	local avgDelta = 0
+	_A.avgDeltaPercent = 0
+	local secondsTillOOM = 99999
+	Listener:Add("holy_mana", {"PLAYER_REGEN_DISABLED", "UNIT_POWER"}, function(event, firstArg, secondArg)
+		if event == "UNIT_POWER" and secondArg == "MANA" then
+			_A.UnitManaHandler(firstArg)
+		end
+	end)
+	function _A.UnitManaHandler(unitID)
+		if unitID == "player" then
+			local currentMana = UnitPower(unitID, 0)
+			_A.PlayerManaChanged(currentMana, UnitPowerMax(unitID, 0), MW_LastMana - currentMana)
+			MW_LastMana = currentMana
+		end
+	end
+	function _A.PlayerManaChanged(Current, Max, Usage)
+		local uptime = GetTime()
+		local manaUsed = 0
+		MW_ManaUsedData[uptime] = Usage
+		for Time, Mana in pairs(MW_ManaUsedData) do
+			if uptime - Time > MW_AnalyzedTimespan then
+				table.remove(MW_ManaUsedData, Time)
+				else
+				manaUsed = manaUsed + Mana
+			end
+		end
+		avgDelta = -(manaUsed / MW_AnalyzedTimespan)
+		_A.avgDeltaPercent = (avgDelta * 100 / Max)
+		if avgDelta < 0 then
+			secondsTillOOM = Current / (-avgDelta)
+			else secondsTillOOM = 99999
+		end
+	end
+	--======================================================================
+	-- HEALTH
+	local MW_HealthAnalyzedTimespan = 30
+	function _A.velocityhealengine()
+		for _, fr in pairs(_A.OM:Get('Friendly')) do
+			if fr.isplayer then
+				if MW_HealthUsedData[fr.guid]==nil then
+					MW_HealthUsedData[fr.guid]={}
+					MW_HealthUsedData[fr.guid].t={}
+					MW_LastHealth[fr.guid]=fr:HealthActual()
+				end
+				UnitHealthHandler(fr.guid)
+			end
+		end
+	end
+	function UnitHealthHandler(unitID)
+		local currentHealth = UnitHealth(unitID)
+		if MW_LastHealth[unitID]~=currentHealth then -- needed otherwise will just feed the next function zeroes
+			PlayerHealthChanged(unitID, currentHealth, UnitHealthMax(unitID), currentHealth - MW_LastHealth[unitID])
+		end
+		MW_LastHealth[unitID] = currentHealth --
+	end
+	function PlayerHealthChanged(unit, Current, Max, Usage)
+		local uptime = GetTime()
+		MW_HealthUsedData[unit].healthUsed = 0
+		MW_HealthUsedData[unit].t[uptime] = Usage
+		for Time, Health in pairs(MW_HealthUsedData[unit].t) do
+			if uptime - Time > MW_HealthAnalyzedTimespan then
+				table.remove(MW_HealthUsedData[unit].t, Time)
+				else
+				MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
+			end
+		end
+		MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
+		MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
+	end
+	local function averageHPv2()
+		local sum = 0
+		local num = 0
+		if next(MW_HealthUsedData)==nil then
+			return 0
+			else
+			for k in pairs(MW_HealthUsedData) do
+				if MW_HealthUsedData[k]~=nil then
+					if next(MW_HealthUsedData[k])~=nil then
+						if MW_HealthUsedData[k].avgHDeltaPercent~=nil then 	
+							local unitOBJECT = Object(k)
+							if unitOBJECT:health()<100 then -- this LOWERS avg hp (only accounting people missing hp) but there has to be a better way
+								if _A.nothealimmune(unitOBJECT) then
+									num = num + 1
+									sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
+									return sum/num
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+		return 0
+	end
+	function _A.manaengine() -- make it so it's tied with group hp
+		--if modifier_alt() then return true end
+		if
+			--((averageHPv2())<0) and 
+			(_A.avgDeltaPercent>=(averageHPv2())) --and secondsTillOOM>=15
+			-- -1 >= -2
+			then return true
+		end
+		return false
+	end
+	function _A.enoughmana(id)
+		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
+		if powertype then
+			local currentmana = _A.UnitPower("player", powertype)
+			if currentmana>=cost then
+				return true
+				else return false
+			end
+		end
+		return true
+	end
+	
+	
+	function _A.modifier_shift()
+		local modkeyb = IsShiftKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
+	
+	function _A.modifier_ctrl()
+		local modkeyb = IsControlKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
+	
+	_A.DSL:Register('canafford', function()
+		return _A.manaengine()
+	end)
+	_A.DSL:Register('chifix', function()
+		return _A.UnitPower("player", 12)
+	end)
+	_A.DSL:Register('chifixmax', function()
+		return _A.UnitPowerMax("player", 12)
+	end)
+	
+	_A.faceunit = function(unit)
+		if unit then
+			if not unit:infront() then
+				_A.FaceDirection(unit.guid, true)
+			end
+		end
+	end
+	
+	function _A.enoughmana(id)
+		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
+		if powertype then
+			local currentmana = _A.UnitPower("player", powertype)
+			if currentmana>=cost then
+				return true
+				else return false
+			end
+		end
+		return true
+	end
+	-------------------------------------------------------
+	-------------------------------------------------------
+	local function pSpeed(unit, maxDistance)
+		local munit = Object(unit)
+		--local unitGUID = unit.guid
+		local x, y, z = _A.ObjectPosition(unit)
+		local facing = _A.ObjectFacing(unit)
+		local speed = _A.GetUnitSpeed(unit)
+		-- Check if the unit is standing still or moving backward
+		if not munit:Moving() or _A.UnitIsMovingBackward(unit) then
+			return x, y, z
+		end 
+		-- Determine the dynamic distance, with a minimum of 2 units for moving units
+		local distance = math.max(2, math.min(maxDistance, speed - 4.5))
+		-- Adjust facing based on strafing or moving forward
+		if _A.UnitIsStrafeLeft(unit) then
+			facing = facing + math.pi / 2 -- 90 degrees to the right for strafe left
+			elseif _A.UnitIsStrafeRight(unit) then
+			facing = facing - math.pi / 2 -- 90 degrees to the left for strafe right
+		end
+		-- Calculate and return the new position
+		local newX = x + distance * math.cos(facing)
+		local newY = y + distance * math.sin(facing)
+		return newX, newY, z
+	end
+	function _A.CastPredictedPos(unit, spell, distance)
+		local player = Object("player")
+		local px, py, pz = pSpeed(unit, distance)
+		_A.CallWowApi("CastSpellByName", spell)
+		if player:SpellIsTargeting() then
+			_A.ClickPosition(px, py, pz)
+			_A.CallWowApi("SpellStopTargeting")
+		end
+	end
+	-------------------------------------------------------
+	-------------------------------------------------------
+	local function castsecond(unit)
+		local givetime = GetTime()
+		local tempvar = select(6, UnitCastingInfo(unit))
+		local timetimetime15687
+		if unit == nil
+			then 
+			unit = "target"
+		end
+		if UnitCastingInfo(unit)~=nil
+			then timetimetime15687 = abs(givetime - (tempvar/1000)) 
+		end
+		return timetimetime15687 or 999
+	end
+	
+	_A.DSL:Register('castsecond', function(unit)
+		return castsecond(unit)
+	end)
+	
+	
+	local function chanpercent(unit)
+		local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
+		local givetime = GetTime()
+		if unit == nil
+			then 
+			unit = "target"
+		end	
+		if UnitChannelInfo(unit)~=nil
+			then local maxcasttime = abs(tempvar1-tempvar2)/1000
+			local remainingcasttimeinsec = abs(givetime - (tempvar2/1000))
+			local percentageofthis = (remainingcasttimeinsec * 100)/maxcasttime
+			return percentageofthis
+		end
+		return 999
+	end
+	
+	_A.DSL:Register('chanpercent', function(unit)
+		return chanpercent(unit)
+	end)
+	
+	
+	local function interruptable(unit)
+		if unit == nil
+			then unit = "target"
+		end
+		local intel5 = (select(9, UnitCastingInfo(unit)))
+		local intel6 = (select(8, UnitChannelInfo(unit)))
+		if intel5==false
+			or intel6==false
+			then return true
+			else return false
+		end
+		return false
+	end
+	
+	_A.DSL:Register('caninterrupt', function(unit)
+		return interruptable(unit)
+	end)
+	
 end
 local exeOnUnload = function()
 end
@@ -186,7 +597,7 @@ local mw_rot = {
 			if castName == GetSpellInfo(133939) then -- furious stone breath
 				if unitDD("target") == 67966 then -- turtle id
 					if isActive(134031) then -- kick shell	
-						_A.RunMacroText("/click ExtraActionButton1")
+						_A.CallWowApi("RunMacroText", "/click ExtraActionButton1")
 					end
 				end
 			end
@@ -528,7 +939,7 @@ local mw_rot = {
 		if player:Stance() == 1   then
 			if player:SpellCooldown("Mana Tea")<.3
 				-- and player:Glyph("Glyph of Mana Tea")
-				and _A.powerpercent()<= 92
+				and player:mana()<= 92
 				and player:BuffStack("Mana Tea")>=2
 				then
 				return player:Cast("Mana Tea")
@@ -931,11 +1342,11 @@ local mw_rot = {
 			if not player:isChanneling("Crackling Jade Lightning") then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if not lowestmelee then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
-				if lowestmelee and lowestmelee:exists() then
-					return lowestmelee:Cast("Crackling Jade Lightning")
+					local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
+					if lowestmelee and lowestmelee:exists() then
+						return lowestmelee:Cast("Crackling Jade Lightning")
+					end
 				end
-			end
 			end
 			else if player:isChanneling("Crackling Jade Lightning") then _A.CallWowApi("SpellStopCasting") end
 		end
@@ -994,6 +1405,7 @@ local mw_rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
+	_A.velocityhealengine()
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .3)
 	mw_rot.caching()
@@ -1008,7 +1420,7 @@ local inCombat = function()
 	mw_rot.Xuen()
 	mw_rot.turtletoss()
 	mw_rot.kick_legsweep()
-	mw_rot.dispellplzarena()
+	-- mw_rot.dispellplzarena()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
 	mw_rot.ringofpeace()
