@@ -350,7 +350,7 @@ local exeOnLoad = function()
 		local uptime = GetTime()
 		-- Variable MW_HealthAnalyzedTimespan
 		if startedcombat_at and (uptime - startedcombat_at)>minimum_MW_HealthAnalyzedTimespan then
-		MW_HealthAnalyzedTimespan = (uptime - startedcombat_at)
+			MW_HealthAnalyzedTimespan = (uptime - startedcombat_at)
 		end
 		--
 		if MW_HealthUsedData[unit] then
@@ -361,10 +361,10 @@ local exeOnLoad = function()
 				if uptime - Time > MW_HealthAnalyzedTimespan then
 					table.remove(MW_HealthUsedData[unit].t, Time)
 					else
-				MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
-				if Health<0 then
-					MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
-				end
+					MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
+					if Health<0 then
+						MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
+					end
 				end
 			end
 			MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
@@ -376,6 +376,10 @@ local exeOnLoad = function()
 	--====================================================== MANA
 	--====================================================== MANA
 	--====================================================== MANA
+	local function effectivemanaregen()
+		local basemanaregen,_=GetManaRegen()
+		return (basemanaregen*100)/UnitPowerMax("player",0)
+	end
 	--====================================================== MANA
 	--====================================================== MANA
 	--====================================================== MANA
@@ -414,7 +418,7 @@ local exeOnLoad = function()
 		local uptime = GetTime()
 		-- Variable MW_AnalyzedTimespan
 		if manacombatstart and (uptime - manacombatstart)>minimumMW_AnalyzedTimespan then
-		MW_AnalyzedTimespan = (uptime - manacombatstart)
+			MW_AnalyzedTimespan = (uptime - manacombatstart)
 		end
 		--
 		local manaUsed = 0
@@ -446,7 +450,7 @@ local exeOnLoad = function()
 				if MW_HealthUsedData[k]~=nil then
 					if next(MW_HealthUsedData[k])~=nil then
 						if MW_HealthUsedData[k].avgHDeltaPercent~=nil then 	
-							if UnitHealth(k)<=UnitHealthMax(k) then
+							if UnitHealth(k)<UnitHealthMax(k) then
 								num = num + 1
 								sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
 								return sum/num
@@ -462,7 +466,7 @@ local exeOnLoad = function()
 		--if modifier_alt() then return true end
 		if
 			--((averageHPv2())<0) and 
-			(_A.avgDeltaPercent>=(averageHPv2())) --and secondsTillOOM>=15
+			(_A.avgDeltaPercent>=(averageHPv2()-effectivemanaregen())) --and secondsTillOOM>=15
 			-- -1 >= -2
 			then return true
 		end
@@ -594,7 +598,7 @@ local exeOnLoad = function()
 		return castsecond(unit)
 	end)
 	
-	
+	-- 116680
 	local function chanpercent(unit)
 		local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
 		local givetime = GetTime()
