@@ -309,8 +309,18 @@ local exeOnLoad = function()
 	-- ====
 	local MW_HealthUsedData = {}
 	local MW_LastHealth = {}
-	local MW_HealthAnalyzedTimespan = 30
+	local startedcombat_at
+	local minimum_MW_HealthAnalyzedTimespan = 30
+	local MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
 	--====================================================== Testing
+	Listener:Add("COMBAT_TRACK", {"PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED"}, function(event, firstArg, secondArg)
+		if event == "PLAYER_REGEN_DISABLED" then
+			startedcombat_at = GetTime()
+		end
+		if event == "PLAYER_REGEN_ENABLED" then
+			MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
+		end
+	end)
 	Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest)
 		if UnitCanCooperate("player", guiddest) or UnitGUID("player")==guiddest  then
 			if UnitIsPlayer(guiddest) then
@@ -338,6 +348,11 @@ local exeOnLoad = function()
 	end
 	function PlayerHealthChanged(unit, Current, Max, Usage)
 		local uptime = GetTime()
+		-- Variable MW_HealthAnalyzedTimespan
+		if startedcombat_at and (uptime - startedcombat_at)>minimum_MW_HealthAnalyzedTimespan then
+		MW_HealthAnalyzedTimespan = (uptime - startedcombat_at)
+		end
+		--
 		if MW_HealthUsedData[unit] then
 			MW_HealthUsedData[unit].healthUsed = 0
 			MW_HealthUsedData[unit].healthnegative = 0
@@ -346,10 +361,10 @@ local exeOnLoad = function()
 				if uptime - Time > MW_HealthAnalyzedTimespan then
 					table.remove(MW_HealthUsedData[unit].t, Time)
 					else
-					MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
-					if Health<0 then
-						MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
-					end
+				MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
+				if Health<0 then
+					MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
+				end
 				end
 			end
 			MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
@@ -371,14 +386,21 @@ local exeOnLoad = function()
 	--====================================================== MANA
 	local MW_ManaUsedData = {}
 	local MW_LastMana = UnitPower("player", 0)
-	local ManaWatchFrame = CreateFrame("Frame")
-	local MW_AnalyzedTimespan = 30
+	local minimumMW_AnalyzedTimespan = 30
+	local manacombatstart
+	local MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan
 	local avgDelta = 0
 	_A.avgDeltaPercent = 0
 	local secondsTillOOM = 99999
-	Listener:Add("holy_mana", {"PLAYER_REGEN_DISABLED", "UNIT_POWER"}, function(event, firstArg, secondArg)
+	Listener:Add("holy_mana", {"PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "UNIT_POWER"}, function(event, firstArg, secondArg)
 		if event == "UNIT_POWER" and secondArg == "MANA" then
 			_A.UnitManaHandler(firstArg)
+		end
+		if event == "PLAYER_REGEN_DISABLED" then
+			manacombatstart = GetTime()
+		end
+		if event == "PLAYER_REGEN_ENABLED" then
+			MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan
 		end
 	end)
 	function _A.UnitManaHandler(unitID)
@@ -390,6 +412,11 @@ local exeOnLoad = function()
 	end
 	function _A.PlayerManaChanged(Current, Max, Usage)
 		local uptime = GetTime()
+		-- Variable MW_AnalyzedTimespan
+		if manacombatstart and (uptime - manacombatstart)>minimumMW_AnalyzedTimespan then
+		MW_AnalyzedTimespan = (uptime - manacombatstart)
+		end
+		--
 		local manaUsed = 0
 		MW_ManaUsedData[uptime] = Usage
 		for Time, Mana in pairs(MW_ManaUsedData) do
