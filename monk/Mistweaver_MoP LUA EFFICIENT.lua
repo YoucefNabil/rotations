@@ -2,6 +2,7 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
 local bossestoavoid = { 69427, 68065, 69017, 69465, 71454 }
+local UnitCanCooperate, UnitHealthMax, GetTime, UnitIsPlayer, string_find = UnitCanCooperate, UnitHealthMax, GetTime, UnitIsPlayer, string.find
 local function blank()
 end
 local function runthese(...)
@@ -14,6 +15,7 @@ local function runthese(...)
 		end
 	end
 end
+local next = next
 local function pull_location()
 	return string.lower(select(2, GetInstanceInfo()))
 end
@@ -80,11 +82,29 @@ local exeOnLoad = function()
 	_A.buttondelay = 0.6
 	local STARTSLOT = 97
 	local STOPSLOT = 104
+	function _A.groundposition(unit)
+		if unit then 
+			local x,y,z=_A.ObjectPosition(unit.guid)
+			local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
+			local los, cx, cy, cz = _A.TraceLine(x, y, z+5, x, y, z-200, flags)
+			if not los then
+				return cx, cy, cz
+			end
+		end
+	end
+	function _A.groundpositiondetail(x,y,z)
+		local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
+		local los, cx, cy, cz = _A.TraceLine(x, y, z+5, x, y, z-200, flags)
+		if not los then
+			return cx, cy, cz
+		end
+	end
+	
 	_A.hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		-- print(slot)
-		local player = Object("player")
+		local player = player or Object("player")
 		if slot==STARTSLOT then 
 			_A.pressedbuttonat = 0
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
@@ -95,6 +115,7 @@ local exeOnLoad = function()
 		if slot==STOPSLOT then 
 			-- TEST STUFF
 			-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
+			-- _A.print(_A.groundposition(player))
 			-- TEST STUFF
 			-- local target = Object("target")
 			-- if target and target:exists() then print(target:creatureType()) end
@@ -288,6 +309,65 @@ local exeOnLoad = function()
 	-- ====
 	local MW_HealthUsedData = {}
 	local MW_LastHealth = {}
+	local MW_HealthAnalyzedTimespan = 30
+	--====================================================== Testing
+	Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest)
+		if UnitCanCooperate("player", guiddest) or UnitGUID("player")==guiddest  then
+			if UnitIsPlayer(guiddest) then
+				if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") or string_find(subevent,"_HEAL_ABSORBED")  
+					or string_find(subevent,"_ABSORBED") or string_find(subevent,"_DRAIN") or string_find(subevent,"_LEECH") then
+					if MW_HealthUsedData[guiddest]==nil then
+						MW_HealthUsedData[guiddest]={}
+						MW_HealthUsedData[guiddest].t={}
+						MW_LastHealth[guiddest]=UnitHealth(guiddest)
+					end
+					UnitHealthHandler(guiddest)
+					-- print(subevent)
+				end
+			end
+		end
+	end
+	)
+	--
+	function UnitHealthHandler(unitID)
+		local currentHealth = UnitHealth(unitID)
+		if MW_LastHealth[unitID] and MW_LastHealth[unitID]~=currentHealth then -- needed otherwise will just feed the next function zeroes
+			PlayerHealthChanged(unitID, currentHealth, UnitHealthMax(unitID), currentHealth - MW_LastHealth[unitID])
+		end
+		MW_LastHealth[unitID] = currentHealth --
+	end
+	function PlayerHealthChanged(unit, Current, Max, Usage)
+		local uptime = GetTime()
+		if MW_HealthUsedData[unit] then
+			MW_HealthUsedData[unit].healthUsed = 0
+			MW_HealthUsedData[unit].healthnegative = 0
+			MW_HealthUsedData[unit].t[uptime] = Usage
+			for Time, Health in pairs(MW_HealthUsedData[unit].t) do
+				if uptime - Time > MW_HealthAnalyzedTimespan then
+					table.remove(MW_HealthUsedData[unit].t, Time)
+					else
+					MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
+					if Health<0 then
+						MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
+					end
+				end
+			end
+			MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
+			MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
+		end
+	end
+	--====================================================== MANA
+	--====================================================== MANA
+	--====================================================== MANA
+	--====================================================== MANA
+	--====================================================== MANA
+	--====================================================== MANA
+	--====================================================== MANA
+	--====================================================== MANA
+	--====================================================== MANA
+	--====================================================== MANA
+	--====================================================== MANA
+	--====================================================== MANA
 	--====================================================== MANA
 	local MW_ManaUsedData = {}
 	local MW_LastMana = UnitPower("player", 0)
@@ -328,41 +408,8 @@ local exeOnLoad = function()
 	end
 	--======================================================================
 	-- HEALTH
-	local MW_HealthAnalyzedTimespan = 30
-	function _A.velocityhealengine()
-		for _, fr in pairs(_A.OM:Get('Friendly')) do
-			if fr.isplayer then
-				if MW_HealthUsedData[fr.guid]==nil then
-					MW_HealthUsedData[fr.guid]={}
-					MW_HealthUsedData[fr.guid].t={}
-					MW_LastHealth[fr.guid]=fr:HealthActual()
-				end
-				UnitHealthHandler(fr.guid)
-			end
-		end
-	end
-	function UnitHealthHandler(unitID)
-		local currentHealth = UnitHealth(unitID)
-		if MW_LastHealth[unitID]~=currentHealth then -- needed otherwise will just feed the next function zeroes
-			PlayerHealthChanged(unitID, currentHealth, UnitHealthMax(unitID), currentHealth - MW_LastHealth[unitID])
-		end
-		MW_LastHealth[unitID] = currentHealth --
-	end
-	function PlayerHealthChanged(unit, Current, Max, Usage)
-		local uptime = GetTime()
-		MW_HealthUsedData[unit].healthUsed = 0
-		MW_HealthUsedData[unit].t[uptime] = Usage
-		for Time, Health in pairs(MW_HealthUsedData[unit].t) do
-			if uptime - Time > MW_HealthAnalyzedTimespan then
-				table.remove(MW_HealthUsedData[unit].t, Time)
-				else
-				MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
-			end
-		end
-		MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
-		MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
-	end
-	local function averageHPv2()
+	
+	function averageHPv2()
 		local sum = 0
 		local num = 0
 		if next(MW_HealthUsedData)==nil then
@@ -372,13 +419,10 @@ local exeOnLoad = function()
 				if MW_HealthUsedData[k]~=nil then
 					if next(MW_HealthUsedData[k])~=nil then
 						if MW_HealthUsedData[k].avgHDeltaPercent~=nil then 	
-							local unitOBJECT = Object(k)
-							if unitOBJECT:health()<100 then -- this LOWERS avg hp (only accounting people missing hp) but there has to be a better way
-								if _A.nothealimmune(unitOBJECT) then
-									num = num + 1
-									sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
-									return sum/num
-								end
+							if UnitHealth(k)<=UnitHealthMax(k) then
+								num = num + 1
+								sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
+								return sum/num
 							end
 						end
 					end
@@ -484,11 +528,23 @@ local exeOnLoad = function()
 	end
 	function _A.CastPredictedPos(unit, spell, distance)
 		local player = Object("player")
-		local px, py, pz = pSpeed(unit, distance)
-		_A.CallWowApi("CastSpellByName", spell)
-		if player:SpellIsTargeting() then
-			_A.ClickPosition(px, py, pz)
-			_A.CallWowApi("SpellStopTargeting")
+		local px, py, pz = _A.groundpositiondetail(pSpeed(unit, distance))
+		if px then
+			_A.CallWowApi("CastSpellByName", spell)
+			if player:SpellIsTargeting() then
+				_A.ClickPosition(px, py, pz)
+				_A.CallWowApi("SpellStopTargeting")
+			end
+		end
+	end
+	function _A.clickcast(unit, spell)
+		local px,py,pz = _A.groundposition(unit)
+		if px then
+			_A.CallWowApi("CastSpellByName", spell)
+			if player:SpellIsTargeting() then
+				_A.ClickPosition(px, py, pz)
+				_A.CallWowApi("SpellStopTargeting")
+			end
 		end
 	end
 	-------------------------------------------------------
@@ -1082,7 +1138,8 @@ local mw_rot = {
 			
 			if	player:SpellCooldown("Summon Jade Serpent Statue")<.3
 				then
-				return player:CastGround("Summon Jade Serpent Statue")
+				-- return player:CastGround("Summon Jade Serpent Statue")
+				return _A.clickcast(player,"Summon Jade Serpent Statue")
 			end
 		end
 	end,
@@ -1098,8 +1155,30 @@ local mw_rot = {
 								if lowest:Distance() < 40 then
 									-- if lowest:los() then
 									-- return lowest:CastGround("Healing Sphere")
-									return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 15)
+									return _A.clickcast(lowest,"Healing Sphere")
+									-- return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 15)
 									-- end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end,
+	
+	healingsphere_keybind = function()
+		if player:SpellCooldown("Healing Sphere")<.3   then
+			if player:Stance() == 1 then
+				if player:keybind("E") then
+					if _A.enoughmana(115460) then
+						local target = Object("target")
+						if target and target:exists() then
+							if target:Distance() < 40 then
+								if target:los() then
+									-- return target:CastGround("Healing Sphere")
+									return _A.clickcast(target,"Healing Sphere")
+									-- return _A.CastPredictedPos(target.guid, "Healing Sphere", 15)
 								end
 							end
 						end
@@ -1122,7 +1201,8 @@ local mw_rot = {
 								if (lowest:Health() < 85) then
 									-- if lowest:los() then
 									-- return lowest:CastGround("Healing Sphere", true)
-									return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 15)
+									return _A.clickcast(lowest,"Healing Sphere")
+									-- return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 15)
 									-- end
 								end
 							end
@@ -1405,13 +1485,14 @@ local mw_rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
-	_A.velocityhealengine()
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .3)
+	-- if averageHPv2()~= 0 then print(averageHPv2()) end
 	mw_rot.caching()
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
 	if player:isChanneling("Crackling Jade Lightning") then return end
+	mw_rot.healingsphere_keybind()
 	mw_rot.autotarget()
 	mw_rot.items_healthstone()
 	mw_rot.items_noggenfogger()
@@ -1420,7 +1501,7 @@ local inCombat = function()
 	mw_rot.Xuen()
 	mw_rot.turtletoss()
 	mw_rot.kick_legsweep()
-	-- mw_rot.dispellplzarena()
+	mw_rot.dispellplzarena()
 	mw_rot.kick_paralysis()
 	mw_rot.kick_spear()
 	mw_rot.ringofpeace()
@@ -1437,7 +1518,6 @@ local inCombat = function()
 	mw_rot.ctrl_mode()
 	mw_rot.healstatue()
 	mw_rot.healingsphere()
-	-- mw_rot.healingsphere_shift()
 	mw_rot.pvp_disable()
 	mw_rot.spin_keybind()
 	mw_rot.blackout_keybind()
