@@ -179,6 +179,17 @@ local exeOnLoad = function()
 	end
 	-----------------------------------
 	-----------------------------------
+	local function fall()
+		local player = player or Object("player")
+		local px, py, pz = _A.ObjectPosition("player")
+		local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
+		if player:Falling() then
+			local  los, cx, cy, cz = _A.TraceLine(px, py, pz+5, px, py, pz - 200, flags)
+			if not los then print("Distance to ground ", pz - cz)
+				else print("interception not found within the specified distance.")
+			end
+		end
+	end
 	-----------------------------------
 	_A.buttondelayfunc = function()
 		local player = Object("player")
@@ -298,6 +309,13 @@ local exeOnLoad = function()
 					_A.SMguid = nil
 				end
 			end
+			-- thunder focus tea capture
+				if subevent == "SPELL_AURA_REMOVED" then
+					if idd == 116680 then
+						_A.thunderbrewremovedat = GetTime()
+						-- print("RE MO V E D")
+					end
+				end
 		end
 	end)
 	function _A.castdelay(idd, delay)
@@ -321,7 +339,7 @@ local exeOnLoad = function()
 			MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
 		end
 	end)
-	Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest)
+	Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if UnitCanCooperate("player", guiddest) or UnitGUID("player")==guiddest  then
 			if UnitIsPlayer(guiddest) then
 				if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") or string_find(subevent,"_HEAL_ABSORBED")  
@@ -1060,9 +1078,11 @@ local mw_rot = {
 	
 	thunderfocustea = function()
 		if player:Stance() == 1 and player:Chi()>=1   and not player:buff(116680) then
-			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea")
+			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea") then
+			 if _A.thunderbrewremovedat==nil or (_A.thunderbrewremovedat and (GetTime() - _A.thunderbrewremovedat)>=45)
 				then
 				player:Cast("Thunder Focus Tea")
+			end
 			end
 		end
 	end,
