@@ -407,7 +407,7 @@ local exeOnLoad = function()
 	--====================================================== MANA
 	--====================================================== MANA
 	local function effectivemanaregen()
-		local basemanaregen,_=GetManaRegen()
+		local basemanaregen=GetManaRegen()
 		return (basemanaregen*100)/UnitPowerMax("player",0)
 	end
 	--====================================================== MANA
@@ -526,10 +526,9 @@ local exeOnLoad = function()
 		return 0
 	end
 	function _A.manaengine() -- make it so it's tied with group hp
-		--if modifier_alt() then return true end
 		if
-			--((averageHPv2())<0) and 
-			(_A.avgDeltaPercent>=(averageHPv2()-effectivemanaregen())) --and secondsTillOOM>=15
+			-- (_A.avgDeltaPercent>=(averageHPv2())) -- old method
+			(_A.avgDeltaPercent>=(averageHPv2()-effectivemanaregen())) -- new method (more mana hungry)
 			-- -1 >= -2
 			then return true
 		end
