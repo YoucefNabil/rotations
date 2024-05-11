@@ -384,21 +384,21 @@ local exeOnLoad = function()
 		end
 		--
 		if MW_HealthUsedData[unit] then
-		MW_HealthUsedData[unit].healthUsed = 0
-		MW_HealthUsedData[unit].healthnegative = 0
-		MW_HealthUsedData[unit].t[uptime] = Usage
-		for Time, Health in pairs(MW_HealthUsedData[unit].t) do
-			if uptime - Time > MW_HealthAnalyzedTimespan then
-				table.remove(MW_HealthUsedData[unit].t, Time)
-				else
-				MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
-				if Health<0 then
-					MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
+			MW_HealthUsedData[unit].healthUsed = 0
+			MW_HealthUsedData[unit].healthnegative = 0
+			MW_HealthUsedData[unit].t[uptime] = Usage
+			for Time, Health in pairs(MW_HealthUsedData[unit].t) do
+				if uptime - Time > MW_HealthAnalyzedTimespan then
+					table.remove(MW_HealthUsedData[unit].t, Time)
+					else
+					MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
+					if Health<0 then
+						MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
+					end
 				end
 			end
-		end
-		MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
-		MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
+			MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
+			MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
 		end
 	end
 	--====================================================== MANA
@@ -427,7 +427,8 @@ local exeOnLoad = function()
 	_A.avgDeltaPercent = 0
 	local secondsTillOOM = 99999
 	Listener:Add("holy_mana", {"PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "UNIT_POWER"}, function(event, firstArg, secondArg)
-		if event == "UNIT_POWER" and secondArg == "MANA" then
+		if event == "UNIT_POWER" and firstArg == "player" and secondArg == "MANA" then
+			if MW_LastMana == nil then MW_LastMana = UnitPower("player", 0) end
 			_A.UnitManaHandler(firstArg)
 		end
 		if event == "PLAYER_REGEN_DISABLED" then
@@ -440,7 +441,9 @@ local exeOnLoad = function()
 	function _A.UnitManaHandler(unitID)
 		if unitID == "player" then
 			local currentMana = UnitPower(unitID, 0)
-			_A.PlayerManaChanged(currentMana, UnitPowerMax(unitID, 0), MW_LastMana - currentMana)
+			if MW_LastMana and currentMana~=MW_LastMana then
+				_A.PlayerManaChanged(currentMana, UnitPowerMax(unitID, 0), MW_LastMana - currentMana)
+			end
 			MW_LastMana = currentMana
 		end
 	end
@@ -467,9 +470,34 @@ local exeOnLoad = function()
 			else secondsTillOOM = 99999
 		end
 	end
+	--====================================================================== -- Cleaning on Deaths
+	Listener:Add("DeathCleaning", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+		if subevent == "UNIT_DIED" then
+			if UnitIsPlayer(guiddest) then
+				if MW_HealthUsedData[guiddest]~=nil then
+					MW_HealthUsedData[guiddest] = nil
+					MW_LastHealth[guiddest] = nil
+				end
+			end
+			if guiddest == UnitGUID("player") then
+				MW_ManaUsedData = {}
+				MW_LastMana = nil
+			end
+		end
+	end
+	)
+	--======================================================================
+	--======================================================================
+	--======================================================================
+	--====================================================================== 
+	--======================================================================
+	--======================================================================
+	--======================================================================
+	--======================================================================
+	--======================================================================
+	--======================================================================
 	--======================================================================
 	-- HEALTH
-	
 	function averageHPv2()
 		local sum = 0
 		local num = 0
@@ -569,7 +597,7 @@ local exeOnLoad = function()
 	end
 	-------------------------------------------------------
 	-------------------------------------------------------
-	local function IsPStr() --temporary method to get strafing.
+	local function IsPStr() -- player only, but more accurate
 		local _,strafeleftkey = _A.GetBinding(7)
 		local _,straferightkey = _A.GetBinding(8)
 		local moveLeft =  _A.IsKeyDown(strafeleftkey)
@@ -695,11 +723,9 @@ local exeOnLoad = function()
 		end
 		return false
 	end
-	
 	_A.DSL:Register('caninterrupt', function(unit)
 		return interruptable(unit)
 	end)
-	
 end
 local exeOnUnload = function()
 end
@@ -1580,9 +1606,11 @@ local mw_rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
+	if not player:alive() then return end
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .3)
 	-- if averageHPv2()~= 0 then print(averageHPv2()) end
+	print(_A.avgDeltaPercent)
 	mw_rot.caching()
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
