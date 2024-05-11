@@ -771,6 +771,7 @@ local mw_rot = {
 			if castName == GetSpellInfo(133939) then -- furious stone breath
 				if unitDD("target") == 67966 then -- turtle id
 					if isActive(134031) then -- kick shell	
+						-- print("passed all checks")
 						_A.CallWowApi("RunMacroText", "/click ExtraActionButton1")
 					end
 				end
