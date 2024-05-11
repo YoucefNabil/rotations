@@ -353,7 +353,9 @@ local exeOnLoad = function()
 	end)
 	Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") or string_find(subevent,"_HEAL_ABSORBED")  
-			or string_find(subevent,"_ABSORBED") or string_find(subevent,"_DRAIN") or string_find(subevent,"_LEECH") then
+			or string_find(subevent,"_ABSORBED") or string_find(subevent,"_DRAIN") or string_find(subevent,"_LEECH") 
+			-- all subevent susceptible of causing health changes
+			then
 			if UnitIsPlayer(guiddest) then
 				if MW_HealthUsedData[guiddest]==nil then
 					MW_HealthUsedData[guiddest]={}
