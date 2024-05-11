@@ -1610,7 +1610,7 @@ local inCombat = function()
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .3)
 	-- if averageHPv2()~= 0 then print(averageHPv2()) end
-	print(_A.avgDeltaPercent)
+	-- print(_A.avgDeltaPercent)
 	mw_rot.caching()
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
