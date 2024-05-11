@@ -310,12 +310,12 @@ local exeOnLoad = function()
 				end
 			end
 			-- thunder focus tea capture
-				if subevent == "SPELL_AURA_REMOVED" then
-					if idd == 116680 then
-						_A.thunderbrewremovedat = GetTime()
-						-- print("RE MO V E D")
-					end
+			if subevent == "SPELL_AURA_REMOVED" then
+				if idd == 116680 then
+					_A.thunderbrewremovedat = GetTime()
+					-- print("RE MO V E D")
 				end
+			end
 		end
 	end)
 	function _A.castdelay(idd, delay)
@@ -468,10 +468,12 @@ local exeOnLoad = function()
 				if MW_HealthUsedData[k]~=nil then
 					if next(MW_HealthUsedData[k])~=nil then
 						if MW_HealthUsedData[k].avgHDeltaPercent~=nil then 	
-							if UnitHealth(k)<UnitHealthMax(k) then
-								num = num + 1
-								sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
-								return sum/num
+							if UnitIsDeadOrGhost(k)==nil then
+								if UnitHealth(k)<UnitHealthMax(k) then
+									num = num + 1
+									sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
+									return sum/num
+								end
 							end
 						end
 					end
@@ -552,18 +554,43 @@ local exeOnLoad = function()
 	end
 	-------------------------------------------------------
 	-------------------------------------------------------
+	local function IsPStr() --temporary method to get strafing.
+		local _,strafeleftkey = _A.GetBinding(7)
+		local _,straferightkey = _A.GetBinding(8)
+		local moveLeft =  _A.IsKeyDown(strafeleftkey)
+		local moveRight = _A.IsKeyDown(straferightkey)
+		if moveLeft then return "left"
+			elseif moveRight then return "right"
+			else return "none"
+		end
+	end
 	local function pSpeed(unit, maxDistance)
 		local munit = Object(unit)
 		--local unitGUID = unit.guid
 		local x, y, z = _A.ObjectPosition(unit)
-		local facing = _A.ObjectFacing(unit)
-		local speed = _A.GetUnitSpeed(unit)
 		-- Check if the unit is standing still or moving backward
 		if not munit:Moving() or _A.UnitIsMovingBackward(unit) then
 			return x, y, z
-		end 
+		end
 		-- Determine the dynamic distance, with a minimum of 2 units for moving units
-		local distance = math.max(2, math.min(maxDistance, speed - 4.5))
+		local facing = _A.ObjectFacing(unit)
+		local speed_raw = _A.GetUnitSpeed(unit)
+		local speed = speed_raw - 4.5
+		local distance = math.max(2, math.min(maxDistance, speed)) -- old is speed - 4.5
+		-- UNIT IS PLAYER
+		local player = player or Object("player")
+	    if munit:is(player) then
+			local strafeDirection = IsPStr()
+			if strafeDirection == "left" then
+				facing = facing + math.pi / 2
+				elseif strafeDirection == "right" then
+				facing = facing - math.pi / 2
+			end
+			local newX = x + distance * math.cos(facing)
+			local newY = y + distance * math.sin(facing)
+			return newX, newY, z
+		end
+		-- UNIT IS NOT PLAYER
 		-- Adjust facing based on strafing or moving forward
 		if _A.UnitIsStrafeLeft(unit) then
 			facing = facing + math.pi / 2 -- 90 degrees to the right for strafe left
@@ -576,7 +603,7 @@ local exeOnLoad = function()
 		return newX, newY, z
 	end
 	function _A.CastPredictedPos(unit, spell, distance)
-		local player = Object("player")
+		local player = player or Object("player")
 		local px, py, pz = _A.groundpositiondetail(pSpeed(unit, distance))
 		if px then
 			_A.CallWowApi("CastSpellByName", spell)
@@ -586,6 +613,8 @@ local exeOnLoad = function()
 			end
 		end
 	end
+	-------------------------------------------------------
+	-------------------------------------------------------
 	function _A.clickcast(unit, spell)
 		local px,py,pz = _A.groundposition(unit)
 		if px then
@@ -1079,10 +1108,10 @@ local mw_rot = {
 	thunderfocustea = function()
 		if player:Stance() == 1 and player:Chi()>=1 then
 			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea") then
-			 if _A.thunderbrewremovedat==nil or (_A.thunderbrewremovedat and (GetTime() - _A.thunderbrewremovedat)>=45)
-				then
-				player:Cast("Thunder Focus Tea")
-			end
+				if _A.thunderbrewremovedat==nil or (_A.thunderbrewremovedat and (GetTime() - _A.thunderbrewremovedat)>=45)
+					then
+					player:Cast("Thunder Focus Tea")
+				end
 			end
 		end
 	end,
