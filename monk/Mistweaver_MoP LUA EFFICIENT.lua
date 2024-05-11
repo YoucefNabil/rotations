@@ -140,7 +140,7 @@ local exeOnLoad = function()
 	function _A.guid_distance(unit1, unit2)
 		local x1, y1, z1 = unit1 and _A.ObjectPosition(unit1)
 		local x2, y2, z2 = unit2 and _A.ObjectPosition(unit2)
-		if x1 and x2 then return _A.GetDistanceBetweenPositions(x1,y1,z1,x2,y2,z2)
+		if x1 and x2 and y1 and y2 and z1 and z2 then return _A.GetDistanceBetweenPositions(x1,y1,z1,x2,y2,z2)
 			else return 9999
 		end
 	end
@@ -352,18 +352,16 @@ local exeOnLoad = function()
 		end
 	end)
 	Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-		if UnitCanCooperate("player", guiddest) or UnitGUID("player")==guiddest  then
+		if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") or string_find(subevent,"_HEAL_ABSORBED")  
+			or string_find(subevent,"_ABSORBED") or string_find(subevent,"_DRAIN") or string_find(subevent,"_LEECH") then
 			if UnitIsPlayer(guiddest) then
-				if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") or string_find(subevent,"_HEAL_ABSORBED")  
-					or string_find(subevent,"_ABSORBED") or string_find(subevent,"_DRAIN") or string_find(subevent,"_LEECH") then
-					if MW_HealthUsedData[guiddest]==nil then
-						MW_HealthUsedData[guiddest]={}
-						MW_HealthUsedData[guiddest].t={}
-						MW_LastHealth[guiddest]=UnitHealth(guiddest)
-					end
-					UnitHealthHandler(guiddest)
-					-- print(subevent)
+				if MW_HealthUsedData[guiddest]==nil then
+					MW_HealthUsedData[guiddest]={}
+					MW_HealthUsedData[guiddest].t={}
+					MW_LastHealth[guiddest]=UnitHealth(guiddest)
 				end
+				UnitHealthHandler(guiddest)
+				-- print(subevent)
 			end
 		end
 	end
@@ -384,21 +382,21 @@ local exeOnLoad = function()
 		end
 		--
 		if MW_HealthUsedData[unit] then
-			MW_HealthUsedData[unit].healthUsed = 0
-			MW_HealthUsedData[unit].healthnegative = 0
-			MW_HealthUsedData[unit].t[uptime] = Usage
-			for Time, Health in pairs(MW_HealthUsedData[unit].t) do
-				if uptime - Time > MW_HealthAnalyzedTimespan then
-					table.remove(MW_HealthUsedData[unit].t, Time)
-					else
-					MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
-					if Health<0 then
-						MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
-					end
+		MW_HealthUsedData[unit].healthUsed = 0
+		MW_HealthUsedData[unit].healthnegative = 0
+		MW_HealthUsedData[unit].t[uptime] = Usage
+		for Time, Health in pairs(MW_HealthUsedData[unit].t) do
+			if uptime - Time > MW_HealthAnalyzedTimespan then
+				table.remove(MW_HealthUsedData[unit].t, Time)
+				else
+				MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
+				if Health<0 then
+					MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
 				end
 			end
-			MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
-			MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
+		end
+		MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
+		MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
 		end
 	end
 	--====================================================== MANA
@@ -483,7 +481,7 @@ local exeOnLoad = function()
 							if UnitIsDeadOrGhost(k)==nil then
 								if UnitHealth(k)<UnitHealthMax(k) then
 									local unitObject = Object(k)
-									if unitObject:distance()<=45 then
+									if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:distance()<=45 then
 										num = num + 1
 										sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
 										return sum/num
@@ -506,200 +504,200 @@ local exeOnLoad = function()
 			then return true
 		end
 		return false
-		end
-		function _A.enoughmana(id)
-			local cost,_,powertype = select(4, _A.GetSpellInfo(id))
-			if powertype then
-				local currentmana = _A.UnitPower("player", powertype)
-				if currentmana>=cost then
-					return true
-					else return false
-				end
-			end
-			return true
-		end
-		
-		
-		function _A.modifier_shift()
-			local modkeyb = IsShiftKeyDown()
-			if modkeyb then
+	end
+	function _A.enoughmana(id)
+		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
+		if powertype then
+			local currentmana = _A.UnitPower("player", powertype)
+			if currentmana>=cost then
 				return true
-				else
-				return false
+				else return false
 			end
 		end
-		
-		function _A.modifier_ctrl()
-			local modkeyb = IsControlKeyDown()
-			if modkeyb then
-				return true
-				else
-				return false
-			end
-		end
-		
-		_A.DSL:Register('canafford', function()
-			return _A.manaengine()
-		end)
-		_A.DSL:Register('chifix', function()
-			return _A.UnitPower("player", 12)
-		end)
-		_A.DSL:Register('chifixmax', function()
-			return _A.UnitPowerMax("player", 12)
-		end)
-		
-		_A.faceunit = function(unit)
-			if unit then
-				if not unit:infront() then
-					_A.FaceDirection(unit.guid, true)
-				end
-			end
-		end
-		
-		function _A.enoughmana(id)
-			local cost,_,powertype = select(4, _A.GetSpellInfo(id))
-			if powertype then
-				local currentmana = _A.UnitPower("player", powertype)
-				if currentmana>=cost then
-					return true
-					else return false
-				end
-			end
+		return true
+	end
+	
+	
+	function _A.modifier_shift()
+		local modkeyb = IsShiftKeyDown()
+		if modkeyb then
 			return true
+			else
+			return false
 		end
-		-------------------------------------------------------
-		-------------------------------------------------------
-		local function IsPStr() --temporary method to get strafing.
-			local _,strafeleftkey = _A.GetBinding(7)
-			local _,straferightkey = _A.GetBinding(8)
-			local moveLeft =  _A.IsKeyDown(strafeleftkey)
-			local moveRight = _A.IsKeyDown(straferightkey)
-			if moveLeft then return "left"
-				elseif moveRight then return "right"
-				else return "none"
+	end
+	
+	function _A.modifier_ctrl()
+		local modkeyb = IsControlKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
+	
+	_A.DSL:Register('canafford', function()
+		return _A.manaengine()
+	end)
+	_A.DSL:Register('chifix', function()
+		return _A.UnitPower("player", 12)
+	end)
+	_A.DSL:Register('chifixmax', function()
+		return _A.UnitPowerMax("player", 12)
+	end)
+	
+	_A.faceunit = function(unit)
+		if unit then
+			if not unit:infront() then
+				_A.FaceDirection(unit.guid, true)
 			end
 		end
-		local function pSpeed(unit, maxDistance)
-			local munit = Object(unit)
-			--local unitGUID = unit.guid
-			local x, y, z = _A.ObjectPosition(unit)
-			-- Check if the unit is standing still or moving backward
-			if not munit:Moving() or _A.UnitIsMovingBackward(unit) then
-				return x, y, z
+	end
+	
+	function _A.enoughmana(id)
+		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
+		if powertype then
+			local currentmana = _A.UnitPower("player", powertype)
+			if currentmana>=cost then
+				return true
+				else return false
 			end
-			-- Determine the dynamic distance, with a minimum of 2 units for moving units
-			local facing = _A.ObjectFacing(unit)
-			local speed_raw = _A.GetUnitSpeed(unit)
-			local speed = speed_raw - 4.5
-			local distance = math.max(2, math.min(maxDistance, speed)) -- old is speed - 4.5
-			-- UNIT IS PLAYER
-			local player = player or Object("player")
-			if munit:is(player) then
-				local strafeDirection = IsPStr()
-				if strafeDirection == "left" then
-					facing = facing + math.pi / 2
-					elseif strafeDirection == "right" then
-					facing = facing - math.pi / 2
-				end
-				local newX = x + distance * math.cos(facing)
-				local newY = y + distance * math.sin(facing)
-				return newX, newY, z
+		end
+		return true
+	end
+	-------------------------------------------------------
+	-------------------------------------------------------
+	local function IsPStr() --temporary method to get strafing.
+		local _,strafeleftkey = _A.GetBinding(7)
+		local _,straferightkey = _A.GetBinding(8)
+		local moveLeft =  _A.IsKeyDown(strafeleftkey)
+		local moveRight = _A.IsKeyDown(straferightkey)
+		if moveLeft then return "left"
+			elseif moveRight then return "right"
+			else return "none"
+		end
+	end
+	local function pSpeed(unit, maxDistance)
+		local munit = Object(unit)
+		--local unitGUID = unit.guid
+		local x, y, z = _A.ObjectPosition(unit)
+		-- Check if the unit is standing still or moving backward
+		if not munit:Moving() or _A.UnitIsMovingBackward(unit) then
+			return x, y, z
+		end
+		-- Determine the dynamic distance, with a minimum of 2 units for moving units
+		local facing = _A.ObjectFacing(unit)
+		local speed_raw = _A.GetUnitSpeed(unit)
+		local speed = speed_raw - 4.5
+		local distance = math.max(2, math.min(maxDistance, speed)) -- old is speed - 4.5
+		-- UNIT IS PLAYER
+		local player = player or Object("player")
+		if munit:is(player) then
+			local strafeDirection = IsPStr()
+			if strafeDirection == "left" then
+				facing = facing + math.pi / 2
+				elseif strafeDirection == "right" then
+				facing = facing - math.pi / 2
 			end
-			-- UNIT IS NOT PLAYER
-			-- Adjust facing based on strafing or moving forward
-			if _A.UnitIsStrafeLeft(unit) then
-				facing = facing + math.pi / 2 -- 90 degrees to the right for strafe left
-				elseif _A.UnitIsStrafeRight(unit) then
-				facing = facing - math.pi / 2 -- 90 degrees to the left for strafe right
-			end
-			-- Calculate and return the new position
 			local newX = x + distance * math.cos(facing)
 			local newY = y + distance * math.sin(facing)
 			return newX, newY, z
 		end
-		function _A.CastPredictedPos(unit, spell, distance)
-			local player = player or Object("player")
-			local px, py, pz = _A.groundpositiondetail(pSpeed(unit, distance))
-			if px then
-				_A.CallWowApi("CastSpellByName", spell)
-				if player:SpellIsTargeting() then
-					_A.ClickPosition(px, py, pz)
-					_A.CallWowApi("SpellStopTargeting")
-				end
+		-- UNIT IS NOT PLAYER
+		-- Adjust facing based on strafing or moving forward
+		if _A.UnitIsStrafeLeft(unit) then
+			facing = facing + math.pi / 2 -- 90 degrees to the right for strafe left
+			elseif _A.UnitIsStrafeRight(unit) then
+			facing = facing - math.pi / 2 -- 90 degrees to the left for strafe right
+		end
+		-- Calculate and return the new position
+		local newX = x + distance * math.cos(facing)
+		local newY = y + distance * math.sin(facing)
+		return newX, newY, z
+	end
+	function _A.CastPredictedPos(unit, spell, distance)
+		local player = player or Object("player")
+		local px, py, pz = _A.groundpositiondetail(pSpeed(unit, distance))
+		if px then
+			_A.CallWowApi("CastSpellByName", spell)
+			if player:SpellIsTargeting() then
+				_A.ClickPosition(px, py, pz)
+				_A.CallWowApi("SpellStopTargeting")
 			end
 		end
-		-------------------------------------------------------
-		-------------------------------------------------------
-		function _A.clickcast(unit, spell)
-			local px,py,pz = _A.groundposition(unit)
-			if px then
-				_A.CallWowApi("CastSpellByName", spell)
-				if player:SpellIsTargeting() then
-					_A.ClickPosition(px, py, pz)
-					_A.CallWowApi("SpellStopTargeting")
-				end
+	end
+	-------------------------------------------------------
+	-------------------------------------------------------
+	function _A.clickcast(unit, spell)
+		local px,py,pz = _A.groundposition(unit)
+		if px then
+			_A.CallWowApi("CastSpellByName", spell)
+			if player:SpellIsTargeting() then
+				_A.ClickPosition(px, py, pz)
+				_A.CallWowApi("SpellStopTargeting")
 			end
 		end
-		-------------------------------------------------------
-		-------------------------------------------------------
-		local function castsecond(unit)
-			local givetime = GetTime()
-			local tempvar = select(6, UnitCastingInfo(unit))
-			local timetimetime15687
-			if unit == nil
-				then 
-				unit = "target"
-			end
-			if UnitCastingInfo(unit)~=nil
-				then timetimetime15687 = abs(givetime - (tempvar/1000)) 
-			end
-			return timetimetime15687 or 999
+	end
+	-------------------------------------------------------
+	-------------------------------------------------------
+	local function castsecond(unit)
+		local givetime = GetTime()
+		local tempvar = select(6, UnitCastingInfo(unit))
+		local timetimetime15687
+		if unit == nil
+			then 
+			unit = "target"
 		end
-		
-		_A.DSL:Register('castsecond', function(unit)
-			return castsecond(unit)
-		end)
-		
-		-- 116680
-		local function chanpercent(unit)
-			local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
-			local givetime = GetTime()
-			if unit == nil
-				then 
-				unit = "target"
-			end	
-			if UnitChannelInfo(unit)~=nil
-				then local maxcasttime = abs(tempvar1-tempvar2)/1000
-				local remainingcasttimeinsec = abs(givetime - (tempvar2/1000))
-				local percentageofthis = (remainingcasttimeinsec * 100)/maxcasttime
-				return percentageofthis
-			end
-			return 999
+		if UnitCastingInfo(unit)~=nil
+			then timetimetime15687 = abs(givetime - (tempvar/1000)) 
 		end
-		
-		_A.DSL:Register('chanpercent', function(unit)
-			return chanpercent(unit)
-		end)
-		
-		
-		local function interruptable(unit)
-			if unit == nil
-				then unit = "target"
-			end
-			local intel5 = (select(9, UnitCastingInfo(unit)))
-			local intel6 = (select(8, UnitChannelInfo(unit)))
-			if intel5==false
-				or intel6==false
-				then return true
-				else return false
-			end
-			return false
+		return timetimetime15687 or 999
+	end
+	
+	_A.DSL:Register('castsecond', function(unit)
+		return castsecond(unit)
+	end)
+	
+	-- 116680
+	local function chanpercent(unit)
+		local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
+		local givetime = GetTime()
+		if unit == nil
+			then 
+			unit = "target"
+		end	
+		if UnitChannelInfo(unit)~=nil
+			then local maxcasttime = abs(tempvar1-tempvar2)/1000
+			local remainingcasttimeinsec = abs(givetime - (tempvar2/1000))
+			local percentageofthis = (remainingcasttimeinsec * 100)/maxcasttime
+			return percentageofthis
 		end
-		
-		_A.DSL:Register('caninterrupt', function(unit)
-			return interruptable(unit)
-		end)
-		
+		return 999
+	end
+	
+	_A.DSL:Register('chanpercent', function(unit)
+		return chanpercent(unit)
+	end)
+	
+	
+	local function interruptable(unit)
+		if unit == nil
+			then unit = "target"
+		end
+		local intel5 = (select(9, UnitCastingInfo(unit)))
+		local intel6 = (select(8, UnitChannelInfo(unit)))
+		if intel5==false
+			or intel6==false
+			then return true
+			else return false
+		end
+		return false
+	end
+	
+	_A.DSL:Register('caninterrupt', function(unit)
+		return interruptable(unit)
+	end)
+	
 end
 local exeOnUnload = function()
 end
