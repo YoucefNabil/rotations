@@ -104,7 +104,7 @@ local exeOnLoad = function()
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		-- print(slot)
-		local player = player or Object("player")
+		player = player or Object("player")
 		if slot==STARTSLOT then 
 			_A.pressedbuttonat = 0
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
@@ -183,7 +183,7 @@ local exeOnLoad = function()
 	
 	
 	function _A.nothealimmune(unit)
-		local player = Object("player")
+		player = Object("player")
 		if unit then 
 			if unit:DebuffAny("Cyclone") then return false end
 		end
@@ -192,7 +192,7 @@ local exeOnLoad = function()
 	-----------------------------------
 	-----------------------------------
 	local function fall()
-		local player = player or Object("player")
+		player = player or Object("player")
 		local px, py, pz = _A.ObjectPosition("player")
 		local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
 		if player:Falling() then
@@ -204,7 +204,7 @@ local exeOnLoad = function()
 	end
 	-----------------------------------
 	_A.buttondelayfunc = function()
-		local player = Object("player")
+		player = Object("player")
 		if player and player:stance()==1 then
 		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end end
 		return false
@@ -526,6 +526,8 @@ local exeOnLoad = function()
 		return 0
 	end
 	function _A.manaengine() -- make it so it's tied with group hp
+		player = player or Object("player")
+		if player:buff("lucidity") then return true end
 		if
 			-- (_A.avgDeltaPercent>=(averageHPv2())) -- old method
 			(_A.avgDeltaPercent>=(averageHPv2()-effectivemanaregen())) -- new method (more mana hungry)
@@ -620,7 +622,7 @@ local exeOnLoad = function()
 		local speed = speed_raw - 4.5
 		local distance = math.max(2, math.min(maxDistance, speed)) -- old is speed - 4.5
 		-- UNIT IS PLAYER
-		local player = player or Object("player")
+		player = player or Object("player")
 		if munit:is(player) then
 			local strafeDirection = IsPStr()
 			if strafeDirection == "left" then
@@ -645,7 +647,7 @@ local exeOnLoad = function()
 		return newX, newY, z
 	end
 	function _A.CastPredictedPos(unit, spell, distance)
-		local player = player or Object("player")
+		player = player or Object("player")
 		local px, py, pz = _A.groundpositiondetail(pSpeed(unit, distance))
 		if px then
 			_A.CallWowApi("CastSpellByName", spell)
@@ -1185,19 +1187,20 @@ local mw_rot = {
 		if player:Stance() == 1   then
 			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
-					if fr.isplayer
-						and fr:SpellRange("Detox")
-						and _A.nothealimmune(fr)
-						and not fr:DebuffAny("Unstable Affliction")
-						and (fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease")) then
-						if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or _A.pull_location == "party" or _A.pull_location == "raid"
-							or fr:DebuffAny("Entangling Roots") or fr:DebuffAny("Freezing Trap") or fr:DebuffAny("Denounce")
-							then
-							if fr:los() then
-								return fr:Cast("Detox")
+					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (_A.pull_location=="arena" and fr:ispet()) then
+						if fr:SpellRange("Detox")
+							and _A.nothealimmune(fr)
+							and not fr:DebuffAny("Unstable Affliction")
+							and (fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease")) then
+							if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or _A.pull_location == "party" or _A.pull_location == "raid"
+								or fr:DebuffAny("Entangling Roots") or fr:DebuffAny("Freezing Trap") or fr:DebuffAny("Denounce")
+								then
+								if fr:los() then
+									return fr:Cast("Detox")
+								end
 							end
-						end
-					end	
+						end	
+					end
 				end
 			end
 		end
@@ -1516,6 +1519,23 @@ local mw_rot = {
 		end
 	end,
 	
+	spin_rjw = function()
+		if player:Stance() == 1 and _A.manaengine() then
+			if	player:Talent("Rushing Jade Wind") 
+				and player:SpellCooldown("Rushing Jade Wind")<.3
+				and _A.enoughmana(116847)
+				then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+				if lowestmelee then
+					if lowestmelee:exists() then
+						return player:Cast("Rushing Jade Wind")
+					end
+				end
+				-- add friendly finder on top
+			end
+		end
+	end,
+	
 	jab_keybind = function()
 		if player:Stance() == 1 and player:Keybind("R") and player:mana()>=9 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
@@ -1588,7 +1608,9 @@ local mw_rot = {
 		--if not player:LostControl() then
 		if player:Stance() ~= 2 and not _A.modifier_shift()   then
 			if player:SpellCooldown("Stance of the Fierce Tiger")<.3
-				and not player:Buff("Rushing Jade Wind") then
+				and not player:Buff("Rushing Jade Wind") 
+				and not player:Buff("lucidity") 
+				then
 				if player:Talent("Rushing Jade Wind") then
 					return player:Cast("Stance of the Fierce Tiger")
 				end
@@ -1640,6 +1662,7 @@ local inCombat = function()
 	mw_rot.manatea()
 	mw_rot.ctrl_mode()
 	mw_rot.healstatue()
+	mw_rot.spin_rjw() -- disable
 	mw_rot.healingsphere()
 	mw_rot.pvp_disable()
 	mw_rot.spin_keybind()
