@@ -352,11 +352,10 @@ local exeOnLoad = function()
 		end
 	end)
 	Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-		if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") or string_find(subevent,"_HEAL_ABSORBED")  
-			or string_find(subevent,"_ABSORBED") or string_find(subevent,"_DRAIN") or string_find(subevent,"_LEECH") 
-			-- all subevent susceptible of causing health changes
-			then
+		if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") then
 			if UnitIsPlayer(guiddest) then
+				-- all subevent susceptible of causing health changes
+				-- print("picked up")
 				if MW_HealthUsedData[guiddest]==nil then
 					MW_HealthUsedData[guiddest]={}
 					MW_HealthUsedData[guiddest].t={}
@@ -385,20 +384,20 @@ local exeOnLoad = function()
 		--
 		if MW_HealthUsedData[unit] then
 			MW_HealthUsedData[unit].healthUsed = 0
-			MW_HealthUsedData[unit].healthnegative = 0
-			MW_HealthUsedData[unit].t[uptime] = Usage
-			for Time, Health in pairs(MW_HealthUsedData[unit].t) do
-				if uptime - Time > MW_HealthAnalyzedTimespan then
-					table.remove(MW_HealthUsedData[unit].t, Time)
-					else
-					MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
-					if Health<0 then
-						MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
-					end
+		MW_HealthUsedData[unit].healthnegative = 0
+		MW_HealthUsedData[unit].t[uptime] = Usage
+		for Time, Health in pairs(MW_HealthUsedData[unit].t) do
+			if uptime - Time > MW_HealthAnalyzedTimespan then
+				table.remove(MW_HealthUsedData[unit].t, Time)
+				else
+				MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
+				if Health<0 then
+					MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
 				end
 			end
-			MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
-			MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
+		end
+		MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
+		MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
 		end
 	end
 	--====================================================== MANA
