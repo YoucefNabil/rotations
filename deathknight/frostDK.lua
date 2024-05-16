@@ -1042,7 +1042,7 @@ frost.rot = {
 	deathpact = function()
 		if player:Talent("Death Pact") then
 			if player:SpellCooldown("Death Pact")<.3 then
-				if  _A.castdelay(46584, 60) then
+				if _A.castdelay(46584, 60) and player:SpellCooldown("Raise Dead")>(player:gcd()*2)  then
 					return player:cast("Death Pact")
 				end
 			end
