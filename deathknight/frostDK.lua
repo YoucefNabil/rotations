@@ -1234,25 +1234,12 @@ frost.rot = {
 		end
 	end,
 	
-	
-	Deathcoil = function()
-		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or _A.dkenergy>=32)
-			and not player:BuffAny("Runic Corruption")  
-			then 
-			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
-			-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
-			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Death Coil")
-			end
-		end
-	end,
-	
 	FrostStrikeFill = function()
 		if _A.dkenergy >= 20 then
 			if player:SpellCooldown("Frost Strike")<.3 
 				and not player:BuffAny("Runic Corruption") 
 				then
-				if not player:buff("Killing Machine") or player:SpellCooldown("Obliterate")>(player:gcd()*3) then
+				if not player:buff("Killing Machine") or player:SpellCooldown("Obliterate")>(player:gcd()*2) then
 				local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Strike)")
 				if lowestmelee then
 					if lowestmelee:exists() then
@@ -1305,7 +1292,7 @@ local inCombat = function()
 	frost.rot.Asphyxiatesnipe()
 	frost.rot.AsphyxiateBurst()
 	-- frost.rot.darksimulacrum()
-	frost.rot.root()
+	-- frost.rot.root()
 	-- DEFS
 	frost.rot.antimagicshell()
 	frost.rot.petres()
