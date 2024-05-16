@@ -1236,16 +1236,6 @@ frost.rot = {
 		end
 	end,
 	
-	obliterate = function()
-		if player:SpellCooldown("Obliterate")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if lowestmelee then
-				if lowestmelee:exists() then
-					return lowestmelee:Cast("Obliterate")
-				end
-			end
-		end
-	end,
 	
 	FrostStrikeFill = function()
 		if _A.dkenergy >= 20 then
@@ -1264,6 +1254,18 @@ frost.rot = {
 		end
 	end,
 	
+	
+	obliterate = function()
+		if player:SpellCooldown("Obliterate")<.3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					return lowestmelee:Cast("Obliterate")
+				end
+			end
+		end
+	end,
+
 	Buffbuff = function()
 		if player:SpellCooldown("Horn of Winter")<.3 and _A.dkenergy <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Horn of Winter")
@@ -1312,15 +1314,15 @@ local inCombat = function()
 	frost.rot.deathpact()
 	frost.rot.Lichborne()
 	-- rotation
-	frost.rot.FrostStrikeDump()
+	-- frost.rot.FrostStrikeDump()
 	frost.rot.outbreak()
 	frost.rot.dotapplication()
 	frost.rot.BonusDeathStrike()
 	frost.rot.DeathcoilHEAL()
 	frost.rot.SoulReaper()
 	frost.rot.howlingBlast()
-	frost.rot.obliterate()
 	frost.rot.FrostStrikeFill()
+	frost.rot.obliterate()
 end
 local outCombat = function()
 	return inCombat()
