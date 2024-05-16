@@ -384,20 +384,20 @@ local exeOnLoad = function()
 		--
 		if MW_HealthUsedData[unit] then
 			MW_HealthUsedData[unit].healthUsed = 0
-		MW_HealthUsedData[unit].healthnegative = 0
-		MW_HealthUsedData[unit].t[uptime] = Usage
-		for Time, Health in pairs(MW_HealthUsedData[unit].t) do
-			if uptime - Time > MW_HealthAnalyzedTimespan then
-				table.remove(MW_HealthUsedData[unit].t, Time)
-				else
-				MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
-				if Health<0 then
-					MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
+			MW_HealthUsedData[unit].healthnegative = 0
+			MW_HealthUsedData[unit].t[uptime] = Usage
+			for Time, Health in pairs(MW_HealthUsedData[unit].t) do
+				if uptime - Time > MW_HealthAnalyzedTimespan then
+					table.remove(MW_HealthUsedData[unit].t, Time)
+					else
+					MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
+					if Health<0 then
+						MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
+					end
 				end
 			end
-		end
-		MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
-		MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
+			MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
+			MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
 		end
 	end
 	--====================================================== MANA
@@ -1583,6 +1583,19 @@ local mw_rot = {
 		end
 	end,
 	
+	autofocus = function()
+		if _A.UnitExists("pet") then
+			local _focus = Object("focus")
+			local lowestmelee = Object("lowestEnemyInSpellRangeMINIMAL(Crackling Jade Lightning)")
+			if lowestmelee and lowestmelee:exists() then
+				if not _focus then _A.CallWowApi("FocusUnit", lowestmelee.guid) end
+				if _focus and _focus.guid ~= lowestmelee.guid  then _A.CallWowApi("FocusUnit", lowestmelee.guid) end
+				if _focus then _A.CallWowApi("RunMacroText", "/petattack focus") end
+			end
+			elseif _focus then _A.CallWowApi("ClearFocus")
+		end
+	end,
+	
 	
 	dpsstance_spin = function()
 		if player:Stance() ~= 1 then
@@ -1627,61 +1640,63 @@ local mw_rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
+	if player then
 	if not player:alive() then return end
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .3)
 	-- if averageHPv2()~= 0 then print(averageHPv2()) end
 	-- print(_A.avgDeltaPercent)
-	mw_rot.caching()
-	if _A.buttondelayfunc()  then return end
-	if player:mounted() then return end
-	if player:isChanneling("Crackling Jade Lightning") then return end
-	mw_rot.healingsphere_keybind()
-	mw_rot.autotarget()
-	mw_rot.items_healthstone()
-	mw_rot.items_noggenfogger()
-	mw_rot.items_intflask()
-	mw_rot.activetrinket()
-	mw_rot.Xuen()
-	mw_rot.turtletoss()
-	mw_rot.kick_legsweep()
-	mw_rot.dispellplzarena()
-	mw_rot.kick_paralysis()
-	mw_rot.kick_spear()
-	mw_rot.ringofpeace()
-	mw_rot.burstdisarm()
-	mw_rot.healingsphere_shift()
-	mw_rot.chi_wave()
-	mw_rot.chibrew()
-	mw_rot.fortifyingbrew()
-	mw_rot.tigerslust()
-	mw_rot.lifecocoon()
-	mw_rot.surgingmist()
-	mw_rot.renewingmist()
-	mw_rot.manatea()
-	mw_rot.ctrl_mode()
-	mw_rot.healstatue()
-	mw_rot.spin_rjw() -- disable
-	mw_rot.healingsphere()
-	mw_rot.pvp_disable()
-	mw_rot.spin_keybind()
-	mw_rot.blackout_keybind()
-	mw_rot.jab_keybind_buff()
-	mw_rot.lightning_keybind()
-	mw_rot.tigerpalm_mm()
-	mw_rot.bk_buff()
-	mw_rot.tp_buff()
-	mw_rot.thunderfocustea()
-	mw_rot.uplift()
-	mw_rot.expelharm()
-	mw_rot.jab_keybind()
-	mw_rot.tigerpalm_filler()
-	mw_rot.jab_filler()
-	mw_rot.statbuff()
-	mw_rot.dpsstance_jab()
-	mw_rot.dpsstance_spin()
-	mw_rot.dpsstance_healstance()
-	mw_rot.dpsstanceswap()
+		mw_rot.caching()
+		if _A.buttondelayfunc()  then return end
+		if player:mounted() then return end
+		if player:isChanneling("Crackling Jade Lightning") then return end
+		mw_rot.healingsphere_keybind()
+		-- mw_rot.autotarget()
+		mw_rot.items_healthstone()
+		mw_rot.items_noggenfogger()
+		mw_rot.items_intflask()
+		mw_rot.activetrinket()
+		mw_rot.Xuen()
+		mw_rot.turtletoss()
+		mw_rot.kick_legsweep()
+		mw_rot.dispellplzarena()
+		mw_rot.kick_paralysis()
+		mw_rot.kick_spear()
+		mw_rot.ringofpeace()
+		mw_rot.burstdisarm()
+		mw_rot.healingsphere_shift()
+		mw_rot.chi_wave()
+		mw_rot.chibrew()
+		mw_rot.fortifyingbrew()
+		mw_rot.tigerslust()
+		mw_rot.lifecocoon()
+		mw_rot.surgingmist()
+		mw_rot.renewingmist()
+		mw_rot.manatea()
+		mw_rot.ctrl_mode()
+		mw_rot.healstatue()
+		mw_rot.spin_rjw() -- disable
+		mw_rot.healingsphere()
+		mw_rot.pvp_disable()
+		mw_rot.spin_keybind()
+		mw_rot.blackout_keybind()
+		mw_rot.jab_keybind_buff()
+		mw_rot.lightning_keybind()
+		mw_rot.tigerpalm_mm()
+		mw_rot.bk_buff()
+		mw_rot.tp_buff()
+		mw_rot.thunderfocustea()
+		mw_rot.uplift()
+		mw_rot.expelharm()
+		mw_rot.jab_keybind()
+		mw_rot.tigerpalm_filler()
+		mw_rot.jab_filler()
+		mw_rot.statbuff()
+		mw_rot.dpsstance_jab()
+		mw_rot.dpsstance_spin()
+		mw_rot.dpsstance_healstance()
+		mw_rot.dpsstanceswap()
+	end
 end
 local spellIds_Loc = function()
 end
@@ -1698,7 +1713,7 @@ _A.CR:Add(270, {
 	apep_ver = "1.1",
 	-- ids = spellIds_Loc,
 	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })

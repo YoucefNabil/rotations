@@ -71,7 +71,34 @@ local hunterspecs = {
 	[254]=true,
 	[255]=true
 }
+local usableitems= { -- item slots
+	13, --first trinket
+	14 --second trinket
+}
 
+local function cditemRemains(itemid)
+	local itempointerpoint;
+	if itemid ~= nil
+		then 
+		if tonumber(itemid)~=nil
+			then 
+			if itemid<=23
+				then itempointerpoint = (select(1, GetInventoryItemID("player", itemid)))
+			end
+			if itemid>23
+				then itempointerpoint = itemid
+			end
+		end
+	end
+	local startcast1 = (select(2, GetItemCooldown(itempointerpoint)))
+	local endcast1 = (select(1, GetItemCooldown(itempointerpoint)))
+	local gettm1 = GetTime()
+	if startcast1 + (endcast1 - gettm1) > 0 then
+		return startcast1 + (endcast1 - gettm1)
+		else
+		return 0
+	end
+end
 
 local immunebuffs = {
 	"Deterrence",
@@ -359,7 +386,7 @@ local exeOnLoad = function()
 					if idd==85948 then --festering strike, refreshes dot duration but not stats
 						ijustdidthatthing = true -- when true, means I just used FS
 						ijustdidthatthingtime = GetTime()
-						print(ijustdidthatthingtime)
+						-- print(ijustdidthatthingtime)
 					end
 				end
 				if (idd==45462) or (idd==77575) -- or (idd==50842) -- outbreak -- Plague Strike -- pestilence(doesnt work because it only works on the target, and not on everyone else)
@@ -370,7 +397,7 @@ local exeOnLoad = function()
 						-- every spell aura refresh of dk refreshes both stats and duration, EXCEPT festering strike (only duration), that's what that check is for
 						then
 						_A.enemyguidtab[guiddest]=_A.myscore()
-						print(_A.enemyguidtab[guiddest])
+						-- print(_A.enemyguidtab[guiddest])
 					end
 					if subevent=="SPELL_AURA_REMOVED" 
 						then
@@ -564,6 +591,18 @@ local exeOnLoad = function()
 		return false
 	end
 	
+	function _A.numplayerenemies(range)
+		local numenemies = 0
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj.isplayer then
+				if Obj:range()<=range then
+					numenemies = numenemies + 1
+				end
+			end
+		end
+		return numenemies
+	end
+	
 	function _A.someoneisuperlow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if _A.isthishuman(Obj.guid) then
@@ -727,6 +766,38 @@ unholy.rot = {
 			then
 			if _A.pull_location=="pvp" then
 				player:useitem("Flask of Winter's Bite")
+			end
+		end
+	end,
+	
+	activetrinket = function()
+		if player:combat() and player:buff("Surge of Victory") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if lowestmelee 
+				and lowestmelee:health()>=65
+				then 
+				for i=1, #usableitems do
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+						if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+							if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
+								_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+							end
+						end
+					end
+				end
+			end
+		end
+	end,
+	
+	Frenzy = function()
+		if player:combat() and player:buff("Call of Victory") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if lowestmelee
+				and lowestmelee:health()>=65
+				then 
+				if player:SpellCooldown("Unholy Frenzy")==0 then 
+					player:Cast("Unholy Frenzy")
+				end
 			end
 		end
 	end,
@@ -1025,6 +1096,14 @@ unholy.rot = {
 		end
 	end,
 	
+	pathoffrost = function()
+		if _A.pull_location~="arena" and not player:combat() and not player:buffany("Path of Frost") then
+			if _A.frost>=1 or _A.death>=1 then
+				player:cast("path of frost")
+			end
+		end
+	end,
+	
 	outbreak = function()
 		if player:SpellCooldown("Outbreak")<.3 --OUTBREAK
 			and _A.enoughmana(77575)
@@ -1063,6 +1142,29 @@ unholy.rot = {
 						return lowestmelee:Cast("Plague Strike")
 					end
 				end
+			end
+		end
+	end,
+	
+    remorselesswinter = function()
+		if player:Talent("Remorseless Winter") and player:SpellCooldown("Remorseless Winter")<.3 --Remorseless Winter
+			then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					if _A.numplayerenemies(8) >= 2 then
+                        return player:Cast("Remorseless Winter")
+					end
+				end
+			end
+		end
+	end,
+	
+    massgrip = function()
+		if player:Talent("Gorefiend's Grasp") and player:SpellCooldown("Gorefiend's Grasp")<.3 --Remorseless Winter
+			then
+			if _A.numplayerenemies(20) >= 3 then
+				return player:Cast("Gorefiend's Grasp")
 			end
 		end
 	end,
@@ -1228,6 +1330,7 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end
+	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player:lostcontrol()  then return end 
 	unholy.rot.GrabGrab()
 	unholy.rot.GrabGrabHunter()
@@ -1238,14 +1341,19 @@ local inCombat = function()
 	unholy.rot.items_strflask()
 	unholy.rot.hasteburst()
 	unholy.rot.items_healthstone()
+	unholy.rot.activetrinket()
+	unholy.rot.Frenzy()
 	unholy.rot.gargoyle()
 	unholy.rot.Empowerruneweapon()
+	unholy.rot.remorselesswinter()
+	unholy.rot.massgrip()
+	-- unholy.rot.pathoffrost()
 	-- PVP INTERRUPTS AND CC
 	unholy.rot.MindFreeze()
 	unholy.rot.strangulatesnipe()
 	unholy.rot.Asphyxiatesnipe()
 	unholy.rot.AsphyxiateBurst()
-	unholy.rot.darksimulacrum()
+	-- unholy.rot.darksimulacrum()
 	unholy.rot.root()
 	-- DEFS
 	unholy.rot.antimagicshell()
