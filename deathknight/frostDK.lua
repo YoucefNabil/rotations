@@ -418,6 +418,21 @@ local exeOnLoad = function()
 		end
 	end
 	
+	_A.casttimers = {} -- doesnt work with channeled spells
+	_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+		if guidsrc == UnitGUID("player") then
+			-- Delay Cast Function
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[idd] = _A.GetTime()
+			end
+		end
+	end)
+	function _A.castdelay(idd, delay)
+		if delay == nil then return true end
+		if _A.casttimers[idd]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[idd])>=delay
+	end
+	
 	
 	
 	function _A.isthisahealer(unit)
@@ -1026,11 +1041,9 @@ frost.rot = {
 	
 	deathpact = function()
 		if player:Talent("Death Pact") then
-			if player:SpellCooldown("Death Pact")==0 then
-				if  _A.UnitExists("pet")
-					and not _A.UnitIsDeadOrGhost("pet")
-					and _A.HasPetUI() then
-					player:cast("Death Pact")
+			if player:SpellCooldown("Death Pact")<.3 then
+				if  _A.castdelay(46584, 60) then
+					return player:cast("Death Pact")
 				end
 			end
 		end
