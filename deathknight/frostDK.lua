@@ -1323,6 +1323,7 @@ local inCombat = function()
 	frost.rot.howlingBlast()
 	frost.rot.FrostStrikeFill()
 	frost.rot.obliterate()
+	frost.rot.Buffbuff()
 end
 local outCombat = function()
 	return inCombat()
