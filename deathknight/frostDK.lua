@@ -5,6 +5,7 @@ local C_Timer = _A.C_Timer
 local looping = C_Timer.NewTicker
 -- top of the CR
 local player
+local FakeUnits = _A.FakeUnits 
 local frost = {}
 local healerspecid = {
 	-- [265]="Lock Affli",
@@ -311,6 +312,29 @@ local exeOnLoad = function()
 		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end
 		return false
 	end
+	
+	FakeUnits:Add('mostgroupedenemy', function(num, area_min)
+		local area, min = _A.StrExplode(area_min)
+		area = tonumber(area) or 8
+		min = tonumber(min) or 3
+		local tempTable, count, enemiesCombat = {}, {}, _A.OM:Get('EnemyCombat')
+		for _, obj in pairs(enemiesCombat) do
+			if obj:SpellRange("Howling Blast") and obj:infront() and _A.notimmune(obj)  and obj:los() then -- 80240 = HAVOC
+				count[obj.guid] = 1
+				for _, obj2 in pairs(enemiesCombat) do
+					if obj2.guid~=obj.guid and obj:rangeFrom(obj2)<=area then
+						count[obj.guid] = count[obj.guid] and count[obj.guid] + 1 or 0
+					end
+				end
+				tempTable[#tempTable+1] = { guid = obj.guid, mobsNear = count[obj.guid] }
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.mobsNear and b.mobsNear and a.mobsNear > b.mobsNear end )
+		end
+		return tempTable[num] and tempTable[num].mobsNear and tempTable[num].mobsNear>=min and tempTable[num].guid  
+	end
+	)
 	
 	function _A.depletedrune()
 		local batch1 = 0
@@ -1203,6 +1227,19 @@ frost.rot = {
 		end
 	end,
 	
+	howlingBlastAOE = function()
+		if player:SpellCooldown("Howling Blast")<=.3
+			then
+			local lowestmelee = Object("mostgroupedenemy(8,3)")
+			if lowestmelee then
+				if lowestmelee:exists() then
+					return lowestmelee:Cast("Howling Blast")
+				end
+			end
+		end
+	end,
+	
+	
 	howlingBlast = function()
 		if player:buff("Freezing Fog")
 			then
@@ -1300,7 +1337,7 @@ local inCombat = function()
 	frost.rot.Empowerruneweapon()
 	frost.rot.remorselesswinter()
 	frost.rot.massgrip()
-	-- frost.rot.pathoffrost()
+	frost.rot.pathoffrost()
 	-- PVP INTERRUPTS AND CC
 	frost.rot.MindFreeze()
 	frost.rot.strangulatesnipe()
@@ -1320,8 +1357,9 @@ local inCombat = function()
 	frost.rot.BonusDeathStrike()
 	frost.rot.DeathcoilHEAL()
 	frost.rot.SoulReaper()
-	frost.rot.howlingBlast()
 	frost.rot.FrostStrikeFill()
+	frost.rot.howlingBlastAOE()
+	frost.rot.howlingBlast()
 	frost.rot.obliterate()
 	frost.rot.Buffbuff()
 end
