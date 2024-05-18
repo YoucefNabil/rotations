@@ -317,9 +317,9 @@ local exeOnLoad = function()
 		local area, min = _A.StrExplode(area_min)
 		area = tonumber(area) or 8
 		min = tonumber(min) or 3
-		local tempTable, count, enemiesCombat = {}, {}, _A.OM:Get('EnemyCombat')
+		local tempTable, count, enemiesCombat = {}, {}, _A.OM:Get('Enemy')
 		for _, obj in pairs(enemiesCombat) do
-			if obj:SpellRange("Howling Blast") and obj:infront() and _A.notimmune(obj)  and obj:los() then -- 80240 = HAVOC
+			if obj:SpellRange("Howling Blast") and obj:infront() and _A.notimmune(obj) and obj:los() then -- 80240 = HAVOC
 				count[obj.guid] = 1
 				for _, obj2 in pairs(enemiesCombat) do
 					if obj2.guid~=obj.guid and obj:rangeFrom(obj2)<=area then
@@ -1230,7 +1230,7 @@ frost.rot = {
 	howlingBlastAOE = function()
 		if player:SpellCooldown("Howling Blast")<=.3
 			then
-			local lowestmelee = Object("mostgroupedenemy(8,3)")
+			local lowestmelee = Object("mostgroupedenemy(10,3)")
 			if lowestmelee then
 				if lowestmelee:exists() then
 					return lowestmelee:Cast("Howling Blast")
@@ -1337,7 +1337,7 @@ local inCombat = function()
 	frost.rot.Empowerruneweapon()
 	frost.rot.remorselesswinter()
 	frost.rot.massgrip()
-	frost.rot.pathoffrost()
+	-- frost.rot.pathoffrost()
 	-- PVP INTERRUPTS AND CC
 	frost.rot.MindFreeze()
 	frost.rot.strangulatesnipe()
@@ -1358,7 +1358,7 @@ local inCombat = function()
 	frost.rot.DeathcoilHEAL()
 	frost.rot.SoulReaper()
 	frost.rot.FrostStrikeFill()
-	frost.rot.howlingBlastAOE()
+	-- frost.rot.howlingBlastAOE()
 	frost.rot.howlingBlast()
 	frost.rot.obliterate()
 	frost.rot.Buffbuff()

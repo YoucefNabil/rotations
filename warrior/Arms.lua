@@ -5,6 +5,7 @@ local DSL = function(api) return _A.DSL:Get(api) end
 local hooksecurefunc =_A.hooksecurefunc
 -- top of the CR
 local player
+_A.numtangos = 0
 local arms = {}
 local immunebuffs = {
 	"Deterrence",
@@ -100,6 +101,34 @@ local function pull_location()
 	local whereimi = string.lower(select(2, GetInstanceInfo()))
 	return string.lower(select(2, GetInstanceInfo()))
 end
+local usableitems= { -- item slots
+	13, --first trinket
+	14 --second trinket
+}
+
+local function cditemRemains(itemid)
+	local itempointerpoint;
+	if itemid ~= nil
+		then 
+		if tonumber(itemid)~=nil
+			then 
+			if itemid<=23
+				then itempointerpoint = (select(1, GetInventoryItemID("player", itemid)))
+			end
+			if itemid>23
+				then itempointerpoint = itemid
+			end
+		end
+	end
+	local startcast1 = (select(2, GetItemCooldown(itempointerpoint)))
+	local endcast1 = (select(1, GetItemCooldown(itempointerpoint)))
+	local gettm1 = GetTime()
+	if startcast1 + (endcast1 - gettm1) > 0 then
+		return startcast1 + (endcast1 - gettm1)
+		else
+		return 0
+	end
+end
 --
 --
 
@@ -150,6 +179,25 @@ local exeOnLoad = function()
 			end
 		end
 	end)
+	
+	function _A.groundposition(unit)
+		if unit then 
+			local x,y,z=_A.ObjectPosition(unit.guid)
+			local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
+			local los, cx, cy, cz = _A.TraceLine(x, y, z+5, x, y, z-200, flags)
+			if not los then
+				return cx, cy, cz
+			end
+		end
+	end
+	function _A.groundpositiondetail(x,y,z)
+		local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
+		local los, cx, cy, cz = _A.TraceLine(x, y, z+5, x, y, z-200, flags)
+		if not los then
+			return cx, cy, cz
+		end
+	end
+	
 	_A.buttondelayfunc = function()
 		local player = Object("player")
 		if player and player:stance()==1 then
@@ -168,6 +216,26 @@ local exeOnLoad = function()
 			if unit:DebuffAny(v) then return false end
 		end
 		return true
+	end
+	
+	_A.numenemiesinfront = function()
+		_A.numtangos = 0
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange("Mortal Strike") and _A.notimmune(Obj)  and Obj:los() then
+				_A.numtangos = _A.numtangos + 1
+			end
+		end
+	end
+	
+	function _A.clickcast(unit, spell)
+		local px,py,pz = _A.groundposition(unit)
+		if px then
+			_A.CallWowApi("CastSpellByName", spell)
+			if player:SpellIsTargeting() then
+				_A.ClickPosition(px, py, pz)
+				_A.CallWowApi("SpellStopTargeting")
+			end
+		end
 	end
 	
 	local function chanpercent(unit)
@@ -304,7 +372,7 @@ arms.rot = {
 		if player:ItemCooldown(76095) == 0
 			and player:ItemCount(76095) > 0
 			and player:ItemUsable(76095)
-			and player:Buff("Unholy Frenzy")
+			and player:Buff("Recklessness")
 			then
 			if _A.pull_location=="pvp" then
 				player:useitem("Potion of Mogu Power")
@@ -462,6 +530,128 @@ arms.rot = {
 		end
 	end,
 	
+	chargegapclose = function()
+		local target = Object("target")
+		if target and player:SpellCooldown("Charge")==0 and player:SpellCooldown("Heroic Leap")>(player:gcd()+.3)
+			and target.isplayer
+			and not target:spellRange("Mortal Strike") 
+			and target:spellRange("Charge") 
+			and target:infront()
+			-- and _A.isthishuman("target")
+			and target:exists()
+			and target:enemy() 
+			and not target:buffany("Bladestorm")
+			and _A.notimmune(target)
+			then if target:los()
+				then 
+				return target:Cast("charge") -- slow/root
+			end
+		end
+	end,
+	
+	
+	heroicleap = function()
+		local target = Object("target")
+		if target and player:SpellCooldown("Heroic Leap")<.3
+			and target.isplayer
+			and not target:spellRange("Mortal Strike") 
+			and target:range()>=8
+			and target:range()<=40
+			and target:infront()
+			-- and _A.isthishuman("target")
+			and target:exists()
+			and target:enemy() 
+			and not target:buffany("Bladestorm")
+			and _A.notimmune(target)
+			then if target:los()
+				then 
+				return _A.clickcast(target, "Heroic Leap") -- slow/root
+			end
+		end
+	end,
+	
+	antifear = function()
+		if player:SpellCooldown("Berserker Rage")==0 and ( player:state("incapacitate") or player:state("fear") ) then
+			player:cast("Berserker Rage")
+		end
+	end,
+	
+	reflectspell = function()
+		reflectcheck = false
+		if player:SpellCooldown("Spell Reflection")==0 then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:range()<=25 and Obj:BuffAny("Nature's Swiftness") then
+					reflectcheck = true
+				end
+			end
+			if reflectcheck == true then player:cast("Spell Reflection") end
+		end
+	end,
+	
+	
+	
+	activetrinket = function()
+		if player:combat() and player:buff("Surge of Victory") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			if lowestmelee 
+				and lowestmelee:health()>=35
+				then 
+				for i=1, #usableitems do
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+						if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+							if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
+								return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+							end
+						end
+					end
+				end
+			end
+		end
+	end,
+	
+	bloodbath = function()
+		if player:combat() and player:buff("Call of Victory") and player:SpellCooldown("Bloodbath")==0 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			if lowestmelee 
+				then 
+				return player:cast("Bloodbath")
+			end
+		end
+	end,
+	
+	reckbanner = function()
+		if player:combat() and player:buff("Call of Victory") and player:SpellCooldown("Recklessness")==0 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			if lowestmelee 
+				then 
+				player:cast("Skull Banner")
+				player:cast("Recklessness")
+			end
+		end
+	end,
+	
+	sweeping_strikes = function()
+		if _A.numtangos>=3 and player:SpellUsable("Sweeping Strikes") and player:SpellCooldown("Sweeping Strikes")==0
+			then
+			return player:cast("sweeping strikes")
+		end
+	end,
+	
+	bladestorm = function()
+		if player:combat() and player:buffany("Bloodbath") and player:SpellCooldown("bladestorm")<.3 then
+			return player:cast("Bladestorm")
+		end
+	end,
+	
+	victoryrush = function()
+		if  player:SpellUsable("Victory Rush") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			if lowestmelee and lowestmelee:exists() then
+				return lowestmelee:Cast("Victory Rush")
+			end
+		end
+	end,
+	
 	
 	overpower = function()
 		if  player:SpellUsable("Overpower") then
@@ -480,6 +670,7 @@ arms.rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
+	_A.numenemiesinfront()
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .1) 
 	if _A.buttondelayfunc()  then return end
@@ -487,7 +678,18 @@ local inCombat = function()
 	if player:mounted() then return end
 	-- if player:lostcontrol()  then return end 
 	-- Interrupts
-	arms.rot.Charge()
+	arms.rot.items_strpot()
+	arms.rot.items_strflask()
+	arms.rot.activetrinket()
+	arms.rot.bloodbath()
+	arms.rot.reckbanner()
+	arms.rot.bladestorm()
+	-- arms.rot.Charge()
+	arms.rot.antifear()
+	arms.rot.reflectspell()
+	arms.rot.sweeping_strikes()
+	arms.rot.chargegapclose()
+	arms.rot.heroicleap()
 	arms.rot.colossussmash()
 	arms.rot.Execute()
 	arms.rot.Pummel()
@@ -496,6 +698,7 @@ local inCombat = function()
 	arms.rot.battleshout()
 	arms.rot.Disruptingshout()
 	arms.rot.hamstringpvp()
+	arms.rot.victoryrush()
 	arms.rot.Mortalstrike()
 	arms.rot.slam()
 	arms.rot.overpower()
