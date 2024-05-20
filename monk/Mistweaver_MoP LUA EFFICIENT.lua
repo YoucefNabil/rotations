@@ -526,7 +526,7 @@ local exeOnLoad = function()
 	end
 	function _A.manaengine() -- make it so it's tied with group hp
 		player = player or Object("player")
-		if player:buff("lucidity") then return true end
+		if player:buff("Lucidity") then return true end
 		if
 			-- (_A.avgDeltaPercent>=(averageHPv2())) -- old method
 			(_A.avgDeltaPercent>=(averageHPv2()-effectivemanaregen())) -- new method (more mana hungry)
@@ -976,6 +976,7 @@ local mw_rot = {
 					if obj.isplayer 
 						and obj:isCastingAny()
 						and obj:SpellRange("Paralysis") 
+						and not obj:iscasting("Frostbolt")
 						and obj:Infront()
 						and _A.notimmune(obj)
 						and obj:los() then
@@ -1036,7 +1037,8 @@ local mw_rot = {
 				if obj:isCastingAny()
 					and obj:SpellRange("Blackout Kick") 
 					and obj:infront()
-					and not obj:State("silence")	
+					and not obj:State("silence")
+					and not obj:iscasting("Frostbolt")
 					and obj:caninterrupt() 
 					and not obj:LostControl()
 					and obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=95
@@ -1519,20 +1521,15 @@ local mw_rot = {
 	end,
 	
 	spin_rjw = function()
-		if player:Stance() == 1 and _A.manaengine() then
+		if (player:Stance() == 1)
+		and player:buffany("Lucidity") then
 			if	player:Talent("Rushing Jade Wind") 
 				and player:SpellCooldown("Rushing Jade Wind")<.3
-				and _A.enoughmana(116847)
 				then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
-				if lowestmelee then
-					if lowestmelee:exists() then
-						return player:Cast("Rushing Jade Wind")
-					end
-				end
-				-- add friendly finder on top
+				return player:Cast("Rushing Jade Wind")
 			end
 		end
+		-- add friendly finder on top
 	end,
 	
 	jab_keybind = function()
@@ -1641,11 +1638,11 @@ local inCombat = function()
 	player = player or Object("player")
 	if not player then return end
 	if player then
-	if not player:alive() then return end
-	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
-	_A.interrupttreshhold = math.max(_A.latency, .3)
-	-- if averageHPv2()~= 0 then print(averageHPv2()) end
-	-- print(_A.avgDeltaPercent)
+		if not player:alive() then return end
+		_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
+		_A.interrupttreshhold = math.max(_A.latency, .3)
+		-- if averageHPv2()~= 0 then print(averageHPv2()) end
+		-- print(_A.avgDeltaPercent)
 		mw_rot.caching()
 		if _A.buttondelayfunc()  then return end
 		if player:mounted() then return end
@@ -1660,6 +1657,7 @@ local inCombat = function()
 		mw_rot.turtletoss()
 		mw_rot.kick_legsweep()
 		mw_rot.dispellplzarena()
+		mw_rot.spin_rjw()
 		mw_rot.kick_paralysis()
 		mw_rot.kick_spear()
 		mw_rot.ringofpeace()
@@ -1675,7 +1673,6 @@ local inCombat = function()
 		mw_rot.manatea()
 		mw_rot.ctrl_mode()
 		mw_rot.healstatue()
-		mw_rot.spin_rjw() -- disable
 		mw_rot.healingsphere()
 		mw_rot.pvp_disable()
 		mw_rot.spin_keybind()
@@ -1713,7 +1710,7 @@ _A.CR:Add(270, {
 	apep_ver = "1.1",
 	-- ids = spellIds_Loc,
 	-- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })

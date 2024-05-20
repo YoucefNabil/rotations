@@ -588,12 +588,10 @@ arms.rot = {
 		end
 	end,
 	
-	
-	
 	activetrinket = function()
 		if player:combat() and player:buff("Surge of Victory") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee 
+			if lowestmelee and lowestmelee.isplayer
 				and lowestmelee:health()>=35
 				then 
 				for i=1, #usableitems do
@@ -612,7 +610,7 @@ arms.rot = {
 	bloodbath = function()
 		if player:combat() and player:buff("Call of Victory") and player:SpellCooldown("Bloodbath")==0 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee 
+			if lowestmelee and lowestmelee.isplayer and lowestmelee:health()>=30
 				then 
 				return player:cast("Bloodbath")
 			end
@@ -622,7 +620,7 @@ arms.rot = {
 	reckbanner = function()
 		if player:combat() and player:buff("Call of Victory") and player:SpellCooldown("Recklessness")==0 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee 
+			if lowestmelee and lowestmelee.isplayer and lowestmelee:health()>=30
 				then 
 				player:cast("Skull Banner")
 				player:cast("Recklessness")
@@ -676,6 +674,7 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end
+	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player:lostcontrol()  then return end 
 	-- Interrupts
 	arms.rot.items_strpot()

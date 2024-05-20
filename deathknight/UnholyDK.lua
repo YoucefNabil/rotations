@@ -674,7 +674,7 @@ local exeOnLoad = function()
 	local function MyTickerCallback(ticker)
 		if GetTime()-ijustdidthatthingtime>=.2 then
 			ijustdidthatthing=false
-		end
+			end
 		--
 		local player = player or Object("player")
 		
@@ -1330,6 +1330,7 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end
+	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player:lostcontrol()  then return end 
 	unholy.rot.GrabGrab()
