@@ -88,6 +88,13 @@ local hunterspecs = {
 	[254]=true,
 	[255]=true
 }
+local frozen_debuffs = {
+	"Frost Nova",
+	"Freeze",
+	33395,
+	122
+}
+
 local function power(unit)
 	local intel2 = UnitPower(unit)
 	if intel2 == 0
@@ -179,6 +186,16 @@ local exeOnLoad = function()
 			end
 		end
 	end)
+	
+	function _A.unitfrozen(unit)
+		if unit then 
+			for _,debuffs in ipairs(frozen_debuffs) do
+				if unit:DebuffAny(debuffs) then return true
+				end
+			end
+		end
+		return false
+	end
 	
 	function _A.groundposition(unit)
 		if unit then 
@@ -570,6 +587,27 @@ arms.rot = {
 		end
 	end,
 	
+	-- Defs
+	diebythesword = function()
+        if player:health() <= 50 then
+            if player:SpellCooldown("Die by the Sword") == 0
+			and not player:buff("Shield Wall")
+                then
+                player:cast("Die by the Sword")
+			end
+		end
+	end,
+	
+    shieldwall = function()
+        if player:health() <= 30 then
+            if player:SpellCooldown("Shield Wall") == 0
+			and not player:buff("Die By the Sword")
+                then
+                player:cast("Shield Wall")
+			end
+		end
+	end,
+	
 	antifear = function()
 		if player:SpellCooldown("Berserker Rage")==0 and ( player:state("incapacitate") or player:state("fear") ) then
 			player:cast("Berserker Rage")
@@ -579,12 +617,32 @@ arms.rot = {
 	reflectspell = function()
 		reflectcheck = false
 		if player:SpellCooldown("Spell Reflection")==0 then
+			if _A.unitfrozen(player) then player:cast("Spell Reflection") end
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:range()<=25 and Obj:BuffAny("Nature's Swiftness") then
 					reflectcheck = true
 				end
 			end
 			if reflectcheck == true then player:cast("Spell Reflection") end
+		end
+	end,
+	
+	safeguard_unroot = function()
+		local tempTable = {}
+		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0 and player:SpellUsable("Safeguard") and player:State("root") then
+			for _, fr in pairs(_A.OM:Get('Friendly')) do
+				if fr.isplayer and fr:spellRange("Safeguard") then
+					if _A.nothealimmune(fr) and fr:los() then
+						tempTable[#tempTable+1] = {
+							obj = fr,
+							range = fr:range(),
+							guid = fr.guid
+						}
+					end
+				end
+			end
+			table.sort( tempTable, function(a,b) return ( a.range < b.range ) end )
+			return tempTable[1] and tempTable[1].obj:cast("Safeguard")
 		end
 	end,
 	
@@ -600,9 +658,9 @@ arms.rot = {
 							if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
 								return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 							end
+							end
 						end
 					end
-				end
 			end
 		end
 	end,
@@ -685,6 +743,9 @@ local inCombat = function()
 	arms.rot.bladestorm()
 	-- arms.rot.Charge()
 	arms.rot.antifear()
+	arms.rot.diebythesword()
+	arms.rot.shieldwall()
+	arms.rot.safeguard_unroot()
 	arms.rot.reflectspell()
 	arms.rot.sweeping_strikes()
 	arms.rot.chargegapclose()
