@@ -170,6 +170,7 @@ local exeOnLoad = function()
 			-- TEST STUFF
 			-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
 			-- TEST STUFF
+			-- print(player:stance())
 			-- local target = Object("target")
 			-- if target and target:exists() then print(target:creatureType()) end
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
@@ -363,6 +364,15 @@ local exeOnUnload = function()
 end
 
 arms.rot = {
+	stance_dance = function()
+		local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+		if player:SpellCooldown("Battle Stance")<.3 then
+			if player:stance()~=2 and player:health()<35 then player:cast("Defensive Stance")
+				elseif player:stance()~=2 and not lowestmelee then player:cast("Defensive Stance")
+				elseif player:stance()~=1 and lowestmelee and player:health()>40 then player:cast("Battle Stance")
+			end
+		end
+	end,
 	items_healthstone = function()
 		if player:health() <= 35 then
 			if player:ItemCooldown(5512) == 0
@@ -589,21 +599,21 @@ arms.rot = {
 	
 	-- Defs
 	diebythesword = function()
-        if player:health() <= 50 then
-            if player:SpellCooldown("Die by the Sword") == 0
-			and not player:buff("Shield Wall")
-                then
-                player:cast("Die by the Sword")
+		if player:health() <= 50 then
+			if player:SpellCooldown("Die by the Sword") == 0
+				and not player:buff("Shield Wall")
+				then
+				player:cast("Die by the Sword")
 			end
 		end
 	end,
 	
-    shieldwall = function()
-        if player:health() <= 30 then
-            if player:SpellCooldown("Shield Wall") == 0
-			and not player:buff("Die By the Sword")
-                then
-                player:cast("Shield Wall")
+	shieldwall = function()
+		if player:health() <= 30 then
+			if player:SpellCooldown("Shield Wall") == 0
+				and not player:buff("Die By the Sword")
+				then
+				player:cast("Shield Wall")
 			end
 		end
 	end,
@@ -658,9 +668,9 @@ arms.rot = {
 							if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
 								return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 							end
-							end
 						end
 					end
+				end
 			end
 		end
 	end,
@@ -738,6 +748,7 @@ local inCombat = function()
 	arms.rot.items_strpot()
 	arms.rot.items_strflask()
 	arms.rot.activetrinket()
+	arms.rot.stance_dance()
 	arms.rot.bloodbath()
 	arms.rot.reckbanner()
 	arms.rot.bladestorm()
