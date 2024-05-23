@@ -175,8 +175,6 @@ end
 --
 
 
-
-
 local function cdRemains(spellid)
 	local endcast, startcast = GetSpellCooldown(spellid)
 	local gettm = GetTime()
@@ -674,7 +672,7 @@ local exeOnLoad = function()
 	local function MyTickerCallback(ticker)
 		if GetTime()-ijustdidthatthingtime>=.2 then
 			ijustdidthatthing=false
-			end
+		end
 		--
 		local player = player or Object("player")
 		
@@ -739,10 +737,10 @@ unholy.rot = {
 			and player:ItemCount(8529) > 0
 			and player:ItemUsable(8529)
 			and (not player:BuffAny(16591) or not player:BuffAny(16595)) -- drink until you get both these buffs
-			then
-			if _A.pull_location=="pvp" then
-				player:useitem("Noggenfogger Elixir")
-			end
+		then
+		if _A.pull_location=="pvp" then
+			player:useitem("Noggenfogger Elixir")
+		end
 		end
 	end,
 	

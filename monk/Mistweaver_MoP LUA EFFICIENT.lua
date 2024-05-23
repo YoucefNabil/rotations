@@ -2,6 +2,13 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
 local bossestoavoid = { 69427, 68065, 69017, 69465, 71454 }
+local MyAddon = "niceAddon"
+_A.RegisterAddonMessagePrefix(MyAddon)
+local CallWowApi = _A.CallWowApi
+local ClickToMove = _A.ClickToMove
+local ObjectPosition = _A.ObjectPosition
+local CalculatePath = _A.CalculatePath
+local FaceDirection = _A.FaceDirection
 local UnitCanCooperate, UnitHealthMax, GetTime, UnitIsPlayer, string_find = UnitCanCooperate, UnitHealthMax, GetTime, UnitIsPlayer, string.find
 local function blank()
 end
@@ -307,6 +314,7 @@ local exeOnLoad = function()
 		-- print(subevent.." "..amount) -- too much voodoo
 		-- end
 		if guidsrc == UnitGUID("player") then
+			-- print(subevent)
 			-- Delay Cast Function
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 				_A.casttimers[idd] = _A.GetTime()
@@ -1522,7 +1530,7 @@ local mw_rot = {
 	
 	spin_rjw = function()
 		if (player:Stance() == 1)
-		and player:buffany("Lucidity") then
+			and player:buffany("Lucidity") then
 			if	player:Talent("Rushing Jade Wind") 
 				and player:SpellCooldown("Rushing Jade Wind")<.3
 				then
@@ -1633,22 +1641,19 @@ local mw_rot = {
 		end
 	end,
 }
-
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
 	if player then
 		if not player:alive() then return end
+		-- sender
 		_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 		_A.interrupttreshhold = math.max(_A.latency, .3)
-		-- if averageHPv2()~= 0 then print(averageHPv2()) end
-		-- print(_A.avgDeltaPercent)
 		mw_rot.caching()
 		if _A.buttondelayfunc()  then return end
 		if player:mounted() then return end
 		if player:isChanneling("Crackling Jade Lightning") then return end
 		mw_rot.healingsphere_keybind()
-		-- mw_rot.autotarget()
 		mw_rot.items_healthstone()
 		mw_rot.items_noggenfogger()
 		mw_rot.items_intflask()
