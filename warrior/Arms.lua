@@ -3,6 +3,7 @@ if class ~= "WARRIOR" then return end;
 local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local hooksecurefunc =_A.hooksecurefunc
+local Listener = _A.Listener
 -- top of the CR
 local player
 _A.numtangos = 0

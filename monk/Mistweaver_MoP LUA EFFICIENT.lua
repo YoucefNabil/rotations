@@ -1642,7 +1642,7 @@ local mw_rot = {
 	end,
 }
 local inCombat = function()	
-	player = player or Object("player")
+	player = Object("player")
 	if not player then return end
 	if player then
 		if not player:alive() then return end
@@ -1651,8 +1651,8 @@ local inCombat = function()
 		_A.interrupttreshhold = math.max(_A.latency, .3)
 		mw_rot.caching()
 		if _A.buttondelayfunc()  then return end
-		if player:mounted() then return end
-		if player:isChanneling("Crackling Jade Lightning") then return end
+		if player and player:mounted() then return end
+		if player and player:isChanneling("Crackling Jade Lightning") then return end
 		mw_rot.healingsphere_keybind()
 		mw_rot.items_healthstone()
 		mw_rot.items_noggenfogger()
@@ -1661,13 +1661,14 @@ local inCombat = function()
 		mw_rot.Xuen()
 		mw_rot.turtletoss()
 		mw_rot.kick_legsweep()
+		mw_rot.healingsphere_shift()
 		mw_rot.dispellplzarena()
 		mw_rot.spin_rjw()
 		mw_rot.kick_paralysis()
 		mw_rot.kick_spear()
 		mw_rot.ringofpeace()
 		mw_rot.burstdisarm()
-		mw_rot.healingsphere_shift()
+		-- mw_rot.healingsphere_shift()
 		mw_rot.chi_wave()
 		mw_rot.chibrew()
 		mw_rot.fortifyingbrew()

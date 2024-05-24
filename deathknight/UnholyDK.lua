@@ -1346,7 +1346,7 @@ local inCombat = function()
 	unholy.rot.Empowerruneweapon()
 	unholy.rot.remorselesswinter()
 	unholy.rot.massgrip()
-	-- unholy.rot.pathoffrost()
+	unholy.rot.pathoffrost()
 	-- PVP INTERRUPTS AND CC
 	unholy.rot.MindFreeze()
 	unholy.rot.strangulatesnipe()
