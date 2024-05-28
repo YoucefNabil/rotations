@@ -165,6 +165,7 @@ local exeOnLoad = function()
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
 				_A.Interface:toggleToggle("mastertoggle", true)
 				_A.print("ON")
+				return true
 			end
 		end
 		if slot==STOPSLOT then 
@@ -177,6 +178,7 @@ local exeOnLoad = function()
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
 				_A.print("OFF")
+				return true
 			end
 		end
 		--
@@ -735,7 +737,7 @@ arms.rot = {
 ---========================
 ---========================
 local inCombat = function()	
-	player = player or Object("player")
+	player = Object("player")
 	if not player then return end
 	_A.numenemiesinfront()
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0

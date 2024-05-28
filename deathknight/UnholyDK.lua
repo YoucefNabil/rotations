@@ -296,12 +296,14 @@ local exeOnLoad = function()
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
 				_A.Interface:toggleToggle("mastertoggle", true)
 				-- _A.print("ON")
+				return true
 			end
 		end
 		if slot==_A.STOPSLOT then 
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
 				-- _A.print("OFF")
+				return true
 			end
 		end
 	end)
@@ -1323,7 +1325,7 @@ unholy.rot = {
 ---========================
 ---========================
 local inCombat = function()	
-	player = player or Object("player")
+	player = Object("player")
 	if not player then return end
 	if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end

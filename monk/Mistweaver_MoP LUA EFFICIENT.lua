@@ -117,6 +117,7 @@ local exeOnLoad = function()
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
 				_A.Interface:toggleToggle("mastertoggle", true)
 				_A.print("ON")
+				return true
 			end
 		end
 		if slot==STOPSLOT then 
@@ -129,6 +130,7 @@ local exeOnLoad = function()
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
 				_A.print("OFF")
+				return true
 			end
 		end
 		--
@@ -193,9 +195,11 @@ local exeOnLoad = function()
 		player = Object("player")
 		if unit then 
 			if unit:DebuffAny("Cyclone") then return false end
+			if unit:DebuffAny("Spirit of Redemption") then return false end
+			if unit:BuffAny("Spirit of Redemption") then return false end
 		end
 		return true
-	end
+	end 
 	-----------------------------------
 	-----------------------------------
 	local function fall()
@@ -211,9 +215,7 @@ local exeOnLoad = function()
 	end
 	-----------------------------------
 	_A.buttondelayfunc = function()
-		player = Object("player")
-		if player and player:stance()==1 then
-		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end end
+		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end
 		return false
 	end
 	_A.FakeUnits:Add('lowestall', function(num, spell)
@@ -1075,6 +1077,36 @@ local mw_rot = {
 							and not target:BuffAny("Hand of Protection")
 							and not target:BuffAny("Hand of Freedom")
 							and not target:BuffAny("Deterrence")
+							and not target:Debuff("Disable")
+							-- and target:DebuffDuration("Disable")<1 
+							-- and ( target:DebuffDuration("Disable")>0 or not target:DebuffAny("disable") )
+							and _A.notimmune(target)
+							and target:los() then
+							return target:Cast("Disable")
+						end
+					end
+				end
+			end
+		end
+	end,
+	
+	pvp_disable_keybind = function()
+		local target = Object("target")
+		if not _A.modifier_shift()   then
+			if player:Stance() == 1 --and pull_location()=="arena" 
+				then
+				if target then
+					if target:exists() then
+						if target:enemy()
+							and _A.UnitIsPlayer(target.guid)
+							and target:SpellRange("Blackout Kick") 
+							and target:Infront()
+							and not target:BuffAny("Bladestorm")
+							and not target:BuffAny("Divine Shield")
+							and not target:BuffAny("Die by the Sword")
+							and not target:BuffAny("Hand of Protection")
+							and not target:BuffAny("Hand of Freedom")
+							and not target:BuffAny("Deterrence")
 							and target:DebuffDuration("Disable")<1 
 							and ( target:DebuffDuration("Disable")>0 or not target:DebuffAny("disable") )
 							and _A.notimmune(target)
@@ -1210,6 +1242,26 @@ local mw_rot = {
 							end
 						end	
 					end
+				end
+			end
+		end
+	end,
+	
+	dispellplzany = function()
+		local temptable = {}
+		if player:Stance() == 1 and _A.pull_location ~="pvp"   then
+			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
+				for _, fr in pairs(_A.OM:Get('Friendly')) do
+					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (_A.pull_location=="arena" and fr:ispet()) then
+						if fr:SpellRange("Detox")
+							and _A.nothealimmune(fr)
+							and not fr:DebuffAny("Unstable Affliction")
+							and (fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease")) then
+							if fr:los() then
+								return fr:Cast("Detox")
+							end
+						end
+					end	
 				end
 			end
 		end
@@ -1657,12 +1709,13 @@ local inCombat = function()
 		mw_rot.items_healthstone()
 		mw_rot.items_noggenfogger()
 		mw_rot.items_intflask()
-		mw_rot.activetrinket()
+		-- mw_rot.activetrinket()
 		mw_rot.Xuen()
 		mw_rot.turtletoss()
 		mw_rot.kick_legsweep()
 		mw_rot.healingsphere_shift()
 		mw_rot.dispellplzarena()
+		mw_rot.dispellplzany()
 		mw_rot.spin_rjw()
 		mw_rot.kick_paralysis()
 		mw_rot.kick_spear()
