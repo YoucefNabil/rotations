@@ -724,16 +724,16 @@ local inCombat = function()
 	if affliction.rot.exhaleopti()  then return end
 	--stuff
 	if affliction.rot.Buffbuff()  then return end
-	if affliction.rot.items_intpot()  then return end
+	affliction.rot.items_intpot()
 	if affliction.rot.petres()  then return end
 	if affliction.rot.petres_supremacy() then return end
-	if affliction.rot.summ_healthstone()  then return end
+	if affliction.rot.summ_healthstone() then return end
 	--bursts
-	if affliction.rot.activetrinket()  then return end
-	if affliction.rot.hasteburst()  then return end
+	affliction.rot.activetrinket()
+	affliction.rot.hasteburst()
 	--HEALS
-	if affliction.rot.Darkregeneration()  then return end
-	if affliction.rot.items_healthstone()  then return end
+	affliction.rot.Darkregeneration()
+	affliction.rot.items_healthstone()
 	if affliction.rot.CauterizeMaster()  then return end
 	if affliction.rot.MortalCoil()  then return end
 	if affliction.rot.twilightward()  then return end
@@ -742,12 +742,12 @@ local inCombat = function()
 	if affliction.rot.bloodhorror()  then return end
 	if affliction.rot.snare_curse()  then return end
 	-- shift
-	-- if modifier_shift()==true then
-		-- if affliction.rot.haunt()  then return end
-		-- if affliction.rot.drainsoul() then return end
-		-- if affliction.rot.grasp()  then return end
-		-- if affliction.rot.felflame()  then return end
-	-- end
+	if modifier_shift()==true then
+		if affliction.rot.haunt()  then return end
+		if affliction.rot.drainsoul() then return end
+		if affliction.rot.grasp()  then return end
+		if affliction.rot.felflame()  then return end
+	end
 	-- DOT DOT
 	if affliction.rot.agonysnap()  then return end
 	if affliction.rot.corruptionsnap()  then return end
@@ -757,7 +757,7 @@ local inCombat = function()
 	-- SOUL SWAP
 	if affliction.rot.soulswapopti()  then return end
 	--buff
-	if affliction.rot.darkintent()  then return end
+	affliction.rot.darkintent()
 	--fills
 	if affliction.rot.lifetap()  then return end
 	if affliction.rot.drainsoul() then return end

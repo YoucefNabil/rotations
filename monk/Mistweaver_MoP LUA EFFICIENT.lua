@@ -814,7 +814,7 @@ local mw_rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
-							_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+							return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 						end
 					end
 				end
@@ -840,7 +840,7 @@ local mw_rot = {
 			and not player:Buff(105691)
 			then
 			if pull_location()=="pvp" then
-				player:useitem("Flask of the Warm Sun")
+				return player:useitem("Flask of the Warm Sun")
 			end
 		end
 	end,
@@ -850,7 +850,7 @@ local mw_rot = {
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) then
-				player:useitem("Healthstone")
+				return player:useitem("Healthstone")
 			end
 		end
 	end,
@@ -862,7 +862,7 @@ local mw_rot = {
 			and (not player:BuffAny(16591) or not player:BuffAny(16595))
 			then
 			if pull_location()=="pvp" then
-				player:useitem("Noggenfogger Elixir")
+				return player:useitem("Noggenfogger Elixir")
 			end
 		end
 	end,
@@ -1260,7 +1260,7 @@ local mw_rot = {
 		if player:Stance() == 1 and _A.pull_location ~="pvp"   then
 			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
-					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (_A.pull_location=="arena" and fr:ispet()) then
+					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox")
 							and _A.nothealimmune(fr)
 							and not fr:DebuffAny("Unstable Affliction")
@@ -1718,54 +1718,54 @@ local inCombat = function()
 		if _A.buttondelayfunc()  then return end
 		if player and player:mounted() then return end
 		if player and player:isChanneling("Crackling Jade Lightning") then return end
-		if mw_rot.detargetcc() then return end
-		if mw_rot.healingsphere_keybind() then return end
-		if mw_rot.items_healthstone() then return end
-		if mw_rot.items_noggenfogger() then return end
-		if mw_rot.items_intflask() then return end
-		if mw_rot.activetrinket() then return end
-		if mw_rot.Xuen() then return end
-		if mw_rot.turtletoss() then return end
-		if mw_rot.kick_legsweep() then return end
-		if mw_rot.healingsphere_shift() then return end
-		if mw_rot.dispellplzarena() then return end
-		if mw_rot.dispellplzany() then return end
-		if mw_rot.spin_rjw() then return end
-		if mw_rot.kick_paralysis() then return end
-		if mw_rot.kick_spear() then return end
-		if mw_rot.ringofpeace() then return end
-		if mw_rot.burstdisarm() then return end
+		mw_rot.detargetcc()
+		-- mw_rot.healingsphere_keybind()
+		mw_rot.items_healthstone() 
+		mw_rot.items_noggenfogger()
+		mw_rot.items_intflask()
+		mw_rot.activetrinket()
+		mw_rot.Xuen()
+		mw_rot.turtletoss()
+		mw_rot.kick_legsweep()
+		mw_rot.healingsphere_shift()
+		mw_rot.dispellplzarena()
+		mw_rot.dispellplzany()
+		mw_rot.spin_rjw()
+		mw_rot.kick_paralysis()
+		mw_rot.kick_spear()
+		mw_rot.ringofpeace()
+		mw_rot.burstdisarm()
 		-- mw_rot.healingsphere_shift()
-		if mw_rot.chi_wave() then return end
-		if mw_rot.chibrew() then return end
-		if mw_rot.fortifyingbrew() then return end
-		if mw_rot.tigerslust() then return end
-		if mw_rot.lifecocoon() then return end
-		if mw_rot.surgingmist() then return end
-		if mw_rot.renewingmist() then return end
-		if mw_rot.manatea() then return end
-		if mw_rot.ctrl_mode() then return end
-		if mw_rot.healstatue() then return end
-		if mw_rot.healingsphere() then return end
-		if mw_rot.pvp_disable() then return end
-		if mw_rot.spin_keybind() then return end
-		if mw_rot.blackout_keybind() then return end
-		if mw_rot.jab_keybind_buff() then return end
-		if mw_rot.lightning_keybind() then return end
-		if mw_rot.tigerpalm_mm() then return end
-		if mw_rot.bk_buff() then return end
-		if mw_rot.tp_buff() then return end
-		if mw_rot.thunderfocustea() then return end
-		if mw_rot.uplift() then return end
-		if mw_rot.expelharm() then return end
-		if mw_rot.jab_keybind() then return end
-		if mw_rot.tigerpalm_filler() then return end
-		if mw_rot.jab_filler() then return end
-		if mw_rot.statbuff() then return end
-		if mw_rot.dpsstance_jab() then return end
-		if mw_rot.dpsstance_spin() then return end
-		if mw_rot.dpsstance_healstance() then return end
-		if mw_rot.dpsstanceswap() then return end
+		mw_rot.chi_wave()
+		mw_rot.chibrew()
+		mw_rot.fortifyingbrew()
+		mw_rot.tigerslust()
+		mw_rot.lifecocoon()
+		mw_rot.surgingmist()
+		mw_rot.renewingmist()
+		mw_rot.manatea()
+		mw_rot.ctrl_mode()
+		mw_rot.healstatue()
+		mw_rot.healingsphere()
+		mw_rot.pvp_disable()
+		mw_rot.spin_keybind()
+		mw_rot.blackout_keybind()
+		mw_rot.jab_keybind_buff()
+		mw_rot.lightning_keybind()
+		mw_rot.tigerpalm_mm()
+		mw_rot.bk_buff()
+		mw_rot.tp_buff()
+		mw_rot.thunderfocustea()
+		mw_rot.uplift()
+		mw_rot.expelharm()
+		mw_rot.jab_keybind()
+		mw_rot.tigerpalm_filler()
+		mw_rot.jab_filler()
+		mw_rot.statbuff()
+		mw_rot.dpsstance_jab()
+		mw_rot.dpsstance_spin()
+		mw_rot.dpsstance_healstance()
+		mw_rot.dpsstanceswap()
 	end
 end
 local spellIds_Loc = function()
