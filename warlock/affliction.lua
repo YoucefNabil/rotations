@@ -126,6 +126,7 @@ end
 local corruptiontbl = {}
 local agonytbl = {}
 local unstabletbl = {}
+local seeds = {}
 local soulswaporigin = nil
 local ijustsoulswapped = false
 local ijustsoulswappedattime = 0
@@ -147,6 +148,11 @@ _A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORL
 	if next(unstabletbl)~=nil then
 		for k in pairs(unstabletbl) do
 			unstabletbl[k]=nil
+		end
+	end
+	if next(seeds)~=nil then
+		for k in pairs(seeds) do
+			seeds[k]=nil
 		end
 	end
 	soulswaporigin = nil
@@ -185,12 +191,23 @@ _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, 
 				unstabletbl[guiddest]=nil
 			end
 		end
+		if (idd==27243) then -- seed of corruption
+			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				then
+				seeds[guiddest]=_A.myscore() 
+			end
+			if subevent=="SPELL_AURA_REMOVED" 
+				then
+				seeds[guiddest]=nil
+			end
+		end
 		if (idd==119678) then -- Soulburn soul swap (applies all three)
 			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
 				corruptiontbl[guiddest]=_A.myscore() 
 				unstabletbl[guiddest]=_A.myscore() 
 				agonytbl[guiddest]=_A.myscore()
+				-- ONLY APPLIES THESE 3 (and nothing else)
 			end
 		end
 	end
@@ -209,6 +226,7 @@ _A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event
 				unstabletbl[guiddest]=unstabletbl[soulswaporigin]
 				agonytbl[guiddest]=agonytbl[soulswaporigin]
 				corruptiontbl[guiddest]=corruptiontbl[soulswaporigin]
+				seeds[guiddest]=seeds[soulswaporigin]
 				ijustsoulswapped = false
 				ijustexhaled = true
 				ijustexhaledattime = _A.GetTime()
@@ -297,10 +315,11 @@ affliction.rot = {
 				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
 					obj = Obj,
-					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0), -- ALWAYS ORDER THIS BY SCORE FIRST
+					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0) + (seeds[Obj.guid] or 0), -- ALWAYS ORDER THIS BY SCORE FIRST
 					agonyscore = (agonytbl[Obj.guid] or 0),
 					unstablescore = (unstabletbl[Obj.guid] or 0),
 					corruptionscore = (corruptiontbl[Obj.guid] or 0),
+					seedscore = (seeds[Obj.guid] or 0),
 					range = Obj:range(2) or 40,
 					health = Obj:HealthActual() or 0,
 					isplayer = Obj.isplayer and 1 or 0
@@ -311,7 +330,8 @@ affliction.rot = {
 						rangedis = Obj:range(2) or 40,
 						isplayer = Obj.isplayer and 1 or 0,
 						health = Obj:HealthActual() or 0,
-						duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
+						-- duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
+						duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
 					}
 				end
 				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = {
@@ -609,6 +629,21 @@ affliction.rot = {
 		end
 	end,
 	
+	sneedofcorruption = function()
+		if #_A.temptabletbl>1 then
+			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
+				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
+				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
+				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
+			end )
+		end
+		if _A.temptabletbl[1] and not player:buff(74434) and _A.myscore()>_A.temptabletbl[1].seedscore  then 
+			if not player:moving() and not player:Iscasting("Seed of Corruption") then
+				return _A.temptabletbl[1].obj:Cast("Seed of corruption")
+			end
+		end
+	end,
+	
 	haunt = function()
 		if _A.castdelay(48181, 1.5) and _A.shards>=1 and not player:isCastingAny() and not player:moving()  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
@@ -706,16 +741,17 @@ local inCombat = function()
 	if affliction.rot.bloodhorrorremovalopti()  then return end
 	if affliction.rot.bloodhorror()  then return end
 	if affliction.rot.snare_curse()  then return end
-	--shift
-	if modifier_shift()==true then
-		if affliction.rot.haunt()  then return end
-		if affliction.rot.drainsoul() then return end
-		if affliction.rot.grasp()  then return end
-		if affliction.rot.felflame()  then return end
-	end
+	-- shift
+	-- if modifier_shift()==true then
+		-- if affliction.rot.haunt()  then return end
+		-- if affliction.rot.drainsoul() then return end
+		-- if affliction.rot.grasp()  then return end
+		-- if affliction.rot.felflame()  then return end
+	-- end
 	-- DOT DOT
 	if affliction.rot.agonysnap()  then return end
 	if affliction.rot.corruptionsnap()  then return end
+	-- if affliction.rot.sneedofcorruption()  then return end
 	if affliction.rot.unstablesnapinstant()  then return end
 	if affliction.rot.unstablesnap()  then return end
 	-- SOUL SWAP
