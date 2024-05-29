@@ -2,6 +2,7 @@ local mediaPath, _A = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local player
+local CallWowApi = _A.CallWowApi
 local affliction = {}
 local healerspecid = {
 	-- [265]="Lock Affli",
@@ -154,27 +155,17 @@ end)
 -- dots
 _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 	if guidsrc == UnitGUID("player") then -- only filter by me
-		-- testing
-		-- if (idd==27243) then
-		-- print(subevent.." "..idd)
-		-- end
-		--
 		if (idd==146739) or (idd==172) then -- Corruption
 			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
 				corruptiontbl[guiddest]=_A.myscore() 
 			end
-			-- if ( subevent=="SPELL_AURA_REFRESH" and ijustexhaled == false ) -- Incase you use soulburn seed of corruption
-			-- then
-			-- print("that thing fired")
-			-- corruptiontbl[guiddest]=_A.myscore() 
-			-- end
 			if subevent=="SPELL_AURA_REMOVED" 
 				then
 				corruptiontbl[guiddest]=nil
 			end
 		end
-		if (idd==980) then
+		if (idd==980) then -- AGONY
 			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
 				agonytbl[guiddest]=_A.myscore()
@@ -184,7 +175,7 @@ _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, 
 				agonytbl[guiddest]=nil
 			end
 		end
-		if (idd==30108) then
+		if (idd==30108) then -- Unstable Affli
 			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
 				unstabletbl[guiddest]=_A.myscore() 
@@ -194,12 +185,12 @@ _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, 
 				unstabletbl[guiddest]=nil
 			end
 		end
-		if (idd==119678) then
+		if (idd==119678) then -- Soulburn soul swap (applies all three)
 			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				then
 				corruptiontbl[guiddest]=_A.myscore() 
 				unstabletbl[guiddest]=_A.myscore() 
-				agonytbl[guiddest]=_A.myscore() 
+				agonytbl[guiddest]=_A.myscore()
 			end
 		end
 	end
@@ -468,7 +459,7 @@ affliction.rot = {
 				if player:buff(74434) or ( not player:moving() ) then
 					return player:cast(112866)
 				end
-				if (not player:buff(74434) and player:combat() and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+				if (not player:buff(74434) and player:combat() and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					then return player:cast(74434) -- shadowburn
 				end	
 			end
@@ -515,21 +506,6 @@ affliction.rot = {
 	bloodhorror = function()
 		if _A.reflectcheck == false and player:SpellCooldown("Blood Horror")<.3 and player:health()>10 and not player:buff("Blood Horror") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Blood Horror")
-		end
-	end,
-	
-	bloodhorrorremoval = function() -- rework this
-		local reflectcheck = false
-		if player:buff("Blood Horror") then
-	 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range(1)<5 and Obj:BuffAny("Spell Reflection") and Obj:los() then
-					reflectcheck = true
-				end
-			end
-			if reflectcheck == true then
-				-- print("removing")
-				_A.RunMacroText("/cancelaura Blood Horror")
-			end
 		end
 	end,
 	
@@ -608,11 +584,11 @@ affliction.rot = {
 				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
 			end )
 		end
-		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore then 
+		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore and player:SpellCooldown("Unstable Affliction")<.3 then 
 			if player:buff(74434) then
-				return  _A.temptabletbl[1].obj:Cast(119678)
+				return _A.temptabletbl[1].obj:Cast(119678)
 			end
-			if  _A.shards>=1 and not player:buff(74434)--or player:buff("Shadow Trance")
+			if  _A.shards>=1 and not player:buff(74434) and player:SpellCooldown(74434)==0 --or player:buff("Shadow Trance")
 				then return player:cast(74434) -- shadowburn
 			end
 		end -- improved soul swap (dots instead)
@@ -626,7 +602,7 @@ affliction.rot = {
 				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
 			end )
 		end
-		if _A.temptabletbl[1] and _A.myscore()>_A.temptabletbl[1].unstablescore then 
+		if _A.temptabletbl[1] and not player:buff(74434) and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
 			if not player:moving() and not player:Iscasting("Unstable Affliction") then
 				return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
 			end
@@ -708,58 +684,51 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	-- if player:lostcontrol()  then return end 
 	--delayed lifetap
-	affliction.rot.lifetap_delayed()
+	if affliction.rot.lifetap_delayed() then return end
 	--exhale
-	-- affliction.rot.exhale()
-	-- affliction.rot.tablesortexhale()
-	affliction.rot.exhaleopti()
+	if affliction.rot.exhaleopti()  then return end
 	--stuff
-	affliction.rot.Buffbuff()
-	affliction.rot.items_intpot()
-	affliction.rot.petres()
-	affliction.rot.petres_supremacy()
-	affliction.rot.summ_healthstone()
+	if affliction.rot.Buffbuff()  then return end
+	if affliction.rot.items_intpot()  then return end
+	if affliction.rot.petres()  then return end
+	if affliction.rot.petres_supremacy() then return end
+	if affliction.rot.summ_healthstone()  then return end
 	--bursts
-	affliction.rot.activetrinket()
-	affliction.rot.hasteburst()
+	if affliction.rot.activetrinket()  then return end
+	if affliction.rot.hasteburst()  then return end
 	--HEALS
-	affliction.rot.Darkregeneration()
-	affliction.rot.items_healthstone()
-	affliction.rot.CauterizeMaster()
-	affliction.rot.MortalCoil()
-	affliction.rot.twilightward()
+	if affliction.rot.Darkregeneration()  then return end
+	if affliction.rot.items_healthstone()  then return end
+	if affliction.rot.CauterizeMaster()  then return end
+	if affliction.rot.MortalCoil()  then return end
+	if affliction.rot.twilightward()  then return end
 	--utility
-	-- affliction.rot.bloodhorrorremoval()
-	affliction.rot.bloodhorrorremovalopti()
-	affliction.rot.bloodhorror()
-	affliction.rot.snare_curse()
+	if affliction.rot.bloodhorrorremovalopti()  then return end
+	if affliction.rot.bloodhorror()  then return end
+	if affliction.rot.snare_curse()  then return end
 	--shift
 	if modifier_shift()==true then
-		affliction.rot.haunt()
-		affliction.rot.drainsoul()
-		affliction.rot.grasp()
-		affliction.rot.felflame()
+		if affliction.rot.haunt()  then return end
+		if affliction.rot.drainsoul() then return end
+		if affliction.rot.grasp()  then return end
+		if affliction.rot.felflame()  then return end
 	end
-	-- snapshots
-	-- if _A.castdelay(119678, 10) then
-	-- affliction.rot.unstablesnapinstant()
-	-- end
-	affliction.rot.corruptionsnap()
-	affliction.rot.agonysnap()
-	affliction.rot.unstablesnapinstant()
-	affliction.rot.unstablesnap()
-	-- soul swap
-	-- affliction.rot.soulswap()
-	affliction.rot.soulswapopti()
+	-- DOT DOT
+	if affliction.rot.agonysnap()  then return end
+	if affliction.rot.corruptionsnap()  then return end
+	if affliction.rot.unstablesnapinstant()  then return end
+	if affliction.rot.unstablesnap()  then return end
+	-- SOUL SWAP
+	if affliction.rot.soulswapopti()  then return end
 	--buff
-	affliction.rot.darkintent()
+	if affliction.rot.darkintent()  then return end
 	--fills
-	affliction.rot.lifetap()
-	affliction.rot.drainsoul()
-	affliction.rot.haunt()
-	affliction.rot.grasp()
-	affliction.rot.felflame()
-end
+	if affliction.rot.lifetap()  then return end
+	if affliction.rot.drainsoul() then return end
+	if affliction.rot.haunt()  then return end
+	if affliction.rot.grasp()  then return end
+	if affliction.rot.felflame() then return end
+end 
 local outCombat = function()
 	return inCombat()
 end
@@ -768,17 +737,17 @@ end
 local blacklist = function()
 end
 _A.CR:Add(265, {
-name = "Youcef's Affliction",
-ic = inCombat,
-ooc = outCombat,
-use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	name = "Youcef's Affliction",
+	ic = inCombat,
+	ooc = outCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })

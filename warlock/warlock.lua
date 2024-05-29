@@ -40,14 +40,16 @@ _A.hooksecurefunc("UseAction", function(...)
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
 			_A.Interface:toggleToggle("mastertoggle", true)
 			_A.print("ON")
+			return true
 		end
 	end
 	if slot==_A.STOPSLOT then
-		local target = Object("target")
-		if target and target:exists() then print(target:creatureType()) end
+		-- local target = Object("target")
+		-- if target and target:exists() then print(target:creatureType()) end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 			_A.Interface:toggleToggle("mastertoggle", false)
 			_A.print("OFF")
+			return true
 		end
 	end
 end)
