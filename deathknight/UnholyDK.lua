@@ -300,6 +300,7 @@ local exeOnLoad = function()
 			end
 		end
 		if slot==_A.STOPSLOT then 
+			-- print(player:stance())
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
 				-- _A.print("OFF")
@@ -734,15 +735,36 @@ unholy.rot = {
 		end
 	end,
 	
+	stance_dance = function()
+		if player:SpellCooldown(48263)<.3 then
+			if player:stance()~=1 and player:health()<50 then player:cast(48263)
+			end
+		end
+		if player:SpellCooldown(48265)<.3 then
+			if player:stance()~=3 and player:health()>65 then player:cast(48265)
+			end
+		end
+	end,
+	
+	icbf = function()
+		if player:health() <= 30 then
+			if player:SpellCooldown("Icebound Fortitude") == 0
+				then
+				player:cast("Gift of the Naaru")
+				player:cast("Icebound Fortitude")
+			end
+		end
+	end,
+	
 	items_noggenfogger = function()
 		if player:ItemCooldown(8529) == 0
 			and player:ItemCount(8529) > 0
 			and player:ItemUsable(8529)
 			and (not player:BuffAny(16591) or not player:BuffAny(16595)) -- drink until you get both these buffs
-		then
-		if _A.pull_location=="pvp" then
+			then
+			if _A.pull_location=="pvp" then
 			player:useitem("Noggenfogger Elixir")
-		end
+			end
 		end
 	end,
 	
@@ -1341,6 +1363,8 @@ local inCombat = function()
 	unholy.rot.items_strpot()
 	unholy.rot.items_strflask()
 	unholy.rot.hasteburst()
+	unholy.rot.stance_dance()
+	unholy.rot.icbf()
 	unholy.rot.items_healthstone()
 	unholy.rot.activetrinket()
 	unholy.rot.Frenzy()
@@ -1371,43 +1395,43 @@ local inCombat = function()
 	unholy.rot.DeathcoilHEAL()
 	unholy.rot.SoulReaper()
 	----pve part
-	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		unholy.rot.dotsnapshotOutBreak()
-		unholy.rot.dotsnapshotPS()
-		unholy.rot.festeringstrike()
-	end
-	----pvp part
-	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		unholy.rot.NecroStrike()
-		unholy.rot.bloodboilorphanblood()
-		unholy.rot.icytouch()
-	end
-	----filler
-	unholy.rot.Deathcoil()
-	unholy.rot.festeringstrike()
-	unholy.rot.scourgestrike()
-	unholy.rot.Buffbuff()
-	unholy.rot.blank()
+if _A.pull_location == "party" or _A.pull_location == "raid" then
+unholy.rot.dotsnapshotOutBreak()
+unholy.rot.dotsnapshotPS()
+unholy.rot.festeringstrike()
+end
+----pvp part
+if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+unholy.rot.NecroStrike()
+unholy.rot.bloodboilorphanblood()
+unholy.rot.icytouch()
+end
+----filler
+unholy.rot.Deathcoil()
+unholy.rot.festeringstrike()
+unholy.rot.scourgestrike()
+unholy.rot.Buffbuff()
+unholy.rot.blank()
 end
 local outCombat = function()
-	return inCombat()
+return inCombat()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
 _A.CR:Add(252, {
-	name = "Youcef's Unholy DK",
-	ic = inCombat,
-	ooc = outCombat,
-	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+name = "Youcef's Unholy DK",
+ic = inCombat,
+ooc = outCombat,
+use_lua_engine = true,
+gui = GUI,
+gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+wow_ver = "5.4.8",
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })

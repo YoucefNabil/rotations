@@ -26,6 +26,8 @@ local ClickthisPleasepvp = function()
 end
 --
 local function MyTickerCallback(ticker)
+	local battlefieldstatus = GetBattlefieldWinner()
+	if battlefieldstatus~=nil then LeaveBattlefield() end
 	ClickthisPleasepvp()
 	-- local newDuration = math.random(5,15)/10
 	local newDuration = .1

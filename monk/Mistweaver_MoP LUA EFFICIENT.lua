@@ -1,4 +1,4 @@
-local mediaPath, _A = ...
+local mediaPath, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
 local bossestoavoid = { 69427, 68065, 69017, 69465, 71454 }
@@ -99,6 +99,13 @@ local exeOnLoad = function()
 			end
 		end
 	end
+	function _A.tbltostr(tbl)
+		local result = {}
+		for _, value in ipairs(tbl) do
+			table.insert(result, tostring(value))
+		end
+		return table.concat(result, " || ")
+	end
 	function _A.dontbreakcc(unit)
 		if unit then
 			if unit:state("charm || sleep || disorient || fear || incapacitate || misc") then return false end
@@ -183,25 +190,34 @@ local exeOnLoad = function()
 		"Cyclone"
 	}
 	
+	-- function _A.notimmune(unit) -- needs to be object
+	-- if unit then 
+	-- if unit:immune("all") then return false end
+	-- end
+	-- for _,v in ipairs(immunebuffs) do
+	-- if unit:BuffAny(v) then return false end
+	-- end
+	-- for _,v in ipairs(immunedebuffs) do
+	-- if unit:DebuffAny(v) then return false end
+	-- end
+	-- return true
+	-- end
+	
 	function _A.notimmune(unit) -- needs to be object
 		if unit then 
 			if unit:immune("all") then return false end
-		end
-		for _,v in ipairs(immunebuffs) do
-			if unit:BuffAny(v) then return false end
-		end
-		for _,v in ipairs(immunedebuffs) do
-			if unit:DebuffAny(v) then return false end
+			if unit:BuffAny(_A.tbltostr(immunebuffs)) then return false end
+			if unit:DebuffAny(_A.tbltostr(immunedebuffs)) then return false end
 		end
 		return true
 	end
 	
 	
+	
 	function _A.nothealimmune(unit)
 		player = Object("player")
 		if unit then 
-			if unit:DebuffAny("Cyclone") then return false end
-			if unit:DebuffAny("Spirit of Redemption") then return false end
+			if unit:DebuffAny("Cyclone || Spirit of Redemption") then return false end
 			if unit:BuffAny("Spirit of Redemption") then return false end
 		end
 		return true
@@ -584,6 +600,27 @@ local exeOnLoad = function()
 		end
 	end
 	
+	-- _A.DSL:Register("debuff.count.type", function(target, args)
+	-- local count = 0
+	-- local fno_filter = target .. '-no_filter'
+	-- if next(_A.unit_debuffs)==nil or _A.unit_debuffs[fno_filter]==nil then
+	-- _ = DSL("debuff")(target, "dummy")
+	-- end  
+	-- local tbl = {_A.StrExplode(args, "||")}
+	-- for _,typeDB in ipairs(tbl) do
+	-- if type(unit_debuffs[fno_filter])=="table" then
+	-- typeDB = typeDB:lower()
+	-- for name in pairs(unit_debuffs[fno_filter]) do
+	-- local bt = unit_debuffs[fno_filter][name][5]
+	-- if bt and bt:lower()==typeDB then
+	-- count = count + unit_debuffs[fno_filter][name][2]
+	-- end
+	-- end
+	-- end
+	-- end
+	-- return count
+	-- end)
+	
 	_A.DSL:Register('canafford', function()
 		return _A.manaengine()
 	end)
@@ -600,18 +637,6 @@ local exeOnLoad = function()
 				_A.FaceDirection(unit.guid, true)
 			end
 		end
-	end
-	
-	function _A.enoughmana(id)
-		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
-		if powertype then
-			local currentmana = _A.UnitPower("player", powertype)
-			if currentmana>=cost then
-				return true
-				else return false
-			end
-		end
-		return true
 	end
 	-------------------------------------------------------
 	-------------------------------------------------------
@@ -1016,10 +1041,10 @@ local mw_rot = {
 					if SMobj and SMobj:SpellRange("Renewing Mist") then
 						if SMobj:buff(132120) then _A.CallWowApi("SpellStopCasting") end
 						if player:Chi()>= 3 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
-						if _A.enoughmana(116694) and player:Chi()< 3 and SMobj:los() then return SMobj:cast("Surging Mist", true) end
+						if player:SpellUsable(116694) and player:Chi()< 3 and SMobj:los() then return SMobj:cast("Surging Mist", true) end
 					end
 				end
-				if not player:isChanneling("Soothing Mist") and _A.enoughmana(115175) and lowest and lowest:exists() then return lowest:cast("Soothing Mist") end 
+				if not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest and lowest:exists() then return lowest:cast("Soothing Mist") end 
 			end
 			else if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
 		end
@@ -1079,12 +1104,7 @@ local mw_rot = {
 							and _A.UnitIsPlayer(target.guid)
 							and target:SpellRange("Blackout Kick") 
 							and target:Infront()
-							and not target:BuffAny("Bladestorm")
-							and not target:BuffAny("Divine Shield")
-							and not target:BuffAny("Die by the Sword")
-							and not target:BuffAny("Hand of Protection")
-							and not target:BuffAny("Hand of Freedom")
-							and not target:BuffAny("Deterrence")
+							and not target:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence")
 							and not target:Debuff("Disable")
 							-- and target:DebuffDuration("Disable")<1 
 							-- and ( target:DebuffDuration("Disable")>0 or not target:DebuffAny("disable") )
@@ -1109,14 +1129,8 @@ local mw_rot = {
 							and _A.UnitIsPlayer(target.guid)
 							and target:SpellRange("Blackout Kick") 
 							and target:Infront()
-							and not target:BuffAny("Bladestorm")
-							and not target:BuffAny("Divine Shield")
-							and not target:BuffAny("Die by the Sword")
-							and not target:BuffAny("Hand of Protection")
-							and not target:BuffAny("Hand of Freedom")
-							and not target:BuffAny("Deterrence")
-							and target:DebuffDuration("Disable")<1 
-							and ( target:DebuffDuration("Disable")>0 or not target:DebuffAny("disable") )
+							and not target:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence")
+							and not target:Debuff("Disable")
 							and _A.notimmune(target)
 							and target:los() then
 							return target:Cast("Disable")
@@ -1232,51 +1246,75 @@ local mw_rot = {
 	end,
 	
 	dispellplzarena = function()
-		local temptable = {}
+		local temptabletbl2 = {}
 		if player:Stance() == 1   then
-			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
+			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (_A.pull_location=="arena" and fr:ispet()) then
 						if fr:SpellRange("Detox")
-							and _A.nothealimmune(fr)
 							and not fr:DebuffAny("Unstable Affliction")
-							and (fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease")) then
+							and fr:DebuffType("Magic || Poison || Disease") then
 							if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or _A.pull_location == "party" or _A.pull_location == "raid"
-								or fr:DebuffAny("Entangling Roots") or fr:DebuffAny("Freezing Trap") or fr:DebuffAny("Denounce") or fr:DebuffAny("Flame Shock")
+								-- annoying
+								or fr:DebuffAny("Entangling Roots ||  Freezing Trap || Denounce || Flame Shock || Moonfire || Sunfire") 
 								then
-								if fr:los() then
-									return fr:Cast("Detox")
+								if _A.nothealimmune(fr) and fr:los() then
+									temptabletbl2[#temptabletbl2+1] = {
+										HP = fr:health(),
+										obj = fr
+									}
 								end
 							end
 						end	
 					end
 				end
+				if #temptabletbl2>1 then
+					table.sort( temptabletbl2, function(a,b) return ( a.HP < b.HP ) end )
+				end
+				return temptabletbl2[1] and temptabletbl2[1].obj:Cast("Detox")
 			end
 		end
 	end,
 	
+	diffusemagic = function()
+		if player:talent("Diffuse Magic") and player:SpellCooldown("Diffuse Magic")==0 then
+			-- add the stuff that hurts
+			if 
+				player:health()<30 or player:DebuffAny("Moonfire || Sunfire || Unstable Affliction || Touch of Karma")
+				then 
+			return player:cast("Diffuse Magic") end
+		end
+	end,
+	
 	dispellplzany = function()
-		local temptable = {}
-		if player:Stance() == 1 and _A.pull_location ~="pvp"   then
-			if player:SpellCooldown("Detox")<.3 and _A.enoughmana("Detox")then
+		local temptabletbl1 = {}
+		-- if player:Stance() == 1 and _A.pull_location ~="pvp"   then
+		if player:Stance() == 1 then
+			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox")
 							and _A.nothealimmune(fr)
-							and not fr:DebuffAny("Unstable Affliction")
-							and (fr:DebuffType("Magic") or fr:DebuffType("Poison") or fr:DebuffType("Disease")) then
+							and not fr:DebuffAny("Unstable Affliction")  then
 							if fr:los() then
-								return fr:Cast("Detox")
+								temptabletbl1[#temptabletbl1+1] = {
+									count = fr:debuffCountType("Magic || Poison || Disease") or 0,
+									obj = fr
+								}
 							end
 						end
 					end	
 				end
 			end
+			if #temptabletbl1>1 then
+				table.sort( temptabletbl1, function(a,b) return ( a.count > b.count ) end )
+			end
+			return temptabletbl1[1] and temptabletbl1[1].count>=1 and temptabletbl1[1].obj:Cast("Detox")
 		end
 	end,
 	
 	lifecocoon = function()
-		if player:SpellCooldown("Life Cocoon")<.3 and _A.enoughmana(116849)   then
+		if player:SpellCooldown("Life Cocoon")<.3 and player:SpellUsable(116849)   then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
@@ -1314,7 +1352,7 @@ local mw_rot = {
 	end,
 	
 	renewingmist = function()
-		if player:SpellCooldown("Renewing Mist")<.3 and _A.enoughmana(115151)   then
+		if player:SpellCooldown("Renewing Mist")<.3 and player:SpellUsable(115151)   then
 			--if not player:LostControl() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
@@ -1338,10 +1376,10 @@ local mw_rot = {
 	end,
 	
 	healingsphere_shift = function()
-		if player:SpellCooldown("Healing Sphere")<.3   then
+		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere") and not player:keybind("R") then
 			if player:Stance() == 1 then
 				if _A.modifier_shift() then
-					if _A.enoughmana(115460) then
+					if player:SpellUsable(115460) then
 						local lowest = Object("lowestall")
 						if lowest and lowest:exists() then
 							if (lowest:Health() < 99) then
@@ -1361,10 +1399,10 @@ local mw_rot = {
 	end,
 	
 	healingsphere_keybind = function()
-		if player:SpellCooldown("Healing Sphere")<.3   then
+		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere")   then
 			if player:Stance() == 1 then
 				if player:keybind("E") then
-					if _A.enoughmana(115460) then
+					if player:SpellUsable(115460) then
 						local target = Object("target")
 						if target and target:exists() then
 							if target:Distance() < 40 then
@@ -1383,9 +1421,9 @@ local mw_rot = {
 	
 	healingsphere = function()
 		--if not player:LostControl() then
-		if player:SpellCooldown("Healing Sphere")<.3   then
+		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere")   then
 			if player:Stance() == 1 then
-				if _A.enoughmana(115460) then
+				if player:SpellUsable(115460) then
 					if _A.manaengine()==true or _A.modifier_shift() then
 						--- ORBS
 						local lowest = Object("lowestall")
@@ -1496,7 +1534,7 @@ local mw_rot = {
 		if player:Stance() == 1   then
 			if	player:Chi()<player:ChiMax()
 				and player:SpellCooldown("Expel Harm")<.3
-				and _A.enoughmana(115072)
+				and player:SpellUsable(115072)
 				then
 				return player:Cast("Expel Harm")
 			end
@@ -1576,7 +1614,7 @@ local mw_rot = {
 		if player:Stance() == 1 and player:Keybind("R") then
 			if	player:Talent("Rushing Jade Wind") 
 				and player:SpellCooldown("Rushing Jade Wind")<.3
-				and _A.enoughmana(116847)
+				and player:SpellUsable(116847)
 				then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
@@ -1711,7 +1749,6 @@ local inCombat = function()
 	if not player then return end
 	if player then
 		if not player:alive() then return end
-		-- sender
 		_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 		_A.interrupttreshhold = math.max(_A.latency, .3)
 		mw_rot.caching()
@@ -1727,9 +1764,10 @@ local inCombat = function()
 		mw_rot.Xuen()
 		mw_rot.turtletoss()
 		mw_rot.kick_legsweep()
-		mw_rot.healingsphere_shift()
-		mw_rot.dispellplzarena()
-		mw_rot.dispellplzany()
+		if mw_rot.healingsphere_shift() then return end
+		-- if mw_rot.dispellplzarena() then return end
+		if mw_rot.dispellplzany() then return end
+		mw_rot.diffusemagic()
 		mw_rot.spin_rjw()
 		mw_rot.kick_paralysis()
 		mw_rot.kick_spear()
@@ -1746,7 +1784,7 @@ local inCombat = function()
 		mw_rot.manatea()
 		mw_rot.ctrl_mode()
 		mw_rot.healstatue()
-		mw_rot.healingsphere()
+		if mw_rot.healingsphere() then return end
 		mw_rot.pvp_disable()
 		mw_rot.spin_keybind()
 		mw_rot.blackout_keybind()

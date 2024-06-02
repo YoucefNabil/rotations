@@ -705,6 +705,18 @@ affliction.rot = {
 			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
 		end
 	end,
+	
+	items_intflask = function()
+		if player:ItemCooldown(76085) == 0  
+			and player:ItemCount(76085) > 0
+			and player:ItemUsable(76085)
+			and not player:Buff(105691)
+			then
+			if pull_location()=="pvp" then
+				return player:useitem("Flask of the Warm Sun")
+			end
+		end
+	end,
 }
 ---========================
 ---========================
@@ -724,6 +736,7 @@ local inCombat = function()
 	if affliction.rot.exhaleopti()  then return end
 	--stuff
 	if affliction.rot.Buffbuff()  then return end
+	affliction.rot.items_intflask()
 	affliction.rot.items_intpot()
 	if affliction.rot.petres()  then return end
 	if affliction.rot.petres_supremacy() then return end
