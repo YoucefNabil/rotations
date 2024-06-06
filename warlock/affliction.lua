@@ -315,11 +315,11 @@ affliction.rot = {
 				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
 					obj = Obj,
-					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0) + (seeds[Obj.guid] or 0), -- ALWAYS ORDER THIS BY SCORE FIRST
+					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0), -- ALWAYS ORDER THIS BY SCORE FIRST
 					agonyscore = (agonytbl[Obj.guid] or 0),
 					unstablescore = (unstabletbl[Obj.guid] or 0),
 					corruptionscore = (corruptiontbl[Obj.guid] or 0),
-					seedscore = (seeds[Obj.guid] or 0),
+					-- seedscore = (seeds[Obj.guid] or 0),
 					range = Obj:range(2) or 40,
 					health = Obj:HealthActual() or 0,
 					isplayer = Obj.isplayer and 1 or 0
@@ -629,21 +629,6 @@ affliction.rot = {
 		end
 	end,
 	
-	sneedofcorruption = function()
-		if #_A.temptabletbl>1 then
-			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
-				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
-				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
-			end )
-		end
-		if _A.temptabletbl[1] and not player:buff(74434) and _A.myscore()>_A.temptabletbl[1].seedscore  then 
-			if not player:moving() and not player:Iscasting("Seed of Corruption") then
-				return _A.temptabletbl[1].obj:Cast("Seed of corruption")
-			end
-		end
-	end,
-	
 	haunt = function()
 		if _A.castdelay(48181, 1.5) and _A.shards>=1 and not player:isCastingAny() and not player:moving()  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
@@ -669,134 +654,134 @@ affliction.rot = {
 				return lowest:cast("fel flame")
 			end
 		end
-	end,
-	
-	drainsoul = function()
-		if not player:moving() 
-			and not player:Ischanneling("Drain Soul") 
-			and _A.enoughmana(1120)
+		end,
+		
+		drainsoul = function()
+			if not player:moving() 
+				and not player:Ischanneling("Drain Soul") 
+				and _A.enoughmana(1120)
 			then
-			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-			if lowest and lowest:exists() and lowest:health()<=20 then
-				return lowest:cast("Drain Soul", true)
-			end
+		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+		if lowest and lowest:exists() and lowest:health()<=20 then
+		return lowest:cast("Drain Soul", true)
 		end
-	end,
-	
-	soulswapopti = function()
+		end
+		end,
+		
+		soulswapopti = function()
 		if  #_A.temptabletbl>1 and soulswaporigin == nil and _A.enoughmana(86121) then
-			if #_A.temptabletblsoulswap > 1 then
-				table.sort( _A.temptabletblsoulswap, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
-			end
-			return _A.temptabletblsoulswap[1] and _A.temptabletblsoulswap[1].obj:Cast(86121)
+		if #_A.temptabletblsoulswap > 1 then
+		table.sort( _A.temptabletblsoulswap, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
 		end
-	end,
-	
-	exhaleopti = function()
+		return _A.temptabletblsoulswap[1] and _A.temptabletblsoulswap[1].obj:Cast(86121)
+		end
+		end,
+		
+		exhaleopti = function()
 		if soulswaporigin ~= nil then
-			if #_A.temptabletblexhale > 1 then
-				table.sort(_A.temptabletblexhale, function(a,b) return  (a.duration < b.duration )  -- order by duration
-					or (a.duration == b.duration and a.isplayer > b.isplayer ) -- if same (or no) duration, order by players first
-					-- or (a.duration == b.duration and a.isplayer == b.isplayer and a.rangedis < b.rangedis )  -- if same (or no) duration, and same isplayer, order by closest
-					or (a.duration == b.duration and a.isplayer == b.isplayer and a.health > b.health )  -- if same (or no) duration, and same isplayer, order by highest health
-				end
-				)
-			end
-			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
+		if #_A.temptabletblexhale > 1 then
+		table.sort(_A.temptabletblexhale, function(a,b) return  (a.duration < b.duration )  -- order by duration
+		or (a.duration == b.duration and a.isplayer > b.isplayer ) -- if same (or no) duration, order by players first
+		-- or (a.duration == b.duration and a.isplayer == b.isplayer and a.rangedis < b.rangedis )  -- if same (or no) duration, and same isplayer, order by closest
+		or (a.duration == b.duration and a.isplayer == b.isplayer and a.health > b.health )  -- if same (or no) duration, and same isplayer, order by highest health
 		end
-	end,
-	
-	items_intflask = function()
+		)
+		end
+		return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
+		end
+		end,
+		
+		items_intflask = function()
 		if player:ItemCooldown(76085) == 0  
-			and player:ItemCount(76085) > 0
-			and player:ItemUsable(76085)
-			and not player:Buff(105691)
-			then
-			if pull_location()=="pvp" then
-				return player:useitem("Flask of the Warm Sun")
-			end
+		and player:ItemCount(76085) > 0
+		and player:ItemUsable(76085)
+		and not player:Buff(105691)
+		then
+		if pull_location()=="pvp" then
+		return player:useitem("Flask of the Warm Sun")
 		end
-	end,
-}
----========================
----========================
----========================
----========================
----========================
-local inCombat = function()	
-	player = player or Object("player")
-	if not player then return end
-	affliction.rot.caching()
-	if player:Mounted() then return end
-	if _A.buttondelayfunc()  then return end
-	-- if player:lostcontrol()  then return end 
-	--delayed lifetap
-	if affliction.rot.lifetap_delayed() then return end
-	--exhale
-	if affliction.rot.exhaleopti()  then return end
-	--stuff
-	if affliction.rot.Buffbuff()  then return end
-	affliction.rot.items_intflask()
-	affliction.rot.items_intpot()
-	if affliction.rot.petres()  then return end
-	if affliction.rot.petres_supremacy() then return end
-	if affliction.rot.summ_healthstone() then return end
-	--bursts
-	affliction.rot.activetrinket()
-	affliction.rot.hasteburst()
-	--HEALS
-	affliction.rot.Darkregeneration()
-	affliction.rot.items_healthstone()
-	if affliction.rot.CauterizeMaster()  then return end
-	if affliction.rot.MortalCoil()  then return end
-	if affliction.rot.twilightward()  then return end
-	--utility
-	if affliction.rot.bloodhorrorremovalopti()  then return end
-	if affliction.rot.bloodhorror()  then return end
-	if affliction.rot.snare_curse()  then return end
-	-- shift
-	if modifier_shift()==true then
+		end
+		end,
+		}
+		---========================
+		---========================
+		---========================
+		---========================
+		---========================
+		local inCombat = function()	
+		player = player or Object("player")
+		if not player then return end
+		affliction.rot.caching()
+		if player:Mounted() then return end
+		if _A.buttondelayfunc()  then return end
+		-- if player:lostcontrol()  then return end 
+		--delayed lifetap
+		if affliction.rot.lifetap_delayed() then return end
+		--exhale
+		if affliction.rot.exhaleopti()  then return end
+		--stuff
+		if affliction.rot.Buffbuff()  then return end
+		affliction.rot.items_intflask()
+		affliction.rot.items_intpot()
+		if affliction.rot.petres()  then return end
+		if affliction.rot.petres_supremacy() then return end
+		if affliction.rot.summ_healthstone() then return end
+		--bursts
+		affliction.rot.activetrinket()
+		affliction.rot.hasteburst()
+		--HEALS
+		affliction.rot.Darkregeneration()
+		affliction.rot.items_healthstone()
+		if affliction.rot.CauterizeMaster()  then return end
+		if affliction.rot.MortalCoil()  then return end
+		if affliction.rot.twilightward()  then return end
+		--utility
+		if affliction.rot.bloodhorrorremovalopti()  then return end
+		if affliction.rot.bloodhorror()  then return end
+		if affliction.rot.snare_curse()  then return end
+		-- shift
+		if modifier_shift()==true then
 		if affliction.rot.haunt()  then return end
 		if affliction.rot.drainsoul() then return end
 		if affliction.rot.grasp()  then return end
 		if affliction.rot.felflame()  then return end
-	end
-	-- DOT DOT
-	if affliction.rot.agonysnap()  then return end
-	if affliction.rot.corruptionsnap()  then return end
-	-- if affliction.rot.sneedofcorruption()  then return end
-	if affliction.rot.unstablesnapinstant()  then return end
-	if affliction.rot.unstablesnap()  then return end
-	-- SOUL SWAP
-	if affliction.rot.soulswapopti()  then return end
-	--buff
-	affliction.rot.darkintent()
-	--fills
-	if affliction.rot.lifetap()  then return end
-	if affliction.rot.drainsoul() then return end
-	if affliction.rot.haunt()  then return end
-	if affliction.rot.grasp()  then return end
-	if affliction.rot.felflame() then return end
-end 
-local outCombat = function()
-	return inCombat()
-end
-local spellIds_Loc = function()
-end
-local blacklist = function()
-end
-_A.CR:Add(265, {
-	name = "Youcef's Affliction",
-	ic = inCombat,
-	ooc = outCombat,
-	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
-})
+		end
+		-- DOT DOT
+		if affliction.rot.agonysnap()  then return end
+		if affliction.rot.corruptionsnap()  then return end
+		-- if affliction.rot.sneedofcorruption()  then return end
+		if affliction.rot.unstablesnapinstant()  then return end
+		if affliction.rot.unstablesnap()  then return end
+		-- SOUL SWAP
+		if affliction.rot.soulswapopti()  then return end
+		--buff
+		affliction.rot.darkintent()
+		--fills
+		if affliction.rot.lifetap()  then return end
+		if affliction.rot.drainsoul() then return end
+		if affliction.rot.haunt()  then return end
+		if affliction.rot.grasp()  then return end
+		if affliction.rot.felflame() then return end
+		end 
+		local outCombat = function()
+		return inCombat()
+		end
+		local spellIds_Loc = function()
+		end
+		local blacklist = function()
+		end
+		_A.CR:Add(265, {
+		name = "Youcef's Affliction",
+		ic = inCombat,
+		ooc = outCombat,
+		use_lua_engine = true,
+		gui = GUI,
+		gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+		wow_ver = "5.4.8",
+		apep_ver = "1.1",
+		-- ids = spellIds_Loc,
+		-- blacklist = blacklist,
+		-- pooling = false,
+		load = exeOnLoad,
+		unload = exeOnUnload
+		})		

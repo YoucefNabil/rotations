@@ -736,12 +736,14 @@ unholy.rot = {
 	end,
 	
 	stance_dance = function()
-		if player:SpellCooldown(48263)<.3 then
-			if player:stance()~=1 and player:health()<50 then player:cast(48263)
+		if not _A.IsForeground() then
+			if player:SpellCooldown(48263)<.3 then
+				if player:stance()~=1 and player:health()<50 then player:cast(48263)
+				end
 			end
-		end
-		if player:SpellCooldown(48265)<.3 then
-			if player:stance()~=3 and player:health()>65 then player:cast(48265)
+			if player:SpellCooldown(48265)<.3 then
+				if player:stance()~=3 and player:health()>65 then player:cast(48265)
+				end
 			end
 		end
 	end,
@@ -763,7 +765,7 @@ unholy.rot = {
 			and (not player:BuffAny(16591) or not player:BuffAny(16595)) -- drink until you get both these buffs
 			then
 			if _A.pull_location=="pvp" then
-			player:useitem("Noggenfogger Elixir")
+				player:useitem("Noggenfogger Elixir")
 			end
 		end
 	end,
@@ -1168,21 +1170,21 @@ unholy.rot = {
 		end
 	end,
 	
-    remorselesswinter = function()
+	remorselesswinter = function()
 		if player:Talent("Remorseless Winter") and player:SpellCooldown("Remorseless Winter")<.3 --Remorseless Winter
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
 				if lowestmelee:exists() then
 					if _A.numplayerenemies(8) >= 2 then
-                        return player:Cast("Remorseless Winter")
+						return player:Cast("Remorseless Winter")
 					end
 				end
 			end
 		end
 	end,
 	
-    massgrip = function()
+	massgrip = function()
 		if player:Talent("Gorefiend's Grasp") and player:SpellCooldown("Gorefiend's Grasp")<.3 --Remorseless Winter
 			then
 			if _A.numplayerenemies(20) >= 3 then
@@ -1352,7 +1354,7 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end
-	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+	if UnitInVehicle("player") then return end
 	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player:lostcontrol()  then return end 
 	unholy.rot.GrabGrab()
@@ -1395,43 +1397,43 @@ local inCombat = function()
 	unholy.rot.DeathcoilHEAL()
 	unholy.rot.SoulReaper()
 	----pve part
-if _A.pull_location == "party" or _A.pull_location == "raid" then
-unholy.rot.dotsnapshotOutBreak()
-unholy.rot.dotsnapshotPS()
-unholy.rot.festeringstrike()
-end
-----pvp part
-if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-unholy.rot.NecroStrike()
-unholy.rot.bloodboilorphanblood()
-unholy.rot.icytouch()
-end
-----filler
-unholy.rot.Deathcoil()
-unholy.rot.festeringstrike()
-unholy.rot.scourgestrike()
-unholy.rot.Buffbuff()
-unholy.rot.blank()
+	if _A.pull_location == "party" or _A.pull_location == "raid" then
+		unholy.rot.dotsnapshotOutBreak()
+		unholy.rot.dotsnapshotPS()
+		unholy.rot.festeringstrike()
+	end
+	----pvp part
+	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+		unholy.rot.NecroStrike()
+		unholy.rot.bloodboilorphanblood()
+		unholy.rot.icytouch()
+	end
+	----filler
+	unholy.rot.Deathcoil()
+	unholy.rot.festeringstrike()
+	unholy.rot.scourgestrike()
+	unholy.rot.Buffbuff()
+	unholy.rot.blank()
 end
 local outCombat = function()
-return inCombat()
+	return inCombat()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
 _A.CR:Add(252, {
-name = "Youcef's Unholy DK",
-ic = inCombat,
-ooc = outCombat,
-use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	name = "Youcef's Unholy DK",
+	ic = inCombat,
+	ooc = outCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })

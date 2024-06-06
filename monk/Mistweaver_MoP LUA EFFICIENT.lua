@@ -217,7 +217,7 @@ local exeOnLoad = function()
 	function _A.nothealimmune(unit)
 		player = Object("player")
 		if unit then 
-			if unit:DebuffAny("Cyclone || Spirit of Redemption") then return false end
+			if unit:DebuffAny("Cyclone || Spirit of Redemption || Beast of Nightmares") then return false end
 			if unit:BuffAny("Spirit of Redemption") then return false end
 		end
 		return true
@@ -414,6 +414,7 @@ local exeOnLoad = function()
 		-- Variable MW_HealthAnalyzedTimespan
 		if startedcombat_at and (uptime - startedcombat_at)>minimum_MW_HealthAnalyzedTimespan then
 			MW_HealthAnalyzedTimespan = (uptime - startedcombat_at)
+			elseif MW_HealthAnalyzedTimespan ~= minimum_MW_HealthAnalyzedTimespan then MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
 		end
 		--
 		if MW_HealthUsedData[unit] then
@@ -485,6 +486,7 @@ local exeOnLoad = function()
 		-- Variable MW_AnalyzedTimespan
 		if manacombatstart and (uptime - manacombatstart)>minimumMW_AnalyzedTimespan then
 			MW_AnalyzedTimespan = (uptime - manacombatstart)
+			elseif MW_AnalyzedTimespan~=minimumMW_AnalyzedTimespan then MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan
 		end
 		--
 		local manaUsed = 0
@@ -851,7 +853,7 @@ local mw_rot = {
 		if player:combat() and player:SpellCooldown("Invoke Xuen, the White Tiger")==0 then
 			if player:buff("Call of Dominance") then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
-				if lowestmelee and lowestmelee:exists() then
+				if lowestmelee then
 				return	lowestmelee:cast("Invoke Xuen, the White Tiger") end
 			end
 		end
@@ -1252,7 +1254,7 @@ local mw_rot = {
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (_A.pull_location=="arena" and fr:ispet()) then
 						if fr:SpellRange("Detox")
-							and not fr:DebuffAny("Unstable Affliction")
+							and not fr:DebuffAny("Unstable Affliction || Vampiric Touch")
 							and fr:DebuffType("Magic || Poison || Disease") then
 							if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or fr:LostControl() or _A.pull_location == "party" or _A.pull_location == "raid"
 								-- annoying
@@ -1295,7 +1297,7 @@ local mw_rot = {
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox")
 							and _A.nothealimmune(fr)
-							and not fr:DebuffAny("Unstable Affliction")  then
+							and not fr:DebuffAny("Unstable Affliction || Vampiric Touch")  then
 							if fr:los() then
 								temptabletbl1[#temptabletbl1+1] = {
 									count = fr:debuffCountType("Magic || Poison || Disease") or 0,
@@ -1399,7 +1401,7 @@ local mw_rot = {
 	end,
 	
 	healingsphere_keybind = function()
-		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere")   then
+		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere")  and not player:keybind("R")   then
 			if player:Stance() == 1 then
 				if player:keybind("E") then
 					if player:SpellUsable(115460) then
@@ -1421,7 +1423,7 @@ local mw_rot = {
 	
 	healingsphere = function()
 		--if not player:LostControl() then
-		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere")   then
+		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere") and not player:keybind("R")   then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
 					if _A.manaengine()==true or _A.modifier_shift() then
@@ -1586,9 +1588,7 @@ local mw_rot = {
 				if player:Buff("Rushing Jade Wind") and not player:Buff("Muscle Memory") then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
-						if lowestmelee:exists() then
-							return lowestmelee:Cast("Jab")
-						end
+						return lowestmelee:Cast("Jab")
 					end
 				end
 			end
@@ -1602,9 +1602,7 @@ local mw_rot = {
 				or player:Chi()==0 then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
-					if lowestmelee:exists() then
-						return lowestmelee:Cast("Jab")
-					end
+					return lowestmelee:Cast("Jab")
 				end
 			end
 		end
@@ -1618,9 +1616,7 @@ local mw_rot = {
 				then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
-					if lowestmelee:exists() then
-						return player:Cast("Rushing Jade Wind")
-					end
+					return player:Cast("Rushing Jade Wind")
 				end
 			end
 		end
@@ -1666,7 +1662,7 @@ local mw_rot = {
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if not lowestmelee then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
-					if lowestmelee and lowestmelee:exists() then
+					if lowestmelee then
 						return lowestmelee:Cast("Crackling Jade Lightning")
 					end
 				end
@@ -1679,7 +1675,7 @@ local mw_rot = {
 		if _A.UnitExists("pet") then
 			local _target = Object("target")
 			local lowestmelee = Object("lowestEnemyInSpellRangeMINIMAL(Crackling Jade Lightning)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee then
 				if _target and _target.guid ~= lowestmelee.guid  then _A.CallWowApi("TargetUnit", lowestmelee.guid) end
 				if not _target then _A.CallWowApi("TargetUnit", lowestmelee.guid) end
 			end
@@ -1695,7 +1691,7 @@ local mw_rot = {
 		if _A.UnitExists("pet") then
 			local _focus = Object("focus")
 			local lowestmelee = Object("lowestEnemyInSpellRangeMINIMAL(Crackling Jade Lightning)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee then
 				if not _focus then _A.CallWowApi("FocusUnit", lowestmelee.guid) end
 				if _focus and _focus.guid ~= lowestmelee.guid  then _A.CallWowApi("FocusUnit", lowestmelee.guid) end
 				if _focus then _A.CallWowApi("RunMacroText", "/petattack focus") end
@@ -1736,9 +1732,7 @@ local mw_rot = {
 				end
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
-					if lowestmelee:exists() then
-						return player:Cast("Stance of the Fierce Tiger")
-					end
+					return player:Cast("Stance of the Fierce Tiger")
 				end
 			end
 		end
@@ -1764,16 +1758,16 @@ local inCombat = function()
 		mw_rot.Xuen()
 		mw_rot.turtletoss()
 		mw_rot.kick_legsweep()
-		if mw_rot.healingsphere_shift() then return end
+		mw_rot.healingsphere_shift()
 		-- if mw_rot.dispellplzarena() then return end
-		if mw_rot.dispellplzany() then return end
+		mw_rot.dispellplzany()
 		mw_rot.diffusemagic()
 		mw_rot.spin_rjw()
 		mw_rot.kick_paralysis()
 		mw_rot.kick_spear()
 		mw_rot.ringofpeace()
 		mw_rot.burstdisarm()
-		-- mw_rot.healingsphere_shift()
+		-- if mw_rot.healingsphere_shift() then return true
 		mw_rot.chi_wave()
 		mw_rot.chibrew()
 		mw_rot.fortifyingbrew()
@@ -1784,14 +1778,14 @@ local inCombat = function()
 		mw_rot.manatea()
 		mw_rot.ctrl_mode()
 		mw_rot.healstatue()
-		if mw_rot.healingsphere() then return end
+		mw_rot.healingsphere()
 		mw_rot.pvp_disable()
 		mw_rot.spin_keybind()
 		mw_rot.blackout_keybind()
 		mw_rot.jab_keybind_buff()
-		mw_rot.lightning_keybind()
+		mw_rot.lightning_keybind() 
 		mw_rot.tigerpalm_mm()
-		mw_rot.bk_buff()
+		mw_rot.bk_buff() 
 		mw_rot.tp_buff()
 		mw_rot.thunderfocustea()
 		mw_rot.uplift()
