@@ -1245,7 +1245,7 @@ unholy.rot = {
 	end,
 	
 	NecroStrike = function()
-		if  _A.death>=1
+		if  player:SpellCooldown("Necro Strike")<.3
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
@@ -1255,6 +1255,15 @@ unholy.rot = {
 						else return lowestmelee:Cast("Scourge Strike")
 					end
 				end
+			end
+		end
+	end,
+	
+	icytouchdispell = function()
+		if player:SpellCooldown("Icy Touch")<.3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
+			if lowestmelee and lowestmelee:exists() and lowestmelee:bufftype("Magic") then
+				return lowestmelee:Cast("Icy Touch")
 			end
 		end
 	end,
@@ -1404,6 +1413,7 @@ local inCombat = function()
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+		unholy.rot.icytouchdispell()
 		unholy.rot.NecroStrike()
 		unholy.rot.bloodboilorphanblood()
 		unholy.rot.icytouch()
