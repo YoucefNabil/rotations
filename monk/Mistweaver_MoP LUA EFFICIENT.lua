@@ -1,6 +1,7 @@
 local mediaPath, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
+local enteredworldat
 local bossestoavoid = { 69427, 68065, 69017, 69465, 71454 }
 local MyAddon = "niceAddon"
 _A.RegisterAddonMessagePrefix(MyAddon)
@@ -82,6 +83,12 @@ local healerspecid = {
 }
 local GUI = {
 }
+Listener:Add("Entering_timerPLZ2", "PLAYER_ENTERING_WORLD", function(event)
+	enteredworldat = _A.GetTime()
+	local stuffsds = pull_location()
+	_A.pull_location = stuffsds
+end
+)
 local exeOnLoad = function()
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .1)
@@ -413,9 +420,11 @@ local exeOnLoad = function()
 		local uptime = GetTime()
 		-- Variable MW_HealthAnalyzedTimespan
 		if startedcombat_at and (uptime - startedcombat_at)>minimum_MW_HealthAnalyzedTimespan then
-			MW_HealthAnalyzedTimespan = (uptime - startedcombat_at)
-			elseif MW_HealthAnalyzedTimespan ~= minimum_MW_HealthAnalyzedTimespan then MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
+		MW_HealthAnalyzedTimespan = (uptime - startedcombat_at)
+		elseif MW_HealthAnalyzedTimespan ~= minimum_MW_HealthAnalyzedTimespan then MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
 		end
+		-- Fixed
+		-- if MW_HealthAnalyzedTimespan ~= minimum_MW_HealthAnalyzedTimespan then MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan end
 		--
 		if MW_HealthUsedData[unit] then
 			MW_HealthUsedData[unit].healthUsed = 0
@@ -485,10 +494,12 @@ local exeOnLoad = function()
 		local uptime = GetTime()
 		-- Variable MW_AnalyzedTimespan
 		if manacombatstart and (uptime - manacombatstart)>minimumMW_AnalyzedTimespan then
-			MW_AnalyzedTimespan = (uptime - manacombatstart)
-			elseif MW_AnalyzedTimespan~=minimumMW_AnalyzedTimespan then MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan
+		MW_AnalyzedTimespan = (uptime - manacombatstart)
+		elseif MW_AnalyzedTimespan~=minimumMW_AnalyzedTimespan then MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan
 		end
-		--
+		-- fixed 
+		-- if MW_AnalyzedTimespan~=minimumMW_AnalyzedTimespan then MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan end
+		
 		local manaUsed = 0
 		MW_ManaUsedData[uptime] = Usage
 		for Time, Mana in pairs(MW_ManaUsedData) do
@@ -544,14 +555,14 @@ local exeOnLoad = function()
 					if next(MW_HealthUsedData[k])~=nil then
 						if MW_HealthUsedData[k].avgHDeltaPercent~=nil then 	
 							if UnitIsDeadOrGhost(k)==nil then
-								if UnitHealth(k)<UnitHealthMax(k) then
+								-- if UnitHealth(k)<UnitHealthMax(k) then
 									local unitObject = Object(k)
 									if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:distance()<=45 then
 										num = num + 1
 										sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
 										return sum/num
 									end
-								end
+								-- end
 							end
 						end
 					end
@@ -802,11 +813,6 @@ local function cditemRemains(itemid)
 	end
 end
 local mw_rot = {
-	
-	caching = function()
-		_A.pull_location = pull_location()
-	end,
-	
 	turtletoss = function()
 		local castName, _, _, _, castStartTime, castEndTime, _, _, castInterruptable = UnitCastingInfo("boss1");
 		local channelName, _, _, _, channelStartTime, channelEndTime, _, channelInterruptable = UnitChannelInfo("boss1");
@@ -1684,7 +1690,7 @@ local mw_rot = {
 	
 	detargetcc = function()
 		local _target = Object("target")
-		if _target and _target:enemy() and ( _target:range()<10 or _A.UnitExists("pet") )  and _A.dontbreakcc(_target)==false then _A.CallWowApi("ClearTarget") end
+		if _A.pull_location == "arena" and _target and _target:enemy() and ( _target:range()<10 or _A.UnitExists("pet") )  and _A.dontbreakcc(_target)==false then _A.CallWowApi("ClearTarget") end
 	end,
 	
 	autofocus = function()
@@ -1738,14 +1744,16 @@ local mw_rot = {
 		end
 	end,
 }
-local inCombat = function()	
+local inCombat = function()
+	if not enteredworldat then return end
+	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return end
 	player = Object("player")
 	if not player then return end
+	if not _A.pull_location then return end
 	if player then
 		if not player:alive() then return end
 		_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 		_A.interrupttreshhold = math.max(_A.latency, .3)
-		mw_rot.caching()
 		if _A.buttondelayfunc()  then return end
 		if player and player:mounted() then return end
 		if player and player:isChanneling("Crackling Jade Lightning") then return end

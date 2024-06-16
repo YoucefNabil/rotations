@@ -5,6 +5,7 @@ local C_Timer = _A.C_Timer
 local looping = C_Timer.NewTicker
 -- top of the CR
 local player
+local enteredworldat
 local unholy = {}
 local healerspecid = {
 	-- [265]="Lock Affli",
@@ -246,6 +247,13 @@ end
 
 local GUI = {
 }
+Listener:Add("Entering_timerPLZ", "PLAYER_ENTERING_WORLD", function(event)
+	enteredworldat = _A.GetTime()
+	local stuffsds = pull_location()
+	_A.pull_location = stuffsds
+	print("HEY HEY HEY HEY")
+end
+)
 local exeOnLoad = function()
 	
 	_A.pressedbuttonat = 0
@@ -722,7 +730,6 @@ unholy.rot = {
 	caching= function()
 		_A.dkenergy = _A.UnitPower("player") or 0
 		_A.blood, _A.frost, _A.unholy, _A.death, _A.total = _A.runes()
-		_A.pull_location = pull_location()
 	end,
 	
 	items_healthstone = function()
@@ -1250,7 +1257,7 @@ unholy.rot = {
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
 				if lowestmelee:exists() then
-					if lowestmelee.isplayer then
+					if lowestmelee.isplayer and player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") then
 						return lowestmelee:Cast("Necrotic Strike")
 						else return lowestmelee:Cast("Scourge Strike")
 					end
@@ -1261,9 +1268,11 @@ unholy.rot = {
 	
 	icytouchdispell = function()
 		if player:SpellCooldown("Icy Touch")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
-			if lowestmelee and lowestmelee:exists() and lowestmelee:bufftype("Magic") then
-				return lowestmelee:Cast("Icy Touch")
+			if _A.frost>=1 or not player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
+				if lowestmelee and lowestmelee:exists() and lowestmelee:bufftype("Magic") then
+					return lowestmelee:Cast("Icy Touch")
+				end
 			end
 		end
 	end,
@@ -1358,8 +1367,11 @@ unholy.rot = {
 ---========================
 ---========================
 local inCombat = function()	
+	if not enteredworldat then return end
+	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return end
 	player = Object("player")
 	if not player then return end
+	if not _A.pull_location then return end
 	if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end

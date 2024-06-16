@@ -45,14 +45,13 @@ end
 
 --
 local function MyTickerCallback(ticker)
+	-- local newDuration = math.random(5,15)/10
+	-- local newDuration = .1
+	local newDuration = _A.Parser.frequency or .1
+	local updatedDuration = ticker:UpdateTicker(newDuration)
 	local battlefieldstatus = GetBattlefieldWinner()
 	if battlefieldstatus~=nil then LeaveBattlefield() end
-	-- CallWowApi("AcceptBattlefieldPort", 1,1)
 	ClickthisPleasepvp()
-	-- local newDuration = math.random(5,15)/10
-	local newDuration = .1
-	local updatedDuration = ticker:UpdateTicker(newDuration)
-	-- print(newDuration)
 end
 C_Timer.NewTicker(1, MyTickerCallback, false, "clickpvp")
 ---
