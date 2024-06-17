@@ -47,14 +47,14 @@ end
 local function MyTickerCallback(ticker)
 	-- local newDuration = math.random(5,15)/10
 	-- local newDuration = .1
+	if battlefieldstatus~=nil then LeaveBattlefield() end
+	ClickthisPleasepvp()
 	local newDuration = _A.Parser.frequency or .1
 	local updatedDuration = ticker:UpdateTicker(newDuration)
 	local battlefieldstatus = GetBattlefieldWinner()
-	if battlefieldstatus~=nil then LeaveBattlefield() end
-	ClickthisPleasepvp()
 end
 C_Timer.NewTicker(1, MyTickerCallback, false, "clickpvp")
 ---
 C_Timer.NewTicker(garbagedelay, function()
-collectgarbage("collect")
+	collectgarbage("collect")
 end, false, "garbage")
