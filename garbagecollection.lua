@@ -55,6 +55,6 @@ local function MyTickerCallback(ticker)
 end
 C_Timer.NewTicker(1, MyTickerCallback, false, "clickpvp")
 ---
--- C_Timer.NewTicker(garbagedelay, function()
--- collectgarbage("collect")
--- end, false, "garbage")
+C_Timer.NewTicker(garbagedelay, function()
+collectgarbage("collect")
+end, false, "garbage")
