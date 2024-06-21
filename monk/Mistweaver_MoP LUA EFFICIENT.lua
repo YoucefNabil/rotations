@@ -576,7 +576,9 @@ local exeOnLoad = function()
 		if player:buff("Lucidity") then return true end
 		if
 			-- (_A.avgDeltaPercent>=(averageHPv2())) -- old method
-			(_A.avgDeltaPercent>=(averageHPv2()-effectivemanaregen())) -- new method (more mana hungry)
+			((_A.avgDeltaPercent/2)>=(averageHPv2()-effectivemanaregen())) -- new method (more mana hungry)
+			-- ((_A.avgDeltaPercent/1.5)>=(averageHPv2()-effectivemanaregen())) -- new method (more mana hungry)
+			-- ((_A.avgDeltaPercent)>=(averageHPv2()-effectivemanaregen())) -- new method (more mana hungry)
 			-- -1 >= -2
 			then return true
 		end

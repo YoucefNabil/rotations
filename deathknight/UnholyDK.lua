@@ -913,7 +913,7 @@ unholy.rot = {
 	
 	strangulatesnipe = function()
 		if (_A.blood>=1 or _A.death>=1)  then
-			if   not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 then
+			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _A.someoneisuperlow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
 						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
@@ -922,7 +922,6 @@ unholy.rot = {
 						and not obj:lostcontrol()
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and _A.notimmune(obj)
-						and _A.someoneisuperlow()
 						and obj:los() then
 						obj:Cast("Strangulate", true)
 					end
