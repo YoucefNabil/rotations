@@ -745,11 +745,13 @@ unholy.rot = {
 	stance_dance = function()
 		if not _A.IsForeground() then
 			if player:SpellCooldown(48263)<.3 then
-				if player:stance()~=1 and player:health()<50 then player:cast(48263)
+				if player:stance()~=1 and player:health()<50 then return player:cast(48263)
+				end
+				if player:buff("Horde Flag") or player:buff("Alliance Flag") then return player:cast(48263)
 				end
 			end
 			if player:SpellCooldown(48265)<.3 then
-				if player:stance()~=3 and player:health()>65 then player:cast(48265)
+				if player:stance()~=3 and player:health()>65 and not player:buff("Horde Flag") and not player:buff("Alliance Flag") then return player:cast(48265) -- unholy
 				end
 			end
 		end
@@ -916,6 +918,29 @@ unholy.rot = {
 			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _A.someoneisuperlow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
+						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
+						and not obj:DebuffAny("Strangulate")
+						and not obj:State("silence")
+						and not obj:lostcontrol()
+						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
+						and _A.notimmune(obj)
+						and obj:los() then
+						obj:Cast("Strangulate", true)
+					end
+				end
+			end
+		end
+	end,
+	
+	strangulatesnipe_new = function()
+		local lowhpcheck = false
+		if (_A.blood>=1 or _A.death>=1)  then
+			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 then
+				for _, obj in pairs(_A.OM:Get('Enemy')) do
+					if obj.isplayer and obj:range()<=40 and obj:health()<=35 then 
+						if lowhpcheck ~= true then lowhpcheck = true end 
+					end
+					if lowhpcheck == true and obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
 						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and not obj:DebuffAny("Strangulate")
 						and not obj:State("silence")
@@ -1267,12 +1292,13 @@ unholy.rot = {
 	
 	icytouchdispell = function()
 		if player:SpellCooldown("Icy Touch")<.3 then
-			if _A.frost>=1 or not player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
-				if lowestmelee and lowestmelee:exists() and lowestmelee:bufftype("Magic") then
-					return lowestmelee:Cast("Icy Touch")
-				end
+			-- if _A.frost>=1 or not player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") then
+			-- if _A.frost>=1 or not player:buff("Unholy Frenzy") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
+			if lowestmelee and lowestmelee:exists() and lowestmelee:bufftype("Magic") then
+				return lowestmelee:Cast("Icy Touch")
 			end
+			-- end
 		end
 	end,
 	
@@ -1413,48 +1439,48 @@ local inCombat = function()
 	unholy.rot.outbreak()
 	unholy.rot.dotapplication()
 	unholy.rot.pettransform()
-	unholy.rot.BonusDeathStrike()
-	unholy.rot.DeathcoilHEAL()
-	unholy.rot.SoulReaper()
-	----pve part
-	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		unholy.rot.dotsnapshotOutBreak()
-		unholy.rot.dotsnapshotPS()
-		unholy.rot.festeringstrike()
-	end
-	----pvp part
-	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		unholy.rot.icytouchdispell()
-		unholy.rot.NecroStrike()
-		unholy.rot.bloodboilorphanblood()
-		unholy.rot.icytouch()
-	end
-	----filler
-	unholy.rot.Deathcoil()
-	unholy.rot.festeringstrike()
-	unholy.rot.scourgestrike()
-	unholy.rot.Buffbuff()
-	unholy.rot.blank()
+unholy.rot.BonusDeathStrike()
+unholy.rot.DeathcoilHEAL()
+unholy.rot.SoulReaper()
+----pve part
+if _A.pull_location == "party" or _A.pull_location == "raid" then
+unholy.rot.dotsnapshotOutBreak()
+unholy.rot.dotsnapshotPS()
+unholy.rot.festeringstrike()
+end
+----pvp part
+if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+unholy.rot.icytouchdispell()
+unholy.rot.NecroStrike()
+unholy.rot.bloodboilorphanblood()
+unholy.rot.icytouch()
+end
+----filler
+unholy.rot.Deathcoil()
+unholy.rot.festeringstrike()
+unholy.rot.scourgestrike()
+unholy.rot.Buffbuff()
+unholy.rot.blank()
 end
 local outCombat = function()
-	return inCombat()
+return inCombat()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
 _A.CR:Add(252, {
-	name = "Youcef's Unholy DK",
-	ic = inCombat,
-	ooc = outCombat,
-	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+name = "Youcef's Unholy DK",
+ic = inCombat,
+ooc = outCombat,
+use_lua_engine = true,
+gui = GUI,
+gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+wow_ver = "5.4.8",
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })

@@ -222,6 +222,34 @@ local exeOnLoad = function()
 	end
 	)
 end
+_A.FakeUnits:Add('mostCbEnemies', function(num, area_distance_min)
+    local count, tempTable = {}, {}
+    local area, distance, min = _A.StrExplode(area_distance_min)
+    area = tonumber(area) or 8
+    distance = tonumber(distance) or 40
+    min = tonumber(min) or 1
+    local enemiesCombat = _A.OM:Get('EnemyCombat')
+    for _, o in pairs(enemiesCombat) do
+        if o:distance() <= distance
+           and o:los() then
+            count = 0
+            for _, o2 in pairs(enemiesCombat) do
+                if o.guid~=o2.guid
+                  and o:distancefrom(o2) <= area then
+                    count = count + 1
+                end
+            end
+            tempTable[#tempTable+1] = {
+                guid = o.key,
+                mobsNear = count
+            }
+        end     
+    end
+    if #tempTable>1 then
+        table.sort( tempTable, function(a,b) return a.mobsNear > b.mobsNear end )
+    end
+    return tempTable[num] and tempTable[num].mobsNear>=min and tempTable[num].guid
+end)
 local exeOnUnload = function()
 end
 local usableitems= { -- item slots

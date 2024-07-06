@@ -90,8 +90,8 @@ Listener:Add("Entering_timerPLZ2", "PLAYER_ENTERING_WORLD", function(event)
 end
 )
 local exeOnLoad = function()
-	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
-	_A.interrupttreshhold = math.max(_A.latency, .1)
+	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
+	_A.interrupttreshhold = .2 + _A.latency
 	_A.pressedbuttonat = 0
 	_A.buttondelay = 0.6
 	local STARTSLOT = 97
@@ -1754,8 +1754,8 @@ local inCombat = function()
 	if not _A.pull_location then return end
 	if player then
 		if not player:alive() then return end
-		_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
-		_A.interrupttreshhold = math.max(_A.latency, .3)
+		_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
+		_A.interrupttreshhold = .2 + _A.latency
 		if _A.buttondelayfunc()  then return end
 		if player and player:mounted() then return end
 		if player and player:isChanneling("Crackling Jade Lightning") then return end
@@ -1767,7 +1767,7 @@ local inCombat = function()
 		mw_rot.activetrinket()
 		mw_rot.Xuen()
 		mw_rot.turtletoss()
-		mw_rot.kick_legsweep()
+		-- mw_rot.kick_legsweep()
 		mw_rot.healingsphere_shift()
 		-- if mw_rot.dispellplzarena() then return end
 		mw_rot.dispellplzany()
