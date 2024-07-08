@@ -301,6 +301,7 @@ local exeOnLoad = function()
 		local x, y, z = _A.ObjectPosition(unit)
 		local facing = _A.ObjectFacing(unit)
 		local speed = _A.GetUnitSpeed(unit)
+		if not munit then return end
 		-- Check if the unit is standing still or moving backward
 		if not munit:Moving() or _A.UnitIsMovingBackward(unit) then
 			return x, y, z
@@ -321,6 +322,7 @@ local exeOnLoad = function()
 	function _A.CastPredictedPos(unit, spell, distance)
 		local player = Object("player")
 		local px, py, pz = _A.pSpeed(unit, distance)
+		if not px then return end
 		_A.CallWowApi("CastSpellByName", spell)
 		if player:SpellIsTargeting() then
 			_A.ClickPosition(px, py, pz)
@@ -486,8 +488,8 @@ brewmaster.rot = {
 	end,
 
 	elusivebrew = function()
-		if player:SpellCooldown("Elusive Brew")==0 and  player:BuffStack("Elusive Brew")>=8 and player:Health()<=40
-			and player:debuff("Heavy Stagger") 
+		if player:SpellCooldown("Elusive Brew")==0 and  player:BuffStack("Elusive Brew")>=8 and player:Health()<=55
+			and (player:debuff("Heavy Stagger") or player:debuff("Moderate Stagger"))
 			then
 			return player:Cast("elusive brew")
 		end

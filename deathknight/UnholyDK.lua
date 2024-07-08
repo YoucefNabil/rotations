@@ -868,7 +868,7 @@ unholy.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike") and obj:infront()
 					and obj:caninterrupt() 
-					and (obj:castsecond() < 0.4 or obj:chanpercent()<=90
+					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
 					)
 					and _A.notimmune(obj)
 					then
@@ -884,7 +884,7 @@ unholy.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if (_A.pull_location ~= "arena") or (_A.pull_location == "arena" and not hunterspecs[_A.UnitSpec(obj.guid)]) then
 					if obj.isplayer and obj:isCastingAny() and obj:SpellRange("Death Grip") and obj:infront() 
-						and (player:SpellCooldown("Mind Freeze")>.3 or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
+						and (player:SpellCooldown("Mind Freeze")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
 						and not obj:State("root")
 						and _A.notimmune(obj)
 						and obj:los() then
@@ -1396,6 +1396,9 @@ local inCombat = function()
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return end
 	player = Object("player")
 	if not player then return end
+	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
+	_A.interrupttreshhold = .2 + _A.latency
+	if not _A.latency and not _A.interrupttreshhold then return end
 	if not _A.pull_location then return end
 	if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
@@ -1439,48 +1442,48 @@ local inCombat = function()
 	unholy.rot.outbreak()
 	unholy.rot.dotapplication()
 	unholy.rot.pettransform()
-unholy.rot.BonusDeathStrike()
-unholy.rot.DeathcoilHEAL()
-unholy.rot.SoulReaper()
-----pve part
-if _A.pull_location == "party" or _A.pull_location == "raid" then
-unholy.rot.dotsnapshotOutBreak()
-unholy.rot.dotsnapshotPS()
-unholy.rot.festeringstrike()
-end
-----pvp part
-if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-unholy.rot.icytouchdispell()
-unholy.rot.NecroStrike()
-unholy.rot.bloodboilorphanblood()
-unholy.rot.icytouch()
-end
-----filler
-unholy.rot.Deathcoil()
-unholy.rot.festeringstrike()
-unholy.rot.scourgestrike()
-unholy.rot.Buffbuff()
-unholy.rot.blank()
+	unholy.rot.BonusDeathStrike()
+	unholy.rot.DeathcoilHEAL()
+	unholy.rot.SoulReaper()
+	----pve part
+	if _A.pull_location == "party" or _A.pull_location == "raid" then
+		unholy.rot.dotsnapshotOutBreak()
+		unholy.rot.dotsnapshotPS()
+		unholy.rot.festeringstrike()
+	end
+	----pvp part
+	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+		unholy.rot.icytouchdispell()
+		unholy.rot.NecroStrike()
+		unholy.rot.bloodboilorphanblood()
+		unholy.rot.icytouch()
+	end
+	----filler
+	unholy.rot.Deathcoil()
+	unholy.rot.festeringstrike()
+	unholy.rot.scourgestrike()
+	unholy.rot.Buffbuff()
+	unholy.rot.blank()
 end
 local outCombat = function()
-return inCombat()
+	return inCombat()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
 _A.CR:Add(252, {
-name = "Youcef's Unholy DK",
-ic = inCombat,
-ooc = outCombat,
-use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	name = "Youcef's Unholy DK",
+	ic = inCombat,
+	ooc = outCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })
