@@ -806,8 +806,8 @@ unholy.rot = {
 	activetrinket = function()
 		if player:combat() and player:buff("Surge of Victory") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if lowestmelee 
-				and lowestmelee:health()>=65
+			if lowestmelee and lowestmelee.isplayer
+				-- and lowestmelee:health()>=35
 				then 
 				for i=1, #usableitems do
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
@@ -824,6 +824,7 @@ unholy.rot = {
 	
 	Frenzy = function()
 		if player:combat() and player:buff("Call of Victory") then
+		-- if player:combat() and player:buff("Surge of Victory") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee
 				and lowestmelee:health()>=65

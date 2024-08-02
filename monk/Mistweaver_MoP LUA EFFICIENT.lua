@@ -249,7 +249,7 @@ local exeOnLoad = function()
 	end
 	_A.FakeUnits:Add('lowestall', function(num, spell)
 		local tempTable = {}
-		local location = pull_location()
+		local location = _A.pull_location
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
 				if _A.nothealimmune(fr) and fr:los() then
@@ -420,8 +420,8 @@ local exeOnLoad = function()
 		local uptime = GetTime()
 		-- Variable MW_HealthAnalyzedTimespan
 		if startedcombat_at and (uptime - startedcombat_at)>minimum_MW_HealthAnalyzedTimespan then
-		MW_HealthAnalyzedTimespan = (uptime - startedcombat_at)
-		elseif MW_HealthAnalyzedTimespan ~= minimum_MW_HealthAnalyzedTimespan then MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
+			MW_HealthAnalyzedTimespan = (uptime - startedcombat_at)
+			elseif MW_HealthAnalyzedTimespan ~= minimum_MW_HealthAnalyzedTimespan then MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
 		end
 		-- Fixed
 		-- if MW_HealthAnalyzedTimespan ~= minimum_MW_HealthAnalyzedTimespan then MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan end
@@ -429,6 +429,7 @@ local exeOnLoad = function()
 		if MW_HealthUsedData[unit] then
 			MW_HealthUsedData[unit].healthUsed = 0
 			MW_HealthUsedData[unit].healthnegative = 0
+			MW_HealthUsedData[unit].healthpositive = 0
 			MW_HealthUsedData[unit].t[uptime] = Usage
 			for Time, Health in pairs(MW_HealthUsedData[unit].t) do
 				if uptime - Time > MW_HealthAnalyzedTimespan then
@@ -437,11 +438,16 @@ local exeOnLoad = function()
 					MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
 					if Health<0 then
 						MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
+						else MW_HealthUsedData[unit].healthpositive = MW_HealthUsedData[unit].healthpositive + Health
 					end
 				end
 			end
 			MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
 			MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100)/Max
+			--
+			MW_HealthUsedData[unit].healthnegativepercent = (MW_HealthUsedData[unit].healthnegative * 100)/Max
+			--
+			MW_HealthUsedData[unit].healthpositivepercent = (MW_HealthUsedData[unit].healthpositive * 100)/Max
 		end
 	end
 	--====================================================== MANA
@@ -494,8 +500,8 @@ local exeOnLoad = function()
 		local uptime = GetTime()
 		-- Variable MW_AnalyzedTimespan
 		if manacombatstart and (uptime - manacombatstart)>minimumMW_AnalyzedTimespan then
-		MW_AnalyzedTimespan = (uptime - manacombatstart)
-		elseif MW_AnalyzedTimespan~=minimumMW_AnalyzedTimespan then MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan
+			MW_AnalyzedTimespan = (uptime - manacombatstart)
+			elseif MW_AnalyzedTimespan~=minimumMW_AnalyzedTimespan then MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan
 		end
 		-- fixed 
 		-- if MW_AnalyzedTimespan~=minimumMW_AnalyzedTimespan then MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan end
@@ -556,12 +562,12 @@ local exeOnLoad = function()
 						if MW_HealthUsedData[k].avgHDeltaPercent~=nil then 	
 							if UnitIsDeadOrGhost(k)==nil then
 								-- if UnitHealth(k)<UnitHealthMax(k) then
-									local unitObject = Object(k)
-									if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:distance()<=45 then
-										num = num + 1
-										sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
-										return sum/num
-									end
+								local unitObject = Object(k)
+								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:distance()<=45 then
+									num = num + 1
+									sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
+									return sum/num
+								end
 								-- end
 							end
 						end
@@ -570,18 +576,13 @@ local exeOnLoad = function()
 			end
 		end
 		return 0
-	end
+	end 
 	function _A.manaengine() -- make it so it's tied with group hp
 		player = player or Object("player")
 		if player:buff("Lucidity") then return true end
-		if
-			-- (_A.avgDeltaPercent>=(averageHPv2())) -- old method
-			((_A.avgDeltaPercent/2)>=(averageHPv2()-effectivemanaregen())) -- new method (more mana hungry)
-			-- ((_A.avgDeltaPercent/1.5)>=(averageHPv2()-effectivemanaregen())) -- new method (more mana hungry)
-			-- ((_A.avgDeltaPercent)>=(averageHPv2()-effectivemanaregen())) -- new method (more mana hungry)
-			-- -1 >= -2
-			then return true
-		end
+		-- mana based
+		if ((_A.avgDeltaPercent/2)>=(averageHPv2()-effectivemanaregen())) then return true end -- new method (more mana hungry)
+		-- HEALTH BASED (mana not taken into account, best for pvp)
 		return false
 	end
 	function _A.enoughmana(id)
@@ -1749,9 +1750,9 @@ local mw_rot = {
 local inCombat = function()
 	if not enteredworldat then return end
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return end
+	if not _A.pull_location then return end
 	player = Object("player")
 	if not player then return end
-	if not _A.pull_location then return end
 	if player then
 		if not player:alive() then return end
 		_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
@@ -1760,7 +1761,7 @@ local inCombat = function()
 		if player and player:mounted() then return end
 		if player and player:isChanneling("Crackling Jade Lightning") then return end
 		mw_rot.detargetcc()
-		-- mw_rot.healingsphere_keybind()
+		mw_rot.healingsphere_keybind()
 		mw_rot.items_healthstone() 
 		mw_rot.items_noggenfogger()
 		mw_rot.items_intflask()
