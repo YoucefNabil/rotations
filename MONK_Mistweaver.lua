@@ -1978,6 +1978,7 @@ local inCombat = function()
 	-- Out of GCD
 	mw_rot.thunderfocustea()
 	mw_rot.kick_spear()
+	mw_rot.activetrinket()
 	--
 	if _A.buttondelayfunc()  then return end
 	if player and player:mounted() then return end
@@ -1989,7 +1990,6 @@ local inCombat = function()
 	if mw_rot.items_healthstone() then return end 
 	if mw_rot.items_noggenfogger() then return end
 	if mw_rot.items_intflask() then return end
-	if mw_rot.activetrinket() then return end
 	-- if mw_rot.paralysis_test() then return end
 	if mw_rot.Xuen() then return end
 	if mw_rot.turtletoss() then return end
@@ -2029,7 +2029,6 @@ local inCombat = function()
 	if mw_rot.healingsphere() then return end
 	-- old pvp slot
 	-- mw_rot.lightning_keybind()
-	if mw_rot.thunderfocustea() then return end
 	if mw_rot.uplift() then return end
 	if mw_rot.expelharm() then return end
 	if mw_rot.statbuff() then return end
