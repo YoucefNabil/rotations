@@ -1008,7 +1008,7 @@ unholy.rot = {
 						-- and obj:infront() 
 						and not obj:DebuffAny("Strangulate")
 						and not obj:State("silence")
-						and not obj:lostcontrol()
+						and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and _A.notimmune(obj)
 						and obj:los() then
@@ -1032,7 +1032,7 @@ unholy.rot = {
 						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and not obj:DebuffAny("Strangulate")
 						and not obj:State("silence")
-						and not obj:lostcontrol()
+						and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and _A.notimmune(obj)
 						and obj:los() then
@@ -1048,7 +1048,7 @@ unholy.rot = {
 		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  and obj:infront() 
-					and not obj:lostcontrol()
+					and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
 					and not obj:DebuffAny("Asphyxiate")
 					and not obj:State("silence")
 					and (obj:drState("Asphyxiate") == 1 or obj:drState("Asphyxiate")==-1)
@@ -1066,7 +1066,7 @@ unholy.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer  and not _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  and obj:infront()
 					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
-					and not obj:lostcontrol()
+					and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
 					and not obj:DebuffAny("Asphyxiate")
 					and not obj:BuffAny("bladestorm")
 					and not obj:BuffAny("Anti-Magic Shell")
@@ -1087,7 +1087,7 @@ unholy.rot = {
 					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)] or darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)] 
 						then
 						if obj:SpellRange("Dark Simulacrum") and obj:infront() and not obj:State("silence") 
-							and not obj:lostcontrol()
+							and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
 							and _A.notimmune(obj)
 							and obj:los() 
 							then
