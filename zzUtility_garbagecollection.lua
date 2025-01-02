@@ -50,8 +50,8 @@ end
 local function MyTickerCallback(ticker)
 	-- local newDuration = math.random(5,15)/10
 	-- local newDuration = .1
-	local battlefieldstatus = GetBattlefieldWinner()
-	if battlefieldstatus~=nil then LeaveBattlefield() end
+	-- local battlefieldstatus = GetBattlefieldWinner()
+	-- if battlefieldstatus~=nil then LeaveBattlefield() end
 	ClickthisPleasepvp()
 	local newDuration = _A.Parser.frequency or .1
 	local updatedDuration = ticker:UpdateTicker(newDuration)
