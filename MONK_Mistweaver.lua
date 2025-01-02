@@ -1463,34 +1463,10 @@ local mw_rot = {
 	healstatue = function()
 		--if not player:LostControl() then
 		if player:Stance() == 1   then
-			
-			if	player:SpellCooldown("Summon Jade Serpent Statue")<.3
+			if	player:SpellCooldown("Summon Jade Serpent Statue")<.3 and player:SpellUsable(115313) 
 				then
 				-- return player:CastGround("Summon Jade Serpent Statue")
 				return _A.clickcast(player,"Summon Jade Serpent Statue")
-			end
-		end
-	end,
-	
-	healingsphere_shift = function()
-		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere") then
-			if player:Stance() == 1 then
-				if _A.modifier_shift() then
-					if player:SpellUsable(115460) then
-						local lowest = Object("lowestall")
-						if lowest and lowest:exists() then
-							if (lowest:healthmonk() < 99) then
-								if lowest:Distance() < 40 then
-									-- if lowest:los() then
-									-- return lowest:CastGround("Healing Sphere")
-									-- return _A.clickcast(lowest,"Healing Sphere")
-									return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 8)
-									-- end
-								end
-							end
-						end
-					end
-				end
 			end
 		end
 	end,
@@ -1897,7 +1873,11 @@ local inCombat = function()
 	if mw_rot.kick_legsweep() then return end
 	if mw_rot.ringofpeacev2() then return end
 	if mw_rot.renewingmist() then return end
-	if mw_rot.healingsphere_shift() then return end
+	if _A.modifier_shift() then
+		if mw_rot.thunderfocustea() then return end
+		if mw_rot.uplift() then return end
+		if mw_rot.healingsphere() then return end
+	end
 	if not player:keybind("R") then
 		if mw_rot.tigerpalm_mm() then return end
 	end
@@ -1933,7 +1913,7 @@ local inCombat = function()
 	if mw_rot.thunderfocustea() then return end
 	if mw_rot.uplift() then return end
 	if mw_rot.expelharm() then return end
-	if mw_rot.jab_filler() then return end
+	-- if mw_rot.jab_filler() then return end
 	if mw_rot.statbuff() then return end
 	if mw_rot.dpsstance_healstance_keybind() then return end
 	if not _A.modifier_shift() then
