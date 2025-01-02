@@ -1,6 +1,6 @@
-local _, class = UnitClass("player");
-if class ~= "WARLOCK" then return end;
-local mediaPath, _A = ...
+local _,class = UnitClass("player")
+if class~="WARLOCK" then return end
+local HarmonyMedia, _A, Harmony = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 _A.pressedbuttonat = 0
 _A.buttondelay = 0.5

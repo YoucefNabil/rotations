@@ -1,4 +1,6 @@
-local mediaPath, _A = ...
+local _,class = UnitClass("player")
+if class~="WARLOCK" then return end
+local HarmonyMedia, _A, Harmony = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
 -- top of the CR
@@ -275,6 +277,7 @@ destro.rot = {
 					obj = Obj,
 					havoc = ((havoctable[Obj.guid]==nil) or (numbads==1)) and 1 or 0,
 					isplayer = Obj.isplayer and 1 or 0,
+					-- ishealer = healerspecid[_A.UnitSpec(Obj.guid)] or 0,
 					health = Obj:health()
 				}
 			end
@@ -606,7 +609,8 @@ destro.rot = {
 	end,
 	
 	chaosbolt = function()
-		if -- _A.BurningEmbers >= 3 or 
+		if 
+		-- _A.BurningEmbers >= 3 or 
 			-- (_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability")) or
 			(_A.BurningEmbers >= 1 and modifier_ctrl())
 			then

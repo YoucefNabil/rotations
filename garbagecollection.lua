@@ -14,11 +14,14 @@ end
 )
 Listener:Add("BG", {'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS'}, function(evt)
 	if evt=="LFG_PROPOSAL_SHOW" then
+		if not _A.IsForeground() then _A.FlashWow() end
 		_A.AcceptProposal()
 		else
 		for i=1, 3 do
 			local status, _, _ = _A.GetBattlefieldStatus(i)
 			if status == "confirm" then
+				if not _A.IsForeground() then _A.FlashWow() end
+				
 				_A.AcceptBattlefieldPort(i,1)
 				_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
 			end
@@ -40,7 +43,7 @@ local ClickthisPleasepvp = function()
 	if #tempTable > 1 then
 		table.sort(tempTable, function(a, b) return a.distance < b.distance end)
 	end
-	if tempTable[1] and tempTable[1].distance <= 15 then _A.ObjectInteract(tempTable[1].guid) end
+	if tempTable[1] and tempTable[1].distance <= 30 then _A.ObjectInteract(tempTable[1].guid) end
 end
 
 --

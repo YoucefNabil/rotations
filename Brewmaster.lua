@@ -1,10 +1,11 @@
-local _, class = UnitClass("player");
-if class ~= "MONK" then return end;
-local mediaPath, _A = ...
+local _,class = UnitClass("player")
+if class~="MONK" then return end
+local HarmonyMedia, _A, Harmony = ...
+-- local _, class = UnitClass("player");
+-- if class ~= "MONK" then return end;
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local hooksecurefunc =_A.hooksecurefunc
-local player
 local brewmaster = {}
 local immunebuffs = {
 	"Deterrence",
@@ -149,215 +150,216 @@ end
 
 local GUI = {
 }
-local exeOnLoad = function()
-	local STARTSLOT = 85
-	local STOPSLOT = 92
-	_A.pressedbuttonat = 0
-	_A.buttondelay = 0.6
-	Listener:Add("warrior_stuff", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
-		_A.pull_location = pull_location()
-	end)
+local STARTSLOT = 85
+local STOPSLOT = 92
+_A.pressedbuttonat = 0
+_A.buttondelay = 0.6
+_A.Listener:Add("warrior_stuff", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
+	_A.pull_location = pull_location()
+end)
+_A.pull_location = _A.pull_location or pull_location()
+--
+hooksecurefunc("UseAction", function(...)
+	local slot, target, clickType = ...
+	local Type, id, subType, spellID
+	-- print(slot)
+	local player = _A.Object("player")
+	if slot==STARTSLOT then 
+		_A.pressedbuttonat = 0
+		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
+			_A.Interface:toggleToggle("mastertoggle", true)
+			_A.print("ON")
+		end
+	end
+	if slot==STOPSLOT then 
+		-- TEST STUFF
+		-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
+		-- TEST STUFF
+		-- local target = Object("target")
+		-- if target and target:exists() then print(target:creatureType()) end
+		if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
+			_A.Interface:toggleToggle("mastertoggle", false)
+			_A.print("OFF")
+		end
+	end
 	--
-	hooksecurefunc("UseAction", function(...)
-		local slot, target, clickType = ...
-		local Type, id, subType, spellID
-		-- print(slot)
-		local player = Object("player")
-		if slot==STARTSLOT then 
-			_A.pressedbuttonat = 0
-			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
-				_A.Interface:toggleToggle("mastertoggle", true)
-				_A.print("ON")
+	if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
+		Type, id, subType = _A.GetActionInfo(slot)
+		if Type == "spell" or Type == "macro" -- remove macro?
+			then
+			_A.pressedbuttonat = _A.GetTime()
+		end
+	end
+end)
+_A.buttondelayfunc = function()
+	local player = _A.Object("player")
+	if player and player:stance()==1 then
+	if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end end
+	return false
+end
+
+function _A.notimmune(unit) -- needs to be object
+	if unit then 
+		if unit:immune("all") then return false end
+	end
+	for _,v in ipairs(immunebuffs) do
+		if unit:BuffAny(v) then return false end
+	end
+	for _,v in ipairs(immunedebuffs) do
+		if unit:DebuffAny(v) then return false end
+	end
+	return true
+end
+
+local function chanpercent(unit)
+	local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
+	local givetime = GetTime()
+	if unit == nil
+		then 
+		unit = "target"
+	end	
+	if UnitChannelInfo(unit)~=nil
+		then local maxcasttime = abs(tempvar1-tempvar2)/1000
+		local remainingcasttimeinsec = abs(givetime - (tempvar2/1000))
+		local percentageofthis = (remainingcasttimeinsec * 100)/maxcasttime
+		return percentageofthis
+	end
+	return 999
+end
+
+local function interruptable(unit)
+	if unit == nil
+		then unit = "target"
+	end
+	local intel5 = (select(9, UnitCastingInfo(unit)))
+	local intel6 = (select(8, UnitChannelInfo(unit)))
+	if intel5==false
+		or intel6==false
+		then return true
+		else return false
+	end
+	return false
+end
+
+local function castsecond(unit)
+	local givetime = GetTime()
+	local tempvar = select(6, UnitCastingInfo(unit))
+	local timetimetime15687
+	if unit == nil
+		then 
+		unit = "target"
+	end
+	if UnitCastingInfo(unit)~=nil
+		then timetimetime15687 = abs(givetime - (tempvar/1000)) 
+	end
+	return timetimetime15687 or 999
+end
+
+local function channelinfo(unit)
+	local channeling = _A.UnitChannelInfo(unit)
+	return channeling and string.lower((select(1, channeling))) or " "
+end
+
+
+_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
+	local tempTable = {}
+	local target = _A.Object("target")
+	if target and target:enemy() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
+		return target and target.guid
+	end
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		if Obj:spellRange(spell) and  Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
+			tempTable[#tempTable+1] = {
+				guid = Obj.guid,
+				health = Obj:health(),
+				isplayer = Obj.isplayer and 1 or 0
+			}
+		end
+	end
+	if #tempTable>1 then
+		table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+	end
+	return tempTable[num] and tempTable[num].guid
+end)
+
+function _A.enemiesinrangeofspin()
+	local tempnumber = 0
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		--if Obj:los() then
+		if Obj:range()<=8 and Obj:alive() then
+			if _A.notimmune(Obj) then
+				tempnumber = tempnumber + 1
 			end
 		end
-		if slot==STOPSLOT then 
-			-- TEST STUFF
-			-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
-			-- TEST STUFF
-			-- local target = Object("target")
-			-- if target and target:exists() then print(target:creatureType()) end
-			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
-				_A.Interface:toggleToggle("mastertoggle", false)
-				_A.print("OFF")
-			end
-		end
-		--
-		if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
-			Type, id, subType = _A.GetActionInfo(slot)
-			if Type == "spell" or Type == "macro" -- remove macro?
-				then
-				_A.pressedbuttonat = _A.GetTime()
-			end
-		end
-	end)
-	_A.buttondelayfunc = function()
-		local player = Object("player")
-		if player and player:stance()==1 then
-		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end end
-		return false
+		--end
 	end
-	
-	function _A.notimmune(unit) -- needs to be object
-		if unit then 
-			if unit:immune("all") then return false end
-		end
-		for _,v in ipairs(immunebuffs) do
-			if unit:BuffAny(v) then return false end
-		end
-		for _,v in ipairs(immunedebuffs) do
-			if unit:DebuffAny(v) then return false end
-		end
-		return true
+	return tempnumber
+end
+
+function _A.pSpeed(unit, maxDistance)
+	local munit = _A.Object(unit)
+	--local unitGUID = unit.guid
+	local x, y, z = _A.ObjectPosition(unit)
+	local facing = _A.ObjectFacing(unit)
+	local speed = _A.GetUnitSpeed(unit)
+	if not munit then return end
+	-- Check if the unit is standing still or moving backward
+	if not munit:Moving() or _A.UnitIsMovingBackward(unit) then
+		return x, y, z
+	end 
+	-- Determine the dynamic distance, with a minimum of 2 units for moving units
+	local distance = math.max(2, math.min(maxDistance, speed - 4.5))
+	-- Adjust facing based on strafing or moving forward
+	if _A.UnitIsStrafeLeft(unit) then
+		facing = facing + math.pi / 2 -- 90 degrees to the right for strafe left
+		elseif _A.UnitIsStrafeRight(unit) then
+		facing = facing - math.pi / 2 -- 90 degrees to the left for strafe right
 	end
-	
-	local function chanpercent(unit)
-		local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
-		local givetime = GetTime()
-		if unit == nil
-			then 
-			unit = "target"
-		end	
-		if UnitChannelInfo(unit)~=nil
-			then local maxcasttime = abs(tempvar1-tempvar2)/1000
-			local remainingcasttimeinsec = abs(givetime - (tempvar2/1000))
-			local percentageofthis = (remainingcasttimeinsec * 100)/maxcasttime
-			return percentageofthis
-		end
-		return 999
+	-- Calculate and return the new position
+	local newX = x + distance * math.cos(facing)
+	local newY = y + distance * math.sin(facing)
+	return newX, newY, z
+end
+function _A.CastPredictedPos(unit, spell, distance)
+	local player = _A.Object("player")
+	local px, py, pz = _A.pSpeed(unit, distance)
+	if not px then return end
+	_A.CallWowApi("CastSpellByName", spell)
+	if player:SpellIsTargeting() then
+		_A.ClickPosition(px, py, pz)
+		_A.CallWowApi("SpellStopTargeting")
 	end
-	
-	local function interruptable(unit)
-		if unit == nil
-			then unit = "target"
-		end
-		local intel5 = (select(9, UnitCastingInfo(unit)))
-		local intel6 = (select(8, UnitChannelInfo(unit)))
-		if intel5==false
-			or intel6==false
-			then return true
-			else return false
-		end
-		return false
-	end
-	
-	local function castsecond(unit)
-		local givetime = GetTime()
-		local tempvar = select(6, UnitCastingInfo(unit))
-		local timetimetime15687
-		if unit == nil
-			then 
-			unit = "target"
-		end
-		if UnitCastingInfo(unit)~=nil
-			then timetimetime15687 = abs(givetime - (tempvar/1000)) 
-		end
-		return timetimetime15687 or 999
-	end
-	
-	local function channelinfo(unit)
-		local channeling = _A.UnitChannelInfo(unit)
-		return channeling and string.lower((select(1, channeling))) or " "
-	end
-	
-	
-	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
-		local tempTable = {}
-		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
-			return target and target.guid
-		end
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					health = Obj:health(),
-					isplayer = Obj.isplayer and 1 or 0
-				}
-			end
-		end
-		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-		end
-		return tempTable[num] and tempTable[num].guid
-	end)
-	
-	function _A.enemiesinrangeofspin()
-		local tempnumber = 0
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			--if Obj:los() then
-			if Obj:range()<=8 and Obj:alive() then
-				if _A.notimmune(Obj) then
-					tempnumber = tempnumber + 1
-				end
-			end
-			--end
-		end
-		return tempnumber
-	end
-	
-	function _A.pSpeed(unit, maxDistance)
-		local munit = Object(unit)
-		--local unitGUID = unit.guid
-		local x, y, z = _A.ObjectPosition(unit)
-		local facing = _A.ObjectFacing(unit)
-		local speed = _A.GetUnitSpeed(unit)
-		if not munit then return end
-		-- Check if the unit is standing still or moving backward
-		if not munit:Moving() or _A.UnitIsMovingBackward(unit) then
-			return x, y, z
-		end 
-		-- Determine the dynamic distance, with a minimum of 2 units for moving units
-		local distance = math.max(2, math.min(maxDistance, speed - 4.5))
-		-- Adjust facing based on strafing or moving forward
-		if _A.UnitIsStrafeLeft(unit) then
-			facing = facing + math.pi / 2 -- 90 degrees to the right for strafe left
-			elseif _A.UnitIsStrafeRight(unit) then
-			facing = facing - math.pi / 2 -- 90 degrees to the left for strafe right
-		end
-		-- Calculate and return the new position
-		local newX = x + distance * math.cos(facing)
-		local newY = y + distance * math.sin(facing)
-		return newX, newY, z
-	end
-	function _A.CastPredictedPos(unit, spell, distance)
-		local player = Object("player")
-		local px, py, pz = _A.pSpeed(unit, distance)
-		if not px then return end
-		_A.CallWowApi("CastSpellByName", spell)
-		if player:SpellIsTargeting() then
-			_A.ClickPosition(px, py, pz)
-			_A.CallWowApi("SpellStopTargeting")
-		end
-	end
-	
-	_A.DSL:Register('caninterrupt', function(unit)
-		return interruptable(unit)
-	end)
-	
-	_A.DSL:Register('chanpercent', function(unit)
-		return chanpercent(unit)
-	end)
-	
-	_A.DSL:Register('castsecond', function(unit)
-		return castsecond(unit)
-	end)
-	
-	_A.DSL:Register('channame', function(unit)
-		return channelinfo(unit)
-	end)
-	
-	_A.DSL:Register('chifix', function()
-		return _A.UnitPower("player", 12)
-	end)
-	_A.DSL:Register('chifixmax', function()
-		return _A.UnitPowerMax("player", 12)
-	end)
-	_A.DSL:Register('kegcheck', function()
-		return (power("player")+(manaregen()*cdRemains(121253)))>=80
-	end)
-	_A.DSL:Register('spinnumber', function()
-		return _A.enemiesinrangeofspin()
-	end)
+end
+
+_A.DSL:Register('caninterrupt', function(unit)
+	return interruptable(unit)
+end)
+
+_A.DSL:Register('chanpercent', function(unit)
+	return chanpercent(unit)
+end)
+
+_A.DSL:Register('castsecond', function(unit)
+	return castsecond(unit)
+end)
+
+_A.DSL:Register('channame', function(unit)
+	return channelinfo(unit)
+end)
+
+_A.DSL:Register('chifix', function()
+	return _A.UnitPower("player", 12)
+end)
+_A.DSL:Register('chifixmax', function()
+	return _A.UnitPowerMax("player", 12)
+end)
+_A.DSL:Register('kegcheck', function()
+	return (power("player")+(manaregen()*cdRemains(121253)))>=80
+end)
+_A.DSL:Register('spinnumber', function()
+	return _A.enemiesinrangeofspin()
+end)
+local exeOnLoad = function()
 end
 local exeOnUnload = function()
 end
@@ -466,7 +468,7 @@ brewmaster.rot = {
 	
 	blackoutkick = function()
 		if  player:chi()>=2 and player:buffduration("Shuffle")<=1.5 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			local lowestmelee = _A.Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee and lowestmelee:exists()  then
 				return lowestmelee:Cast("Blackout Kick")
 			end
@@ -486,7 +488,7 @@ brewmaster.rot = {
 			return player:Cast("Purifying Brew")
 		end
 	end,
-
+	
 	elusivebrew = function()
 		if player:SpellCooldown("Elusive Brew")==0 and  player:BuffStack("Elusive Brew")>=8 and player:Health()<=55
 			and (player:debuff("Heavy Stagger") or player:debuff("Moderate Stagger"))
@@ -494,11 +496,11 @@ brewmaster.rot = {
 			return player:Cast("elusive brew")
 		end
 	end,
-
+	
 	
 	kegsmash = function()
 		if  (player:chi())<(player:chifixmax()-1) and player:SpellCooldown("Keg Smash")<.3 and player:energy()>=40  then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Keg Smash)")
+			local lowestmelee = _A.Object("lowestEnemyInSpellRange(Keg Smash)")
 			if lowestmelee and lowestmelee:exists()  then
 				return lowestmelee:Cast("Keg Smash")
 			end
@@ -507,7 +509,7 @@ brewmaster.rot = {
 	
 	jab = function()
 		if  player:chi()<player:chifixmax() and player:energy()>=40  then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			local lowestmelee = _A.Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee and lowestmelee:exists()  then
 				return lowestmelee:Cast("Jab")
 			end
@@ -516,7 +518,7 @@ brewmaster.rot = {
 	
 	chiwave = function()
 		if  player:talent("Chi Wave") and player:SpellCooldown("Chi Wave")<.3  then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Chi Wave)")
+			local lowestmelee = _A.Object("lowestEnemyInSpellRange(Chi Wave)")
 			if lowestmelee and lowestmelee:exists()  then
 				return lowestmelee:Cast("Chi Wave")
 			end
@@ -545,25 +547,34 @@ brewmaster.rot = {
 		end
 	end,
 	
+	SCraneKick_AOEPrio = function()
+		if not player:talent("Rushing Jade Wind") and player:energy()>=40 and player:SpellCooldown("Spinning Crane Kick")<.3 and player:spinnumber()>=3  then
+			return player:Cast("Spinning Crane Kick")
+		end
+	end,
+	
 	RS_Fill = function()
 		if  player:talent("Rushing Jade Wind") and player:energy()>=40 and player:SpellCooldown("Rushing Jade Wind")<.3 and player:kegcheck()  then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			local lowestmelee = _A.Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee and lowestmelee:exists()  then
 				return player:Cast("Rushing Jade Wind")
 			end
 		end
 	end,
 	
+	
 	tigerpalm = function()
-		local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+	if player:level()>=34 or not player:buff("Tiger Power") then
+		local lowestmelee = _A.Object("lowestEnemyInSpellRange(Blackout Kick)")
 		if lowestmelee and lowestmelee:exists()  then
 			return lowestmelee:Cast(100787)
+		end
 		end
 	end,
 	
 	healingsphere = function()
 		if player:Health()<90 and player:energy()>=40 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			local lowestmelee = _A.Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if not lowestmelee  then
 				return _A.CastPredictedPos(player.guid, "Healing Sphere", 20)
 			end
@@ -578,7 +589,7 @@ brewmaster.rot = {
 ---========================
 ---========================
 local inCombat = function()	
-	player = player or Object("player")
+	player = player or _A.Object("player")
 	if not player then return end
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .2) 
@@ -602,6 +613,7 @@ local inCombat = function()
 	brewmaster.rot.purifyingbrew()
 	-- Combo Builder
 	brewmaster.rot.kegsmash()
+	brewmaster.rot.SCraneKick_AOEPrio()
 	brewmaster.rot.jab()
 	-- Fills
 	brewmaster.rot.RS_Fill()

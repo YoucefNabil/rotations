@@ -1,4 +1,6 @@
-local mediaPath, _A = ...
+local _,class = UnitClass("player")
+if class~="WARLOCK"  then return end
+local HarmonyMedia, _A, Harmony = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 -- top of the CR
 local player
@@ -213,6 +215,13 @@ _A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, 
 	end
 end
 )
+Harmony.exitedvehicleat = GetTime()
+_A.Listener:Add("EXITING_VEHICLE", "UNIT_EXITING_VEHICLE", function(event, arg1)
+	if arg1=="player" then
+		Harmony.exitedvehicleat = GetTime()
+		print(event, arg1)
+	end
+end)
 -- Soul Swap
 _A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 	if guidsrc == UnitGUID("player") then -- only filter by me
@@ -393,7 +402,7 @@ affliction.rot = {
 	end,
 	
 	items_intpot = function()
-		if player:ItemCooldown(76093) == 0
+		if not player:isCastingAny() and player:ItemCooldown(76093) == 0
 			and player:ItemCount(76093) > 0
 			and player:ItemUsable(76093)
 			and player:Buff("Dark Soul: Misery")
@@ -407,6 +416,7 @@ affliction.rot = {
 	
 	items_strflask = function()
 		if not player:isCastingAny() and player:ItemCooldown(76088) == 0
+			and player:combat()
 			and player:ItemCount(76088) > 0
 			and player:ItemUsable(76088)
 			and not player:Buff(105696)
@@ -470,18 +480,37 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy = function()
-		if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112866)<.3 and _A.castdelay(112866, 1.5) and not player:iscasting(112866) and _A.enoughmana(112866)  then
-			if 
-				not _A.UnitExists("pet")
-				or _A.UnitIsDeadOrGhost("pet")
-				or not _A.HasPetUI()
-				then 
-				if player:buff(74434) or ( not player:moving() ) then
-					return player:cast(112866)
+		if Harmony.exitedvehicleat and GetTime()-Harmony.exitedvehicleat>= 2 then
+			if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112866)<.3 and _A.castdelay(112866, 1.5) and not player:iscasting(112866) and _A.enoughmana(112866)  then
+				if 
+					not _A.UnitExists("pet")
+					or _A.UnitIsDeadOrGhost("pet")
+					or not _A.HasPetUI()
+					then 
+					if player:buff(74434) or ( not player:moving() ) then
+						return player:cast(112866)
+					end
+					if (not player:buff(74434) and player:combat() and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+						then player:cast(74434) -- shadowburn
+					end	
 				end
-				if (not player:buff(74434) and player:combat() and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
-					then player:cast(74434) -- shadowburn
-				end	
+			end
+		end
+	end,
+	
+	healthfunnel = function()
+		if Harmony.exitedvehicleat and GetTime()-Harmony.exitedvehicleat>= 2 then
+			if player:talent("Grimoire of Supremacy") then
+				if 
+					_A.UnitExists("pet")
+					and not _A.UnitIsDeadOrGhost("pet")
+					and _A.HasPetUI()
+					then
+					local pet = Object("pet")
+					if  player:glyph("Glyph of Health Funnel") and player:SpellCooldown("Health Funnel")<.3 and player:SpellUsable("Health Funnel") and pet and pet:health()<85 and pet:los() then
+						return player:cast("Health Funnel")
+					end
+				end
 			end
 		end
 	end,
@@ -539,7 +568,7 @@ affliction.rot = {
 	snare_curse = function() -- rework this
 		local flagcarry = nil
 		if _A.pull_location == "pvp" and not player:buff(74434) then
-	 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj:spellRange(172) and _A.attackable(Obj) and (Obj:BuffAny("Alliance Flag") or Obj:BuffAny("Horde Flag")) and not Obj:Debuff("Curse of Exhaustion") and _A.notimmune(Obj) and Obj:los() then
 					flagcarry = Obj
 				end
@@ -692,10 +721,11 @@ affliction.rot = {
 	end,
 	
 	items_intflask = function()
-		if player:ItemCooldown(76085) == 0  
+		if player:ItemCooldown(76085) == 0 and not player:isCastingAny() 
 			and player:ItemCount(76085) > 0
 			and player:ItemUsable(76085)
 			and not player:Buff(105691)
+			and player:combat()
 			then
 			if pull_location()=="pvp" then
 				return player:useitem("Flask of the Warm Sun")
@@ -746,6 +776,8 @@ local inCombat = function()
 		if affliction.rot.grasp()  then return end
 		if affliction.rot.felflame()  then return end
 	end
+	-- Heal pet
+	if affliction.rot.healthfunnel() then return end
 	-- DOT DOT
 	if affliction.rot.agonysnap()  then return end
 	if affliction.rot.corruptionsnap()  then return end

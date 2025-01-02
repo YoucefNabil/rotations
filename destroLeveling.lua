@@ -1,8 +1,17 @@
-local mediaPath, _A = ...
+local _,class = UnitClass("player")
+if class~="WARLOCK" then return end
+local HarmonyMedia, _A, Harmony = ...
 local DSL = function(api) return _A.DSL:Get(api) end
+local Listener = _A.Listener
 -- top of the CR
+local next = next 
+local C_Timer = _A.C_Timer
 local player
-local demono = {}
+local lowest
+local lowestaoe
+local reflectcheck = false
+local numbads = 0
+local destro = {}
 local healerspecid = {
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",
@@ -22,6 +31,11 @@ local healerspecid = {
 	-- [62]="Mage Arcane",
 	-- [63]="Mage Fire",
 	-- [64]="Mage Frost"
+}
+local warriorspecs = {
+	[71]=true,
+	[72]=true,
+	[73]=true
 }
 local darksimulacrumspecsBGS = {
 	[265]="Lock Affli",
@@ -104,8 +118,15 @@ local function pull_location()
 	local whereimi = string.lower(select(2, GetInstanceInfo()))
 	return string.lower(select(2, GetInstanceInfo()))
 end
+_A.pull_location = pull_location()
 local function modifier_shift()
 	local modkeyb = _A.IsShiftKeyDown()
+	if modkeyb then return true
+	end
+	return false
+end
+local function modifier_ctrl()
+	local modkeyb = _A.IsControlKeyDown()
 	if modkeyb then return true
 	end
 	return false
@@ -115,19 +136,31 @@ end
 --============================================
 --============================================
 --============================================
-_A.casttimers = {}
-_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+_A.casttimers = {} -- doesnt work with channeled spells
+local havoctable = {}
+Listener:Add("destro_cleaning", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
+	_A.pull_location = pull_location()
+	havoctable = {}
+	_A.casttimers = {}
+	-- print("location successfully set to ".._A.pull_location)
+end)
+Listener:Add("Destro_Havoc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 	if guidsrc == UnitGUID("player") then -- only filter by me
 		-- print(subevent.." "..idd)
-		if (idd==688) then
-			if subevent == "SPELL_CAST_SUCCESS" then
-				_A.casttimers[idd] = _A.GetTime()
+		if (idd==80240) then
+			if subevent == "SPELL_CAST_SUCCESS" or subevent=="SPELL_AURA_APPLIED" then
+				-- print("havoc "..subevent)
+				havoctable[guiddest]=true
+			end
+			if subevent=="SPELL_AURA_REMOVED" 
+				then
+				havoctable[guiddest]=nil
 			end
 		end
 	end
 end)
 _A.casttbl = {}
-_A.Listener:Add("iscasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+Listener:Add("iscasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 	if guidsrc == UnitGUID("player") then -- only filter by me
 		if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED"   then
 			_A.casttbl[idd] = nil
@@ -147,6 +180,19 @@ end
 --============================================
 --============================================
 --============================================
+Listener:Add("destrodelaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+	if guidsrc == UnitGUID("player") then
+		-- print(subevent.." "..idd)
+		if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+			_A.casttimers[idd] = _A.GetTime()
+		end
+	end
+end)
+function _A.castdelay(idd, delay)
+	if delay == nil then return true end
+	if _A.casttimers[idd]==nil then return true end
+	return (_A.GetTime() - _A.casttimers[idd])>=delay
+end
 --============================================
 --============================================
 --============================================
@@ -161,28 +207,79 @@ local usableitems= { -- item slots
 	13, --first trinket
 	14 --second trinket
 }
-demono.rot = {
+destro.rot = {
 	blank = function()
 	end,
 	
 	caching= function()
-		_A.fury = (UnitPower("player", 15)/10)
-		_A.pull_location = pull_location()
+		_A.targetless = {}
+		_A.target = nil
+		_A.BurningEmbers = _A.UnitPower("player", 14)
+		numbads = destro.rot.numenemiesaround()
+		local target = Object("target")
+		if target and target:enemy() and target:spellRange("Conflagrate") and target:Infront() and ((not target:Debuff(80240)) or (numbads==1)) and _A.attackable(target) and _A.notimmune(target)  and target:los() then
+			if target then _A.target = target end
+		end
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj)  and Obj:los() then
+				_A.targetless[#_A.targetless+1] = {
+					obj = Obj,
+					havoc = ((havoctable[Obj.guid]==nil) or (numbads==1)) and 1 or 0,
+					isplayer = Obj.isplayer and 1 or 0,
+					-- ishealer = healerspecid[_A.UnitSpec(Obj.guid)] or 0,
+					health = Obj:health()
+				}
+			end
+		end
+	end,
+	
+	rainoffire = function()
+		if player:Keybind("T") then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return _A.CastGround("Rain of Fire", "cursor")
+		end
 	end,
 	
 	items_healthstone = function()
-		if player:health() <= 35 then
+		if player:health() <= 54 then
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
-				and player:ItemUsable(5512) then
+				and player:ItemUsable(5512) 
+				-- and (player:Buff("Dark Regeneration") or not player:talent("Dark regeneration"))
+				then
 				player:useitem("Healthstone")
 			end
 		end
 	end,
 	
+	numenemiesaround = function()
+		local num = 0
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+				num = num + 1
+			end
+		end
+		return num
+	end,
+	
+	Darkregeneration = function()
+		if player:health() <= 55 then
+			if player:SpellCooldown("Dark Regeneration") == 0
+				then
+				player:cast("Dark Regeneration")
+				player:useitem("Healthstone")
+			end
+		end
+	end,
+	
+	twilightward = function()
+		if player:SpellCooldown("Twilight Ward")<.3 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			return player:Cast("Twilight Ward")
+		end
+	end,
+	
 	summ_healthstone = function()
-		if player:ItemCount(5512) == 0 and not player:combat() then
-			if not player:moving() and not player:Iscasting("Create Healthstone") then
+		if (player:ItemCount(5512) == 0 and player:ItemCooldown(5512) < 2.55 ) or (player:ItemCount(5512) < 3 and not player:combat()) then
+			if not player:moving() and not player:Iscasting("Create Healthstone") and _A.castdelay(6201, 1.5) then
 				player:cast("Create Healthstone")
 			end
 		end
@@ -212,6 +309,19 @@ demono.rot = {
 		end
 	end,
 	
+	items_intpot = function()
+		if player:ItemCooldown(76093) == 0
+			and player:ItemCount(76093) > 0
+			and player:ItemUsable(76093)
+			and player:Buff("Dark Soul: Instability")
+			and player:combat()
+			then
+			if _A.pull_location=="pvp" then
+				player:useitem("Potion of the Jade Serpent")
+			end
+		end
+	end,
+	
 	items_strflask = function()
 		if not player:isCastingAny() and player:ItemCooldown(76088) == 0
 			and player:ItemCount(76088) > 0
@@ -227,7 +337,7 @@ demono.rot = {
 	--============================================
 	--============================================
 	activetrinket = function()
-		if player:buff("Surge of Dominance") then
+		if player:buff("Surge of Dominance") and player:combat() then
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -240,55 +350,26 @@ demono.rot = {
 		end
 	end,
 	
-	demoburst = function()
-		if player:combat() and player:SpellCooldown("Dark Soul: Knowledge")==0 and not player:buff("Dark Soul: Knowledge") and _A.enoughmana(113861)  then
+	critburst = function()
+		if player:combat() and player:SpellCooldown("Dark Soul: Instability")==0 and not player:buff("Dark Soul: Instability") then
 			if player:buff("Call of Dominance") then
 				player:cast("Lifeblood")
-				player:cast("Dark Soul: Knowledge")
+				player:cast("Dark Soul: Instability")
+			end
+		end
+	end,
+	--============================================
+	--============================================
+	--============================================
+	
+	embertap = function()
+		if (_A.BurningEmbers > 2 ) and not player:isCastingAny() then
+			if player:health() <= 75 and player:SpellCooldown("Ember Tap")<.3 then
+				return player:cast("Ember Tap")
 			end
 		end
 	end,
 	
-	impswarm = function()
-		if player:combat() and player:SpellCooldown(104316)<.3 and player:buff("Dark Soul: Knowledge")  then
-			return player:cast(104316)
-		end
-	end,
-	
-	handofguldan = function()
-	if _A.GetShapeshiftForm() == 0 then
-		if _A.fury>=30 and player:combat() and player:buff("Call of Dominance") then
-			local lowest = Object("lowestEnemyInSpellRange(Soul Fire)")
-			if lowest and lowest:exists() and player:SpellCharges(105174)~=0 then
-				return lowest:cast(105174)
-			end
-		end
-		end
-	end,
-	
-	metamorf = function()
-		if player:SpellCharges(105174)==0 and _A.fury>=30 and not player:buff("Metamorphosis") and player:combat() and player:buff("Call of Dominance") and player:SpellCount("Hand of Gul'dan") == 0   then
-			return player:cast("Metamorphosis")
-		end
-	end,
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
-	--============================================
 	petres = function()
 		if player:talent("Grimoire of Sacrifice") and not player:Buff("Grimoire of Sacrifice") and player:SpellCooldown("Grimoire of Sacrifice")==0 then
 			if 
@@ -297,7 +378,7 @@ demono.rot = {
 				-- or 
 				not _A.HasPetUI()
 				then 
-				if not player:moving() and not player:iscasting("Summon Imp") then
+				if not player:moving() and not player:iscasting("Summon Imp") and not player:isCastingAny() then
 					return player:cast("Summon Imp")
 				end
 			end
@@ -312,6 +393,7 @@ demono.rot = {
 	
 	lifetap = function()
 		if soulswaporigin == nil 
+			and not player:isCastingAny()
 			and player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
 			and player:Mana()<=45
@@ -322,69 +404,47 @@ demono.rot = {
 	--======================================
 	--======================================
 	--======================================
-	--======================================
-	--======================================
-	--======================================
-	--======================================
-	Doom = function()
-		local lowest = Object("lowestEnemyInSpellRange(Soul Fire)")
-		if lowest and lowest:exists() and lowest:DebuffRefreshable("Doom")  then
-			return lowest:cast("Doom")
-		end
-	end,
 	
-	touchofchaos = function()
-		local lowest = Object("lowestEnemyInSpellRange(Soul Fire)")
-		if lowest and lowest:exists()  then
-			return lowest:cast(103964)
-		end
-	end,
-	--======================================
-	--======================================
-	--======================================
-	--======================================
-	--======================================
-	--======================================
-	Corruption = function()
-		local lowest = Object("lowestEnemyInSpellRange(Soul Fire)")
-		if lowest and lowest:exists() and lowest:DebuffRefreshable("Corruption")  then
-			return lowest:cast("Corruption")
-		end
-	end,
 	
-	Soulfire = function()
-		if not player:moving() and not player:Iscasting("Soul Fire") and player:buff("Molten Core") then
-			local lowest = Object("lowestEnemyInSpellRange(Soul Fire)")
-			if lowest and lowest:exists() then
-				return lowest:cast("Soul Fire")
+	--======================================
+	--======================================
+	--======================================
+	
+	
+	--==================================================================================
+	--==================================================================================
+	--==================================================================================
+	--==================================================================================
+	--==================================================================================
+	--==================================================================================
+	incinerate_tar = function()
+		if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
+			local target = Object("target")
+			if target and target:enemy() and target:alive() and target:infront() and target:range()<=40
+				-- and (_A.target:health()>20 or  _A.BurningEmbers<1) 
+				then
+				return target:cast("Incinerate")
 			end
 		end
 	end,
 	
-	felflame_shift = function()
-		if modifier_shift()==true then
-			local lowest = Object("lowestEnemyInSpellRange(Soul Fire)")
-			if lowest and lowest:exists()  then
-				return lowest:cast("fel flame", true)
+	conflagrate_tar = function()
+		if player:SpellCooldown("Conflagrate") == 0 then
+			local target = Object("target")
+			if target and target:enemy() and target:alive() and target:infront() and target:range()<=40
+				-- and (_A.target:health()>20 or  _A.BurningEmbers<1) 
+				then
+				
+				return target:cast("Conflagrate")
 			end
 		end
 	end,
 	
-	
-	shadowbolt = function()
-		if (not player:moving() or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Shadow Bolt") then
-			local lowest = Object("lowestEnemyInSpellRange(Shadow Bolt)")
-			if lowest and lowest:exists() then
-				return lowest:cast("Shadow Bolt")
-			end
-		end
-	end,
-	
-	felflame = function()
-		local lowest = Object("lowestEnemyInSpellRange(fel flame)")
-		if lowest and lowest:exists()  then
-			return lowest:cast("fel flame")
-		end
+	facetarget = function()
+	local target = Object("target")
+	if target and target:enemy() and target:alive() and not target:infront() and target:range()<=40 then
+	_A.FaceDirection(target, true) 
+	end
 	end,
 }
 ---========================
@@ -393,31 +453,18 @@ demono.rot = {
 ---========================
 ---========================
 local inCombat = function()	
+	lowestaoe = nil
 	player = player or Object("player")
 	if not player then return end
-	demono.rot.caching()
-	if _A.buttondelayfunc()  then return end
-	if player:lostcontrol()  then return end 
-	if player:Mounted() then return end
-	-- burst
-	demono.rot.activetrinket()
-	demono.rot.demoburst()
-	demono.rot.impswarm()
-	demono.rot.handofguldan()
-	demono.rot.metamorf()
-	-- metamorphosis
-	if _A.GetShapeshiftForm() == 1 then
-		demono.rot.Doom()
-		demono.rot.touchofchaos()
-	end
-	-- default form
-	if _A.GetShapeshiftForm() == 0 then
-		demono.rot.Corruption()
-		demono.rot.Soulfire()
-		demono.rot.felflame_shift()
-		demono.rot.shadowbolt()
-		demono.rot.felflame()
-	end
+	if player:mounted() then return end
+	-- if _A.buttondelayfunc()  then return end
+	-- if player:isCastingAny() then return end
+	-- HEALS AND DEFS
+	destro.rot.facetarget()
+	destro.rot.summ_healthstone()
+	destro.rot.conflagrate_tar()
+	destro.rot.incinerate_tar()
+	-- soul swap
 end
 local outCombat = function()
 	return inCombat()
@@ -426,8 +473,8 @@ local spellIds_Loc = function()
 end
 local blacklist = function()
 end
-_A.CR:Add(266, {
-	name = "Youcef's Demonology",
+_A.CR:Add(267, {
+	name = "Youcef's Destro for Leveling",
 	ic = inCombat,
 	ooc = outCombat,
 	use_lua_engine = true,
