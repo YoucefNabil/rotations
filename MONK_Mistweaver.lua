@@ -70,7 +70,7 @@ local healerspecid = {
 	[105]="Druid Resto",
 	-- [102]="Druid Balance",
 	[270]="monk mistweaver",
-	-- [65]="Paladin Holy",
+	[65]="Paladin Holy",
 	-- [66]="Paladin prot",
 	-- [70]="Paladin retri",
 	[257]="Priest Holy",
@@ -83,6 +83,111 @@ local healerspecid = {
 	-- [63]="Mage Fire",
 	-- [64]="Mage Frost"
 }
+--
+local spelltable = {
+    [5782] = 2,     -- Fear
+    [1120] = 1,     -- Drain Soul
+    [689] = 1,      -- Drain Life
+    [30108] = 1,    -- Unstable Affliction
+    [1454] = 1,     -- Life Tap
+    [33786] = 2,    -- Cyclone
+    [28272] = 2,    -- Polymorph (Pig)
+    [118] = 2,      -- Polymorph
+    [61305] = 2,    -- Polymorph (Black Cat)
+    [61721] = 2,    -- Polymorph (Rabbit)
+    [61780] = 2,    -- Polymorph (Turkey)
+    [28271] = 2,    -- Polymorph (Turtle)
+    [51514] = 2,    -- Hex
+    [339] = 1,      -- Entangling Roots
+    [30451] = 1,    -- Arcane Blast
+    [20066] = 2,    -- Repentance
+    [116858] = 2,   -- Chaos Bolt
+    [113092] = 1,   -- Frost Bomb
+    [8092] = 1,     -- Mind Blast
+    [11366] = 1,    -- Pyroblast
+    [48181] = 1,    -- Haunt
+    [102051] = 1,   -- Frostjaw
+    [1064] = 1,     -- Chain Heal
+    [77472] = 2,    -- Greater Healing Wave
+    [8004] = 2,     -- Healing Surge
+    [73920] = 1,    -- Healing Rain
+    [51505] = 1,    -- Lava Burst
+    [8936] = 2,     -- Regrowth
+    [2061] = 2,     -- Flash Heal
+    [2060] = 2,     -- Heal
+    [2006] = 1,     -- Resurrection
+    [5185] = 2,     -- Healing Touch
+    [19750] = 2,    -- Flash of Light
+    [635] = 1,      -- Holy Light
+    [7328] = 1,     -- Redemption
+    [2008] = 1,     -- Ancestral Spirit
+    [50769] = 1,    -- Revive
+    [2812] = 1,     -- Holy Wrath
+    [82327] = 1,    -- Holy Radiance
+    [10326] = 2,    -- Turn Evil
+    [82326] = 2,    -- Divine Light
+    [116694] = 2,   -- Surging Mist
+    [124682] = 1,   -- Enveloping Mist
+    [115151] = 1,   -- Renewing Mist
+    [115310] = 1,   -- Revival
+    -- [126201] = 1,   -- Frostbolt (Water Elemental)
+	[44614] = 1,    -- Frostfire Bolt
+    [133] = 1,      -- Fireball
+    [1513] = 1,     -- Scare Beast
+    [982] = 2,      -- Revive Pet
+    [111771] = 2,   -- Demonic Gateway
+    -- [118297] = 1,   -- Immolate (Fel Imp)
+    [29722] = 1,    -- Incinerate
+    [124465] = 1,   -- Vampiric Touch
+    [32375] = 2,    -- Mass Dispel
+    [2948] = 1,     -- Scorch
+    [12051] = 2,    -- Evocation
+    [90337] = 2,    -- Bad Manner (Monkey Pet)
+    [47540] = 2,    -- Penance
+    [115268] = 2,   -- Mesmerize (Shivarra)
+    [6358] = 2,     -- Seduction (Succubus)
+    [51963] = 2,    -- Pain Suppression
+    [78674] = 1,    -- Starsurge
+    [113792] = 1,   -- Psychic Terror (Psyfiend)
+    [115175] = 2,   -- Soothing Mist
+    [115750] = 2,   -- Blinding Light
+    [103103] = 1,   -- Drain Soul
+    [113724] = 2,   -- Ring of Frost
+    [117014] = 1,   -- Elemental Blast
+    [605] = 1,      -- Mind Control
+    [740] = 2,      -- Tranquility
+    [32546] = 2,    -- Binding Heal
+    [113506] = 2,   -- Cyclone (Symbiosis)
+    [31687] = 2,    -- Summon Water Elemental
+    [119996] = 1,   -- Transcendence: Transfer
+    [117952] = 1,    -- Crackling Jade Lightning
+	[116] = 1,      -- Frostbolt
+    [50464] = 1,   -- Nourish
+    [331] = 1,      -- Healing Wave
+    [724] = 1,      -- Lightwell
+	[129197] = 1   -- Insanity
+}
+
+local function kickcheck(unit)
+	if unit then
+		for k,_ in pairs(spelltable) do
+			if unit:iscasting(k) or unit:channeling(k) then
+				return true
+			end
+		end
+	end
+	return false
+end
+local function kickcheck_highprio(unit)
+	if unit then
+		for k,v in pairs(spelltable) do
+			if v==2 and unit:iscasting(k) or unit:channeling(k) then
+				return true
+			end
+		end
+	end
+	return false
+end
 local GUI = {
 }
 _A.Listener:Add("Entering_timerPLZ2", "PLAYER_ENTERING_WORLD", function(event)
@@ -1008,6 +1113,7 @@ local mw_rot = {
 					if obj:isCastingAny()
 						and obj:range()<5
 						and _A.notimmune(obj)
+						and (kickcheck_highprio(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 						and obj:los() then
 						return obj:Cast("Leg Sweep")
 					end 
@@ -1024,6 +1130,7 @@ local mw_rot = {
 						and obj:range()<30
 						and obj:Infront()
 						and _A.notimmune(obj)
+						and (kickcheck(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 						and obj:los() then
 						return obj:Cast("Charging Ox Wave")
 					end 
@@ -1042,10 +1149,24 @@ local mw_rot = {
 						and not obj:iscasting("Frostbolt")
 						and obj:Infront()
 						and _A.notimmune(obj)
+						and (kickcheck(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 						and obj:los() then
 						return obj:Cast("Paralysis")
 					end
 				end
+			end
+		end
+	end,
+	
+	paralysis_test = function()
+		if player:Stance() == 1  and player:SpellCooldown("Paralysis")<.3 then
+			local obj = Object("target")
+			if obj and obj.isplayer 
+				and obj:SpellRange("Paralysis") 
+				and obj:Infront()
+				and _A.notimmune(obj)
+				and obj:los() then
+				return obj:Cast("Paralysis")
 			end
 		end
 	end,
@@ -1080,47 +1201,48 @@ local mw_rot = {
 				if not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest and lowest:exists() then return lowest:cast("Soothing Mist") end 
 			end
 			else if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
-	end
-end,
-
-burstdisarm = function()
-	if player:Stance() == 1   then
-		if player:SpellCooldown("Grapple Weapon")<.3 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer 
-					and obj:SpellRange("Grapple Weapon") 
-					and obj:Infront()
-					and not healerspecid[_A.UnitSpec(obj.guid)] 
-					-- and (_A.pull_location=="arena" or UnitTarget(obj.guid)==player.guid)
-					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
-					and not obj:BuffAny("Bladestorm")
-					and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
-					and not obj:state("disarm")
-					and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
-					and _A.notimmune(obj)
-					and obj:los() then
-					return obj:Cast("Grapple Weapon")
+		end
+	end,
+	
+	burstdisarm = function()
+		if player:Stance() == 1   then
+			if player:SpellCooldown("Grapple Weapon")<.3 then
+				for _, obj in pairs(_A.OM:Get('Enemy')) do
+					if obj.isplayer 
+						and obj:SpellRange("Grapple Weapon") 
+						and obj:Infront()
+						and not healerspecid[obj:spec()] 
+						-- and (_A.pull_location=="arena" or UnitTarget(obj.guid)==player.guid)
+						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
+						and not obj:BuffAny("Bladestorm")
+						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
+						and not obj:state("disarm")
+						and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
+						and _A.notimmune(obj)
+						and obj:los() then
+						return obj:Cast("Grapple Weapon")
+					end
 				end
 			end
 		end
-	end
-end,
-
-kick_spear = function()
-	if player:SpellCooldown("Spear Hand Strik")==0   then
-		for _, obj in pairs(_A.OM:Get('Enemy')) do
-			if obj:isCastingAny()
-				and obj:SpellRange("Blackout Kick") 
-				and obj:infront()
-				and not obj:State("silence")
-				and not obj:iscasting("Frostbolt")
-				and obj:caninterrupt() 
-				and not obj:state("silence || incapacitate || fear || disorient || charm || misc || sleep")
-				and obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=95
-				and _A.notimmune(obj)
-				then
-				obj:Cast("Spear Hand Strike")
-			end
+	end,
+	
+	kick_spear = function()
+		if player:SpellCooldown("Spear Hand Strik")==0   then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj:isCastingAny()
+					and obj:SpellRange("Blackout Kick") 
+					and obj:infront()
+					and not obj:State("silence")
+					and not obj:iscasting("Frostbolt")
+					and obj:caninterrupt() 
+					and not obj:state("stun || silence || incapacitate || fear || disorient || charm || misc || sleep")
+					and obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=95
+					and (kickcheck(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
+					and _A.notimmune(obj)
+					then
+					obj:Cast("Spear Hand Strike")
+				end
 			end
 		end
 	end,
@@ -1177,7 +1299,7 @@ kick_spear = function()
 			
 			-- Version 1: Only enemies targeting
 			for _, enemy in pairs(_A.OM:Get('Enemy')) do
-				if enemy and enemy.isplayer and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) and not enemy:state("Disarm") and not healerspecid[_A.UnitSpec(enemy.guid)] then
+				if enemy and enemy.isplayer and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) and not enemy:state("Disarm") and not healerspecid[enemy:spec()] then
 					local tguid = UnitTarget(enemy.guid)
 					if tguid then
 						local tobj = Object(tguid)
@@ -1237,15 +1359,13 @@ kick_spear = function()
 					end
 				end
 			end
-			
-			-- if _A.pull_location and _A.pull_location=="arena" then
-			
 			-- Version 3: Silence healers if someone is low
+			-- if _A.pull_location and _A.pull_location=="arena" then
 			if _A.someoneislow() then -- iterates through enemy players to find if a low hp enemy player exists
 				for _, friend in pairs(_A.OM:Get('Friendly')) do
 					if friend and friend.isplayer and _A.nothealimmune(friend) then
 						for _, enemy in pairs(_A.OM:Get('Enemy')) do
-							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 8 and healerspecid[_A.UnitSpec(enemy.guid)]  and _A.notimmune(enemy) and not enemy:state("silence") and friend:los() then
+							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 8 and healerspecid[enemy:spec()]  and _A.notimmune(enemy) and not enemy:state("silence") and friend:los() then
 								print("enemy healer silence - low enemy in range")
 								return friend:Cast("Ring of Peace")
 							end
@@ -1254,6 +1374,20 @@ kick_spear = function()
 				end
 			end
 			-- end
+			-- version 4: interrupt high prio casts
+			if _A.someoneislow() then -- iterates through enemy players to find if a low hp enemy player exists
+				for _, friend in pairs(_A.OM:Get('Friendly')) do
+					if friend and friend.isplayer and _A.nothealimmune(friend) then
+						for _, enemy in pairs(_A.OM:Get('Enemy')) do
+							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 8 and kickcheck_highprio(enemy) and _A.notimmune(enemy) and friend:los() then
+								print("interrupting high prio")
+								return friend:Cast("Ring of Peace")
+							end
+						end
+					end
+				end
+			end
+			--
 		end
 	end,
 	
@@ -1841,6 +1975,10 @@ local inCombat = function()
 	_A.interrupttreshhold = .2 + _A.latency
 	mw_rot.autofocus()
 	mw_rot.autoattackmanager()
+	-- Out of GCD
+	mw_rot.thunderfocustea()
+	mw_rot.kick_spear()
+	--
 	if _A.buttondelayfunc()  then return end
 	if player and player:mounted() then return end
 	if player and player:isChanneling("Crackling Jade Lightning") then return end
@@ -1852,14 +1990,15 @@ local inCombat = function()
 	if mw_rot.items_noggenfogger() then return end
 	if mw_rot.items_intflask() then return end
 	if mw_rot.activetrinket() then return end
+	-- if mw_rot.paralysis_test() then return end
 	if mw_rot.Xuen() then return end
 	if mw_rot.turtletoss() then return end
 	if mw_rot.kick_legsweep() then return end
+	if mw_rot.kick_paralysis() then return end
 	if mw_rot.ringofpeacev2() then return end
 	if mw_rot.sapsnipe() then return end
 	if mw_rot.renewingmist() then return end
 	if _A.modifier_shift() then
-		if mw_rot.thunderfocustea() then return end
 		if mw_rot.uplift() then return end
 		if mw_rot.healingsphere() then return end
 	end
@@ -1869,8 +2008,6 @@ local inCombat = function()
 	if mw_rot.dispellplzany() then return end
 	if mw_rot.diffusemagic() then return end
 	if mw_rot.spin_rjw() then return end
-	if mw_rot.kick_paralysis() then return end
-	if mw_rot.kick_spear() then return end
 	if mw_rot.burstdisarm()  then return end
 	if mw_rot.chi_wave()  then return end
 	if mw_rot.chibrew()  then return end
