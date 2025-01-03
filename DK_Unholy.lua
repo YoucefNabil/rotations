@@ -1,5 +1,3 @@
-local _,class = UnitClass("player")
-if class~="DEATHKNIGHT" then return end
 local HarmonyMedia, _A, Harmony = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
@@ -78,7 +76,19 @@ local usableitems= { -- item slots
 	13, --first trinket
 	14 --second trinket
 }
-local funny_table = {}
+local speedbuffs = {
+	"Tiger's lust",
+	"Angelic Feather"
+}
+local function hasspeedbuff(unit)
+	if unit then
+		for _,v in pairs(speedbuffs) do
+			if unit:BuffAny(v) then return true
+			end
+		end
+	end
+end
+
 local function cditemRemains(itemid)
 	local itempointerpoint;
 	if itemid ~= nil
@@ -119,6 +129,125 @@ local immunedebuffs = {
 	"Cyclone",
 	-- "Smoke Bomb"
 }
+
+local spelltable = {
+	[5782] = 2,     -- Fear
+	[1120] = 1,     -- Drain Soul
+	[689] = 1,      -- Drain Life
+	[30108] = 1,    -- Unstable Affliction
+	[1454] = 1,     -- Life Tap
+	[33786] = 2,    -- Cyclone
+	[28272] = 2,    -- Polymorph (Pig)
+	[118] = 2,      -- Polymorph
+	[61305] = 2,    -- Polymorph (Black Cat)
+	[61721] = 2,    -- Polymorph (Rabbit)
+	[61780] = 2,    -- Polymorph (Turkey)
+	[28271] = 2,    -- Polymorph (Turtle)
+	[51514] = 2,    -- Hex
+	[339] = 1,      -- Entangling Roots
+	[30451] = 1,    -- Arcane Blast
+	[20066] = 2,    -- Repentance
+	[116858] = 2,   -- Chaos Bolt
+	[113092] = 1,   -- Frost Bomb
+	[8092] = 1,     -- Mind Blast
+	[11366] = 1,    -- Pyroblast
+	[48181] = 1,    -- Haunt
+	[102051] = 1,   -- Frostjaw
+	[1064] = 1,     -- Chain Heal
+	[77472] = 2,    -- Greater Healing Wave
+	[8004] = 2,     -- Healing Surge
+	[73920] = 1,    -- Healing Rain
+	[51505] = 1,    -- Lava Burst
+	[8936] = 2,     -- Regrowth
+	[2061] = 2,     -- Flash Heal
+	[2060] = 2,     -- Heal
+	[2006] = 1,     -- Resurrection
+	[5185] = 2,     -- Healing Touch
+	[19750] = 2,    -- Flash of Light
+	[635] = 1,      -- Holy Light
+	[7328] = 1,     -- Redemption
+	[2008] = 1,     -- Ancestral Spirit
+	[50769] = 1,    -- Revive
+	[2812] = 1,     -- Holy Wrath
+	[82327] = 1,    -- Holy Radiance
+	[10326] = 2,    -- Turn Evil
+	[82326] = 2,    -- Divine Light
+	[116694] = 2,   -- Surging Mist
+	[124682] = 1,   -- Enveloping Mist
+	[115151] = 1,   -- Renewing Mist
+	[115310] = 1,   -- Revival
+	-- [126201] = 1,   -- Frostbolt (Water Elemental)
+	[44614] = 1,    -- Frostfire Bolt
+	[133] = 1,      -- Fireball
+	[1513] = 1,     -- Scare Beast
+	[982] = 2,      -- Revive Pet
+	[111771] = 2,   -- Demonic Gateway
+	-- [118297] = 1,   -- Immolate (Fel Imp)
+	[29722] = 1,    -- Incinerate
+	[124465] = 1,   -- Vampiric Touch
+	[32375] = 2,    -- Mass Dispel
+	[2948] = 1,     -- Scorch
+	[12051] = 2,    -- Evocation
+	[90337] = 2,    -- Bad Manner (Monkey Pet)
+	[47540] = 2,    -- Penance
+	[115268] = 2,   -- Mesmerize (Shivarra)
+	[6358] = 2,     -- Seduction (Succubus)
+	[51963] = 2,    -- Pain Suppression
+	[78674] = 1,    -- Starsurge
+	[113792] = 1,   -- Psychic Terror (Psyfiend)
+	[115175] = 2,   -- Soothing Mist
+	[115750] = 2,   -- Blinding Light
+	[103103] = 1,   -- Drain Soul
+	[113724] = 2,   -- Ring of Frost
+	[117014] = 1,   -- Elemental Blast
+	[605] = 1,      -- Mind Control
+	[740] = 2,      -- Tranquility
+	[32546] = 2,    -- Binding Heal
+	[113506] = 2,   -- Cyclone (Symbiosis)
+	[31687] = 2,    -- Summon Water Elemental
+	[119996] = 1,   -- Transcendence: Transfer
+	[117952] = 1,    -- Crackling Jade Lightning
+	[116] = 1,      -- Frostbolt
+	[50464] = 1,   -- Nourish
+	[331] = 1,      -- Healing Wave
+	[724] = 1,      -- Lightwell
+	[129197] = 1,   -- Insanity
+	[113656] = 2,   -- Fists of Fury
+	[9484] = 2,   -- Shackle Undead
+}
+
+local function kickcheck(unit)
+	if unit then
+		for k,_ in pairs(spelltable) do
+			if unit:iscasting(k) or unit:channeling(k) then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function kickcheck_nomove(unit)
+	if unit then
+		for k,_ in pairs(spelltable) do
+			if not unit:moving() and (unit:iscasting(k) or unit:channeling(k)) then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function kickcheck_nomove_highprio(unit)
+	if unit then
+		for k,v in pairs(spelltable) do
+			if v==2 and not unit:moving() and (unit:iscasting(k) or unit:channeling(k)) then
+				return true
+			end
+		end
+	end
+	return false
+end
 
 local function power(unit)
 	local intel2 = UnitPower(unit)
@@ -313,8 +442,6 @@ local exeOnLoad = function()
 		end
 		if slot==_A.STOPSLOT then 
 			-- print(player:stance())
-			-- print(_A.Core:GetSpellID("blood presence"))
-			-- print(_A.ObjectFacing("player"))
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
 				-- _A.print("OFF")
@@ -378,8 +505,25 @@ local exeOnLoad = function()
 		return (ap + mastery + crit + haste)
 		--return (mastery + crit + haste)
 	end
-	
-	
+	_A.casttimers = {}
+	_A.Listener:Add("delaycasts_DK", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+		-- Testing
+		-- if subevent == "SWING_DAMAGE" or subevent == "RANGE_DAMAGE" or subevent == "SPELL_PERIODIC_DAMAGE" or subevent == "SPELL_BUILDING_DAMAGE" or subevent == "ENVIRONMENTAL_DAMAGE"  then
+		-- print(subevent.." "..amount) -- too much voodoo
+		-- end
+		if guidsrc == UnitGUID("player") then
+			-- print(subevent)
+			-- Delay Cast Function
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[idd] = _A.GetTime()
+			end
+		end
+	end)
+	function _A.castdelay(idd, delay)
+		if delay == nil then return true end
+		if _A.casttimers[idd]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[idd])>=delay
+	end
 	-- dot snapshorring
 	_A.enemyguidtab = {}
 	local ijustdidthatthing = false
@@ -560,48 +704,6 @@ local exeOnLoad = function()
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
-	
-	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOFACE', function(num, spell)
-		local tempTable = {}
-		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and  _A.notimmune(target)  and target:los() then
-			return target and target.guid
-		end
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and _A.notimmune(Obj)  and Obj:los() then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					health = Obj:health(),
-					isplayer = Obj.isplayer and 1 or 0
-				}
-			end
-		end
-		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-		end
-		return tempTable[num] and tempTable[num].guid
-	end)
-	
-	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOFACEMELEE', function(num)
-		local tempTable = {}
-		local target = Object("target")
-		if target and target:enemy() and target:inmelee() and  _A.notimmune(target)  and target:los() then
-			return target and target.guid
-		end
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:inmelee() and _A.notimmune(Obj) and Obj:los() then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					health = Obj:health(),
-					isplayer = Obj.isplayer and 1 or 0
-				}
-			end
-		end
-		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-		end
-		return tempTable[num] and tempTable[num].guid
-	end)
 	--
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
@@ -639,7 +741,9 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if _A.isthishuman(Obj.guid) then
 				if Obj:Health()<65 then
-					return true
+					if Obj:range()<40 then
+						return true
+					end
 				end
 			end
 		end
@@ -662,7 +766,9 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if _A.isthishuman(Obj.guid) then
 				if Obj:Health()<35 then
-					return true
+					if Obj:range()<40 then
+						return true
+					end
 				end
 			end
 		end
@@ -735,6 +841,7 @@ local exeOnLoad = function()
 			then
 			local target = Object("target")
 			if target
+				and _A.IsKeyDown("9")
 				and target:exists()
 				and target:enemy()
 				and target:spellRange("Death Grip")
@@ -757,40 +864,6 @@ local exeOnLoad = function()
 end
 local exeOnUnload = function()
 end
-
-local function Funny_Cast(Target, SpellID, var)
-	player = Object("player")
-	if not player then return end
-	if Target then
-		Target:cast(SpellID, var) -- spamming casts
-		if funny_table[Target.guid]==nil then -- populating tables
-			funny_table[Target.guid]={} 
-			funny_table[Target.guid].t={}
-		end
-		if not Target:Infront() then 
-			funny_table[Target.guid].t[SpellID] = _A.ObjectFacing("Player")
-			lastFunnyCastTime = currentTime
-			_A.FaceDirection(Target.guid, true) -- face direction
-		end
-	end
-end
-_A.Listener:Add("FunnyEvent", "COMBAT_LOG_EVENT_UNFILTERED", function(_,_,subevent,_,guidsrc,_,_,_,guiddest,_,_,_,idd)
-	if guidsrc == UnitGUID("player") then -- only filter by me
-		if subevent =="SPELL_CAST_SUCCESS" then -- listen for successful spellcast
-			for TARGETGUID,v in pairs(funny_table) do
-				if v ~= nil and guiddest == TARGETGUID then
-					for SPELLID, FACING in pairs(funny_table[TARGETGUID].t) do
-						if ((idd == SPELLID) or (idd == _A.Core:GetSpellID(SPELLID)))  then
-							_A.FaceDirection(FACING, true) -- Reset facing
-							funny_table[TARGETGUID]=nil -- remove from table
-						end
-					end
-				end
-			end
-		end
-	end
-end)
-
 
 unholy.rot = {
 	blank = function()
@@ -947,15 +1020,15 @@ unholy.rot = {
 	MindFreeze = function()
 		if player:SpellCooldown("Mind Freeze")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:inmelee() 
-					-- and obj:infront()
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike") and obj:infront()
 					and obj:caninterrupt() 
 					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
 					)
 					and _A.notimmune(obj)
 					then
-					obj:Cast("Mind Freeze", true)
-					-- return Funny_Cast(obj, "Mind Freeze", true)
+					if kickcheck(obj) then
+						obj:Cast("Mind Freeze", true)
+					end
 				end
 			end
 		end
@@ -966,14 +1039,19 @@ unholy.rot = {
 		if player:SpellCooldown("Death Grip")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if (_A.pull_location ~= "arena") or (_A.pull_location == "arena" and not hunterspecs[_A.UnitSpec(obj.guid)]) then
-					if obj.isplayer and obj:isCastingAny() and obj:SpellRange("Death Grip") 
-						-- and obj:infront() 
+					if obj.isplayer and obj:isCastingAny() and obj:SpellRange("Death Grip") and obj:infront() 
 						and (player:SpellCooldown("Mind Freeze")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
 						and not obj:State("root")
+						and _A.castdelay(45524 ,1.5)
 						and _A.notimmune(obj)
-						and obj:los() then
-						obj:Cast("Death Grip", true)
-						-- return Funny_Cast(obj, "Death Grip", true)
+						and ( not _A.castdelay(49576,3) or ((obj:castsecond() < _A.interrupttreshhold) or obj:chanpercent()<=95))
+						
+						then 
+						if (kickcheck_nomove_highprio(obj) or  ( not _A.castdelay(49576,3) and kickcheck_nomove(obj))) or (healerspecid[obj:spec()] and obj:health()<=40 and kickcheck_nomove(obj)) then
+							if obj:los() then
+								obj:Cast("Death Grip", true)
+							end
+						end
 					end
 				end
 			end
@@ -986,13 +1064,12 @@ unholy.rot = {
 			if player:SpellCooldown("Death Grip")==0 then
 				if roster and roster:DebuffAny("Scatter Shot") then
 					for _, obj in pairs(_A.OM:Get('Enemy')) do
-						if 	obj.isplayer and hunterspecs[_A.UnitSpec(obj.guid)] and obj:SpellRange("Death Grip") 
-							-- and obj:infront() 
+						if 	obj.isplayer and hunterspecs[_A.UnitSpec(obj.guid)] and obj:SpellRange("Death Grip") and obj:infront() 
 							and not obj:State("root")
+							and _A.castdelay(45524 ,1.5)
 							and _A.notimmune(obj)
 							and obj:los() then
 							obj:Cast("Death Grip", true)
-							-- return Funny_Cast(obj, "Death Grip", true)
 						end
 					end
 				end
@@ -1004,11 +1081,11 @@ unholy.rot = {
 		if (_A.blood>=1 or _A.death>=1)  then
 			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _A.someoneisuperlow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
-						-- and obj:infront() 
+					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
+						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and not obj:DebuffAny("Strangulate")
 						and not obj:State("silence")
-						and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+						and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and _A.notimmune(obj)
 						and obj:los() then
@@ -1027,17 +1104,15 @@ unholy.rot = {
 					if obj.isplayer and obj:range()<=40 and obj:health()<=35 then 
 						if lowhpcheck ~= true then lowhpcheck = true end 
 					end
-					if lowhpcheck == true and obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
-						-- and obj:infront() 
+					if lowhpcheck == true and obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
 						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and not obj:DebuffAny("Strangulate")
 						and not obj:State("silence")
-						and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+						and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and _A.notimmune(obj)
 						and obj:los() then
 						obj:Cast("Strangulate", true)
-						-- return Funny_Cast(obj, "Strangulate", true)
 					end
 				end
 			end
@@ -1048,7 +1123,7 @@ unholy.rot = {
 		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  and obj:infront() 
-					and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 					and not obj:DebuffAny("Asphyxiate")
 					and not obj:State("silence")
 					and (obj:drState("Asphyxiate") == 1 or obj:drState("Asphyxiate")==-1)
@@ -1066,7 +1141,7 @@ unholy.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer  and not _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  and obj:infront()
 					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
-					and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 					and not obj:DebuffAny("Asphyxiate")
 					and not obj:BuffAny("bladestorm")
 					and not obj:BuffAny("Anti-Magic Shell")
@@ -1087,7 +1162,7 @@ unholy.rot = {
 					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)] or darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)] 
 						then
 						if obj:SpellRange("Dark Simulacrum") and obj:infront() and not obj:State("silence") 
-							and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+							and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 							and _A.notimmune(obj)
 							and obj:los() 
 							then
@@ -1099,30 +1174,60 @@ unholy.rot = {
 		end
 	end,
 	
-	root = function()
-		local target = Object("target")
-		if target and player:SpellCooldown("Chains of Ice")
-			and target.isplayer
-			and not target:spellRange("Death Strike") 
-			and target:spellRange("Chains of Ice") 
-			and target:infront()
-			-- and _A.isthishuman("target")
-			and target:exists()
-			and target:enemy() 
-			and not target:buffany(50435)
-			and not target:buffany(1044)
-			and not target:buffany(45524)
-			and not target:buffany(48707)
-			and not target:buffany("Bladestorm")
-			and not target:Debuff("Chains of Ice") -- remove this
-			and not target:state("root")
-			and _A.notimmune(target)
-			then if target:los()
-				then 
-				return target:Cast("Chains of Ice") -- slow/root
+	root_buff = function()
+		if player:SpellCooldown("Chains of Ice")<.3 
+			-- and _A.castdelay(49576 ,1.5)
+			then 
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:SpellRange("Chains of Ice") and obj:infront() 
+					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
+					and not obj:Debuffany("Chains of Ice")
+					and not obj:buffany("Hand of Freedom")
+					and not obj:buffany(45524)
+					and not obj:buffany(48707)							
+					and not obj:buffany(50435)	
+					and not obj:buffany("Bladestorm")
+					and _A.notimmune(obj)
+					and not obj:buffany(1044)
+					and hasspeedbuff(obj)
+					and obj:los() 
+					then
+					return obj:Cast("Chains of Ice", true)
+				end
 			end
 		end
 	end,
+	
+	root = function()
+		if player:SpellCooldown("Chains of Ice")<.3 and _A.castdelay(49576 ,1.5) then
+			local target = Object("target")
+			if target  
+				and target.isplayer
+				and not target:spellRange("Death Strike") 
+				and target:spellRange("Chains of Ice") 
+				and target:infront()
+				-- and _A.isthishuman("target")
+				and target:exists()
+				and target:enemy() 
+				and not target:buffany(50435)
+				and not target:buffany(1044)
+				and not target:buffany("Hand of Freedom")
+				and not target:buffany(45524)
+				and not target:buffany(48707)
+				and not target:buffany("Bladestorm")
+				and not target:Debuff("Chains of Ice") -- remove this
+				and not target:state("root")
+				and _A.notimmune(target)
+				then if target:los()
+					then 
+					
+					return target:Cast("Chains of Ice")
+					-- slow/root
+				end
+			end
+		end
+	end,
+	
 	
 	dotsnapshotOutBreak = function()
 		local target = Object("target")
@@ -1425,20 +1530,6 @@ unholy.rot = {
 		end
 	end,
 	
-	festeringstrikeTEST = function()
-		if player:SpellCooldown("Festering Strike")<.05 then
-			local lowestmelee = Object("lowestEnemyInSpellRangeNOFACEMELEE(Death Strike)")
-			if lowestmelee then
-				if not lowestmelee.isplayer then
-					if lowestmelee:exists() then
-						return lowestmelee:Cast("Festering Strike")
-						-- return Funny_Cast(lowestmelee, "Festering Strike")
-					end
-				end
-			end
-		end
-	end,
-	
 	
 	Deathcoil = function()
 		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or _A.dkenergy>=32)
@@ -1483,21 +1574,6 @@ unholy.rot = {
 		end
 	end,
 	
-	scourgestrikeTEST = function()
-		if _A.unholy>=1 then
-			local lowestmelee = Object("lowestEnemyInSpellRangeNOFACEMELEE(Death Strike)")
-			if lowestmelee then
-				if lowestmelee:exists() and lowestmelee:inmelee() then
-					if lowestmelee:health()>35
-						then
-						return lowestmelee:Cast("Scourge Strike")
-						-- return Funny_Cast(lowestmelee, "Scourge Strike")
-					end
-				end
-			end
-		end
-	end,
-	
 	Buffbuff = function()
 		if player:SpellCooldown("Horn of Winter")<.3 and _A.dkenergy <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Horn of Winter")
@@ -1519,14 +1595,15 @@ local inCombat = function()
 	if not _A.latency and not _A.interrupttreshhold then return end
 	if not _A.pull_location then return end
 	if _A.buttondelayfunc()  then return end
-	if player:isCastingAny() then return end
+	if  player:isCastingAny() then return end
 	if player:mounted() then return end
 	if UnitInVehicle("player") then return end
+	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+	-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
+	unholy.rot.GrabGrab()
+	unholy.rot.GrabGrabHunter()
 	-- utility
 	unholy.rot.caching()
-	-- grabs
-	if unholy.rot.GrabGrab() then return end
-	if unholy.rot.GrabGrabHunter() then return end
 	-- Burst and utility
 	unholy.rot.items_strpot()
 	unholy.rot.items_strflask()
@@ -1546,8 +1623,11 @@ local inCombat = function()
 	unholy.rot.strangulatesnipe()
 	unholy.rot.Asphyxiatesnipe()
 	unholy.rot.AsphyxiateBurst()
-	unholy.rot.darksimulacrum()
-	unholy.rot.root()
+	-- unholy.rot.darksimulacrum()
+	unholy.rot.root_buff()
+	if player:keybind("x") then
+		unholy.rot.root()
+	end
 	-- DEFS
 	unholy.rot.antimagicshell()
 	unholy.rot.petres()
@@ -1562,11 +1642,11 @@ local inCombat = function()
 	unholy.rot.BonusDeathStrike()
 	unholy.rot.DeathcoilHEAL()
 	unholy.rot.SoulReaper()
-	--pve part
+	----pve part
 	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		unholy.rot.dotsnapshotOutBreak()
-		unholy.rot.dotsnapshotPS()
-		unholy.rot.festeringstrike()
+	unholy.rot.dotsnapshotOutBreak()
+	unholy.rot.dotsnapshotPS()
+	unholy.rot.festeringstrike()
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then

@@ -1,6 +1,6 @@
 local _,class = UnitClass("player")
 if class~="MONK" then return end
-local HarmonyMedia, _A, Harmony = ...
+local _, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
 local enteredworldat
@@ -86,8 +86,7 @@ local healerspecid = {
 --
 local spelltable = {
     [5782] = 2,     -- Fear
-    [1120] = 1,     -- Drain Soul
-    [689] = 1,      -- Drain Life
+	
     [30108] = 1,    -- Unstable Affliction
     [1454] = 1,     -- Life Tap
     [33786] = 2,    -- Cyclone
@@ -165,7 +164,12 @@ local spelltable = {
     [50464] = 1,   -- Nourish
     [331] = 1,      -- Healing Wave
     [724] = 1,      -- Lightwell
-	[129197] = 1   -- Insanity
+	[129197] = 1,   -- Insanity
+    [1120] = 1,     -- Drain Soul
+    [689] = 1,      -- Drain Life
+    ["Polymorph"] = 2,     -- Drain Life
+	["Fists of Fury"] = 2, -- fists of fury
+	["Shackle Undead"] = 2 -- fists of fury
 }
 
 local function kickcheck(unit)
@@ -203,7 +207,7 @@ local exeOnLoad = function()
 		return CalculateHP(unit)
 	end)
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
-	_A.interrupttreshhold = .2 + _A.latency
+	_A.interrupttreshhold = .3 + _A.latency
 	_A.pressedbuttonat = 0
 	_A.buttondelay = 0.6
 	local STARTSLOT = 97
@@ -258,7 +262,7 @@ local exeOnLoad = function()
 			-- _A.print(_A.groundposition(player))
 			-- TEST STUFF
 			-- local target = Object("target")
-			-- if target and target:exists() then print(target:creatureType()) end
+			-- if target then print(target:creatureType()) end
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
 				_A.print("OFF")
@@ -288,7 +292,7 @@ local exeOnLoad = function()
 	function _A.someoneislow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj.isplayer then
-				if Obj:Health()<45 then
+				if Obj:Health()<=35 then
 					return true
 				end
 			end
@@ -383,8 +387,13 @@ local exeOnLoad = function()
 				end
 			end
 		end
-		table.sort( tempTable, function(a,b) return ( a.HP < b.HP ) end )
-		return tempTable[1] and tempTable[1].guid
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return ( a.HP < b.HP ) end )
+		end
+		if #tempTable>=1 then
+			return tempTable[1] and tempTable[1].guid
+			else return
+		end
 	end)
 	_A.FakeUnits:Add('lowestallNOHOT', function(num, spell)
 		local tempTable = {}
@@ -400,8 +409,13 @@ local exeOnLoad = function()
 				end
 			end
 		end
-		table.sort( tempTable, function(a,b) return ( a.HP < b.HP ) end )
-		return tempTable[1] and tempTable[1].guid
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return ( a.HP < b.HP ) end )
+		end
+		if #tempTable >=1 then
+			return tempTable[1] and tempTable[1].guid
+			else return
+		end
 	end)
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeMINIMAL', function(num, spell)
 		local tempTable = {}
@@ -417,18 +431,21 @@ local exeOnLoad = function()
 		if #tempTable>1 then
 			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
-		return tempTable[num] and tempTable[num].guid
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+			else  return
+		end
 	end)
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		-- if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.dontbreakcc(target) and _A.notimmune(target)  and target:los() then
-		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.notimmune(target) and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
+		-- if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and _A.dontbreakcc(target) and _A.notimmune(target)  and target:los() then
+		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and _A.notimmune(target) and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			-- if Obj:spellRange(spell) and _A.dontbreakcc(Obj) and _A.notimmune(Obj) and  Obj:Infront() and Obj:los() then
-			if Obj:spellRange(spell) and _A.notimmune(Obj) and  Obj:Infront() and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
+			-- if Obj:spellRange(spell) and _A.dontbreakcc(Obj) and _A.notimmune(Obj) and  Obj:InConeOf(player, 150) and Obj:los() then
+			if Obj:spellRange(spell) and _A.notimmune(Obj) and  Obj:InConeOf(player, 150) and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:healthmonk(),
@@ -439,7 +456,10 @@ local exeOnLoad = function()
 		if #tempTable>1 then
 			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
-		return tempTable[num] and tempTable[num].guid
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid 
+			else return
+		end
 	end)
 	_A.FakeUnits:Add('mostTargetedRosterPVP', function()
 		local targets = {}
@@ -774,7 +794,7 @@ local exeOnLoad = function()
 	
 	_A.faceunit = function(unit)
 		if unit then
-			if not unit:infront() then
+			if not unit:InConeOf(player, 150) then
 				_A.FaceDirection(unit.guid, true)
 			end
 		end
@@ -971,7 +991,7 @@ local mw_rot = {
 	
 	autoattackmanager = function()
 		local target = Object("target")
-		if target and target.isplayer and target:enemy() and target:alive() and target:inmelee() and target:infront() and target:los() then
+		if target and target.isplayer and target:enemy() and target:alive() and target:inmelee() and target:InConeOf(player, 150) and target:los() then
 			if target:state("incapacitate || fear || disorient || charm || misc || sleep") and player:autoattack() then print("Stopping attack") _A.CallWowApi("RunMacroText", "/stopattack") 
 				elseif not target:state("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then print("starting attack") _A.CallWowApi("RunMacroText", "/startattack") 
 			end
@@ -1128,7 +1148,7 @@ local mw_rot = {
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj:isCastingAny()
 						and obj:range()<30
-						and obj:Infront()
+						and obj:InConeOf(player, 90)
 						and _A.notimmune(obj)
 						and (kickcheck(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 						and obj:los() then
@@ -1147,9 +1167,10 @@ local mw_rot = {
 						and obj:isCastingAny()
 						and obj:SpellRange("Paralysis") 
 						and not obj:iscasting("Frostbolt")
-						and obj:Infront()
+						and (player:SpellCooldown("Spear Hand Strike")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Blackout Kick"))
+						and obj:InConeOf(player, 150)
 						and _A.notimmune(obj)
-						and (kickcheck(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
+						and (kickcheck_highprio(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 						and obj:los() then
 						return obj:Cast("Paralysis")
 					end
@@ -1163,7 +1184,7 @@ local mw_rot = {
 			local obj = Object("target")
 			if obj and obj.isplayer 
 				and obj:SpellRange("Paralysis") 
-				and obj:Infront()
+				and obj:InConeOf(player, 150)
 				and _A.notimmune(obj)
 				and obj:los() then
 				return obj:Cast("Paralysis")
@@ -1198,7 +1219,7 @@ local mw_rot = {
 						if player:SpellUsable(116694) and player:Chi()< 3 and SMobj:los() then return SMobj:cast("Surging Mist", true) end
 					end
 				end
-				if not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest and lowest:exists() then return lowest:cast("Soothing Mist") end 
+				if not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then return lowest:cast("Soothing Mist") end 
 			end
 			else if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
 		end
@@ -1210,14 +1231,14 @@ local mw_rot = {
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer 
 						and obj:SpellRange("Grapple Weapon") 
-						and obj:Infront()
+						and obj:InConeOf(player, 150)
 						and not healerspecid[obj:spec()] 
 						-- and (_A.pull_location=="arena" or UnitTarget(obj.guid)==player.guid)
 						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
 						and not obj:BuffAny("Bladestorm")
 						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
 						and not obj:state("disarm")
-						and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
+						and (obj:drState("Grapple Weapon") == 0 or obj:drState("Grapple Weapon")==-1)
 						and _A.notimmune(obj)
 						and obj:los() then
 						return obj:Cast("Grapple Weapon")
@@ -1232,12 +1253,12 @@ local mw_rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj:isCastingAny()
 					and obj:SpellRange("Blackout Kick") 
-					and obj:infront()
+					and obj:InConeOf(player, 150)
 					and not obj:State("silence")
 					and not obj:iscasting("Frostbolt")
 					and obj:caninterrupt() 
 					and not obj:state("stun || silence || incapacitate || fear || disorient || charm || misc || sleep")
-					and obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=95
+					and ((obj:castsecond() < _A.interrupttreshhold) or obj:chanpercent()<=95)
 					and (kickcheck(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 					and _A.notimmune(obj)
 					then
@@ -1276,7 +1297,7 @@ local mw_rot = {
 		if player:Stance() == 1   then
 			if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<0.3 then
 				local peacetarget = Object("mostTargetedRosterPVP")
-				if peacetarget and peacetarget:exists()  then
+				if peacetarget then
 					if peacetarget:SpellRange("Ring of Peace") and peacetarget:healthmonk()<=85 and not peacetarget:BuffAny("Ring of Peace") then
 						if ( peacetarget:areaEnemies(6) >= 3 ) or ( peacetarget:areaEnemies(6) >= 1 and peacetarget:healthmonk()<75 ) then
 							if peacetarget:los() then
@@ -1299,11 +1320,13 @@ local mw_rot = {
 			
 			-- Version 1: Only enemies targeting
 			for _, enemy in pairs(_A.OM:Get('Enemy')) do
-				if enemy and enemy.isplayer and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) and not enemy:state("Disarm") and not healerspecid[enemy:spec()] then
+				if enemy.isplayer and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) and not enemy:state("Disarm") 
+					and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+					and not healerspecid[enemy:spec()] then
 					local tguid = UnitTarget(enemy.guid)
 					if tguid then
 						local tobj = Object(tguid)
-						if tobj and _A.nothealimmune(tobj) and tobj:Distancefrom(enemy) < 8 and _A.nothealimmune(tobj) then
+						if tobj and _A.nothealimmune(tobj) and tobj:Distancefrom(enemy) < 7 and _A.nothealimmune(tobj) then
 							targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
 						end
 					end
@@ -1318,7 +1341,7 @@ local mw_rot = {
 			end
 			
 			if mostGuid then peacetarget = Object(mostGuid)
-				if peacetarget and peacetarget:exists() then
+				if peacetarget then
 					if peacetarget:SpellRange("Ring of Peace") and not peacetarget:BuffAny("Ring of Peace") then
 						if (most >= 2) or (most >= 1 and (peacetarget:healthmonk() < 45 or (_A.pull_location == "arena" and peacetarget:healthmonk() < 65))) then
 							if peacetarget:los() then
@@ -1331,9 +1354,11 @@ local mw_rot = {
 			end
 			-- Version 2: All valid enemies in range
 			for _, friend in pairs(_A.OM:Get('Friendly')) do
-				if friend and friend.isplayer and _A.nothealimmune(friend) then
+				if friend.isplayer and _A.nothealimmune(friend) then
 					for _, enemy in pairs(_A.OM:Get('Enemy')) do
-						if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 8 and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) and not enemy:state("Disarm")  then
+						if enemy.isplayer and friend:Distancefrom(enemy) < 7 and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) 
+							and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+							and not enemy:state("Disarm")  then
 							targetsall[friend.guid] = targetsall[friend.guid] and targetsall[friend.guid] + 1 or 1
 						end
 					end
@@ -1348,7 +1373,7 @@ local mw_rot = {
 			end
 			
 			if mostallGuid then peacetarget = Object(mostallGuid)
-				if peacetarget and peacetarget:exists() then
+				if peacetarget then
 					if peacetarget:SpellRange("Ring of Peace") and not peacetarget:BuffAny("Ring of Peace") then
 						if (mostall >= 3) then
 							if peacetarget:los() then
@@ -1359,13 +1384,29 @@ local mw_rot = {
 					end
 				end
 			end
-			-- Version 3: Silence healers if someone is low
+			-- version 3: interrupt high prio casts
+			for _, friend in pairs(_A.OM:Get('Friendly')) do
+				if friend and friend.isplayer and _A.nothealimmune(friend) then
+					for _, enemy in pairs(_A.OM:Get('Enemy')) do
+						if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and kickcheck_highprio(enemy) 
+							and (player:SpellCooldown("Spear Hand Strike")>_A.interrupttreshhold or not enemy:caninterrupt() or not enemy:SpellRange("Blackout Kick"))
+							and _A.notimmune(enemy) and friend:los() then
+							print("interrupting high prio")
+							return friend:Cast("Ring of Peace")
+						end
+					end
+				end
+			end
+			--
+			-- Version 4: Silence healers if someone is low
 			-- if _A.pull_location and _A.pull_location=="arena" then
 			if _A.someoneislow() then -- iterates through enemy players to find if a low hp enemy player exists
 				for _, friend in pairs(_A.OM:Get('Friendly')) do
 					if friend and friend.isplayer and _A.nothealimmune(friend) then
 						for _, enemy in pairs(_A.OM:Get('Enemy')) do
-							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 8 and healerspecid[enemy:spec()]  and _A.notimmune(enemy) and not enemy:state("silence") and friend:los() then
+							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and healerspecid[enemy:spec()]  and _A.notimmune(enemy) and not enemy:state("silence") 
+								and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+								and friend:los() then
 								print("enemy healer silence - low enemy in range")
 								return friend:Cast("Ring of Peace")
 							end
@@ -1374,20 +1415,6 @@ local mw_rot = {
 				end
 			end
 			-- end
-			-- version 4: interrupt high prio casts
-			if _A.someoneislow() then -- iterates through enemy players to find if a low hp enemy player exists
-				for _, friend in pairs(_A.OM:Get('Friendly')) do
-					if friend and friend.isplayer and _A.nothealimmune(friend) then
-						for _, enemy in pairs(_A.OM:Get('Enemy')) do
-							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 8 and kickcheck_highprio(enemy) and _A.notimmune(enemy) and friend:los() then
-								print("interrupting high prio")
-								return friend:Cast("Ring of Peace")
-							end
-						end
-					end
-				end
-			end
-			--
 		end
 	end,
 	
@@ -1398,7 +1425,7 @@ local mw_rot = {
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
 				if lowest then
-					if lowest:exists() and lowest:SpellRange("Chi Wave")
+					if lowest:SpellRange("Chi Wave")
 						then 
 						return lowest:Cast("Chi Wave")
 					end
@@ -1549,7 +1576,7 @@ local mw_rot = {
 		if player:SpellCooldown("Life Cocoon")<.3 and player:SpellUsable(116849)   then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
-				if lowest and lowest:exists() and lowest:SpellRange("Life Cocoon") then 			
+				if lowest and lowest:SpellRange("Life Cocoon") then 			
 					--]]
 					if 
 						-- (lowest:healthmonk()<40 or (pull_location()=="pvp" and lowest:healthmonk()<40))
@@ -1585,7 +1612,7 @@ local mw_rot = {
 		if player:SpellCooldown("Renewing Mist")<.3 and player:SpellUsable(115151)   then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
-				if lowest and lowest:exists() and lowest:SpellRange("Renewing Mist") then 
+				if lowest and lowest:SpellRange("Renewing Mist") then 
 					return lowest:Cast("Renewing Mist")
 				end
 			end
@@ -1608,7 +1635,7 @@ local mw_rot = {
 				if player:keybind("E") then
 					if player:SpellUsable(115460) then
 						local target = Object("target")
-						if target and target:exists() then
+						if target then
 							if target:Distance() < 40 then
 								if target:los() then
 									-- return target:CastGround("Healing Sphere")
@@ -1631,14 +1658,12 @@ local mw_rot = {
 						--- ORBS
 						local lowest = Object("lowestall")
 						if lowest then
-							if lowest:exists() then
-								if (lowest:healthmonk() < 85) then
-									-- if lowest:los() then
-									-- return lowest:CastGround("Healing Sphere", true)
-									-- return _A.clickcast(lowest,"Healing Sphere")
-									return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 8)
-									-- end
-								end
+							if (lowest:healthmonk() < 85) then
+								-- if lowest:los() then
+								-- return lowest:CastGround("Healing Sphere", true)
+								-- return _A.clickcast(lowest,"Healing Sphere")
+								return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 8)
+								-- end
 							end
 						end
 					end
@@ -1654,13 +1679,11 @@ local mw_rot = {
 					---------------------------------- 
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
-						if lowestmelee:exists() then
-							---------------------------------- 
-							return lowestmelee:Cast("Blackout Kick")
-						end
+						---------------------------------- 
+						return lowestmelee:Cast("Blackout Kick")
 					end
-					--------------------------------- damage based
 				end
+				--------------------------------- damage based
 			end
 		end
 	end,
@@ -1672,13 +1695,11 @@ local mw_rot = {
 					---------------------------------- 
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
-						if lowestmelee:exists() then
-							---------------------------------- 
-							return lowestmelee:Cast("Tiger Palm")
-						end
+						---------------------------------- 
+						return lowestmelee:Cast("Tiger Palm")
 					end
-					--------------------------------- damage based
 				end
+				--------------------------------- damage based
 			end
 		end
 	end,
@@ -1691,9 +1712,7 @@ local mw_rot = {
 					then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
-						if lowestmelee:exists() then
-							return lowestmelee:Cast("Blackout Kick")
-						end
+						return lowestmelee:Cast("Blackout Kick")
 					end
 				end
 			end
@@ -1708,9 +1727,7 @@ local mw_rot = {
 					then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
-						if lowestmelee:exists() then
-							return lowestmelee:Cast("Tiger Palm")
-						end
+						return lowestmelee:Cast("Tiger Palm")
 					end
 				end
 			end
@@ -1725,9 +1742,7 @@ local mw_rot = {
 					then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
-						if lowestmelee:exists() then
-							return lowestmelee:Cast("Tiger Palm", true)
-						end
+						return lowestmelee:Cast("Tiger Palm", true)
 					end
 				end
 			end
@@ -1761,9 +1776,7 @@ local mw_rot = {
 				if player:Buff("Muscle Memory") then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
-						if lowestmelee:exists() then
-							return lowestmelee:Cast("Tiger Palm")
-						end
+						return lowestmelee:Cast("Tiger Palm")
 					end
 				end
 			end
@@ -1778,13 +1791,11 @@ local mw_rot = {
 				---------------------------------- 
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
-					if lowestmelee:exists() then
-						---------------------------------- 
-						return lowestmelee:Cast("Blackout Kick", true)
-					end
+					---------------------------------- 
+					return lowestmelee:Cast("Blackout Kick", true)
 				end
-				--------------------------------- damage based
 			end
+			--------------------------------- damage based
 		end
 	end,
 	
@@ -1849,9 +1860,7 @@ local mw_rot = {
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee then
-				if lowestmelee:exists() then
-					return lowestmelee:Cast("Jab", true)
-				end
+				return lowestmelee:Cast("Jab", true)
 			end
 		end
 	end,
@@ -1895,6 +1904,7 @@ local mw_rot = {
 				if not _focus then _A.CallWowApi("FocusUnit", lowestmelee.guid) end
 				if _focus and _focus.guid ~= lowestmelee.guid  then _A.CallWowApi("FocusUnit", lowestmelee.guid) end
 				if _focus then _A.CallWowApi("RunMacroText", "/petattack focus") end
+				else _A.CallWowApi("RunMacroText", "/petfollow")
 			end
 			elseif _focus then _A.CallWowApi("ClearFocus")
 		end
@@ -1972,7 +1982,7 @@ local inCombat = function()
 	if not player then return end
 	if not player:alive() then return end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
-	_A.interrupttreshhold = .2 + _A.latency
+	_A.interrupttreshhold = .3 + _A.latency
 	mw_rot.autofocus()
 	mw_rot.autoattackmanager()
 	-- Out of GCD
