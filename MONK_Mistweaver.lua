@@ -992,8 +992,8 @@ local mw_rot = {
 	autoattackmanager = function()
 		local target = Object("target")
 		if target and target.isplayer and target:enemy() and target:alive() and target:inmelee() and target:InConeOf(player, 150) and target:los() then
-			if target:state("incapacitate || fear || disorient || charm || misc || sleep") and player:autoattack() then print("Stopping attack") _A.CallWowApi("RunMacroText", "/stopattack") 
-				elseif not target:state("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then print("starting attack") _A.CallWowApi("RunMacroText", "/startattack") 
+			if target:state("incapacitate || fear || disorient || charm || misc || sleep") and player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") 
+				elseif not target:state("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then  _A.CallWowApi("RunMacroText", "/startattack") 
 			end
 		end
 	end,
@@ -1405,6 +1405,7 @@ local mw_rot = {
 					if friend and friend.isplayer and _A.nothealimmune(friend) then
 						for _, enemy in pairs(_A.OM:Get('Enemy')) do
 							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and healerspecid[enemy:spec()]  and _A.notimmune(enemy) and not enemy:state("silence") 
+							and (enemy:drState(137460)==1 or enemy:drState(137460)==-1)
 								and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
 								and friend:los() then
 								print("enemy healer silence - low enemy in range")
