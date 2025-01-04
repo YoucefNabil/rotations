@@ -1160,20 +1160,18 @@ local mw_rot = {
 	end,
 	
 	kick_paralysis = function()
-		if player:Stance() == 1   then
-			if player:SpellCooldown("Paralysis")<.3 then
-				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj.isplayer 
-						and obj:isCastingAny()
-						and obj:SpellRange("Paralysis") 
-						and not obj:iscasting("Frostbolt")
-						and (player:SpellCooldown("Spear Hand Strike")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Blackout Kick"))
-						and obj:InConeOf(player, 150)
-						and _A.notimmune(obj)
-						and (kickcheck_highprio(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
-						and obj:los() then
-						return obj:Cast("Paralysis")
-					end
+		if player:SpellCooldown("Paralysis")<.3 then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer 
+					and obj:isCastingAny()
+					and obj:SpellRange("Paralysis") 
+					and not obj:iscasting("Frostbolt")
+					and (player:SpellCooldown("Spear Hand Strike")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Blackout Kick"))
+					and obj:InConeOf(player, 150)
+					and _A.notimmune(obj)
+					and (kickcheck_highprio(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
+					and obj:los() then
+					return obj:Cast("Paralysis")
 				end
 			end
 		end
@@ -1294,15 +1292,13 @@ local mw_rot = {
 	end,
 	
 	ringofpeace = function()
-		if player:Stance() == 1   then
-			if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<0.3 then
-				local peacetarget = Object("mostTargetedRosterPVP")
-				if peacetarget then
-					if peacetarget:SpellRange("Ring of Peace") and peacetarget:healthmonk()<=85 and not peacetarget:BuffAny("Ring of Peace") then
-						if ( peacetarget:areaEnemies(6) >= 3 ) or ( peacetarget:areaEnemies(6) >= 1 and peacetarget:healthmonk()<75 ) then
-							if peacetarget:los() then
-								return peacetarget:Cast("Ring of Peace")
-							end
+		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<0.3 then
+			local peacetarget = Object("mostTargetedRosterPVP")
+			if peacetarget then
+				if peacetarget:SpellRange("Ring of Peace") and peacetarget:healthmonk()<=85 and not peacetarget:BuffAny("Ring of Peace") then
+					if ( peacetarget:areaEnemies(6) >= 3 ) or ( peacetarget:areaEnemies(6) >= 1 and peacetarget:healthmonk()<75 ) then
+						if peacetarget:los() then
+							return peacetarget:Cast("Ring of Peace")
 						end
 					end
 				end
@@ -1311,7 +1307,7 @@ local mw_rot = {
 	end,
 	
 	ringofpeacev2 = function()
-		if player:Stance() == 1 and player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace") < 0.3 then
+		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace") < 0.3 then
 			local targets = {}
 			local targetsall = {}
 			local peacetarget = nil
@@ -1556,7 +1552,7 @@ local mw_rot = {
 		if player:talent("Diffuse Magic") and player:SpellCooldown("Diffuse Magic")==0 then
 			-- add the stuff that hurts
 			if 
-				player:healthmonk()<30 or player:DebuffAny("Moonfire || Sunfire || Unstable Affliction || Touch of Karma")
+				player:healthmonk()<30 or player:DebuffAny("Moonfire || Sunfire || Unstable Affliction || Touch of Karma") or player:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence")
 				then 
 			return player:cast("Diffuse Magic") end
 		end
@@ -2035,6 +2031,7 @@ local inCombat = function()
 		if mw_rot.tigerpalm_mm() then return end
 	end
 	if mw_rot.dispellplzany() then return end
+	-- if mw_rot.dispellplzarena() then return end
 	if mw_rot.diffusemagic() then return end
 	if mw_rot.spin_rjw() then return end
 	if mw_rot.burstdisarm()  then return end
