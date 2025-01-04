@@ -2028,7 +2028,7 @@ local inCombat = function()
 	if mw_rot.renewingmist() then return end
 	if _A.modifier_shift() then
 		if mw_rot.uplift() then return end
-		if manatea_HealthRegen() then return end
+		if mw_rot.manatea_HealthRegen() then return end
 		if mw_rot.healingsphere() then return end
 	end
 	if not player:keybind("R") then
