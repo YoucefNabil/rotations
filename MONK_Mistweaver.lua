@@ -1405,7 +1405,7 @@ local mw_rot = {
 					if friend and friend.isplayer and _A.nothealimmune(friend) then
 						for _, enemy in pairs(_A.OM:Get('Enemy')) do
 							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and healerspecid[enemy:spec()]  and _A.notimmune(enemy) and not enemy:state("silence") 
-							and (enemy:drState(137460)==1 or enemy:drState(137460)==-1)
+								and (enemy:drState(137460)==1 or enemy:drState(137460)==-1)
 								and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
 								and friend:los() then
 								print("enemy healer silence - low enemy in range")
@@ -1444,6 +1444,23 @@ local mw_rot = {
 				then
 				return player:Cast("Mana Tea")
 				-- _A.CastSpellByName("Mana Tea")
+			end
+		end
+	end,
+	
+	manatea_HealthRegen = function()
+		if player:Stance() == 1  and player:talent("Healing Elixirs") and player:buff("Healing Elixirs") then
+			if player:SpellCooldown("Mana Tea")<.3
+				and player:Glyph("Glyph of Mana Tea")
+				and player:mana()<= 92
+				and player:health()<=85
+				and player:BuffStack("Mana Tea")>=2
+				then
+				local lowest = Object("lowestall")
+				if lowest and lowest.guid == player.guid then
+					return player:Cast("Mana Tea")
+					-- _A.CastSpellByName("Mana Tea")
+				end
 			end
 		end
 	end,
@@ -2011,6 +2028,7 @@ local inCombat = function()
 	if mw_rot.renewingmist() then return end
 	if _A.modifier_shift() then
 		if mw_rot.uplift() then return end
+		if manatea_HealthRegen() then return end
 		if mw_rot.healingsphere() then return end
 	end
 	if not player:keybind("R") then
