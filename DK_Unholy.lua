@@ -431,6 +431,25 @@ local exeOnLoad = function()
 					end
 				end
 			end
+			if id == _A.Core:GetSpellID("Death Grip") then
+				if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip")
+					then
+					local target = Object("target")
+					if target
+						and target:exists()
+						and target:enemy()
+						and target:spellRange("Death Grip")
+						and target:alive()
+						and not target:State("root")
+						and _A.castdelay(45524,1.5)
+						-- and _A.isthishuman(target.guid)
+						and _A.notimmune(target)
+						and target:infront()
+						and target:los() then
+						return target:Cast("Death Grip")
+					end
+				end
+			end
 		end
 		if slot==_A.STARTSLOT then 
 			_A.pressedbuttonat = 0
@@ -837,16 +856,17 @@ local exeOnLoad = function()
 		--
 		local player = player or Object("player")
 		
-		if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip") and player:Keybind("R")
+		if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip")
 			then
 			local target = Object("target")
 			if target
-				and _A.IsKeyDown("9")
+				and _A.IsKeyDown("3")
 				and target:exists()
 				and target:enemy()
 				and target:spellRange("Death Grip")
 				and target:alive()
 				and not target:State("root")
+				and _A.castdelay(45524,1.5)
 				and _A.isthishuman(target.guid)
 				and _A.notimmune(target)
 				and target:infront()
@@ -1044,7 +1064,7 @@ unholy.rot = {
 						and not obj:State("root")
 						and _A.castdelay(45524 ,1.5)
 						and _A.notimmune(obj)
-						and ( not _A.castdelay(49576,3) or ((obj:castsecond() < _A.interrupttreshhold) or obj:chanpercent()<=95))
+						and (not _A.castdelay(49576,3) or ((obj:castsecond() < _A.interrupttreshhold) or obj:chanpercent()<=95))
 						
 						then 
 						if (kickcheck_nomove_highprio(obj) or  ( not _A.castdelay(49576,3) and kickcheck_nomove(obj))) or (healerspecid[obj:spec()] and obj:health()<=40 and kickcheck_nomove(obj)) then
@@ -1176,7 +1196,7 @@ unholy.rot = {
 	
 	root_buff = function()
 		if player:SpellCooldown("Chains of Ice")<.3 
-			-- and _A.castdelay(49576 ,1.5)
+			and _A.castdelay(49576 ,1.5)
 			then 
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:SpellRange("Chains of Ice") and obj:infront() 
@@ -1623,9 +1643,9 @@ local inCombat = function()
 	unholy.rot.strangulatesnipe()
 	unholy.rot.Asphyxiatesnipe()
 	unholy.rot.AsphyxiateBurst()
-	-- unholy.rot.darksimulacrum()
+	unholy.rot.darksimulacrum()
 	unholy.rot.root_buff()
-	if player:keybind("x") then
+	if player:keybind("X") then
 		unholy.rot.root()
 	end
 	-- DEFS
@@ -1644,9 +1664,9 @@ local inCombat = function()
 	unholy.rot.SoulReaper()
 	----pve part
 	if _A.pull_location == "party" or _A.pull_location == "raid" then
-	unholy.rot.dotsnapshotOutBreak()
-	unholy.rot.dotsnapshotPS()
-	unholy.rot.festeringstrike()
+		unholy.rot.dotsnapshotOutBreak()
+		unholy.rot.dotsnapshotPS()
+		unholy.rot.festeringstrike()
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
