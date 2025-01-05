@@ -86,7 +86,6 @@ local healerspecid = {
 --
 local spelltable = {
     [5782] = 2,     -- Fear
-	
     [30108] = 1,    -- Unstable Affliction
     [1454] = 1,     -- Life Tap
     [33786] = 2,    -- Cyclone
@@ -576,7 +575,7 @@ local exeOnLoad = function()
 			MW_HealthUsedData[unit].t[uptime] = Usage
 			for Time, Health in pairs(MW_HealthUsedData[unit].t) do
 				if uptime - Time > MW_HealthAnalyzedTimespan then
-					table.remove(MW_HealthUsedData[unit].t, Time)
+					MW_HealthUsedData[unit].t[Time]=nil
 					else
 					MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health			
 					if Health<0 then
@@ -648,12 +647,11 @@ local exeOnLoad = function()
 		end
 		-- fixed 
 		-- if MW_AnalyzedTimespan~=minimumMW_AnalyzedTimespan then MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan end
-		
 		local manaUsed = 0
 		MW_ManaUsedData[uptime] = Usage
 		for Time, Mana in pairs(MW_ManaUsedData) do
 			if uptime - Time > MW_AnalyzedTimespan then
-				table.remove(MW_ManaUsedData, Time)
+				MW_ManaUsedData[Time]=nil
 				else
 				manaUsed = manaUsed + Mana
 			end
