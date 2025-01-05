@@ -2006,7 +2006,7 @@ local inCombat = function()
 	-- ProcessItemsCoroutine()
 	-- if player and player:isChanneling("Mana Tea") then return end
 	--
-	if mw_rot.healingsphere_keybind() then return end
+	-- if mw_rot.healingsphere_keybind() then return end
 	if mw_rot.items_healthstone() then return end 
 	if mw_rot.items_noggenfogger() then return end
 	if mw_rot.items_intflask() then return end
