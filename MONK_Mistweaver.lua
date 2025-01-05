@@ -536,7 +536,7 @@ local exeOnLoad = function()
 	end)
 	_A.Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") then -- does this work with absorbs? I don't remember testing this
-			if UnitIsPlayer(guiddest) then
+			if UnitIsPlayer(guiddest) then -- only players
 				-- all subevent susceptible of causing health changes
 				-- print("picked up")
 				if MW_HealthUsedData[guiddest]==nil then
@@ -666,12 +666,10 @@ local exeOnLoad = function()
 	--====================================================================== -- Cleaning on Deaths
 	_A.Listener:Add("DeathCleaning", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if subevent == "UNIT_DIED" then
-			if UnitIsPlayer(guiddest) then
 				if MW_HealthUsedData[guiddest]~=nil then
 					MW_HealthUsedData[guiddest] = nil
 					MW_LastHealth[guiddest] = nil
 				end
-			end
 			if guiddest == UnitGUID("player") then
 				MW_ManaUsedData = {}
 				MW_LastMana = nil
@@ -2039,7 +2037,7 @@ local inCombat = function()
 	if mw_rot.tigerslust()  then return end
 	if mw_rot.lifecocoon()  then return end
 	if mw_rot.pvp_disable_keybind() then return end
-	if player:keybind("R") or ((_A.pull_location=="none" and not player:isparty() and not player:israid()) or _A.pull_location=="party")  then
+	if player:keybind("R") or ((_A.pull_location=="none" and not player:israid())  then
 		if mw_rot.manatea() then return end
 		if mw_rot.tp_buff_keybind() then return end
 		if mw_rot.blackout_keybind()  then return end
