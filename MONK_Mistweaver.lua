@@ -2037,7 +2037,7 @@ local inCombat = function()
 	if mw_rot.tigerslust()  then return end
 	if mw_rot.lifecocoon()  then return end
 	if mw_rot.pvp_disable_keybind() then return end
-	if player:keybind("R") or ((_A.pull_location=="none" and not player:israid())  then
+	if player:keybind("R") or (_A.pull_location=="none" and not player:israid())  then
 		if mw_rot.manatea() then return end
 		if mw_rot.tp_buff_keybind() then return end
 		if mw_rot.blackout_keybind()  then return end
