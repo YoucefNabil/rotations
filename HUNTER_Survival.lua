@@ -467,9 +467,9 @@ local inCombat = function()
 	if player:mounted() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if not player:isCastingAny() or player:CastingRemaining() < 0.3 then
-		if player:combat() and survival.rot.mendpet() then return end
 		if survival.rot.explosiveshot() then return end
 		if survival.rot.arcaneshot() then return end
+		if player:combat() and survival.rot.mendpet() then return end
 		if survival.rot.cobrashot() then return end
 	end
 end
