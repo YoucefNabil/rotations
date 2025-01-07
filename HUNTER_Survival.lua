@@ -445,7 +445,7 @@ survival.rot = {
 	end,
 	
 	serpentsting = function()
-		if _A.castdelay(1978, (2*player:gcd())) _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting")  then
+		if _A.castdelay(1978, (2*player:gcd())) and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting")  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff("Serpent Sting") then
 				return lowestmelee:Cast("Serpent Sting")
