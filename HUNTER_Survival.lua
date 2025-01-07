@@ -539,11 +539,9 @@ survival.rot = {
 	
 	multishot = function()
 		if player:SpellUsable("Multi-Shot") and _A.mostclumpedenemy then
-			if _A.clumpcount>=enemytreshhold then -- or special check, like if a super stacked unit exists.
-				local lowestmelee = Object(_A.mostclumpedenemy)
-				if lowestmelee then
-					return lowestmelee:Cast("Multi-Shot")
-				end
+			local lowestmelee = Object(_A.mostclumpedenemy)
+			if lowestmelee then
+				return lowestmelee:Cast("Multi-Shot")
 			end
 		end
 	end,
@@ -553,6 +551,15 @@ survival.rot = {
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Arcane Shot")
+			end
+		end
+	end,
+	
+	killshot = function()
+		if player:Spellcooldown("Kill Shot") then
+			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Kill Shot)")
+			if lowestmelee and lowestmelee:health()<=20 then
+				return lowestmelee:Cast("Kill Shot")
 			end
 		end
 	end,
@@ -592,9 +599,15 @@ local inCombat = function()
 	if player:mounted() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if not player:isCastingAny() or player:CastingRemaining() < 0.3 then
+		-- aoe
+		-- maybe add shift?
+		if (_A.clumpcount>=enemytreshhold) and survival.rot.multishot() then return end
+		-- single target
+		if survival.rot.killshot() then return end
 		if (_A.clumpcount<enemytreshhold) and survival.rot.explosiveshot() then return end
 		if player:combat() and survival.rot.mendpet() then return end
-		if survival.rot.multishot() then return end
+		-- dump
+		-- maybe add an auto multishot here?
 		if (_A.clumpcount<enemytreshhold) and survival.rot.serpentsting() then return end
 		if survival.rot.arcaneshot() then return end
 		if survival.rot.cobrashot() then return end
