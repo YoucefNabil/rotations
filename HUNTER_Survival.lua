@@ -148,9 +148,9 @@ end
 local cobraid = _A.Core:GetSpellID("Cobra Shot")
 local steadyid = _A.Core:GetSpellID("Steady Shot") 
 local ESid = _A.Core:GetSpellID("Explosive Shot") 
-local GLAIVEid = _A.Core:GetSpellID("Explosive Shot") 
-local BAid = _A.Core:GetSpellID("Explosive Shot") 
-local AMOCid = _A.Core:GetSpellID("Explosive Shot") 
+local gtID = _A.Core:GetSpellID("Glaive Toss") 
+local baID = _A.Core:GetSpellID("Black Arrow") 
+local amocID = _A.Core:GetSpellID("A Murder of Crows") 
 local GUI = {
 }
 local exeOnLoad = function()
@@ -391,10 +391,10 @@ local exeOnLoad = function()
 	-- while also making sure to have enough focus by the time important cds come up
 	_A.ArcaneCheck = function() -- arcane shot function checks all 4 spells, explosive shot checks black arrow and amoc, black arrow checks amoc, amoc checks nothing (glaives same checks as AS)
 		if player:focus() >= (player:FocusMax() - 5) then return true end -- avoids capping focus, always bad.
-		-- local amoc_pool = _A.IsSpellKnown(ESid) and - player:spellcost(ESid) + (manaregen()*tempTable[ESid]) or 0
-		-- local blackarrow_pool = _A.IsSpellKnown(ESid) and - player:spellcost(ESid) + (manaregen()*tempTable[ESid]) or 0
-		-- local glaive_pool = _A.IsSpellKnown(ESid) and - player:spellcost(ESid) + (manaregen()*tempTable[ESid]) or 0
 		local explosiveshot_pool = -player:spellcost("Explosive Shot") + (manaregen()*player:SpellCooldown("Explosive Shot"))
+		local glaivetoss_pool = _A.IsSpellKnown(gaID) and (-player:spellcost("Glaive Toss") + (manaregen()*player:SpellCooldown("Glaive Toss"))) or 0
+		local blackarrow_pool = _A.IsSpellKnown(baID) and (-player:spellcost("Black Arrow") + (manaregen()*player:SpellCooldown("Black Arrow"))) or 0
+		local amoc_pool = _A.IsSpellKnown(amocID) and (-player:spellcost("A Murder of Crows") + (manaregen()*player:SpellCooldown("A Murder of Crows"))) or 0
 		return player:focus() - player:spellcost("Arcane Shot") + explosiveshot_pool  >= (manaregen()*player:gcd())
 	end
 	_A.CobraCheck = function() -- we only want to cast Cobra Shot if not enough ressources by the time important cds come up (Idk if this is necessary just yet)
