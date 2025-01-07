@@ -392,6 +392,23 @@ local exeOnLoad = function()
 		return tempTable[num] and tempTable[num].guid
 	end)
 	
+	_A.FakeUnits:Add('highestEnemyInSpellRangeNOTAR', function(num, spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and Obj:combat() and _A.notimmune(Obj)  and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:HealthActual(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	
 	_A.DSL:Register('caninterrupt', function(unit)
 		return interruptable(unit)
 	end)
@@ -423,7 +440,24 @@ local exeOnLoad = function()
 			end
 		end
 	end)
-	
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
+	--=========================== SPELL CHECKS
 	_A.lowpriocheck = function(spellid)
 		-- Avoid focus capping
 		if player:focus() >= (player:FocusMax() - 5) then return true end
@@ -495,7 +529,109 @@ local exeOnLoad = function()
 		-- If all focus checks pass, Arcane Shot can be cast
 		return true
 	end
+	------------------------------------------------------------------
+	------------------------------------------------------------------
+	------------------------------------------------------------------
+	_A.EScheck = function()
+		-- Avoid focus capping
+		if player:focus() >= (player:FocusMax() - 5) then return true end
+		
+		-- Helper to compute required focus with time-based regeneration
+		local function required_focus(spell, elapsed)
+			-- if not player:spellknown(spell) then return 0 end
+			local cd = player:SpellCooldown(spell) -- Cooldown remaining
+			local regen = manaregen() * math.max(0, cd - elapsed) -- Regen focus during cooldown after elapsed time
+			return -player:spellcost(spell) + regen
+		end
+		
+		-- Define abilities with cooldowns and conditions
+		local spells = {
+			{ name = "Black Arrow", ready = _A.IsSpellKnown(3674) },
+			{ name = "A Murder of Crows", ready = player:talent("A Murder of Crows") }
+		}
+		
+		-- Sort spells by cooldown (shortest first)
+		table.sort(spells, function(a, b)
+			return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
+		end)
+		
+		-- Track elapsed time and current focus
+		local time_elapsed = 0
+		local current_focus = player:focus() - player:spellcost("Explosive Shot")
+		
+		-- Simulate focus pooling without loops (nested conditions)
+		local focus_cost, cooldown
+		
+		-- First spell
+		if spells[1].ready then
+			cooldown = player:SpellCooldown(spells[1].name)
+			focus_cost = required_focus(spells[1].name, time_elapsed)
+			if current_focus < -focus_cost then return false end
+			current_focus = current_focus + focus_cost
+			time_elapsed = cooldown -- Update elapsed time
+		end
+		
+		-- Second spell
+		if spells[2].ready then
+			cooldown = player:SpellCooldown(spells[2].name)
+			focus_cost = required_focus(spells[2].name, time_elapsed)
+			if current_focus < -focus_cost then return false end
+			current_focus = current_focus + focus_cost
+			time_elapsed = cooldown -- Update elapsed time
+		end
+		
+		-- If all focus checks pass, Arcane Shot can be cast
+		return true
+	end
+	------------------------------------------------------------------
+	------------------------------------------------------------------
+	------------------------------------------------------------------
+	_A.BAcheck = function()
+		-- Avoid focus capping
+		if player:focus() >= (player:FocusMax() - 5) then return true end
+		
+		-- Helper to compute required focus with time-based regeneration
+		local function required_focus(spell, elapsed)
+			-- if not player:spellknown(spell) then return 0 end
+			local cd = player:SpellCooldown(spell) -- Cooldown remaining
+			local regen = manaregen() * math.max(0, cd - elapsed) -- Regen focus during cooldown after elapsed time
+			return -player:spellcost(spell) + regen
+		end
+		
+		-- Define abilities with cooldowns and conditions
+		local spells = {
+			{ name = "A Murder of Crows", ready = player:talent("A Murder of Crows") }
+		}
+		
+		-- Sort spells by cooldown (shortest first)
+		table.sort(spells, function(a, b)
+			return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
+		end)
+		
+		
+		-- Track elapsed time and current focus
+		local time_elapsed = 0
+		local current_focus = player:focus() - player:spellcost("Black Arrow")
+		
+		-- Simulate focus pooling without loops (nested conditions)
+		local focus_cost, cooldown
+		
+		-- First spell
+		if spells[1].ready then
+			cooldown = player:SpellCooldown(spells[1].name)
+			focus_cost = required_focus(spells[1].name, time_elapsed)
+			if current_focus < -focus_cost then return false end
+			current_focus = current_focus + focus_cost
+			time_elapsed = cooldown -- Update elapsed time
+		end
+		-- If all focus checks pass, Arcane Shot can be cast
+		return true
+	end
+	------------------------------------------------------------------
+	------------------------------------------------------------------
+	------------------------------------------------------------------
 	_A.CobraCheck = function() -- we only want to cast Cobra Shot if not enough ressources by the time important cds come up (Idk if this is necessary just yet)
+		if not _A.EScheck() then return true end
 		if player:focus()+(player:spellcooldown("Explosive Shot")*manaregen())<player:spellcost("Explosive Shot") then return true end
 		local ct = player:level()<81 and player:SpellCasttime("Steady Shot") or player:SpellCasttime("Cobra Shot")
 		-- print(ct<=player:spellcooldown("Explosive Shot"))
@@ -520,10 +656,19 @@ survival.rot = {
 	end,
 	-- serpent sting, find a way to put dot on as many people as possible in the least amount of multishots, it is a big deal.
 	explosiveshot = function()
-		if  player:SpellUsable("Explosive Shot") and player:SpellCooldown("Explosive Shot")<.3 then
+		if _A.EScheck() and player:SpellUsable("Explosive Shot") and player:SpellCooldown("Explosive Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Explosive Shot")
+			end
+		end
+	end,
+	
+	blackarrow = function()
+		if _A.BAcheck() and player:SpellUsable("Black Arrow") and player:SpellCooldown("Black Arrow")<.3 then
+			local lowestmelee = Object("highestEnemyInSpellRangeNOTAR(Arcane Shot)")
+			if lowestmelee then
+				return lowestmelee:Cast("Black Arrow")
 			end
 		end
 	end,
@@ -565,13 +710,11 @@ survival.rot = {
 	end,
 	
 	cobrashot = function()
-		if _A.CobraCheck() or (_A.clumpcount>=enemytreshhold)  then
+		if (_A.clumpcount>=enemytreshhold) or _A.CobraCheck() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				if player:level()<81 then
-					-- if _A.castchecktbl[steadyid] == nil or _A.castchecktbl[steadyid] == false then return lowestmelee:Cast("Steady Shot") end
 					return lowestmelee:Cast("Steady Shot")
-					-- else if _A.castchecktbl[steadyid] == nil or _A.castchecktbl[steadyid] == false then return lowestmelee:Cast("Cobra Shot") end
 					else  return lowestmelee:Cast("Cobra Shot")
 				end
 			end
@@ -601,9 +744,10 @@ local inCombat = function()
 	if not player:isCastingAny() or player:CastingRemaining() < 0.3 then
 		-- aoe
 		-- maybe add shift?
-		if (_A.clumpcount>=enemytreshhold) and survival.rot.multishot() then return end
+		if (_A.clumpcount>=enemytreshhold) and survival.rot.multishot() then return end -- make a complete aoe check function
 		-- single target
 		if survival.rot.killshot() then return end
+		if (_A.clumpcount<enemytreshhold) and survival.rot.blackarrow() then return end -- Put on highest (((RAW))) HP instead of lowest
 		if (_A.clumpcount<enemytreshhold) and survival.rot.explosiveshot() then return end
 		if player:combat() and survival.rot.mendpet() then return end
 		-- dump
