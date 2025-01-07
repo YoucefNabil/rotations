@@ -420,7 +420,6 @@ local exeOnLoad = function()
 		if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
 			then
 			Type, id, subType = _A.GetActionInfo(slot)
-			
 			if Type == "spell" or Type == "macro" -- remove macro?
 				then
 				if player then
@@ -860,13 +859,13 @@ local exeOnLoad = function()
 			then
 			local target = Object("target")
 			if target
-				and _A.IsKeyDown("3")
+				and _A.IsKeyDown("1")
 				and target:exists()
 				and target:enemy()
 				and target:spellRange("Death Grip")
 				and target:alive()
 				and not target:State("root")
-				and _A.castdelay(45524,1.5)
+				and _A.castdelay(45524,0.5)
 				and _A.isthishuman(target.guid)
 				and _A.notimmune(target)
 				and target:infront()
@@ -1064,7 +1063,7 @@ unholy.rot = {
 						and not obj:State("root")
 						and _A.castdelay(45524 ,1.5)
 						and _A.notimmune(obj)
-						and (not _A.castdelay(49576,3) or ((obj:castsecond() < _A.interrupttreshhold) or obj:chanpercent()<=95))
+						and ( not _A.castdelay(49576,3) or ((obj:castsecond() < _A.interrupttreshhold) or obj:chanpercent()<=95))
 						
 						then 
 						if (kickcheck_nomove_highprio(obj) or  ( not _A.castdelay(49576,3) and kickcheck_nomove(obj))) or (healerspecid[obj:spec()] and obj:health()<=40 and kickcheck_nomove(obj)) then
@@ -1196,7 +1195,7 @@ unholy.rot = {
 	
 	root_buff = function()
 		if player:SpellCooldown("Chains of Ice")<.3 
-			and _A.castdelay(49576 ,1.5)
+			-- and _A.castdelay(49576 ,1.5)
 			then 
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:SpellRange("Chains of Ice") and obj:infront() 
@@ -1518,10 +1517,13 @@ unholy.rot = {
 	
 	icytouch = function()
 		-- if (_A.frost>_A.blood and _A.frost>=1) then
-		if _A.frost>=1 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
-			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Icy Touch")
+		if player:SpellCooldown("Icy Touch")<.3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if _A.frost>=1 or not lowestmelee then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
+				if lowestmelee and lowestmelee:exists() then
+					return lowestmelee:Cast("Icy Touch")
+				end
 			end
 		end
 	end,
@@ -1546,6 +1548,18 @@ unholy.rot = {
 						return lowestmelee:Cast("Festering Strike")
 					end
 				end
+			end
+		end
+	end,
+	
+	DeathcoilTotem = function()
+		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or _A.dkenergy>=32)
+			-- and not player:BuffAny("Runic Corruption")  
+			then 
+			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
+			-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
+			if lowestmelee and lowestmelee:exists() then
+				return lowestmelee:Cast("Death Coil")
 			end
 		end
 	end,
@@ -1603,6 +1617,14 @@ unholy.rot = {
 ---========================
 ---========================
 ---========================
+-- local function petengine(ticker)
+-- local newDuration = math.random(5,15)/10
+-- local newDuration = .1
+-- local battlefieldstatus = GetBattlefieldWinner()
+-- if battlefieldstatus~=nil then LeaveBattlefield() end
+-- ClickthisPleasepvp()
+-- end
+-- C_Timer.NewTicker(.1, petengine, false, "clickpvp")
 ---========================
 ---========================
 local inCombat = function()	
@@ -1643,9 +1665,9 @@ local inCombat = function()
 	unholy.rot.strangulatesnipe()
 	unholy.rot.Asphyxiatesnipe()
 	unholy.rot.AsphyxiateBurst()
-	unholy.rot.darksimulacrum()
+	-- unholy.rot.darksimulacrum()
 	unholy.rot.root_buff()
-	if player:keybind("X") then
+	if player:keybind("2") then
 		unholy.rot.root()
 	end
 	-- DEFS
@@ -1670,10 +1692,10 @@ local inCombat = function()
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		unholy.rot.icytouchdispell()
+		-- unholy.rot.icytouchdispell()
 		unholy.rot.bloodboilorphanblood()
-		unholy.rot.icytouch()
 		unholy.rot.NecroStrike()
+		unholy.rot.icytouch()
 	end
 	----filler
 	unholy.rot.Deathcoil()
