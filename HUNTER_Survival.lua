@@ -313,6 +313,15 @@ local exeOnLoad = function()
 		return false
 	end
 	
+	function _A.modifier_shift()
+		local modkeyb = IsShiftKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
+	
 	local function castsecond(unit)
 		local givetime = GetTime()
 		local tempvar = select(6, UnitCastingInfo(unit))
@@ -453,6 +462,17 @@ survival.rot = {
 		end
 	end,
 	
+	multishot = function()
+		if player:SpellUsable("Multi-Shot") then
+			if _A.modifier_shift() then -- or special check, like if a super stacked unit exists.
+				local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+				if lowestmelee then
+					return lowestmelee:Cast("Multi-Shot")
+				end
+			end
+		end
+	end,
+	
 	arcaneshot = function()
 		if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -463,14 +483,14 @@ survival.rot = {
 	end,
 	
 	cobrashot = function()
-		if _A.CobraCheck() then
+		if _A.CobraCheck() or _A.modifier_shift() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				if player:level()<81 then
 					-- if _A.castchecktbl[steadyid] == nil or _A.castchecktbl[steadyid] == false then return lowestmelee:Cast("Steady Shot") end
 					return lowestmelee:Cast("Steady Shot")
 					-- else if _A.castchecktbl[steadyid] == nil or _A.castchecktbl[steadyid] == false then return lowestmelee:Cast("Cobra Shot") end
-					else  return lowestmelee:Cast("Cobra Shot")
+				else  return lowestmelee:Cast("Cobra Shot")
 				end
 			end
 		end
@@ -492,10 +512,11 @@ local inCombat = function()
 	if player:mounted() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if not player:isCastingAny() or player:CastingRemaining() < 0.3 then
-		if survival.rot.explosiveshot() then return end
-		if survival.rot.arcaneshot() then return end
+		if not _A.modifier_shift() and survival.rot.explosiveshot() then return end
 		if player:combat() and survival.rot.mendpet() then return end
-		if survival.rot.serpentsting() then return end
+		if survival.rot.multishot() then return end
+		if not _A.modifier_shift() and survival.rot.serpentsting() then return end
+		if survival.rot.arcaneshot() then return end
 		if survival.rot.cobrashot() then return end
 	end
 end
