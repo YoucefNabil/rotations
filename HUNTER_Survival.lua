@@ -423,7 +423,7 @@ local exeOnLoad = function()
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and (_A.pull_location=="none" or Obj:combat()) and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and  Obj:combat() and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -434,13 +434,15 @@ local exeOnLoad = function()
 		if #tempTable>1 then
 			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
-		return tempTable[num] and tempTable[num].guid
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
 	end)
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and (_A.pull_location=="none" or Obj:combat()) and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and Obj:combat() and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -451,7 +453,13 @@ local exeOnLoad = function()
 		if #tempTable>1 then
 			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
-		return tempTable[num] and tempTable[num].guid
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+		local target = Object("target")
+		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and  _A.notimmune(target)  and target:los() then
+			return target and target.guid
+		end
 	end)
 	
 	_A.FakeUnits:Add('highestEnemyInSpellRangeNOTAR', function(num, spell)
@@ -466,9 +474,15 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health > b.health) end )
 		end
-		return tempTable[num] and tempTable[num].guid
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+		local target = Object("target")
+		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and  _A.notimmune(target)  and target:los() then
+			return target and target.guid
+		end
 	end)
 	
 	_A.DSL:Register('caninterrupt', function(unit)
@@ -491,16 +505,16 @@ local exeOnLoad = function()
 	_A.castchecktbl = {}
 	_A.Listener:Add("steadycasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if guidsrc == UnitGUID("player") then
-			if idd == cobraid or idd == steadyid then
-				-- print(subevent.." "..idd)
-				if subevent == "SPELL_CAST_START" then
-					_A.castchecktbl[idd] = true
-				end
-				if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED" then
-					_A.castchecktbl[idd] = false
-				end
+		if idd == cobraid or idd == steadyid then
+			-- print(subevent.." "..idd)
+			if subevent == "SPELL_CAST_START" then
+				_A.castchecktbl[idd] = true
+			end
+			if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED" then
+				_A.castchecktbl[idd] = false
 			end
 		end
+	end
 	end)
 	--=========================== SPELL CHECKS
 	--=========================== SPELL CHECKS
@@ -772,7 +786,7 @@ survival.rot = {
 	end,
 	
 	cobrashot = function()
-		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		local lowestmelee = Object("highestEnemyInSpellRangeNOTAR(Arcane Shot)")
 		if lowestmelee then
 			if player:level()<81 then
 				return lowestmelee:Cast("Steady Shot")
@@ -811,13 +825,13 @@ local inCombat = function()
 		if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 		-- single target important rotation
 		if survival.rot.killshot() then return end
-		if not AOEcheck() and survival.rot.blackarrow() then return end -- Put on highest (((RAW))) HP instead of lowest
+		if not AOEcheck() and survival.rot.blackarrow() then return end
 		if not AOEcheck() and survival.rot.explosiveshot() then return end
 		-- FILLS
 		if player:combat() and survival.rot.mendpet() then return end
 		if not AOEcheck() and survival.rot.serpentsting() then return end
-		if survival.rot.arcaneshot() then return end
-		if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return end
+		if not AOEcheck() and survival.rot.arcaneshot() then return end
+		if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return end -- needs to be on highest HP
 	end
 end
 local spellIds_Loc = function()
