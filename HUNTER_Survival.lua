@@ -8,7 +8,7 @@ local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 -- top of the CR
 local player
-_A.numtangos = 0
+local enemytreshhold = 3
 local survival = {}
 local immunebuffs = {
 	"Deterrence",
@@ -263,13 +263,25 @@ local exeOnLoad = function()
 		return true
 	end
 	
-	_A.numenemiesinfront = function()
-		_A.numtangos = 0
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange("Mortal Strike") and _A.notimmune(Obj)  and Obj:los() then
-				_A.numtangos = _A.numtangos + 1
+	_A.clusteredenemy = function()
+		local targets = {}
+		local most, mostGuid = 0
+		for _, enemy in pairs(_A.OM:Get('Enemy')) do
+			if enemy:InConeOf(player, 150) and (_A.pull_location=="none" or enemy:combat()) and not enemy:state("incapacitate || fear || disorient || charm || misc || sleep") and not enemy:BuffAny("Divine Shield || Deterrence") and _A.notimmune(enemy) and enemy:los()  then
+				for _, enemy2 in pairs(_A.OM:Get('Enemy')) do
+					if enemy:rangefrom(enemy2)<=8 and not enemy2:state("incapacitate || fear || disorient || charm || misc || sleep") and not enemy2:BuffAny("Divine Shield || Deterrence") and _A.notimmune(enemy2) then
+						targets[enemy.guid] = targets[enemy.guid] and targets[enemy.guid] + 1 or 1
+					end
+				end
 			end
 		end
+		for guid, count in pairs(targets) do
+			if count > most then
+				most = count
+				mostGuid = guid
+			end
+		end
+		return most, mostGuid
 	end
 	
 	function _A.clickcast(unit, spell)
@@ -411,19 +423,6 @@ local exeOnLoad = function()
 			end
 		end
 	end)
-	-- I need to order these by cooldown
-	-- _A.lowpriocheck = function(spellid) -- arcane shot function checks all 4 spells, explosive shot whill check black arrow and amoc, black arrow checks amoc, amoc checks nothing (it is the highest prio)
-	-- if player:focus() >= (player:FocusMax() - 5) then return true end -- avoids capping focus, always bad.
-	-- local explosiveshot_pool = -player:spellcost("Explosive Shot") + (manaregen()*player:SpellCooldown("Explosive Shot"))
-	-- local glaivetoss_pool = player:talent("Glaive Toss") and (-player:spellcost("Glaive Toss") + (manaregen()*player:SpellCooldown("Glaive Toss"))) or 0
-	-- local blackarrow_pool = _A.IsSpellKnown(3674) and (-player:spellcost("Black Arrow") + (manaregen()*player:SpellCooldown("Black Arrow"))) or 0
-	-- local amoc_pool = player:talent("A Murder of Crows") and (-player:spellcost("A Murder of Crows") + (manaregen()*player:SpellCooldown("A Murder of Crows"))) or 0
-	-- return 
-	-- ((player:focus() - player:spellcost(spellid) + explosiveshot_pool) >= (manaregen()*player:gcd())) and
-	-- ((player:focus() - player:spellcost(spellid) + glaivetoss_pool) >= (manaregen()*player:gcd())) and
-	-- ((player:focus() - player:spellcost(spellid) + blackarrow_pool) >= (manaregen()*player:gcd())) and
-	-- ((player:focus() - player:spellcost(spellid) + amoc_pool) >= (manaregen()*player:gcd())) and
-	-- end
 	
 	_A.lowpriocheck = function(spellid)
 		-- Avoid focus capping
@@ -539,9 +538,9 @@ survival.rot = {
 	end,
 	
 	multishot = function()
-		if player:SpellUsable("Multi-Shot") then
-			if _A.modifier_shift() then -- or special check, like if a super stacked unit exists.
-				local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		if player:SpellUsable("Multi-Shot") and _A.mostclumpedenemy then
+			if _A.clumpcount>=enemytreshhold then -- or special check, like if a super stacked unit exists.
+				local lowestmelee = Object(_A.mostclumpedenemy)
 				if lowestmelee then
 					return lowestmelee:Cast("Multi-Shot")
 				end
@@ -559,7 +558,7 @@ survival.rot = {
 	end,
 	
 	cobrashot = function()
-		if _A.CobraCheck() or _A.modifier_shift() then
+		if _A.CobraCheck() or (_A.clumpcount>=enemytreshhold)  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				if player:level()<81 then
@@ -577,21 +576,26 @@ survival.rot = {
 ---========================
 ---========================
 ---========================
+_A.mostclumpedenemy = nil
+_A.clumpcount = 0
 local inCombat = function()	
 	player = Object("player")
 	if not player then return end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
+	_A.clumpcount, _A.mostclumpedenemy = _A.clusteredenemy()
+	-- print(_A.mostclumpedenemy)
+	-- print(_A.clumpcount)
 	-- print(player:spellexists("Black Arrow"))
 	if not _A.pull_location then return end
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if not player:isCastingAny() or player:CastingRemaining() < 0.3 then
-		if not _A.modifier_shift() and survival.rot.explosiveshot() then return end
+		if (_A.clumpcount<enemytreshhold) and survival.rot.explosiveshot() then return end
 		if player:combat() and survival.rot.mendpet() then return end
 		if survival.rot.multishot() then return end
-		if not _A.modifier_shift() and survival.rot.serpentsting() then return end
+		if (_A.clumpcount<enemytreshhold) and survival.rot.serpentsting() then return end
 		if survival.rot.arcaneshot() then return end
 		if survival.rot.cobrashot() then return end
 	end
