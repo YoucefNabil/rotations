@@ -763,7 +763,7 @@ survival.rot = {
 	end,
 	
 	killshot = function()
-		if player:Spellcooldown("Kill Shot") then
+		if player:Spellcooldown("Kill Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Kill Shot)")
 			if lowestmelee and lowestmelee:health()<=20 then
 				return lowestmelee:Cast("Kill Shot")
@@ -782,8 +782,8 @@ survival.rot = {
 	end,
 }
 local function AOEcheck()
-	if _A.modifier_shift() then return false end
-	if (_A.clumpcount>=enemytreshhold) then return true end
+	if _A.modifier_shift() then return true end
+	-- if (_A.clumpcount>=enemytreshhold) then return true end
 	return false
 end
 ---========================
@@ -817,7 +817,7 @@ local inCombat = function()
 		if player:combat() and survival.rot.mendpet() then return end
 		if not AOEcheck() and survival.rot.serpentsting() then return end
 		if survival.rot.arcaneshot() then return end
-		if (AOEcheck() or _A.CobraCheck()) and survival.rot.cobrashot() then return end
+		if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return end
 	end
 end
 local spellIds_Loc = function()
