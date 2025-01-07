@@ -710,17 +710,20 @@ survival.rot = {
 	end,
 	
 	cobrashot = function()
-		if (_A.clumpcount>=enemytreshhold) or _A.CobraCheck() then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee then
-				if player:level()<81 then
-					return lowestmelee:Cast("Steady Shot")
-					else  return lowestmelee:Cast("Cobra Shot")
-				end
+		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		if lowestmelee then
+			if player:level()<81 then
+				return lowestmelee:Cast("Steady Shot")
+				else  return lowestmelee:Cast("Cobra Shot")
 			end
 		end
 	end,
 }
+local function AOEcheck()
+	if _A.modifier_shift() then return false end
+	if (_A.clumpcount>=enemytreshhold) then return true end
+	return false
+end
 ---========================
 ---========================
 ---========================
@@ -743,18 +746,17 @@ local inCombat = function()
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if not player:isCastingAny() or player:CastingRemaining() < 0.3 then
 		-- aoe
-		-- maybe add shift?
-		if (_A.clumpcount>=enemytreshhold) and survival.rot.multishot() then return end -- make a complete aoe check function
+		if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 		-- single target
 		if survival.rot.killshot() then return end
-		if (_A.clumpcount<enemytreshhold) and survival.rot.blackarrow() then return end -- Put on highest (((RAW))) HP instead of lowest
-		if (_A.clumpcount<enemytreshhold) and survival.rot.explosiveshot() then return end
+		if not AOEcheck() and survival.rot.blackarrow() then return end -- Put on highest (((RAW))) HP instead of lowest
+		if not AOEcheck() and survival.rot.explosiveshot() then return end
 		if player:combat() and survival.rot.mendpet() then return end
 		-- dump
 		-- maybe add an auto multishot here?
-		if (_A.clumpcount<enemytreshhold) and survival.rot.serpentsting() then return end
+		if not AOEcheck() and survival.rot.serpentsting() then return end
 		if survival.rot.arcaneshot() then return end
-		if survival.rot.cobrashot() then return end
+		if (AOEcheck() or _A.CobraCheck()) and survival.rot.cobrashot() then return end
 	end
 end
 local spellIds_Loc = function()
