@@ -387,15 +387,15 @@ local exeOnLoad = function()
 			end
 		end
 	end)
-	-- this below is the pooling function, it keeps focus neatly between around 1 gcd worth of focus (around 6) to almost cap (around 95)
+	-- this below is the pooling function for arcane shot, it keeps focus spending for AS in check so focus stays neatly between around 1 gcd worth of focus (around 6) to almost cap (around 95)
 	-- while also making sure to have enough focus by the time important cds come up
-	_A.ArcaneCheck = function() -- arcane shot function checks all 4 spells, explosive shot checks black arrow and amoc, black arrow checks amoc, amoc checks nothing (glaives same checks as AS)
+	_A.lowpriocheck = function(spellid) -- arcane shot function checks all 4 spells, explosive shot whill check black arrow and amoc, black arrow checks amoc, amoc checks nothing (it is the highest prio)
 		if player:focus() >= (player:FocusMax() - 5) then return true end -- avoids capping focus, always bad.
 		local explosiveshot_pool = -player:spellcost("Explosive Shot") + (manaregen()*player:SpellCooldown("Explosive Shot"))
-		local glaivetoss_pool = _A.IsSpellKnown(gaID) and (-player:spellcost("Glaive Toss") + (manaregen()*player:SpellCooldown("Glaive Toss"))) or 0
-		local blackarrow_pool = _A.IsSpellKnown(baID) and (-player:spellcost("Black Arrow") + (manaregen()*player:SpellCooldown("Black Arrow"))) or 0
-		local amoc_pool = _A.IsSpellKnown(amocID) and (-player:spellcost("A Murder of Crows") + (manaregen()*player:SpellCooldown("A Murder of Crows"))) or 0
-		return player:focus() - player:spellcost("Arcane Shot") + explosiveshot_pool  >= (manaregen()*player:gcd())
+		local glaivetoss_pool = player:talent("Glaive Toss") and (-player:spellcost("Glaive Toss") + (manaregen()*player:SpellCooldown("Glaive Toss"))) or 0
+		local blackarrow_pool = _A.IsSpellKnown(3674) and (-player:spellcost("Black Arrow") + (manaregen()*player:SpellCooldown("Black Arrow"))) or 0
+		local amoc_pool = player:talent("A Murder of Crows") and (-player:spellcost("A Murder of Crows") + (manaregen()*player:SpellCooldown("A Murder of Crows"))) or 0
+		return player:focus() - player:spellcost(spellid) + explosiveshot_pool + glaivetoss_pool +  blackarrow_pool + amoc_pool >= (manaregen()*player:gcd())
 	end
 	_A.CobraCheck = function() -- we only want to cast Cobra Shot if not enough ressources by the time important cds come up (Idk if this is necessary just yet)
 		local ct = player:level()<81 and player:SpellCasttime("Steady Shot") or player:SpellCasttime("Cobra Shot")
@@ -423,16 +423,25 @@ survival.rot = {
 	explosiveshot = function()
 		if  player:SpellUsable("Explosive Shot") and player:SpellCooldown("Explosive Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee then
 				return lowestmelee:Cast("Explosive Shot")
 			end
 		end
 	end,
 	
-	arcaneshot = function()
-		if _A.ArcaneCheck() and player:SpellUsable("Arcane Shot") then
+	serpentsting = function()
+		if _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting")  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee and not lowestmelee:debuff("Serpent Sting") then
+				return lowestmelee:Cast("Serpent Sting")
+			end
+		end
+	end,
+	
+	arcaneshot = function()
+		if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee then
 				return lowestmelee:Cast("Arcane Shot")
 			end
 		end
@@ -441,7 +450,7 @@ survival.rot = {
 	cobrashot = function()
 		if _A.CobraCheck() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee then
 				if player:level()<81 then
 					-- if _A.castchecktbl[steadyid] == nil or _A.castchecktbl[steadyid] == false then return lowestmelee:Cast("Steady Shot") end
 					return lowestmelee:Cast("Steady Shot")
@@ -462,6 +471,7 @@ local inCombat = function()
 	if not player then return end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
+	-- print(player:spellexists("Black Arrow"))
 	if not _A.pull_location then return end
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
@@ -470,6 +480,7 @@ local inCombat = function()
 		if survival.rot.explosiveshot() then return end
 		if survival.rot.arcaneshot() then return end
 		if player:combat() and survival.rot.mendpet() then return end
+		if survival.rot.serpentsting() then return end
 		if survival.rot.cobrashot() then return end
 	end
 end
