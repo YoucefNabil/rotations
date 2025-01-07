@@ -262,27 +262,89 @@ local exeOnLoad = function()
 		end
 		return true
 	end
-	
+	--
 	_A.clusteredenemy = function()
-		local targets = {}
-		local most, mostGuid = 0
-		for _, enemy in pairs(_A.OM:Get('Enemy')) do
-			if enemy:InConeOf(player, 150) and (_A.pull_location=="none" or enemy:combat()) and not enemy:state("incapacitate || fear || disorient || charm || misc || sleep") and not enemy:BuffAny("Divine Shield || Deterrence") and _A.notimmune(enemy) and enemy:los()  then
-				for _, enemy2 in pairs(_A.OM:Get('Enemy')) do
-					if enemy:rangefrom(enemy2)<=8 and not enemy2:state("incapacitate || fear || disorient || charm || misc || sleep") and not enemy2:BuffAny("Divine Shield || Deterrence") and _A.notimmune(enemy2) then
-						targets[enemy.guid] = targets[enemy.guid] and targets[enemy.guid] + 1 or 1
-					end
-				end
+        local targets = {}
+        local most, mostGuid = 0
+        
+        -- Pre-filter enemies to avoid redundant checks
+        local validEnemies = {}
+        for _, enemy in pairs(_A.OM:Get('Enemy')) do
+			if enemy:InConeOf(player, 150) and 
+				(_A.pull_location == "none" or enemy:combat()) and 
+				not enemy:state("incapacitate || fear || disorient || charm || misc || sleep") and 
+				not enemy:BuffAny("Divine Shield || Deterrence") and 
+				_A.notimmune(enemy) and enemy:los() then
+				table.insert(validEnemies, enemy)
 			end
 		end
-		for guid, count in pairs(targets) do
+        
+        -- Count clusters
+        for _, enemy in pairs(validEnemies) do
+			local count = 0
+			for _, enemy2 in pairs(validEnemies) do
+				if enemy ~= enemy2 and enemy:rangefrom(enemy2) <= 8 then
+					count = count + 1
+				end
+			end
+			targets[enemy.guid] = count
+		end
+        
+        -- Find the enemy with the most neighbors
+        for guid, count in pairs(targets) do
 			if count > most then
 				most = count
 				mostGuid = guid
 			end
 		end
-		return most, mostGuid
+		
+        return most, mostGuid
 	end
+	--]]
+	--[[
+		_A.clusteredenemy = function() -- 8 yards
+        local most, mostGuid = 0
+        local positions = {}
+        -- Pre-filter enemies and cache positions
+        for _, enemy in pairs(_A.OM:Get('Enemy')) do
+		if enemy:InConeOf(player, 150) and 
+		(_A.pull_location == "none" or enemy:combat()) and 
+		not enemy:state("incapacitate || fear || disorient || charm || misc || sleep") and 
+		not enemy:BuffAny("Divine Shield || Deterrence") and 
+		_A.notimmune(enemy) and enemy:los() then
+		local x, y, z = _A.ObjectPosition(enemy.guid)
+		-- local CR = _A.UnitCombatReach(enemy.guid)
+		table.insert(positions, {guid = enemy.guid, x = x, y = y, z = z})
+		positions[#positions+1] = {
+		guid = enemy.guid,
+		-- cr = CR,
+		x = x, 
+		y = y, 
+		z = z
+		}
+		end
+		end
+        -- Calculate clusters using positions
+        local count = {}
+		if #positions>1 then
+		for _,v1 in ipairs(positions) do
+		for _,v2 in ipairs(positions) do
+		if _A.GetDistanceBetweenPositions(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z) <= 8 then
+		count[v1.guid]=count[v1.guid] and count[v1.guid] + 1 or 1
+		end
+		end
+		end
+		end
+        -- Find the best cluster
+        for guid, cnt in pairs(count) do
+		if cnt > most then
+		most = cnt
+		mostGuid = guid
+		end
+		end
+        return most, mostGuid
+		end
+	--]]
 	
 	function _A.clickcast(unit, spell)
 		local px,py,pz = _A.groundposition(unit)
