@@ -165,6 +165,21 @@ local exeOnLoad = function()
 		_A.pull_location = pull_location()
 	end)
 	_A.pull_location = _A.pull_location or pull_location()
+	
+	_A.casttimers = {}
+	_A.Listener:Add("delaycasts_DK", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+		if guidsrc == UnitGUID("player") then
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[idd] = _A.GetTime()
+			end
+		end
+	end)
+	function _A.castdelay(idd, delay)
+		-- local spellid = idd and _A.Core:GetSpellID(idd)
+		if delay == nil then return true end
+		if _A.casttimers[idd]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[idd])>=delay
+	end
 	--
 	hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
@@ -430,7 +445,7 @@ survival.rot = {
 	end,
 	
 	serpentsting = function()
-		if _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting")  then
+		if _A.castdelay(1978, (2*player:gcd())) _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting")  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff("Serpent Sting") then
 				return lowestmelee:Cast("Serpent Sting")
