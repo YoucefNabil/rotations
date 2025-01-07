@@ -398,7 +398,8 @@ local exeOnLoad = function()
 		return player:focus() - player:spellcost("Arcane Shot") + explosiveshot_pool  >= (manaregen()*player:gcd())
 	end
 	_A.CobraCheck = function() -- we only want to cast Cobra Shot if not enough ressources by the time important cds come up (Idk if this is necessary just yet)
-		if player:SpellCasttime("Steady Shot")<=player:spellcooldown("Explosive Shot") then return true
+		local ct = player:level()<81 and player:SpellCasttime("Steady Shot") or player:SpellCasttime("Cobra Shot")
+		if ct<=player:spellcooldown("Explosive Shot") then return true
 		end
 	end
 end
