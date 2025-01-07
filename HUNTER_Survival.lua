@@ -411,15 +411,90 @@ local exeOnLoad = function()
 			end
 		end
 	end)
-	-- this below is the pooling function for arcane shot, it keeps focus spending for AS in check so focus stays neatly between around 1 gcd worth of focus (around 6) to almost cap (around 95)
-	-- while also making sure to have enough focus by the time important cds come up
-	_A.lowpriocheck = function(spellid) -- arcane shot function checks all 4 spells, explosive shot whill check black arrow and amoc, black arrow checks amoc, amoc checks nothing (it is the highest prio)
-		if player:focus() >= (player:FocusMax() - 5) then return true end -- avoids capping focus, always bad.
-		local explosiveshot_pool = -player:spellcost("Explosive Shot") + (manaregen()*player:SpellCooldown("Explosive Shot"))
-		local glaivetoss_pool = player:talent("Glaive Toss") and (-player:spellcost("Glaive Toss") + (manaregen()*player:SpellCooldown("Glaive Toss"))) or 0
-		local blackarrow_pool = _A.IsSpellKnown(3674) and (-player:spellcost("Black Arrow") + (manaregen()*player:SpellCooldown("Black Arrow"))) or 0
-		local amoc_pool = player:talent("A Murder of Crows") and (-player:spellcost("A Murder of Crows") + (manaregen()*player:SpellCooldown("A Murder of Crows"))) or 0
-		return player:focus() - player:spellcost(spellid) + explosiveshot_pool + glaivetoss_pool +  blackarrow_pool + amoc_pool >= (manaregen()*player:gcd())
+	-- I need to order these by cooldown
+	-- _A.lowpriocheck = function(spellid) -- arcane shot function checks all 4 spells, explosive shot whill check black arrow and amoc, black arrow checks amoc, amoc checks nothing (it is the highest prio)
+	-- if player:focus() >= (player:FocusMax() - 5) then return true end -- avoids capping focus, always bad.
+	-- local explosiveshot_pool = -player:spellcost("Explosive Shot") + (manaregen()*player:SpellCooldown("Explosive Shot"))
+	-- local glaivetoss_pool = player:talent("Glaive Toss") and (-player:spellcost("Glaive Toss") + (manaregen()*player:SpellCooldown("Glaive Toss"))) or 0
+	-- local blackarrow_pool = _A.IsSpellKnown(3674) and (-player:spellcost("Black Arrow") + (manaregen()*player:SpellCooldown("Black Arrow"))) or 0
+	-- local amoc_pool = player:talent("A Murder of Crows") and (-player:spellcost("A Murder of Crows") + (manaregen()*player:SpellCooldown("A Murder of Crows"))) or 0
+	-- return 
+	-- ((player:focus() - player:spellcost(spellid) + explosiveshot_pool) >= (manaregen()*player:gcd())) and
+	-- ((player:focus() - player:spellcost(spellid) + glaivetoss_pool) >= (manaregen()*player:gcd())) and
+	-- ((player:focus() - player:spellcost(spellid) + blackarrow_pool) >= (manaregen()*player:gcd())) and
+	-- ((player:focus() - player:spellcost(spellid) + amoc_pool) >= (manaregen()*player:gcd())) and
+	-- end
+	
+	_A.lowpriocheck = function(spellid)
+		-- Avoid focus capping
+		if player:focus() >= (player:FocusMax() - 5) then return true end
+		
+		-- Helper to compute required focus with time-based regeneration
+		local function required_focus(spell, elapsed)
+			-- if not player:spellknown(spell) then return 0 end
+			local cd = player:SpellCooldown(spell) -- Cooldown remaining
+			local regen = manaregen() * math.max(0, cd - elapsed) -- Regen focus during cooldown after elapsed time
+			return -player:spellcost(spell) + regen
+		end
+		
+		-- Define abilities with cooldowns and conditions
+		local spells = {
+			{ name = "Explosive Shot", ready = true },
+			{ name = "Glaive Toss", ready = player:talent("Glaive Toss") },
+			{ name = "Black Arrow", ready = _A.IsSpellKnown(3674) },
+			{ name = "A Murder of Crows", ready = player:talent("A Murder of Crows") }
+		}
+		
+		-- Sort spells by cooldown (shortest first)
+		table.sort(spells, function(a, b)
+			return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
+		end)
+		
+		-- Track elapsed time and current focus
+		local time_elapsed = 0
+		local current_focus = player:focus() - player:spellcost(spellid)
+		
+		-- Simulate focus pooling without loops (nested conditions)
+		local focus_cost, cooldown
+		
+		-- First spell
+		if spells[1].ready then
+			cooldown = player:SpellCooldown(spells[1].name)
+			focus_cost = required_focus(spells[1].name, time_elapsed)
+			if current_focus < -focus_cost then return false end
+			current_focus = current_focus + focus_cost
+			time_elapsed = cooldown -- Update elapsed time
+		end
+		
+		-- Second spell
+		if spells[2].ready then
+			cooldown = player:SpellCooldown(spells[2].name)
+			focus_cost = required_focus(spells[2].name, time_elapsed)
+			if current_focus < -focus_cost then return false end
+			current_focus = current_focus + focus_cost
+			time_elapsed = cooldown -- Update elapsed time
+		end
+		
+		-- Third spell
+		if spells[3].ready then
+			cooldown = player:SpellCooldown(spells[3].name)
+			focus_cost = required_focus(spells[3].name, time_elapsed)
+			if current_focus < -focus_cost then return false end
+			current_focus = current_focus + focus_cost
+			time_elapsed = cooldown -- Update elapsed time
+		end
+		
+		-- Fourth spell
+		if spells[4].ready then
+			cooldown = player:SpellCooldown(spells[4].name)
+			focus_cost = required_focus(spells[4].name, time_elapsed)
+			if current_focus < -focus_cost then return false end
+			current_focus = current_focus + focus_cost
+			time_elapsed = cooldown -- Update elapsed time
+		end
+		
+		-- If all focus checks pass, Arcane Shot can be cast
+		return true
 	end
 	_A.CobraCheck = function() -- we only want to cast Cobra Shot if not enough ressources by the time important cds come up (Idk if this is necessary just yet)
 		local ct = player:level()<81 and player:SpellCasttime("Steady Shot") or player:SpellCasttime("Cobra Shot")
@@ -490,7 +565,7 @@ survival.rot = {
 					-- if _A.castchecktbl[steadyid] == nil or _A.castchecktbl[steadyid] == false then return lowestmelee:Cast("Steady Shot") end
 					return lowestmelee:Cast("Steady Shot")
 					-- else if _A.castchecktbl[steadyid] == nil or _A.castchecktbl[steadyid] == false then return lowestmelee:Cast("Cobra Shot") end
-				else  return lowestmelee:Cast("Cobra Shot")
+					else  return lowestmelee:Cast("Cobra Shot")
 				end
 			end
 		end
