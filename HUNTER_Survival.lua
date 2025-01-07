@@ -747,13 +747,12 @@ local inCombat = function()
 	if not player:isCastingAny() or player:CastingRemaining() < 0.3 then
 		-- aoe
 		if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
-		-- single target
+		-- single target important rotation
 		if survival.rot.killshot() then return end
 		if not AOEcheck() and survival.rot.blackarrow() then return end -- Put on highest (((RAW))) HP instead of lowest
 		if not AOEcheck() and survival.rot.explosiveshot() then return end
+		-- FILLS
 		if player:combat() and survival.rot.mendpet() then return end
-		-- dump
-		-- maybe add an auto multishot here?
 		if not AOEcheck() and survival.rot.serpentsting() then return end
 		if survival.rot.arcaneshot() then return end
 		if (AOEcheck() or _A.CobraCheck()) and survival.rot.cobrashot() then return end
