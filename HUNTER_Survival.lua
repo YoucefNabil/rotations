@@ -664,8 +664,9 @@ local exeOnLoad = function()
 	------------------------------------------------------------------
 	_A.BAcheck = function()
 		-- Avoid focus capping
-		if player:focus() >= (player:FocusMax() - 5) then return true end
-		
+		-- if player:focus() >= (player:FocusMax() - 5) then return true end
+		-- Check if spell exists
+		if not _A.IsSpellKnown(3674) then return false end
 		-- Helper to compute required focus with time-based regeneration
 		local function required_focus(spell, elapsed)
 			-- if not player:spellknown(spell) then return 0 end
