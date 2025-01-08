@@ -1686,54 +1686,54 @@ local inCombat = function()
 	unholy.rot.items_healthstone()
 	unholy.rot.activetrinket()
 	unholy.rot.Frenzy()
-unholy.rot.gargoyle()
-unholy.rot.Empowerruneweapon()
-unholy.rot.remorselesswinter()
-unholy.rot.massgrip()
-unholy.rot.pathoffrost()
--- PVP INTERRUPTS AND CC
-unholy.rot.MindFreeze()
-unholy.rot.strangulatesnipe()
-unholy.rot.Asphyxiatesnipe()
-unholy.rot.AsphyxiateBurst()
--- unholy.rot.darksimulacrum()
-unholy.rot.root_buff()
-if player:keybind("2") then
-	unholy.rot.root()
-end
--- DEFS
-unholy.rot.antimagicshell()
-unholy.rot.petres()
-unholy.rot.deathpact()
-unholy.rot.Lichborne()
--- rotation
-unholy.rot.DeathcoilDump()
-unholy.rot.dkuhaoe()
-unholy.rot.outbreak()
-unholy.rot.dotapplication()
-unholy.rot.pettransform()
-unholy.rot.BonusDeathStrike()
-unholy.rot.DeathcoilHEAL()
-unholy.rot.SoulReaper()
-----pve part
-if _A.pull_location == "party" or _A.pull_location == "raid" then
-	unholy.rot.dotsnapshotOutBreak()
-	unholy.rot.dotsnapshotPS()
+	unholy.rot.gargoyle()
+	unholy.rot.Empowerruneweapon()
+	unholy.rot.remorselesswinter()
+	unholy.rot.massgrip()
+	unholy.rot.pathoffrost()
+	-- PVP INTERRUPTS AND CC
+	unholy.rot.MindFreeze()
+	unholy.rot.strangulatesnipe()
+	unholy.rot.Asphyxiatesnipe()
+	unholy.rot.AsphyxiateBurst()
+	-- unholy.rot.darksimulacrum()
+	unholy.rot.root_buff()
+	if player:keybind("2") then
+		unholy.rot.root()
+	end
+	-- DEFS
+	unholy.rot.antimagicshell()
+	unholy.rot.petres()
+	unholy.rot.deathpact()
+	unholy.rot.Lichborne()
+	-- rotation
+	unholy.rot.DeathcoilDump()
+	unholy.rot.dkuhaoe()
+	unholy.rot.outbreak()
+	unholy.rot.dotapplication()
+	unholy.rot.pettransform()
+	unholy.rot.BonusDeathStrike()
+	unholy.rot.DeathcoilHEAL()
+	unholy.rot.SoulReaper()
+	----pve part
+	if _A.pull_location == "party" or _A.pull_location == "raid" then
+		unholy.rot.dotsnapshotOutBreak()
+		unholy.rot.dotsnapshotPS()
+		unholy.rot.festeringstrike()
+	end
+	----pvp part
+	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+		-- unholy.rot.icytouchdispell()
+		unholy.rot.bloodboilorphanblood()
+		unholy.rot.NecroStrike()
+		unholy.rot.icytouch()
+	end
+	----filler
+	unholy.rot.Deathcoil()
 	unholy.rot.festeringstrike()
-end
-----pvp part
-if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-	-- unholy.rot.icytouchdispell()
-	unholy.rot.bloodboilorphanblood()
-	unholy.rot.NecroStrike()
-	unholy.rot.icytouch()
-end
-----filler
-unholy.rot.Deathcoil()
-unholy.rot.festeringstrike()
-unholy.rot.scourgestrike()
-unholy.rot.Buffbuff()
-unholy.rot.blank()
+	unholy.rot.scourgestrike()
+	unholy.rot.Buffbuff()
+	unholy.rot.blank()
 end
 local outCombat = function()
 	return inCombat()
