@@ -1650,7 +1650,7 @@ end
 local function attacktarget()
 	local target = Object("target")
 	if target and target:alive() and target:enemy() then
-		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=target.guid then
+		if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
 			return _A.CallWowApi("RunMacroText", "/petattack")
 		end
 		return 1
