@@ -536,7 +536,7 @@ local exeOnLoad = function()
 	--=========================== SPELL CHECKS
 	_A.lowpriocheck = function(spellid)
 		-- Avoid focus capping
-		if player:focus() >= (player:FocusMax() - 5) then return true end
+		-- if player:focus() >= (player:FocusMax() - 5) then return true end
 		
 		-- Helper to compute required focus with time-based regeneration
 		local function required_focus(spell, elapsed)
@@ -610,7 +610,7 @@ local exeOnLoad = function()
 	------------------------------------------------------------------
 	_A.EScheck = function()
 		-- Avoid focus capping
-		if player:focus() >= (player:FocusMax() - 5) then return true end
+		-- if player:focus() >= (player:FocusMax() - 5) then return true end
 		
 		-- Helper to compute required focus with time-based regeneration
 		local function required_focus(spell, elapsed)
@@ -707,9 +707,9 @@ local exeOnLoad = function()
 	------------------------------------------------------------------
 	------------------------------------------------------------------
 	_A.CobraCheck = function() -- we only want to cast Cobra Shot if not enough ressources by the time important cds come up (Idk if this is necessary just yet)
-		if not _A.EScheck() then return true end
-		if player:focus()+(player:spellcooldown("Explosive Shot")*manaregen())<player:spellcost("Explosive Shot") then return true end
+		-- if not _A.EScheck() then return true end
 		local ct = player:level()<81 and player:SpellCasttime("Steady Shot") or player:SpellCasttime("Cobra Shot")
+		if player:focus()+((player:spellcooldown("Explosive Shot")+ct)*manaregen())<player:spellcost("Explosive Shot") then return true end
 		-- print(ct<=player:spellcooldown("Explosive Shot"))
 		return ct<=player:spellcooldown("Explosive Shot")
 	end
@@ -863,7 +863,7 @@ local function petengine()
 	if attackfocus() then return true end
 	if attacktarget() then return true end
 end
-C_Timer.NewTicker(.1, petengine, false, "petengineengine")
+C_Timer.NewTicker(.3, petengine, false, "petengineengine")
 ---========================
 ---========================
 _A.mostclumpedenemy = nil

@@ -1679,7 +1679,7 @@ local function petengine()
 	if attackfocus() then return true end
 	if attacktarget() then return true end
 end
-C_Timer.NewTicker(.1, petengine, false, "petengineengine")
+C_Timer.NewTicker(.3, petengine, false, "petengineengine")
 ---========================
 ---========================
 local inCombat = function()	
