@@ -1671,6 +1671,7 @@ end
 local function petengine()
 	if not player or not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 	_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
+	if _A.PetGUID == nil then return end
 	if attacktotem() then return true end
 	if attackfocus() then return true end
 	if attacktarget() then return true end
