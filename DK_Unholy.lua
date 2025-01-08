@@ -1488,20 +1488,20 @@ unholy.rot = {
 		end
 	end,
 	
-	NecroStrike = function()
-		if  player:SpellCooldown("Necro Strike")<.3
-			then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if lowestmelee then
-				if lowestmelee:exists() then
-					if lowestmelee.isplayer and player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") then
-						return lowestmelee:Cast("Necrotic Strike")
-						else return lowestmelee:Cast("Scourge Strike")
-					end
-				end
-			end
-		end
-	end,
+    NecroStrike = function()
+        if  player:SpellCooldown("Necro Strike")<.3
+            then
+            local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+            if lowestmelee then
+                if lowestmelee:exists() then
+                    if lowestmelee.isplayer and (player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") or (lowestmelee:Health() <= 75) and lowestmelee:Health() >= 8) then
+                        return lowestmelee:Cast("Necrotic Strike")
+                        else return lowestmelee:Cast("Scourge Strike")
+                    end
+                end
+            end
+        end
+    end,
 	
 	icytouchdispell = function()
 		if player:SpellCooldown("Icy Touch")<.3 then
@@ -1617,14 +1617,17 @@ unholy.rot = {
 ---========================
 ---========================
 ---========================
--- local function petengine(ticker)
--- local newDuration = math.random(5,15)/10
--- local newDuration = .1
--- local battlefieldstatus = GetBattlefieldWinner()
--- if battlefieldstatus~=nil then LeaveBattlefield() end
--- ClickthisPleasepvp()
--- end
--- C_Timer.NewTicker(.1, petengine, false, "clickpvp")
+local function attacktotem()
+	local Object =
+end
+local function petengine(ticker)
+	local newDuration = math.random(5,15)/10
+	local newDuration = .1
+	local battlefieldstatus = GetBattlefieldWinner()
+	if battlefieldstatus~=nil then LeaveBattlefield() end
+	ClickthisPleasepvp()
+end
+C_Timer.NewTicker(.1, petengine, false, "clickpvp")
 ---========================
 ---========================
 local inCombat = function()	
@@ -1646,63 +1649,63 @@ local inCombat = function()
 	unholy.rot.GrabGrabHunter()
 	-- utility
 	unholy.rot.caching()
-	-- Burst and utility
-	unholy.rot.items_strpot()
-	unholy.rot.items_strflask()
-	unholy.rot.hasteburst()
-	unholy.rot.stance_dance()
-	unholy.rot.icbf()
-	unholy.rot.items_healthstone()
-	unholy.rot.activetrinket()
-	unholy.rot.Frenzy()
-	unholy.rot.gargoyle()
-	unholy.rot.Empowerruneweapon()
-	unholy.rot.remorselesswinter()
-	unholy.rot.massgrip()
-	unholy.rot.pathoffrost()
-	-- PVP INTERRUPTS AND CC
-	unholy.rot.MindFreeze()
-	unholy.rot.strangulatesnipe()
-	unholy.rot.Asphyxiatesnipe()
-	unholy.rot.AsphyxiateBurst()
-	-- unholy.rot.darksimulacrum()
-	unholy.rot.root_buff()
-	if player:keybind("2") then
-		unholy.rot.root()
-	end
-	-- DEFS
-	unholy.rot.antimagicshell()
-	unholy.rot.petres()
-	unholy.rot.deathpact()
-	unholy.rot.Lichborne()
-	-- rotation
-	unholy.rot.DeathcoilDump()
-	unholy.rot.dkuhaoe()
-	unholy.rot.outbreak()
-	unholy.rot.dotapplication()
-	unholy.rot.pettransform()
-	unholy.rot.BonusDeathStrike()
-	unholy.rot.DeathcoilHEAL()
-	unholy.rot.SoulReaper()
-	----pve part
-	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		unholy.rot.dotsnapshotOutBreak()
-		unholy.rot.dotsnapshotPS()
-		unholy.rot.festeringstrike()
-	end
-	----pvp part
-	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		-- unholy.rot.icytouchdispell()
-		unholy.rot.bloodboilorphanblood()
-		unholy.rot.NecroStrike()
-		unholy.rot.icytouch()
-	end
-	----filler
-	unholy.rot.Deathcoil()
+-- Burst and utility
+unholy.rot.items_strpot()
+unholy.rot.items_strflask()
+unholy.rot.hasteburst()
+unholy.rot.stance_dance()
+unholy.rot.icbf()
+unholy.rot.items_healthstone()
+unholy.rot.activetrinket()
+unholy.rot.Frenzy()
+unholy.rot.gargoyle()
+unholy.rot.Empowerruneweapon()
+unholy.rot.remorselesswinter()
+unholy.rot.massgrip()
+unholy.rot.pathoffrost()
+-- PVP INTERRUPTS AND CC
+unholy.rot.MindFreeze()
+unholy.rot.strangulatesnipe()
+unholy.rot.Asphyxiatesnipe()
+unholy.rot.AsphyxiateBurst()
+-- unholy.rot.darksimulacrum()
+unholy.rot.root_buff()
+if player:keybind("2") then
+	unholy.rot.root()
+end
+-- DEFS
+unholy.rot.antimagicshell()
+unholy.rot.petres()
+unholy.rot.deathpact()
+unholy.rot.Lichborne()
+-- rotation
+unholy.rot.DeathcoilDump()
+unholy.rot.dkuhaoe()
+unholy.rot.outbreak()
+unholy.rot.dotapplication()
+unholy.rot.pettransform()
+unholy.rot.BonusDeathStrike()
+unholy.rot.DeathcoilHEAL()
+unholy.rot.SoulReaper()
+----pve part
+if _A.pull_location == "party" or _A.pull_location == "raid" then
+	unholy.rot.dotsnapshotOutBreak()
+	unholy.rot.dotsnapshotPS()
 	unholy.rot.festeringstrike()
-	unholy.rot.scourgestrike()
-	unholy.rot.Buffbuff()
-	unholy.rot.blank()
+end
+----pvp part
+if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+	-- unholy.rot.icytouchdispell()
+	unholy.rot.bloodboilorphanblood()
+	unholy.rot.NecroStrike()
+	unholy.rot.icytouch()
+end
+----filler
+unholy.rot.Deathcoil()
+unholy.rot.festeringstrike()
+unholy.rot.scourgestrike()
+unholy.rot.Buffbuff()
+unholy.rot.blank()
 end
 local outCombat = function()
 	return inCombat()
