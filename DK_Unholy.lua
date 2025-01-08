@@ -1512,14 +1512,15 @@ unholy.rot = {
             local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
             if lowestmelee then
                 if lowestmelee:exists() then
-                    if lowestmelee.isplayer and (player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") or (lowestmelee:Health() <= 75) and lowestmelee:Health() >= 8) then
+                    local Necrostack = _A.UnitGetTotalHealAbsorbs(lowestmelee.guid) 
+                    if lowestmelee.isplayer and Necrostack <=100000 and (player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") or (lowestmelee:Health() <= 75) and lowestmelee:Health() >= 8) then
                         return lowestmelee:Cast("Necrotic Strike")
                         else return lowestmelee:Cast("Scourge Strike")
-					end
-				end
-			end
-		end
-	end,
+                    end
+                end
+            end
+        end
+    end,
 	
 	icytouchdispell = function()
 		if player:SpellCooldown("Icy Touch")<.3 then
@@ -1617,14 +1618,14 @@ unholy.rot = {
             local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
             if lowestmelee then
                 if lowestmelee:exists() then
-                    if (lowestmelee:health()>37 or player:SpellCooldown("Soul Reaper") > 1)
+                    if (lowestmelee:health()>35 or player:SpellCooldown("Soul Reaper") > 1)
                         then
                         return lowestmelee:Cast("Scourge Strike")
-					end
-				end
-			end
-		end
-	end,
+                    end
+                end
+            end
+        end
+    end,
 	
 	Buffbuff = function()
 		if player:SpellCooldown("Horn of Winter")<.3 and _A.dkenergy <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
@@ -1647,7 +1648,7 @@ end
 local function attacktarget()
 	local target = Object("target")
 	if target and target:alive() and target:enemy() then
-		then _A.CallWowApi("RunMacroText", "/petattack") 
+		 _A.CallWowApi("RunMacroText", "/petattack") 
 	end
 end
 local function petengine()
