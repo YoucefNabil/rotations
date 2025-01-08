@@ -1650,7 +1650,7 @@ local function attacktarget()
 		then _A.CallWowApi("RunMacroText", "/petattack") 
 	end
 end
-local function petengine(ticker)
+local function petengine()
 	if not player or not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then return end
 	if attacktotem() then return end
 	if attacktarget() then return end
