@@ -698,6 +698,24 @@ local exeOnLoad = function()
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
+	
+	_A.FakeUnits:Add('HealingStreamTotem', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj.name=="Healing Stream Totem" and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					range = Obj:range(),
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
 	--
 	--
 	--
@@ -1497,11 +1515,11 @@ unholy.rot = {
                     if lowestmelee.isplayer and (player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") or (lowestmelee:Health() <= 75) and lowestmelee:Health() >= 8) then
                         return lowestmelee:Cast("Necrotic Strike")
                         else return lowestmelee:Cast("Scourge Strike")
-                    end
-                end
-            end
-        end
-    end,
+					end
+				end
+			end
+		end
+	end,
 	
 	icytouchdispell = function()
 		if player:SpellCooldown("Icy Touch")<.3 then
@@ -1594,14 +1612,14 @@ unholy.rot = {
 		end
 	end,
 	
-	scourgestrike = function()
-		if _A.unholy>=1 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if lowestmelee then
-				if lowestmelee:exists() then
-					if lowestmelee:health()>35
-						then
-						return lowestmelee:Cast("Scourge Strike")
+    scourgestrike = function()
+        if _A.unholy>=1 then
+            local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+            if lowestmelee then
+                if lowestmelee:exists() then
+                    if (lowestmelee:health()>37 or player:SpellCooldown("Soul Reaper") > 1)
+                        then
+                        return lowestmelee:Cast("Scourge Strike")
 					end
 				end
 			end
@@ -1618,16 +1636,26 @@ unholy.rot = {
 ---========================
 ---========================
 local function attacktotem()
-	local Object =
+	local htotem = Object("HealingStreamTotem")
+	if htotem then
+		local _focus = Object("focus")
+		if not _focus then _A.CallWowApi("FocusUnit", htotem.guid) end
+		if _focus and _focus.guid ~= htotem.guid  then _A.CallWowApi("FocusUnit", htotem.guid) end
+		if _focus then _A.CallWowApi("RunMacroText", "/petattack focus") end
+	end
+end
+local function attacktarget()
+	local target = Object("target")
+	if target and target:alive() and target:enemy() then
+		then _A.CallWowApi("RunMacroText", "/petattack") 
+	end
 end
 local function petengine(ticker)
-	local newDuration = math.random(5,15)/10
-	local newDuration = .1
-	local battlefieldstatus = GetBattlefieldWinner()
-	if battlefieldstatus~=nil then LeaveBattlefield() end
-	ClickthisPleasepvp()
+	if not player or not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then return end
+	if attacktotem() then return end
+	if attacktarget() then return end
 end
-C_Timer.NewTicker(.1, petengine, false, "clickpvp")
+C_Timer.NewTicker(.1, petengine, false, "petengineengine")
 ---========================
 ---========================
 local inCombat = function()	
@@ -1649,15 +1677,15 @@ local inCombat = function()
 	unholy.rot.GrabGrabHunter()
 	-- utility
 	unholy.rot.caching()
--- Burst and utility
-unholy.rot.items_strpot()
-unholy.rot.items_strflask()
-unholy.rot.hasteburst()
-unholy.rot.stance_dance()
-unholy.rot.icbf()
-unholy.rot.items_healthstone()
-unholy.rot.activetrinket()
-unholy.rot.Frenzy()
+	-- Burst and utility
+	unholy.rot.items_strpot()
+	unholy.rot.items_strflask()
+	unholy.rot.hasteburst()
+	unholy.rot.stance_dance()
+	unholy.rot.icbf()
+	unholy.rot.items_healthstone()
+	unholy.rot.activetrinket()
+	unholy.rot.Frenzy()
 unholy.rot.gargoyle()
 unholy.rot.Empowerruneweapon()
 unholy.rot.remorselesswinter()
