@@ -710,7 +710,7 @@ local exeOnLoad = function()
 	_A.CobraCheck = function() -- we only want to cast Cobra Shot if not enough ressources by the time important cds come up (Idk if this is necessary just yet)
 		-- if not _A.EScheck() then return true end
 		local ct = player:level()<81 and player:SpellCasttime("Steady Shot") or player:SpellCasttime("Cobra Shot")
-		if player:focus()+((player:spellcooldown("Explosive Shot")+ct)*manaregen())<player:spellcost("Explosive Shot") then return true end
+		if player:focus()+((player:spellcooldown("Explosive Shot"))*manaregen())<player:spellcost("Explosive Shot") then return true end
 		-- print(ct<=player:spellcooldown("Explosive Shot"))
 		return ct<=player:spellcooldown("Explosive Shot")
 	end
@@ -842,8 +842,19 @@ local function attackfocus()
 		end
 	end
 end
-local function attacktarget()
+local function attacklowest()
 	local target = Object("lowestEnemyInSpellRange(Arcane Shot)")
+	if target and target:alive() and target:enemy() and target:exists() then
+		if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+				return _A.CallWowApi("PetAttack", target.guid), 3
+			end
+		end
+		return 3
+	end
+end
+local function attacktarget()
+	local target = Object("target")
 	if target and target:alive() and target:enemy() and target:exists() then
 		if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
@@ -862,6 +873,7 @@ local function petengine()
 	-- Rotation
 	if attacktotem() then return true end
 	if attackfocus() then return true end
+	-- if attacklowest() then return true end
 	if attacktarget() then return true end
 end
 C_Timer.NewTicker(.3, petengine, false, "petengineengine")
