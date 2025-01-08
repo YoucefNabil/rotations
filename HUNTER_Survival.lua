@@ -505,16 +505,16 @@ local exeOnLoad = function()
 	_A.castchecktbl = {}
 	_A.Listener:Add("steadycasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if guidsrc == UnitGUID("player") then
-		if idd == cobraid or idd == steadyid then
-			-- print(subevent.." "..idd)
-			if subevent == "SPELL_CAST_START" then
-				_A.castchecktbl[idd] = true
-			end
-			if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED" then
-				_A.castchecktbl[idd] = false
+			if idd == cobraid or idd == steadyid then
+				-- print(subevent.." "..idd)
+				if subevent == "SPELL_CAST_START" then
+					_A.castchecktbl[idd] = true
+				end
+				if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED" then
+					_A.castchecktbl[idd] = false
+				end
 			end
 		end
-	end
 	end)
 	--=========================== SPELL CHECKS
 	--=========================== SPELL CHECKS
@@ -803,6 +803,63 @@ end
 ---========================
 ---========================
 ---========================
+_A.FakeUnits:Add('HealingStreamTotem', function(num)
+	local tempTable = {}
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		if Obj.name=="Healing Stream Totem" and Obj:los() then
+			tempTable[#tempTable+1] = {
+				guid = Obj.guid,
+				range = Obj:range(),
+			}
+		end
+	end
+	if #tempTable>1 then
+		table.sort( tempTable, function(a,b) return a.range < b.range end )
+	end
+	if #tempTable>=1 then
+		return tempTable[num] and tempTable[num].guid
+	end
+end)
+_A.PetGUID  = nil
+local function attacktotem()
+	local htotem = Object("HealingStreamTotem")
+	if htotem then
+		local _focus = Object("focus")
+		if not _focus then return _A.CallWowApi("FocusUnit", htotem.guid) end
+		if _focus and _focus.guid ~= htotem.guid then return _A.CallWowApi("FocusUnit", htotem.guid) end
+		if _focus then return _A.CallWowApi("RunMacroText", "/petattack focus") end
+		return 2
+	end
+end
+local function attackfocus()
+	local _focus = Object("focus")
+	local htotem = Object("HealingStreamTotem")
+	if not htotem and _focus then
+		if _focus:alive() and _focus:enemy() then
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
+				return _A.CallWowApi("RunMacroText", "/petattack")
+			end
+			return 3
+		end
+	end
+end
+local function attacktarget()
+	local target = Object("target")
+	if target and target:alive() and target:enemy() then
+		if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+			return _A.CallWowApi("RunMacroText", "/petattack")
+		end
+		return 1
+	end
+end
+local function petengine()
+	if not player or not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end  return true end
+	_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
+	if attacktotem() then return true end
+	if attackfocus() then return true end
+	if attacktarget() then return true end
+end
+C_Timer.NewTicker(.1, petengine, false, "petengineengine")
 ---========================
 ---========================
 _A.mostclumpedenemy = nil
