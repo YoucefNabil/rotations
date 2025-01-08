@@ -865,16 +865,19 @@ local function attacktarget()
 	end
 end
 local function petengine()
-	if not player then return end
-	if player:spec()~=255 then return end
+	if not player then return true end
+	if player:spec()~=255 then return true end
+	if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
+	if player:mounted() then return end
+	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 	_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 	if _A.PetGUID == nil then return end
 	-- Rotation
 	if attacktotem() then return true end
 	if attackfocus() then return true end
-	-- if attacklowest() then return true end
-	if attacktarget() then return true end
+	if attacklowest() then return true end
+	-- if attacktarget() then return true end
 end
 C_Timer.NewTicker(.3, petengine, false, "petengineengine")
 ---========================

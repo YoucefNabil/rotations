@@ -1657,6 +1657,17 @@ local function attackfocus()
 		end
 	end
 end
+local function attacklowest()
+	local target = Object("lowestEnemyInSpellRange(Icy Touch)")
+	if target and target:alive() and target:enemy() and target:exists() then
+		if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+				return _A.CallWowApi("PetAttack", target.guid), 3
+			end
+		end
+		return 3
+	end
+end
 local function attacktarget()
 	local target = Object("target")
 	if target and target:alive() and target:enemy() and target:exists() then
@@ -1669,15 +1680,19 @@ local function attacktarget()
 	end
 end
 local function petengine()
-	if not player then return end
-	if player:spec()~=252 then return end
+	if not player then return true end
+	if player:spec()~=252 then return true end
+	if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
+	if player:mounted() then return end
+	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 	_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 	if _A.PetGUID == nil then return end
 	-- Rotation
 	if attacktotem() then return true end
 	if attackfocus() then return true end
-	if attacktarget() then return true end
+	if attacklowest() then return true end
+	-- if attacktarget() then return true end
 end
 C_Timer.NewTicker(.3, petengine, false, "petengineengine")
 ---========================
