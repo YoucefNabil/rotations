@@ -1635,31 +1635,44 @@ unholy.rot = {
 }
 ---========================
 ---========================
----========================
+---======================== -- casting pet spells when pet is too far from spell target causes spell to stutter
 _A.PetGUID  = nil
 local function attacktotem()
 	local htotem = Object("HealingStreamTotem")
 	if htotem then
-		local _focus = Object("focus")
-		if not _focus then return _A.CallWowApi("FocusUnit", htotem.guid) end
-		if _focus and _focus.guid ~= htotem.guid then return _A.CallWowApi("FocusUnit", htotem.guid) end
-		if _focus then return _A.CallWowApi("RunMacroText", "/petattack focus") end
-		return 2
+		return _A.CallWowApi("PetAttack", htotem.guid), 1
+	end
+end
+local function attackfocus()
+	local _focus = Object("focus")
+	local htotem = Object("HealingStreamTotem")
+	if not htotem and _focus then
+		if _focus:alive() and _focus:enemy() and _focus:exists() then
+			if (_A.pull_location~="party" and _A.pull_location~="raid") or _focus:combat() then -- avoid pulling shit by accident
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
+					return _A.CallWowApi("PetAttack", _focus.guid), 2
+				end
+			end
+			return 2
+		end
 	end
 end
 local function attacktarget()
 	local target = Object("target")
-	if target and target:alive() and target:enemy() then
-		if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-			return _A.CallWowApi("RunMacroText", "/petattack")
+	if target and target:alive() and target:enemy() and target:exists() then
+		if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+				return _A.CallWowApi("PetAttack", target.guid), 3
+			end
 		end
-		return 1
+		return 3
 	end
 end
 local function petengine()
-	if not player or not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end  return true end
+	if not player or not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 	_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 	if attacktotem() then return true end
+	if attackfocus() then return true end
 	if attacktarget() then return true end
 end
 C_Timer.NewTicker(.1, petengine, false, "petengineengine")
@@ -1670,77 +1683,77 @@ local inCombat = function()
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return end
 	player = Object("player")
 	if not player then return end
-	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
-	_A.interrupttreshhold = .2 + _A.latency
-	if not _A.latency and not _A.interrupttreshhold then return end
-	if not _A.pull_location then return end
-	if _A.buttondelayfunc()  then return end
-	if  player:isCastingAny() then return end
-	if player:mounted() then return end
-	if UnitInVehicle("player") then return end
-	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
-	-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
-	unholy.rot.GrabGrab()
-	unholy.rot.GrabGrabHunter()
-	-- utility
-	unholy.rot.caching()
-	-- Burst and utility
-	unholy.rot.items_strpot()
-	unholy.rot.items_strflask()
-	unholy.rot.hasteburst()
-	unholy.rot.stance_dance()
-	unholy.rot.icbf()
-	unholy.rot.items_healthstone()
-	unholy.rot.activetrinket()
-	unholy.rot.Frenzy()
-	unholy.rot.gargoyle()
-	unholy.rot.Empowerruneweapon()
-	unholy.rot.remorselesswinter()
-	unholy.rot.massgrip()
-	unholy.rot.pathoffrost()
-	-- PVP INTERRUPTS AND CC
-	unholy.rot.MindFreeze()
-	unholy.rot.strangulatesnipe()
-	unholy.rot.Asphyxiatesnipe()
-	unholy.rot.AsphyxiateBurst()
-	-- unholy.rot.darksimulacrum()
-	unholy.rot.root_buff()
-	if player:keybind("2") then
-		unholy.rot.root()
-	end
-	-- DEFS
-	unholy.rot.antimagicshell()
-	unholy.rot.petres()
-	unholy.rot.deathpact()
-	unholy.rot.Lichborne()
-	-- rotation
-	unholy.rot.DeathcoilDump()
-	unholy.rot.dkuhaoe()
-	unholy.rot.outbreak()
-	unholy.rot.dotapplication()
-	unholy.rot.pettransform()
-	unholy.rot.BonusDeathStrike()
-	unholy.rot.DeathcoilHEAL()
-	unholy.rot.SoulReaper()
-	----pve part
-	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		unholy.rot.dotsnapshotOutBreak()
-		unholy.rot.dotsnapshotPS()
-		unholy.rot.festeringstrike()
-	end
-	----pvp part
-	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		-- unholy.rot.icytouchdispell()
-		unholy.rot.bloodboilorphanblood()
-		unholy.rot.NecroStrike()
-		unholy.rot.icytouch()
-	end
-	----filler
-	unholy.rot.Deathcoil()
+_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
+_A.interrupttreshhold = .2 + _A.latency
+if not _A.latency and not _A.interrupttreshhold then return end
+if not _A.pull_location then return end
+if _A.buttondelayfunc()  then return end
+if  player:isCastingAny() then return end
+if player:mounted() then return end
+if UnitInVehicle("player") then return end
+-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
+unholy.rot.GrabGrab()
+unholy.rot.GrabGrabHunter()
+-- utility
+unholy.rot.caching()
+-- Burst and utility
+unholy.rot.items_strpot()
+unholy.rot.items_strflask()
+unholy.rot.hasteburst()
+unholy.rot.stance_dance()
+unholy.rot.icbf()
+unholy.rot.items_healthstone()
+unholy.rot.activetrinket()
+unholy.rot.Frenzy()
+unholy.rot.gargoyle()
+unholy.rot.Empowerruneweapon()
+unholy.rot.remorselesswinter()
+unholy.rot.massgrip()
+unholy.rot.pathoffrost()
+-- PVP INTERRUPTS AND CC
+unholy.rot.MindFreeze()
+unholy.rot.strangulatesnipe()
+unholy.rot.Asphyxiatesnipe()
+unholy.rot.AsphyxiateBurst()
+-- unholy.rot.darksimulacrum()
+unholy.rot.root_buff()
+if player:keybind("2") then
+	unholy.rot.root()
+end
+-- DEFS
+unholy.rot.antimagicshell()
+unholy.rot.petres()
+unholy.rot.deathpact()
+unholy.rot.Lichborne()
+-- rotation
+unholy.rot.DeathcoilDump()
+unholy.rot.dkuhaoe()
+unholy.rot.outbreak()
+unholy.rot.dotapplication()
+unholy.rot.pettransform()
+unholy.rot.BonusDeathStrike()
+unholy.rot.DeathcoilHEAL()
+unholy.rot.SoulReaper()
+----pve part
+if _A.pull_location == "party" or _A.pull_location == "raid" then
+	unholy.rot.dotsnapshotOutBreak()
+	unholy.rot.dotsnapshotPS()
 	unholy.rot.festeringstrike()
-	unholy.rot.scourgestrike()
-	unholy.rot.Buffbuff()
-	unholy.rot.blank()
+end
+----pvp part
+if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+	-- unholy.rot.icytouchdispell()
+	unholy.rot.bloodboilorphanblood()
+	unholy.rot.NecroStrike()
+	unholy.rot.icytouch()
+end
+----filler
+unholy.rot.Deathcoil()
+unholy.rot.festeringstrike()
+unholy.rot.scourgestrike()
+unholy.rot.Buffbuff()
+unholy.rot.blank()
 end
 local outCombat = function()
 	return inCombat()

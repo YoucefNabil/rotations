@@ -824,36 +824,36 @@ _A.PetGUID  = nil
 local function attacktotem()
 	local htotem = Object("HealingStreamTotem")
 	if htotem then
-		local _focus = Object("focus")
-		if not _focus then return _A.CallWowApi("FocusUnit", htotem.guid) end
-		if _focus and _focus.guid ~= htotem.guid then return _A.CallWowApi("FocusUnit", htotem.guid) end
-		if _focus then return _A.CallWowApi("RunMacroText", "/petattack focus") end
-		return 2
+		return _A.CallWowApi("PetAttack", htotem.guid), 1
 	end
 end
 local function attackfocus()
 	local _focus = Object("focus")
 	local htotem = Object("HealingStreamTotem")
 	if not htotem and _focus then
-		if _focus:alive() and _focus:enemy() then
-			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
-				return _A.CallWowApi("RunMacroText", "/petattack")
+		if _focus:alive() and _focus:enemy() and _focus:exists() then
+			if (_A.pull_location~="party" and _A.pull_location~="raid") or _focus:combat() then -- avoid pulling shit by accident
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
+					return _A.CallWowApi("PetAttack", _focus.guid), 2
+				end
 			end
-			return 3
+			return 2
 		end
 	end
 end
 local function attacktarget()
-	local target = Object("target")
-	if target and target:alive() and target:enemy() then
-		if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-			return _A.CallWowApi("RunMacroText", "/petattack")
+	local target = Object("lowestEnemyInSpellRange(Arcane Shot)")
+	if target and target:alive() and target:enemy() and target:exists() then
+		if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+				return _A.CallWowApi("PetAttack", target.guid), 3
+			end
 		end
-		return 1
+		return 3
 	end
 end
 local function petengine()
-	if not player or not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end  return true end
+	if not player or not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 	_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 	if attacktotem() then return true end
 	if attackfocus() then return true end
