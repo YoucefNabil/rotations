@@ -1636,23 +1636,29 @@ unholy.rot = {
 ---========================
 ---========================
 ---========================
+_A.PetGUID  = nil
 local function attacktotem()
 	local htotem = Object("HealingStreamTotem")
 	if htotem then
 		local _focus = Object("focus")
-		if not _focus then _A.CallWowApi("FocusUnit", htotem.guid) end
-		if _focus and _focus.guid ~= htotem.guid  then _A.CallWowApi("FocusUnit", htotem.guid) end
-		if _focus then _A.CallWowApi("RunMacroText", "/petattack focus") end
+		if not _focus then return _A.CallWowApi("FocusUnit", htotem.guid) end
+		if _focus and _focus.guid ~= htotem.guid then return _A.CallWowApi("FocusUnit", htotem.guid) end
+		if _focus then return _A.CallWowApi("RunMacroText", "/petattack focus") end
+		return 2
 	end
 end
 local function attacktarget()
 	local target = Object("target")
 	if target and target:alive() and target:enemy() then
-		_A.CallWowApi("RunMacroText", "/petattack")
+		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=target.guid then
+			return _A.CallWowApi("RunMacroText", "/petattack")
+		end
+		return 1
 	end
 end
 local function petengine()
-	if not player or not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then return end
+	if not player or not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end  return end
+	_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 	if attacktotem() then return end
 	if attacktarget() then return end
 end

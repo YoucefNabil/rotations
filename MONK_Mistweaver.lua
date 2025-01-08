@@ -1561,7 +1561,7 @@ local mw_rot = {
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
-						if fr:SpellRange("Detox")
+						if fr:SpellRange("Detox") and fr:statepurge("Detox")
 							and _A.nothealimmune(fr)
 							and not fr:DebuffAny("Unstable Affliction")  then
 							-- and not fr:DebuffAny("Unstable Affliction || Vampiric Touch")  then
