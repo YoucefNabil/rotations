@@ -865,8 +865,9 @@ survival.rot = {
 	end,
 	
 	multishot = function()
-		if player:SpellUsable("Multi-Shot") and _A.mostclumpedenemy then
-			local lowestmelee = Object(_A.mostclumpedenemy)
+		-- if player:SpellUsable("Multi-Shot") and _A.mostclumpedenemy then
+		if player:SpellUsable("Multi-Shot") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Multi-Shot")
 			end
@@ -943,7 +944,7 @@ local inCombat = function()
 	if not player then return end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
-	_A.clumpcount, _A.mostclumpedenemy = _A.clusteredenemy()
+	-- _A.clumpcount, _A.mostclumpedenemy = _A.clusteredenemy()
 	-- print(_A.mostclumpedenemy)
 	-- print(_A.clumpcount)
 	-- print(player:spellexists("Black Arrow"))
