@@ -534,18 +534,19 @@ local exeOnLoad = function()
 	--=========================== SPELL CHECKS
 	--=========================== SPELL CHECKS
 	--=========================== SPELL CHECKS
+	-- Helper to compute required focus with time-based regeneration
+	local function required_focus(spell, elapsed)
+		-- if not player:spellknown(spell) then return 0 end
+		local cd = player:SpellCooldown(spell) -- Cooldown remaining
+		local regen = manaregen() * math.max(0, cd - elapsed) -- Regen focus during cooldown after elapsed time
+		local cost,_ = player:spellcost(spell)
+		return -cost + regen
+	end
+	
+	
 	_A.lowpriocheck = function(spellid)
 		-- Avoid focus capping
 		-- if player:focus() >= (player:FocusMax() - 5) then return true end
-		
-		-- Helper to compute required focus with time-based regeneration
-		local function required_focus(spell, elapsed)
-			-- if not player:spellknown(spell) then return 0 end
-			local cd = player:SpellCooldown(spell) -- Cooldown remaining
-			local regen = manaregen() * math.max(0, cd - elapsed) -- Regen focus during cooldown after elapsed time
-			return -player:spellcost(spell) + regen
-		end
-		
 		-- Define abilities with cooldowns and conditions
 		local spells = {
 			{ name = "Explosive Shot", ready = true },
@@ -555,51 +556,62 @@ local exeOnLoad = function()
 		}
 		
 		-- Sort spells by cooldown (shortest first)
-		table.sort(spells, function(a, b)
-			return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
-		end)
+		if #spells>1 then
+			table.sort(spells, function(a, b)
+				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
+			end)
+		end
 		
 		-- Track elapsed time and current focus
 		local time_elapsed = 0
 		local current_focus = player:focus() - player:spellcost(spellid)
 		
-		-- Simulate focus pooling without loops (nested conditions)
-		local focus_cost, cooldown
-		
-		-- First spell
-		if spells[1].ready then
-			cooldown = player:SpellCooldown(spells[1].name)
-			focus_cost = required_focus(spells[1].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
+		for i, spell in ipairs(spells) do
+			if spell.ready then
+				local focus_cost = required_focus(spell.name, time_elapsed)
+				if current_focus < -focus_cost then
+					-- Not enough focus for this spell
+					return false
+				end
+				current_focus = current_focus + focus_cost
+				time_elapsed = time_elapsed + player:SpellCooldown(spell.name)
+			end
 		end
 		
-		-- Second spell
-		if spells[2].ready then
-			cooldown = player:SpellCooldown(spells[2].name)
-			focus_cost = required_focus(spells[2].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
+		-- If all focus checks pass, Arcane Shot can be cast
+		return true
+	end
+	
+	_A.glaivetosscheck = function()
+		-- Avoid focus capping
+		-- if player:focus() >= (player:FocusMax() - 5) then return true end
+		-- Define abilities with cooldowns and conditions
+		if not player:talent("Glaive Toss") then return false end
+		local spells = {
+			{ name = "Explosive Shot", ready = true },
+			{ name = "Black Arrow", ready = _A.IsSpellKnown(3674) },
+			{ name = "A Murder of Crows", ready = player:talent("A Murder of Crows") }
+		}
+		-- Sort spells by cooldown (shortest first)
+		if #spells>1 then
+			table.sort(spells, function(a, b)
+				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
+			end)
 		end
+		-- Track elapsed time and current focus
+		local time_elapsed = 0
+		local current_focus = player:focus() - player:spellcost("Glaive Toss")
 		
-		-- Third spell
-		if spells[3].ready then
-			cooldown = player:SpellCooldown(spells[3].name)
-			focus_cost = required_focus(spells[3].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
-		end
-		
-		-- Fourth spell
-		if spells[4].ready then
-			cooldown = player:SpellCooldown(spells[4].name)
-			focus_cost = required_focus(spells[4].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
+		for i, spell in ipairs(spells) do
+			if spell.ready then
+				local focus_cost = required_focus(spell.name, time_elapsed)
+				if current_focus < -focus_cost then
+					-- Not enough focus for this spell
+					return false
+				end
+				current_focus = current_focus + focus_cost
+				time_elapsed = time_elapsed + player:SpellCooldown(spell.name)
+			end
 		end
 		
 		-- If all focus checks pass, Arcane Shot can be cast
@@ -612,14 +624,6 @@ local exeOnLoad = function()
 		-- Avoid focus capping
 		-- if player:focus() >= (player:FocusMax() - 5) then return true end
 		if player:buff("Lock and Load") then return true end
-		
-		-- Helper to compute required focus with time-based regeneration
-		local function required_focus(spell, elapsed)
-			-- if not player:spellknown(spell) then return 0 end
-			local cd = player:SpellCooldown(spell) -- Cooldown remaining
-			local regen = manaregen() * math.max(0, cd - elapsed) -- Regen focus during cooldown after elapsed time
-			return -player:spellcost(spell) + regen
-		end
 		
 		-- Define abilities with cooldowns and conditions
 		local spells = {
@@ -636,25 +640,16 @@ local exeOnLoad = function()
 		local time_elapsed = 0
 		local current_focus = player:focus() - player:spellcost("Explosive Shot")
 		
-		-- Simulate focus pooling without loops (nested conditions)
-		local focus_cost, cooldown
-		
-		-- First spell
-		if spells[1].ready then
-			cooldown = player:SpellCooldown(spells[1].name)
-			focus_cost = required_focus(spells[1].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
-		end
-		
-		-- Second spell
-		if spells[2].ready then
-			cooldown = player:SpellCooldown(spells[2].name)
-			focus_cost = required_focus(spells[2].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
+		for i, spell in ipairs(spells) do
+			if spell.ready then
+				local focus_cost = required_focus(spell.name, time_elapsed)
+				if current_focus < -focus_cost then
+					-- Not enough focus for this spell
+					return false
+				end
+				current_focus = current_focus + focus_cost
+				time_elapsed = time_elapsed + player:SpellCooldown(spell.name)
+			end
 		end
 		
 		-- If all focus checks pass, Arcane Shot can be cast
@@ -668,13 +663,6 @@ local exeOnLoad = function()
 		-- if player:focus() >= (player:FocusMax() - 5) then return true end
 		-- Check if spell exists
 		if not _A.IsSpellKnown(3674) then return false end
-		-- Helper to compute required focus with time-based regeneration
-		local function required_focus(spell, elapsed)
-			-- if not player:spellknown(spell) then return 0 end
-			local cd = player:SpellCooldown(spell) -- Cooldown remaining
-			local regen = manaregen() * math.max(0, cd - elapsed) -- Regen focus during cooldown after elapsed time
-			return -player:spellcost(spell) + regen
-		end
 		
 		-- Define abilities with cooldowns and conditions
 		local spells = {
@@ -788,20 +776,22 @@ local exeOnLoad = function()
 		end
 	end
 	local function petengine()
-		if not player then return true end
-		if player:spec()~=255 then return true end
-		if not player:combat() then return true end
-		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
-		if player:mounted() then return end
-		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
-		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
-		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
-		if _A.PetGUID == nil then return end
-		-- Rotation
-		if attacktotem() then return true end
-		if attackfocus() then return true end
-		if attacklowest() then return true end
-		-- if attacktarget() then return true end
+		_A.Core:WhenInGame(function()
+			if not player then return true end
+			if player:spec()~=255 then return true end
+			if not player:combat() then return true end
+			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
+			if player:mounted() then return end
+			if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+			if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
+			_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
+			if _A.PetGUID == nil then return end
+			-- Rotation
+			if attacktotem() then return true end
+			if attackfocus() then return true end
+			if attacklowest() then return true end
+			-- if attacktarget() then return true end
+		end)
 	end
 	C_Timer.NewTicker(.3, petengine, false, "petengineengine")
 end
@@ -815,14 +805,14 @@ survival.rot = {
 			and not _A.UnitIsDeadOrGhost("pet")
 			and _A.HasPetUI()
 			and _A.castdelay("Mend Pet", (2*player:gcd()))
+			and player:spellcooldown("Mend Pet")<.3
 			then
-			pet = Object("pet")
-			if pet and pet:range()<=40 and not pet:buff("Mend Pet") and pet:los() then 
-				return player:cast("Mend Pet") 
-			end
+		pet = Object("pet")
+		if pet and pet:range()<=40 and not pet:buff("Mend Pet") and pet:los() then 
+			return player:cast("Mend Pet") 
+		end
 		end
 	end,
-	-- serpent sting, find a way to put dot on as many people as possible in the least amount of multishots, it is a big deal.
 	explosiveshot = function()
 		if _A.EScheck() and player:SpellUsable("Explosive Shot") and player:SpellCooldown("Explosive Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -831,7 +821,6 @@ survival.rot = {
 			end
 		end
 	end,
-	
 	amoc = function()
 		if player:talent("A Murder of Crows") and player:SpellUsable("A Murder of Crows") and player:SpellCooldown("A Murder of Crows")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -840,7 +829,6 @@ survival.rot = {
 			end
 		end
 	end,
-	
 	blackarrow = function()
 		if _A.BAcheck() and player:SpellUsable("Black Arrow") and player:SpellCooldown("Black Arrow")<.3 then
 			local lowestmelee = nil
@@ -854,45 +842,55 @@ survival.rot = {
 			end
 		end
 	end,
-	
-	
 	serpentsting = function()
-		if _A.castdelay(1978, (2*player:gcd())) and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting")  then
+		if _A.castdelay(1978, (2*player:gcd())) and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting") and player:spellcooldown("Serpent Sting")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff("Serpent Sting") then
 				return lowestmelee:Cast("Serpent Sting")
 			end
 		end
 	end,
-	
 	multishot = function()
 		-- if player:SpellUsable("Multi-Shot") and _A.mostclumpedenemy then
-		if player:SpellUsable("Multi-Shot") then
+		if player:SpellUsable("Multi-Shot") and player:spellcooldown("Multi-Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Multi-Shot")
 			end
 		end
 	end,
-	
 	arcaneshot = function()
-		if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") then
+		if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") and player:spellcooldown("Arcane Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Arcane Shot")
 			end
 		end
 	end,
-	
+	tranquillshot_target = function()
+		if _A.lowpriocheck("Tranquilizing Shot") and player:SpellUsable("Tranquilizing Shot") and player:spellcooldown("Tranquilizing Shot")<.3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
+			if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
+				return lowestmelee:Cast("Tranquilizing Shot")
+			end
+		end
+	end,
+	venom = function()
+		if _A.lowpriocheck("Widow Venom") and player:SpellUsable("Widow Venom") and player:spellcooldown("Widow Venom")<.3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
+			if lowestmelee and not lowestmelee:debuff("Widow Venom") then
+				return lowestmelee:Cast("Widow Venom")
+			end
+		end
+	end,
 	glaivetoss = function()
-		if player:talent("Glaive Toss") and _A.lowpriocheck("Glaive Toss") and player:SpellUsable("Glaive Toss") and player:SpellCooldown("Glaive Toss")<.3 then
+		if player:talent("Glaive Toss") and _A.glaivetosscheck() and player:SpellUsable("Glaive Toss") and player:SpellCooldown("Glaive Toss")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Glaive Toss")
 			end
 		end
 	end,
-	
 	killshot = function()
 		if player:Spellcooldown("Kill Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Kill Shot)")
@@ -901,7 +899,6 @@ survival.rot = {
 			end
 		end
 	end,
-	
 	pet_misdirect = function()
 		if player:Spellcooldown("Misdirection")==0 and _A.castdelay("Misdirection", 1.5)
 			and player:combat() and _A.pull_location=="none" and not player:isCastingAny()
@@ -912,18 +909,12 @@ survival.rot = {
 			end
 		end
 	end,
-	
 	cobrashot = function()
-		local lowestmelee = nil
-		if _A.pull_location=="pvp" then
-			lowestmelee = Object("highestEnemyInSpellRangeNOTAR(Arcane Shot)")
-			else 
-			lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-		end
+		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 		if lowestmelee then
 			if player:level()<81 then
-				return lowestmelee:Cast("Steady Shot")
-				else  return lowestmelee:Cast("Cobra Shot")
+				return player:spellcooldown("Steady Shot")<.3 and lowestmelee:Cast("Steady Shot")
+				else return player:spellcooldown("Cobra Shot")<.3 and lowestmelee:Cast("Cobra Shot")
 			end
 		end
 	end,
@@ -940,37 +931,44 @@ end
 ---========================
 _A.mostclumpedenemy = nil
 _A.clumpcount = 0
-local inCombat = function()	
-	player = Object("player")
-	if not player then return end
-	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
-	_A.interrupttreshhold = .3 + _A.latency
-	-- _A.clumpcount, _A.mostclumpedenemy = _A.clusteredenemy()
-	-- print(_A.mostclumpedenemy)
-	-- print(_A.clumpcount)
-	-- print(player:spellexists("Black Arrow"))
-	if not _A.pull_location then return end
-	if _A.buttondelayfunc()  then return end
-	if player:mounted() then return end
-	if not player:combat() then return end
-	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
-	if not player:isCastingAny() or player:CastingRemaining() < 0.3 then
+local inCombat = function()
+	_A.Core:WhenInGame(function()
+		player = Object("player")
+		if not player then return end
+		_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
+		_A.interrupttreshhold = .3 + _A.latency
+		-- _A.clumpcount, _A.mostclumpedenemy = _A.clusteredenemy()
+		-- print(_A.mostclumpedenemy)
+		-- print(_A.clumpcount)
+		-- print("------------------------------------------")
+		-- print("Widow Check "..tostring(_A.lowpriocheck("Widow Venom")))
+		-- print("Tranquil check "..tostring(_A.lowpriocheck("Tranquilizing Shot")))
+		-- print("arcane check "..tostring(_A.lowpriocheck("Arcane Shot")))
+		if not _A.pull_location then return true end
+		if _A.buttondelayfunc()  then return true end
+		if player:mounted() then return true end
+		if not player:combat() then return true end
+		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return true end
+		if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return true end
 		-- no gcd
 		survival.rot.pet_misdirect()
 		-- aoe
-		if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
-		-- single target important rotation
-		if survival.rot.killshot() then return end
-		if not AOEcheck() and survival.rot.amoc() then return end
-		if not AOEcheck() and survival.rot.blackarrow() then return end
-		if (not AOEcheck() or player:buff("Lock and Load")) and survival.rot.explosiveshot() then return end
-		if not AOEcheck() and survival.rot.glaivetoss() then return end
+		if AOEcheck() and survival.rot.multishot() then return true end -- make a complete aoe check function
+		-- Important Spells
+		if survival.rot.killshot() then return true end
+		if not AOEcheck() and survival.rot.serpentsting() then return true end
+		if not AOEcheck() and survival.rot.venom() then print("Passed Venom") return true end
+		if not AOEcheck() and survival.rot.tranquillshot_target() then print("Passed Tranquillshot") return true end
+		if not AOEcheck() and survival.rot.amoc() then return true end
+		if not AOEcheck() and survival.rot.blackarrow() then return true end
+		if (not AOEcheck() or player:buff("Lock and Load")) and survival.rot.explosiveshot() then return true end
+		-- focus excess priority
+		if not AOEcheck() and survival.rot.glaivetoss() then return true end
+		if not AOEcheck() and survival.rot.arcaneshot() then return true end
 		-- Fills
-		if not AOEcheck() and survival.rot.serpentsting() then return end
-		if not AOEcheck() and survival.rot.arcaneshot() then return end
-		if player:combat() and survival.rot.mendpet() then return end
-		if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return end -- needs to be on highest HP
-	end
+		if player:combat() and survival.rot.mendpet() then return true end
+		if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return true end -- needs to be on highest HP
+	end)
 end
 local spellIds_Loc = function()
 end
@@ -984,10 +982,10 @@ _A.CR:Add(255, {
 	gui = GUI,
 	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
 	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })
