@@ -175,10 +175,10 @@ local exeOnLoad = function()
 		end
 	end)
 	function _A.castdelay(idd, delay)
-		-- local spellid = idd and _A.Core:GetSpellID(idd)
+		local spellid = idd and _A.Core:GetSpellID(idd)
 		if delay == nil then return true end
-		if _A.casttimers[idd]==nil then return true end
-		return (_A.GetTime() - _A.casttimers[idd])>=delay
+		if _A.casttimers[spellid]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[spellid])>=delay
 	end
 	--
 	hooksecurefunc("UseAction", function(...)
@@ -874,6 +874,17 @@ survival.rot = {
 		end
 	end,
 	
+	pet_misdirect = function()
+		if player:Spellcooldown("Misdirection")==0 and _A.castdelay("Misdirection", 1.5)
+		and player:combat() and _A.pull_location=="none" and not player:isCastingAny()
+		then
+			local pet = Object("pet")
+			if pet and pet:alive() and pet:exists() and not player:buff("Misdirection") and pet:SpellRange("Misdirection") and pet:los() then
+				return pet:Cast("Misdirection")
+			end
+		end
+	end,
+	
 	cobrashot = function()
 		local lowestmelee = Object("highestEnemyInSpellRangeNOTAR(Arcane Shot)")
 		if lowestmelee then
@@ -910,6 +921,8 @@ local inCombat = function()
 	if player:mounted() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if not player:isCastingAny() or player:CastingRemaining() < 0.3 then
+		-- no gcd
+		survival.rot.pet_misdirect()
 		-- aoe
 		if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 		-- single target important rotation
