@@ -611,6 +611,7 @@ local exeOnLoad = function()
 	_A.EScheck = function()
 		-- Avoid focus capping
 		-- if player:focus() >= (player:FocusMax() - 5) then return true end
+		if player:buff("Lock and Load") then return true end
 		
 		-- Helper to compute required focus with time-based regeneration
 		local function required_focus(spell, elapsed)
@@ -789,6 +790,7 @@ local exeOnLoad = function()
 	local function petengine()
 		if not player then return true end
 		if player:spec()~=255 then return true end
+		if not player:combat() then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
 		if player:mounted() then return end
 		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
@@ -814,7 +816,7 @@ survival.rot = {
 			and _A.HasPetUI()
 			then
 			pet = Object("pet")
-			if pet and pet:range()<=40 and not pet:buff("Mend Pet") then 
+			if pet and pet:range()<=40 and not pet:buff("Mend Pet") and pet:los() then 
 				return player:cast("Mend Pet") 
 			end
 		end
@@ -829,14 +831,29 @@ survival.rot = {
 		end
 	end,
 	
+	amoc = function()
+		if player:talent("A Murder of Crows") and player:SpellUsable("A Murder of Crows") and player:SpellCooldown("A Murder of Crows")<.3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee then
+				return lowestmelee:Cast("A Murder of Crows")
+			end
+		end
+	end,
+	
 	blackarrow = function()
 		if _A.BAcheck() and player:SpellUsable("Black Arrow") and player:SpellCooldown("Black Arrow")<.3 then
-			local lowestmelee = Object("highestEnemyInSpellRangeNOTAR(Arcane Shot)")
+			local lowestmelee = nil
+			if _A.pull_location=="pvp" then
+				lowestmelee = Object("highestEnemyInSpellRangeNOTAR(Arcane Shot)")
+				else 
+				lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			end
 			if lowestmelee then
 				return lowestmelee:Cast("Black Arrow")
 			end
 		end
 	end,
+	
 	
 	serpentsting = function()
 		if _A.castdelay(1978, (2*player:gcd())) and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting")  then
@@ -865,6 +882,15 @@ survival.rot = {
 		end
 	end,
 	
+	glaivetoss = function()
+		if player:talent("Glaive Toss") and _A.lowpriocheck("Glaive Toss") and player:SpellUsable("Glaive Toss") and player:SpellCooldown("Glaive Toss")<.3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee then
+				return lowestmelee:Cast("Glaive Toss")
+			end
+		end
+	end,
+	
 	killshot = function()
 		if player:Spellcooldown("Kill Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Kill Shot)")
@@ -876,8 +902,8 @@ survival.rot = {
 	
 	pet_misdirect = function()
 		if player:Spellcooldown("Misdirection")==0 and _A.castdelay("Misdirection", 1.5)
-		and player:combat() and _A.pull_location=="none" and not player:isCastingAny()
-		then
+			and player:combat() and _A.pull_location=="none" and not player:isCastingAny()
+			then
 			local pet = Object("pet")
 			if pet and pet:alive() and pet:exists() and not player:buff("Misdirection") and pet:SpellRange("Misdirection") and pet:los() then
 				return pet:Cast("Misdirection")
@@ -886,7 +912,12 @@ survival.rot = {
 	end,
 	
 	cobrashot = function()
-		local lowestmelee = Object("highestEnemyInSpellRangeNOTAR(Arcane Shot)")
+		local lowestmelee = nil
+		if _A.pull_location=="pvp" then
+			lowestmelee = Object("highestEnemyInSpellRangeNOTAR(Arcane Shot)")
+			else 
+			lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		end
 		if lowestmelee then
 			if player:level()<81 then
 				return lowestmelee:Cast("Steady Shot")
@@ -919,6 +950,7 @@ local inCombat = function()
 	if not _A.pull_location then return end
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
+	if not player:combat() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if not player:isCastingAny() or player:CastingRemaining() < 0.3 then
 		-- no gcd
@@ -927,12 +959,14 @@ local inCombat = function()
 		if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 		-- single target important rotation
 		if survival.rot.killshot() then return end
+		if not AOEcheck() and survival.rot.amoc() then return end
 		if not AOEcheck() and survival.rot.blackarrow() then return end
-		if not AOEcheck() and survival.rot.explosiveshot() then return end
-		-- FILLS
-		if player:combat() and survival.rot.mendpet() then return end
+		if (not AOEcheck() or player:buff("Lock and Load")) and survival.rot.explosiveshot() then return end
+		if not AOEcheck() and survival.rot.glaivetoss() then return end
+		-- Fills
 		if not AOEcheck() and survival.rot.serpentsting() then return end
 		if not AOEcheck() and survival.rot.arcaneshot() then return end
+		if player:combat() and survival.rot.mendpet() then return end
 		if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return end -- needs to be on highest HP
 	end
 end
