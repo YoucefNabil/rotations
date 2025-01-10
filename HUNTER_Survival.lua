@@ -1156,7 +1156,7 @@ local exeOnLoad = function()
 		if attacktotem() then return true end
 		if attackfocus() then return true end
 		if attacklowest() then return true end
-		return _A.CallWowApi("RunMacroText", "/petfollow")
+		-- return _A.CallWowApi("RunMacroText", "/petfollow")
 		-- if attacktarget() then return true end
 	end
 	C_Timer.NewTicker(.3, petengine, false, "petengineengine")
