@@ -698,24 +698,6 @@ local exeOnLoad = function()
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
-	
-	_A.FakeUnits:Add('HealingStreamTotem', function(num)
-		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.name=="Healing Stream Totem" and Obj:los() then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					range = Obj:range(),
-				}
-			end
-		end
-		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
-		end
-		if #tempTable>=1 then
-			return tempTable[num] and tempTable[num].guid
-		end
-	end)
 	--
 	--
 	--
@@ -902,53 +884,87 @@ local exeOnLoad = function()
 	---------------------------------------------------------------------
 	---------------------------------------------------------------------
 	---------------------------------------------------------------------
-	_A.PetGUID  = nil
-	local function attacktotem()
-		local htotem = Object("HealingStreamTotem")
-		if htotem then
-			return _A.CallWowApi("PetAttack", htotem.guid), 1
-		end
-	end
-	local function attackfocus()
-		local _focus = Object("focus")
-		local htotem = Object("HealingStreamTotem")
-		if not htotem and _focus then
-			if _focus:alive() and _focus:enemy() and _focus:exists() then
-				if (_A.pull_location~="party" and _A.pull_location~="raid") or _focus:combat() then -- avoid pulling shit by accident
-					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
-						return _A.CallWowApi("PetAttack", _focus.guid), 2
+		local badtotems = {
+			"Mana Tide",
+			"Mana Tide Totem",
+			"Healing Stream Totem",
+			"Healing Tide",
+			"Healing Tide Totem",
+			"Lightning Surge Totem",
+			"Earthgrab Totem",
+			"Earthbind Totem",
+			"Grounding Totem",
+		}
+		_A.FakeUnits:Add('HealingStreamTotem', function(num)
+			local tempTable = {}
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				for _,totems in ipairs(badtotems) do
+					if Obj.name==totems and Obj:los() then
+						tempTable[#tempTable+1] = {
+							guid = Obj.guid,
+							range = Obj:range(),
+						}
 					end
 				end
-				return 2
+			end
+			if #tempTable>1 then
+				table.sort( tempTable, function(a,b) return a.range < b.range end )
+			end
+			if #tempTable>=1 then
+				return tempTable[num] and tempTable[num].guid
+			end
+		end)
+		_A.PetGUID  = nil
+		local function attacktotem()
+			local htotem = Object("HealingStreamTotem")
+			if htotem then
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
+					return _A.CallWowApi("PetAttack", htotem.guid), 1
+				end
+				return 1
 			end
 		end
-	end
-	local function attacklowest()
-		local target = Object("lowestEnemyInSpellRange(Icy Touch)")
-		if target and target:alive() and target:enemy() and target:exists() then
-			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-					return _A.CallWowApi("PetAttack", target.guid), 3
+		local function attackfocus()
+			local _focus = Object("focus")
+			local htotem = Object("HealingStreamTotem")
+			if not htotem and _focus then
+				if _focus:alive() and _focus:enemy() and _focus:exists() then
+					if (_A.pull_location~="party" and _A.pull_location~="raid") or _focus:combat() then -- avoid pulling shit by accident
+						if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
+							return _A.CallWowApi("PetAttack", _focus.guid), 2
+							end
+						end
+						return 2
+					end
 				end
 			end
-			return 3
-		end
-	end
-	local function attacktarget()
-		local target = Object("target")
-		if target and target:alive() and target:enemy() and target:exists() then
-			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-					return _A.CallWowApi("PetAttack", target.guid), 3
+			local function attacklowest()
+				local target = Object("lowestEnemyInSpellRange(Arcane Shot)")
+				if target and target:alive() and target:enemy() and target:exists() then
+					if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+						if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+						return _A.CallWowApi("PetAttack", target.guid), 3
+					end
 				end
+				return 3
 			end
-			return 3
 		end
-	end
-	local function petengine()
-		_A.Core:WhenInGame(function()
+		local function attacktarget()
+			local target = Object("target")
+			if target and target:alive() and target:enemy() and target:exists() then
+				if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+						return _A.CallWowApi("PetAttack", target.guid), 3
+					end
+				end
+				return 3
+			end
+		end
+		local function petengine()
+			if not _A.Cache.Utils.PlayerInGame then return end
 			if not player then return true end
 			if player:spec()~=252 then return true end
+			if not player:combat() then return true end
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
 			if player:mounted() then return end
 			if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
@@ -960,8 +976,8 @@ local exeOnLoad = function()
 			if attackfocus() then return true end
 			if attacklowest() then return true end
 			-- if attacktarget() then return true end
-		end)
-	end
+		end
+		C_Timer.NewTicker(.3, petengine, false, "petengineengine")
 	C_Timer.NewTicker(.3, petengine, false, "petengineengine")
 end
 local exeOnUnload = function()
