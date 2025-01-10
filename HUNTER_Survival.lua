@@ -1442,8 +1442,9 @@ survival.rot = {
 			end
 		end
 	end,
-	tranquillshot_target = function()
-		if _A.lowpriocheck("Tranquilizing Shot") and player:SpellUsable("Tranquilizing Shot") and player:spellcooldown("Tranquilizing Shot")<.3 then
+	tranquillshot = function()
+		if _A.lowpriocheck("Tranquilizing Shot") or player:glyph("Glyph of Tranquilizing Shot") and player:SpellUsable("Tranquilizing Shot") 
+			and player:spellcooldown("Tranquilizing Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
 			if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
 				return lowestmelee:Cast("Tranquilizing Shot")
@@ -1545,7 +1546,7 @@ local inCombat = function()
 		-- excess focus priority
 		if survival.rot.arcaneshot_proc() then return end -- is this necessary?
 		if survival.rot.venom() then return end
-		if survival.rot.tranquillshot_target() then return end -- find a solution for this
+		if survival.rot.tranquillshot() then return end -- find a solution for this
 		if survival.rot.glaivetoss() then return end
 		if survival.rot.arcaneshot() then return end
 	end
