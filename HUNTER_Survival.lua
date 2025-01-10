@@ -1257,7 +1257,9 @@ survival.rot = {
 		if player:SpellCooldown("Scatter Shot")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] and not Obj:state("incapacitate || disorient || charm || misc || sleep || stun") 
-					and _A.notimmune(Obj) and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) and Obj:los() then
+					and _A.notimmune(Obj) and Obj:InConeOf("player", 150) 
+					and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
+					and Obj:los() then
 					if (player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena") or player:Spellcooldown("Snake Trap")<.3 or player:Spellcooldown("Explosive Trap")<.3 then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
 						end 
@@ -1271,8 +1273,20 @@ survival.rot = {
 		if player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:glyph("Glyph of Solace") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] and Obj:state("disorient || charm || sleep || stun") 
-					and not Obj:moving() and _A.notimmune(Obj) and Obj:los() then
+					and _A.notimmune(Obj) and Obj:los() then
 					return _A.clickcast(Obj, "Freezing Trap")
+				end
+			end
+		end
+	end,
+	sleep = function()
+		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3 then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 150) and healerspecid[Obj:spec()] 
+					and not Obj:state("incapacitate || disorient || charm || misc || sleep || stun")
+					and (Obj:drstate("Wyvern Sting")==1 or Obj:drstate("Wyvern Sting")==-1) 
+					and _A.notimmune(Obj) and Obj:los() then
+					return Obj:cast("Wyvern Sting")
 				end
 			end
 		end
@@ -1478,9 +1492,9 @@ local inCombat = function()
 		if survival.rot.amoc() then return end
 		if survival.rot.blackarrow() then return end
 		-- focus excess priority -- ordered by the most efficient use of focus (hopefully)
-		if survival.rot.arcaneshot_proc() then return end
+		if survival.rot.arcaneshot_proc() then return end -- is this necessary?
 		if survival.rot.venom() then return end
-		if survival.rot.tranquillshot_target() then return end
+		if survival.rot.tranquillshot_target() then return end -- find a solution for this
 		if survival.rot.glaivetoss() then return end
 		if survival.rot.arcaneshot() then return end
 	end
