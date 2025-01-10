@@ -1272,7 +1272,7 @@ survival.rot = {
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] and Obj:state("disorient || charm || sleep || stun") 
 					and not Obj:moving() and _A.notimmune(Obj) and Obj:los() then
-					return _A.clickcast(lowestmelee, "Freezing Trap")
+					return _A.clickcast(Obj, "Freezing Trap")
 				end
 			end
 		end
