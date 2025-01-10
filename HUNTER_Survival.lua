@@ -1258,6 +1258,10 @@ survival.rot = {
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] and not Obj:state("incapacitate || disorient || charm || misc || sleep || stun") 
 					and _A.notimmune(Obj) and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) and Obj:los() then
+					if (player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena") or player:Spellcooldown("Snake Trap")<.3 or player:Spellcooldown("Explosive Trap")<.3 then
+						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
+						end 
+					end
 					return Obj:cast("Scatter Shot")
 				end
 			end
@@ -1453,13 +1457,13 @@ local inCombat = function()
 	survival.rot.autoattackmanager()
 	-- no gcd
 	if not player:isCastingAny() then
-		survival.rot.freezing()
 		survival.rot.pet_misdirect()
 		survival.rot.activetrinket()
 		survival.rot.kick()
 		survival.rot.bursthunt()
 		survival.rot.bindingshot()
 	end
+	survival.rot.freezing()
 	survival.rot.traps()
 	--
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return end
