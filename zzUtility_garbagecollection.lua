@@ -21,7 +21,6 @@ Listener:Add("BG", {'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS'}, function(
 			local status, _, _ = _A.GetBattlefieldStatus(i)
 			if status == "confirm" then
 				if not _A.IsForeground() then _A.FlashWow() end
-				
 				_A.AcceptBattlefieldPort(i,1)
 				_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
 			end
@@ -48,10 +47,13 @@ end
 
 --
 local function MyTickerCallback(ticker)
-	-- local newDuration = math.random(5,15)/10
-	-- local newDuration = .1
-	-- local battlefieldstatus = GetBattlefieldWinner()
-	-- if battlefieldstatus~=nil then LeaveBattlefield() end
+	local newDuration = math.random(5,15)/10
+	local newDuration = .1
+	local battlefieldstatus = GetBattlefieldWinner()
+	if battlefieldstatus~=nil then 
+		if not _A.IsForeground() then _A.FlashWow() end
+		-- LeaveBattlefield() 
+	end
 	ClickthisPleasepvp()
 	local newDuration = _A.Parser.frequency or .1
 	local updatedDuration = ticker:UpdateTicker(newDuration)
@@ -59,5 +61,5 @@ end
 C_Timer.NewTicker(1, MyTickerCallback, false, "clickpvp")
 ---
 -- C_Timer.NewTicker(garbagedelay, function()
-	-- collectgarbage("collect")
+-- collectgarbage("collect")
 -- end, false, "garbage")
