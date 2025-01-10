@@ -1185,7 +1185,7 @@ end
 
 
 survival.rot = {
-	-- misc and defs
+	-- defs
 	deterrence = function()
 		if player:health() <= 25 then
 			if player:SpellCooldown("Deterrence") == 0 and not player:buff("Deterrence") and _A.castdelay("Deterrence", 1.5)
@@ -1198,7 +1198,7 @@ survival.rot = {
 	end,
 	masterscall = function()
 		if player:SpellCooldown("Master's Call")==0 and player:state("root") then
-			pet = Object("pet")
+			local pet = Object("pet")
 			if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:range()<40 and pet:los() then
 				-- cancel cast
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end 
@@ -1206,19 +1206,24 @@ survival.rot = {
 			end
 		end
 	end,
+	roarofsac = function()
+		if player:SpellCooldown("Roar of Sacrifice(Cunning Ability)")==0 and player:health()<65 and player:combat() and not player:buff("Deterrence") and _A.castdelay("Deterrence",(5+player:gcd())) then
+			local pet = Object("pet")
+			if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:range()<40 and pet:los() then
+				return player:cast("Roar of Sacrifice(Cunning Ability)")
+			end
+		end
+	end,
 	mendpet =  function()
-		if	_A.UnitExists("pet")
-			and not _A.UnitIsDeadOrGhost("pet")
-			and _A.HasPetUI()
-			and _A.castdelay("Mend Pet", (2*player:gcd()))
-			and player:spellcooldown("Mend Pet")<.3
+		if	_A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI() and _A.castdelay("Mend Pet", (2*player:gcd())) and player:spellcooldown("Mend Pet")<.3
 			then
-			pet = Object("pet")
+			local pet = Object("pet")
 			if pet and pet:range()<=40 and pet:health()<90 and pet:combat() and not pet:buff("Mend Pet") and pet:los() then 
 				return player:cast("Mend Pet") 
 			end
 		end
 	end,
+	-- Misc
 	autoattackmanager = function()
 		local target = Object("target")
 		if target and target.isplayer and target:enemy() and target:alive() and target:inmelee() and target:InConeOf(player, 150) and target:los() then
@@ -1250,35 +1255,6 @@ survival.rot = {
 			local pet = Object("pet")
 			if pet and pet:alive() and pet:exists() and not player:buff("Misdirection") and pet:SpellRange("Misdirection") and pet:los() then
 				return pet:Cast("Misdirection")
-			end
-		end
-	end,
-	-- Burst
-	activetrinket = function()
-		if player:combat() and player:buff("Surge of Conquest") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and lowestmelee.isplayer
-				-- and lowestmelee:health()>=35
-				then 
-				for i=1, #usableitems do
-					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
-						if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
-							if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
-								_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
-							end
-						end
-					end
-				end
-			end
-		end
-	end,
-	bursthunt = function()
-		if player:combat() and player:buff("Call of Conquest") and player:SpellCooldown("Rapid Fire")==0 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and lowestmelee.isplayer
-				-- and lowestmelee:health()>=35
-				then 
-				return player:cast("Rapid Fire")
 			end
 		end
 	end,
@@ -1352,6 +1328,45 @@ survival.rot = {
 			if lowestmelee then
 				-- return lowestmelee:Castground("Binding Shot")
 				return _A.clickcast(lowestmelee, "Binding Shot")
+			end
+		end
+	end,
+	-- Burst
+	activetrinket = function()
+		if player:combat() and player:buff("Surge of Conquest") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee and lowestmelee.isplayer
+				-- and lowestmelee:health()>=35
+				then 
+				for i=1, #usableitems do
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+						if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+							if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
+								_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+							end
+						end
+					end
+				end
+			end
+		end
+	end,
+	bursthunt = function()
+		if player:combat() and player:buff("Call of Conquest") and player:SpellCooldown("Rapid Fire")==0 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee and lowestmelee.isplayer
+				-- and lowestmelee:health()>=35
+				then 
+				return player:cast("Rapid Fire")
+			end
+		end
+	end,
+	stampede = function()
+		if player:combat() and player:buff("Rapid Fire") and player:SpellCooldown("Stampede")<.3 and player:combat() then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee and lowestmelee.isplayer
+				-- and lowestmelee:health()>=35
+				then 
+				return player:cast("Stampede")
 			end
 		end
 	end,
@@ -1479,8 +1494,8 @@ end
 ---========================
 ---========================
 ---========================
-_A.mostclumpedenemy = nil
-_A.clumpcount = 0
+-- _A.mostclumpedenemy = nil
+-- _A.clumpcount = 0
 local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return end
 	player = Object("player")
@@ -1492,19 +1507,22 @@ local inCombat = function()
 	if player:mounted() then return end
 	-- if not player:combat() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
-	if player:lostcontrol() then return end
 	if player:isChanneling("Barrage") then return end
+	survival.rot.roarofsac()
+	if player:lostcontrol() then return end
 	survival.rot.autoattackmanager()
 	-- Defs
 	survival.rot.deterrence()
 	survival.rot.masterscall()
 	-- no gcd
 	if not player:isCastingAny() then
+		survival.rot.bindingshot()
 		survival.rot.pet_misdirect()
 		survival.rot.activetrinket()
-		survival.rot.kick()
+		-- Burst
 		survival.rot.bursthunt()
-		survival.rot.bindingshot()
+		survival.rot.stampede()
+		survival.rot.kick()
 	end
 	-- Traps
 	survival.rot.freezing()
