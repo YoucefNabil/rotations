@@ -1176,6 +1176,7 @@ end
 
 
 survival.rot = {
+	-- misc
 	mendpet =  function()
 		if	_A.UnitExists("pet")
 			and not _A.UnitIsDeadOrGhost("pet")
@@ -1186,6 +1187,14 @@ survival.rot = {
 			pet = Object("pet")
 			if pet and pet:range()<=40 and pet:health()<90 and pet:combat() and not pet:buff("Mend Pet") and pet:los() then 
 				return player:cast("Mend Pet") 
+			end
+		end
+	end,
+	autoattackmanager = function()
+		local target = Object("target")
+		if target and target.isplayer and target:enemy() and target:alive() and target:inmelee() and target:InConeOf(player, 150) and target:los() then
+			if target:state("incapacitate || fear || disorient || charm || misc || sleep") and player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") 
+				elseif not target:state("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then  _A.CallWowApi("RunMacroText", "/startattack") 
 			end
 		end
 	end,
@@ -1205,6 +1214,17 @@ survival.rot = {
 			end
 		end
 	end,
+	pet_misdirect = function()
+		if player:Spellcooldown("Misdirection")==0 and _A.castdelay("Misdirection", 1.5)
+			and player:combat() and _A.pull_location=="none" and not player:isCastingAny()
+			then
+			local pet = Object("pet")
+			if pet and pet:alive() and pet:exists() and not player:buff("Misdirection") and pet:SpellRange("Misdirection") and pet:los() then
+				return pet:Cast("Misdirection")
+			end
+		end
+	end,
+	-- Burst
 	activetrinket = function()
 		if player:combat() and player:buff("Surge of Conquest") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -1233,7 +1253,15 @@ survival.rot = {
 			end
 		end
 	end,
-	-- castground
+	-- Traps and CC
+	concussion = function()
+		if player:spellcooldown("Concussive Shot")<.3  then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee and lowestmelee.isplayer and not lowestmelee.debuff("player") then
+				return lowestmelee:Cast("Concussive Shot")
+			end
+		end
+	end,
 	traps = function()
 		if player:buff("Trap Launcher") then
 			local lowestmelee = Object("enemyplayercc")
@@ -1300,6 +1328,7 @@ survival.rot = {
 			end
 		end
 	end,
+	-- ROTATION
 	explosiveshot = function()
 		if _A.EScheck() and player:SpellUsable("Explosive Shot") and player:SpellCooldown("Explosive Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -1329,22 +1358,6 @@ survival.rot = {
 			end
 		end
 	end,
-	icetrap = function()
-		if _A.castdelay(1978, (2*player:gcd())) and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting") and player:spellcooldown("Serpent Sting")<.3  then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and not lowestmelee:debuff("Serpent Sting") then
-				return lowestmelee:Cast("Serpent Sting")
-			end
-		end
-	end,
-	concussion = function()
-		if player:spellcooldown("Concussive Shot")<.3  then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and lowestmelee.isplayer and not lowestmelee.debuff("player") then
-				return lowestmelee:Cast("Concussive Shot")
-			end
-		end
-	end,
 	serpentsting = function()
 		if _A.castdelay(1978, (2*player:gcd())) and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting") and player:spellcooldown("Serpent Sting")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -1356,7 +1369,6 @@ survival.rot = {
 		end
 	end,
 	multishot = function()
-		-- if player:SpellUsable("Multi-Shot") and _A.mostclumpedenemy then
 		if player:SpellUsable("Multi-Shot") and player:spellcooldown("Multi-Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
@@ -1412,30 +1424,12 @@ survival.rot = {
 			end
 		end
 	end,
-	pet_misdirect = function()
-		if player:Spellcooldown("Misdirection")==0 and _A.castdelay("Misdirection", 1.5)
-			and player:combat() and _A.pull_location=="none" and not player:isCastingAny()
-			then
-			local pet = Object("pet")
-			if pet and pet:alive() and pet:exists() and not player:buff("Misdirection") and pet:SpellRange("Misdirection") and pet:los() then
-				return pet:Cast("Misdirection")
-			end
-		end
-	end,
 	cobrashot = function()
 		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 		if lowestmelee then
 			if player:level()<81 then
 				return player:spellcooldown("Steady Shot")<.3 and lowestmelee:Cast("Steady Shot")
 				else return player:spellcooldown("Cobra Shot")<.3 and lowestmelee:Cast("Cobra Shot")
-			end
-		end
-	end,
-	autoattackmanager = function()
-		local target = Object("target")
-		if target and target.isplayer and target:enemy() and target:alive() and target:inmelee() and target:InConeOf(player, 150) and target:los() then
-			if target:state("incapacitate || fear || disorient || charm || misc || sleep") and player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") 
-				elseif not target:state("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then  _A.CallWowApi("RunMacroText", "/startattack") 
 			end
 		end
 	end,
@@ -1483,6 +1477,7 @@ local inCombat = function()
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return end
 	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 	-- Important Spells
+	survival.rot.sleep()
 	survival.rot.scatter()
 	survival.rot.killshot()
 	if survival.rot.concussion() then return end
