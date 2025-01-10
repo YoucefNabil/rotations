@@ -537,7 +537,7 @@ local exeOnLoad = function()
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and  Obj:combat()  and _A.notimmune(Obj)  and Obj:los() 
-				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
+				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -566,6 +566,25 @@ local exeOnLoad = function()
 						health = Obj:health(),
 					}
 				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.range < b.range) end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
+	
+	_A.FakeUnits:Add('meleeunits', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj.isplayer and Obj:spellRange("Arcane Shot") and meleespecs[Obj:spec()] and _A.notimmune(Obj) and Obj:los() then
+				tempTable[#tempTable+1] = {
+					range = Obj:range(),
+					guid = Obj.guid,
+					health = Obj:health(),
+				}
 			end
 		end
 		if #tempTable>1 then
@@ -1209,7 +1228,7 @@ survival.rot = {
 		if player:buff("Trap Launcher") then
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
-				if player:Spellcooldown("Ice Trap")<.3 then
+				if player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena" then
 					return _A.clickcast(lowestmelee, "Ice Trap")
 					elseif player:Spellcooldown("Snake Trap")<.3 then
 					return _A.clickcast(lowestmelee, "Snake Trap")
@@ -1219,23 +1238,6 @@ survival.rot = {
 			end
 		end
 	end,
-	trapsonme = function()
-		if player:buff("Trap Launcher") then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
-				if Obj.isplayer and Obj:rangefrom(player)<4 and meleespecs[Obj:spec()] and _A.notimmune(Obj) and Obj:los() then
-					if player:Spellcooldown("Ice Trap")<.3 then	
-						return _A.clickcast(Obj, "Ice Trap")
-						elseif player:Spellcooldown("Snake Trap")<.3 then
-						return _A.clickcast(Obj, "Snake Trap")
-						elseif player:Spellcooldown("Explosive Trap")<.3 then
-						return _A.clickcast(Obj, "Explosive Trap")
-					end
-				end
-			end
-		end
-	end,
-	
 	bindingshot = function()
 		if player:talent("Binding Shot") and player:SpellCooldown("Binding Shot")==0 then
 			local lowestmelee = Object("meleeunits")
