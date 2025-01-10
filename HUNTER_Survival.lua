@@ -1313,6 +1313,7 @@ survival.rot = {
 				if Obj.isplayer and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] and not Obj:state("incapacitate || disorient || charm || misc || sleep || stun") 
 					and _A.notimmune(Obj) and Obj:InConeOf("player", 150) 
 					and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
+					and (Obj:drstate("Scatter Shot")==1 or Obj:drstate("Scatter Shot")==-1)
 					and Obj:los() then
 					if (player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena") or player:Spellcooldown("Snake Trap")<.3 or player:Spellcooldown("Explosive Trap")<.3 then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
@@ -1492,7 +1493,7 @@ local inCombat = function()
 	-- if not player:combat() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if player:lostcontrol() then return end
-	if player:player:isChanneling("Barrage") then return end
+	if player:isChanneling("Barrage") then return end
 	survival.rot.autoattackmanager()
 	-- Defs
 	survival.rot.deterrence()
@@ -1518,11 +1519,12 @@ local inCombat = function()
 	if survival.rot.concussion() then return end
 	if player:buff("Deterrence") then return end
 	if not AOEcheck() then
+		-- important spells
 		if survival.rot.serpentsting() then return end
 		if survival.rot.explosiveshot() then return end
 		if survival.rot.amoc() then return end
 		if survival.rot.blackarrow() then return end
-		-- focus excess priority -- ordered by the most efficient use of focus (hopefully)
+		-- excess focus priority
 		if survival.rot.arcaneshot_proc() then return end -- is this necessary?
 		if survival.rot.venom() then return end
 		if survival.rot.tranquillshot_target() then return end -- find a solution for this
