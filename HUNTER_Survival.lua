@@ -1141,6 +1141,15 @@ local exeOnLoad = function()
 			return 3
 		end
 	end
+	local function petfollow() -- when pet target has a breakable cc
+		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
+			local target = Object(_A.UnitTarget(_A.PetGUID))
+			if target and target:alive() and target:enemy() and target:exists() and target:state("incapacitate || disorient || charm || misc || sleep") then
+				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+			end
+			return 4
+		end
+	end
 	local function petengine()
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
@@ -1156,10 +1165,11 @@ local exeOnLoad = function()
 		if attacktotem() then return true end
 		if attackfocus() then return true end
 		if attacklowest() then return true end
+		if petfollow() then return true end
 		-- return _A.CallWowApi("RunMacroText", "/petfollow")
 		-- if attacktarget() then return true end
 	end
-	C_Timer.NewTicker(.3, petengine, false, "petengineengine")
+	C_Timer.NewTicker(.1, petengine, false, "petengineengine")
 end
 local exeOnUnload = function()
 end
@@ -1239,6 +1249,26 @@ survival.rot = {
 					return _A.clickcast(lowestmelee, "Snake Trap")
 					elseif player:Spellcooldown("Explosive Trap")<.3 then
 					return _A.clickcast(lowestmelee, "Explosive Trap")
+				end
+			end
+		end
+	end,
+	scatter = function()
+		if player:SpellCooldown("Scatter Shot")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher") then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] and not Obj:state("incapacitate || disorient || charm || misc || sleep || stun") 
+					and _A.notimmune(Obj) and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) and Obj:los() then
+					return Obj:cast("Scatter Shot")
+				end
+			end
+		end
+	end,
+	freezing = function()
+		if player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:glyph("Glyph of Solace") then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] and Obj:state("disorient || charm || sleep || stun") 
+					and not Obj:moving() and _A.notimmune(Obj) and Obj:los() then
+					return _A.clickcast(lowestmelee, "Freezing Trap")
 				end
 			end
 		end
@@ -1423,6 +1453,7 @@ local inCombat = function()
 	survival.rot.autoattackmanager()
 	-- no gcd
 	if not player:isCastingAny() then
+		survival.rot.freezing()
 		survival.rot.pet_misdirect()
 		survival.rot.activetrinket()
 		survival.rot.kick()
@@ -1434,6 +1465,7 @@ local inCombat = function()
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return end
 	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 	-- Important Spells
+	survival.rot.scatter()
 	survival.rot.killshot()
 	if survival.rot.concussion() then return end
 	if not AOEcheck() then
