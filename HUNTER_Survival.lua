@@ -1,6 +1,6 @@
 local _,class = UnitClass("player")
 if class~="HUNTER" then return end
-local HarmonyMedia, _A, Harmony = ...
+local HarmonyMedia, _A, _Y = ...
 -- local _, class = UnitClass("player");
 -- if class ~= "WARRIOR" then return end;
 local DSL = function(api) return _A.DSL:Get(api) end
@@ -1228,6 +1228,11 @@ survival.rot = {
 		if player:buff("Trap Launcher") then
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
+				-- cancel cast
+				if (player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena") or player:Spellcooldown("Snake Trap")<.3 or player:Spellcooldown("Explosive Trap")<.3 then
+					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
+					end 
+				end
 				if player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena" then
 					return _A.clickcast(lowestmelee, "Ice Trap")
 					elseif player:Spellcooldown("Snake Trap")<.3 then
@@ -1287,7 +1292,7 @@ survival.rot = {
 	concussion = function()
 		if player:spellcooldown("Concussive Shot")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and lowestmelee.isplayer then
+			if lowestmelee and lowestmelee.isplayer and not lowestmelee.debuff("player") then
 				return lowestmelee:Cast("Concussive Shot")
 			end
 		end
@@ -1403,6 +1408,10 @@ local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return end
 	player = Object("player")
 	if not player then return end
+	-- _Y.lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+	-- _Y.lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+	-- _Y.lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+	-- _Y.lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
 	if not _A.pull_location then return end
@@ -1410,7 +1419,6 @@ local inCombat = function()
 	if player:mounted() then return end
 	-- if not player:combat() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
-	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return end
 	if player:lostcontrol() then return end
 	survival.rot.autoattackmanager()
 	-- no gcd
@@ -1420,13 +1428,14 @@ local inCombat = function()
 		survival.rot.kick()
 		survival.rot.bursthunt()
 		survival.rot.bindingshot()
-		survival.rot.traps()
-		-- survival.rot.trapsonme()
 	end
-	-- aoe
+	survival.rot.traps()
+	--
+	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return end
 	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 	-- Important Spells
-	if survival.rot.killshot() then return end
+	survival.rot.killshot()
+	if survival.rot.concussion() then return end
 	if not AOEcheck() then
 		if survival.rot.serpentsting() then return end
 		if survival.rot.explosiveshot() then return end
@@ -1442,7 +1451,6 @@ local inCombat = function()
 	-- Fills
 	if survival.rot.explosiveshot() then return end
 	if player:combat() and survival.rot.mendpet() then return end
-	if _A.modifier_ctrl() and survival.rot.concussion() then return end
 	if (true or AOEcheck()) and survival.rot.cobrashot() then return end -- needs to be on highest HP
 end
 local spellIds_Loc = function()
