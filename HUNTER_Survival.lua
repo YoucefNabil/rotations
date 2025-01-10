@@ -86,6 +86,22 @@ local darksimulacrumspecsARENA = {
 	[63]="Mage Fire",
 	[64]="Mage Frost"
 }
+local meleespecs = {
+	[250]="Blood",
+	[251]="Frost",
+	[252]="Unholy",
+	[103]="Feral",
+	[269]="WW",
+	[70]="Ret",
+	[66]="Prot",
+	[259]="Assassin",
+	[260]="Outlaw",
+	[261]="Sub",
+	[263]="Enh",
+	[71]="Arms",
+	[72]="Fury",
+	[73]="Prot",
+}
 local hunterspecs = {
 	[253]=true,
 	[254]=true,
@@ -97,6 +113,104 @@ local frozen_debuffs = {
 	33395,
 	122
 }
+local spelltable = {
+	[5782] = 2,     -- Fear
+	[1120] = 1,     -- Drain Soul
+	[689] = 1,      -- Drain Life
+	[30108] = 1,    -- Unstable Affliction
+	[1454] = 1,     -- Life Tap
+	[33786] = 2,    -- Cyclone
+	[28272] = 2,    -- Polymorph (Pig)
+	[118] = 2,      -- Polymorph
+	[61305] = 2,    -- Polymorph (Black Cat)
+	[61721] = 2,    -- Polymorph (Rabbit)
+	[61780] = 2,    -- Polymorph (Turkey)
+	[28271] = 2,    -- Polymorph (Turtle)
+	[51514] = 2,    -- Hex
+	[339] = 1,      -- Entangling Roots
+	[30451] = 1,    -- Arcane Blast
+	[20066] = 2,    -- Repentance
+	[116858] = 2,   -- Chaos Bolt
+	[113092] = 1,   -- Frost Bomb
+	[8092] = 1,     -- Mind Blast
+	[11366] = 1,    -- Pyroblast
+	[48181] = 1,    -- Haunt
+	[102051] = 1,   -- Frostjaw
+	[1064] = 1,     -- Chain Heal
+	[77472] = 2,    -- Greater Healing Wave
+	[8004] = 2,     -- Healing Surge
+	[73920] = 1,    -- Healing Rain
+	[51505] = 1,    -- Lava Burst
+	[8936] = 2,     -- Regrowth
+	[2061] = 2,     -- Flash Heal
+	[2060] = 2,     -- Heal
+	[2006] = 1,     -- Resurrection
+	[5185] = 2,     -- Healing Touch
+	[19750] = 2,    -- Flash of Light
+	[635] = 1,      -- Holy Light
+	[7328] = 1,     -- Redemption
+	[2008] = 1,     -- Ancestral Spirit
+	[50769] = 1,    -- Revive
+	[2812] = 1,     -- Holy Wrath
+	[82327] = 1,    -- Holy Radiance
+	[10326] = 2,    -- Turn Evil
+	[82326] = 2,    -- Divine Light
+	[116694] = 2,   -- Surging Mist
+	[124682] = 1,   -- Enveloping Mist
+	[115151] = 1,   -- Renewing Mist
+	[115310] = 1,   -- Revival
+	-- [126201] = 1,   -- Frostbolt (Water Elemental)
+	[44614] = 1,    -- Frostfire Bolt
+	[133] = 1,      -- Fireball
+	[1513] = 1,     -- Scare Beast
+	[982] = 2,      -- Revive Pet
+	[111771] = 2,   -- Demonic Gateway
+	-- [118297] = 1,   -- Immolate (Fel Imp)
+	[29722] = 1,    -- Incinerate
+	[124465] = 1,   -- Vampiric Touch
+	[32375] = 2,    -- Mass Dispel
+	[2948] = 1,     -- Scorch
+	[12051] = 2,    -- Evocation
+	[90337] = 2,    -- Bad Manner (Monkey Pet)
+	[47540] = 2,    -- Penance
+	[115268] = 2,   -- Mesmerize (Shivarra)
+	[6358] = 2,     -- Seduction (Succubus)
+	[51963] = 2,    -- Pain Suppression
+	[78674] = 1,    -- Starsurge
+	[113792] = 1,   -- Psychic Terror (Psyfiend)
+	[115175] = 2,   -- Soothing Mist
+	[115750] = 2,   -- Blinding Light
+	[103103] = 1,   -- Drain Soul
+	[113724] = 2,   -- Ring of Frost
+	[117014] = 1,   -- Elemental Blast
+	[605] = 1,      -- Mind Control
+	[740] = 2,      -- Tranquility
+	[32546] = 2,    -- Binding Heal
+	[113506] = 2,   -- Cyclone (Symbiosis)
+	[31687] = 2,    -- Summon Water Elemental
+	[119996] = 1,   -- Transcendence: Transfer
+	[117952] = 1,    -- Crackling Jade Lightning
+	[116] = 1,      -- Frostbolt
+	[50464] = 1,   -- Nourish
+	[331] = 1,      -- Healing Wave
+	[724] = 1,      -- Lightwell
+	[129197] = 1,   -- Insanity
+	[113656] = 2,   -- Fists of Fury
+	[9484] = 2,   -- Shackle Undead
+}
+
+local function kickcheck(unit)
+	if unit then
+		for k,v in pairs(spelltable) do
+			if v==2 then
+				if unit:iscasting(k) or unit:channeling(k) then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
 local function manaregen()
 	local regen = GetPowerRegen()
 	return tonumber(regen)
@@ -347,17 +461,6 @@ local exeOnLoad = function()
 			end
 		--]]
 		
-		function _A.clickcast(unit, spell)
-			local px,py,pz = _A.groundposition(unit)
-			if px then
-				_A.CallWowApi("CastSpellByName", spell)
-				if player:SpellIsTargeting() then
-					_A.ClickPosition(px, py, pz)
-					_A.CallWowApi("SpellStopTargeting")
-				end
-			end
-		end
-		
 		local function chanpercent(unit)
 			local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
 			local givetime = GetTime()
@@ -452,16 +555,39 @@ local exeOnLoad = function()
 		_A.FakeUnits:Add('enemyplayercc', function(num)
 			local tempTable = {}
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer Obj:spellRange("Arcane Shot") and _A.notimmune(Obj)  and Obj:los() then
+				-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
+				if Obj.isplayer and Obj:spellRange("Arcane Shot") and _A.notimmune(Obj) and Obj:los() then
+					-- if Obj:state("stun") or (Obj:isCastingAny() and not Obj:moving()) then
+					if Obj:state("stun") then
+						tempTable[#tempTable+1] = {
+							range = Obj:range(),
+							guid = Obj.guid,
+							health = Obj:health(),
+						}
+					end
+				end
+			end
+			if #tempTable>1 then
+				table.sort( tempTable, function(a,b) return (a.range < b.range) end )
+			end
+			if #tempTable>=1 then
+				return tempTable[num] and tempTable[num].guid
+			end
+		end)
+		
+		_A.FakeUnits:Add('meleeunits', function(num)
+			local tempTable = {}
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Arcane Shot") and meleespecs[Obj:spec()] and _A.notimmune(Obj) and Obj:los() then
 					tempTable[#tempTable+1] = {
+						range = Obj:range(),
 						guid = Obj.guid,
 						health = Obj:health(),
-						isplayer = Obj.isplayer and 1 or 0
 					}
 				end
 			end
 			if #tempTable>1 then
-				table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+				table.sort( tempTable, function(a,b) return (a.range < b.range) end )
 			end
 			if #tempTable>=1 then
 				return tempTable[num] and tempTable[num].guid
@@ -910,6 +1036,7 @@ local exeOnLoad = function()
 				if player:SpellIsTargeting() then
 					_A.ClickPosition(px, py, pz)
 					_A.CallWowApi("SpellStopTargeting")
+					_A.CallWowApi("SpellStopTargeting")
 				end
 			end
 		end
@@ -918,6 +1045,14 @@ local exeOnLoad = function()
 		-------------------------------------------------------
 		-------------------------------------------------------
 		-------------------------------------------------------
+		function _A.meleeonme()
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
+				if Obj.isplayer and Obj:rangefrom(player)<4 and meleespecs[Obj:spec()] and _A.notimmune(Obj) and Obj:los() then
+					return true
+				end
+			end
+		end
 		------------------------------------------------------- PET
 		------------------------------------------------------- ENGINE
 		-------------------------------------------------------
@@ -1039,6 +1174,22 @@ survival.rot = {
 			end
 		end
 	end,
+	kick = function()
+		if player:SpellCooldown("Counter Shot")==0 then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Arcane Shot") and obj:InConeOf("player", 150)
+					and obj:caninterrupt() 
+					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
+					)
+					and _A.notimmune(obj)
+					then
+					if kickcheck(obj) then
+						obj:Cast("Counter Shot", true)
+					end
+				end
+			end
+		end
+	end,
 	activetrinket = function()
 		if player:combat() and player:buff("Surge of Conquest") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -1064,6 +1215,47 @@ survival.rot = {
 				-- and lowestmelee:health()>=35
 				then 
 				return player:cast("Rapid Fire")
+			end
+		end
+	end,
+	-- castground
+	traps = function()
+		if player:buff("Trap Launcher") then
+			local lowestmelee = Object("enemyplayercc")
+			if lowestmelee then
+				if player:Spellcooldown("Ice Trap")<.3 then
+					return _A.clickcast(lowestmelee, "Ice Trap")
+					elseif player:Spellcooldown("Snake Trap")<.3 then
+					return _A.clickcast(lowestmelee, "Snake Trap")
+					elseif player:Spellcooldown("Explosive Trap")<.3 then
+					return _A.clickcast(lowestmelee, "Explosive Trap")
+				end
+			end
+		end
+	end,
+	trapsonme = function()
+		if player:buff("Trap Launcher") then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
+				if Obj.isplayer and Obj:rangefrom(player)<4 and meleespecs[Obj:spec()] and _A.notimmune(Obj) and Obj:los() then
+					if player:Spellcooldown("Ice Trap")<.3 then	
+						return _A.clickcast(Obj, "Ice Trap")
+						elseif player:Spellcooldown("Snake Trap")<.3 then
+						return _A.clickcast(Obj, "Snake Trap")
+						elseif player:Spellcooldown("Explosive Trap")<.3 then
+						return _A.clickcast(Obj, "Explosive Trap")
+					end
+				end
+			end
+		end
+	end,
+	
+	bindingshot = function()
+		if player:talent("Binding Shot") and player:SpellCooldown("Binding Shot")==0 then
+			local lowestmelee = Object("meleeunits")
+			if lowestmelee then
+				-- return lowestmelee:Castground("Binding Shot")
+				return _A.clickcast(lowestmelee, "Binding Shot")
 			end
 		end
 	end,
@@ -1225,9 +1417,15 @@ local inCombat = function()
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return end
 	if player:lostcontrol() then return end
 	-- no gcd
-	survival.rot.pet_misdirect()
-	survival.rot.activetrinket()
-	survival.rot.bursthunt()
+	if not player:isCastingAny() then
+		survival.rot.pet_misdirect()
+		survival.rot.activetrinket()
+		survival.rot.kick()
+		survival.rot.bursthunt()
+		survival.rot.bindingshot()
+		survival.rot.traps()
+		-- survival.rot.trapsonme()
+	end
 	-- aoe
 	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 	-- Important Spells
@@ -1267,5 +1465,5 @@ _A.CR:Add(255, {
 	-- blacklist = blacklist,
 	-- pooling = false,
 	load = exeOnLoad,
-unload = exeOnUnload
+	unload = exeOnUnload
 })
