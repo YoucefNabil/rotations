@@ -1176,7 +1176,33 @@ end
 
 
 survival.rot = {
-	-- misc
+	-- misc and defs
+	deterrence = function()
+		if player:health() <= 25 then
+			if player:SpellCooldown("Deterrence") == 0 and not player:buff("Deterrence") and _A.castdelay("Deterrence", 1.5)
+				then
+				-- cancel cast
+				if (player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena") or player:Spellcooldown("Snake Trap")<.3 or player:Spellcooldown("Explosive Trap")<.3 then
+					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
+					end 
+				end
+				return player:cast("Deterrence")
+			end
+		end
+	end,
+	masterscall = function()
+		if player:SpellCooldown("Master's Call")==0 and player:state("root") then
+			pet = Object("pet")
+			if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:range()<40 and pet:los() then
+				-- cancel cast
+				if (player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena") or player:Spellcooldown("Snake Trap")<.3 or player:Spellcooldown("Explosive Trap")<.3 then
+					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
+					end 
+				end
+				return player:cast("Master's Call")
+			end
+		end
+	end,
 	mendpet =  function()
 		if	_A.UnitExists("pet")
 			and not _A.UnitIsDeadOrGhost("pet")
@@ -1263,7 +1289,7 @@ survival.rot = {
 		end
 	end,
 	traps = function()
-		if player:buff("Trap Launcher") then
+		if player:buff("Trap Launcher") and _A.pull_location~="arena" then
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
 				-- cancel cast
@@ -1271,7 +1297,7 @@ survival.rot = {
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
 					end 
 				end
-				if player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena" then
+				if player:Spellcooldown("Ice Trap")<.3 then
 					return _A.clickcast(lowestmelee, "Ice Trap")
 					elseif player:Spellcooldown("Snake Trap")<.3 then
 					return _A.clickcast(lowestmelee, "Snake Trap")
@@ -1376,6 +1402,14 @@ survival.rot = {
 			end
 		end
 	end,
+	barrage = function()
+		if player:Talent("Barrage") and player:spellcooldown("Barrage")<.3 and player:SpellUsable("Barrage") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee then
+				return lowestmelee:Cast("Barrage")
+			end
+		end
+	end,
 	arcaneshot = function()
 		if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") and player:spellcooldown("Arcane Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -1450,10 +1484,6 @@ local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return end
 	player = Object("player")
 	if not player then return end
-	-- _Y.lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-	-- _Y.lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-	-- _Y.lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-	-- _Y.lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
 	if not _A.pull_location then return end
@@ -1462,7 +1492,11 @@ local inCombat = function()
 	-- if not player:combat() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if player:lostcontrol() then return end
+	if player:player:isChanneling("Barrage") then return end
 	survival.rot.autoattackmanager()
+	-- Defs
+	survival.rot.deterrence()
+	survival.rot.masterscall()
 	-- no gcd
 	if not player:isCastingAny() then
 		survival.rot.pet_misdirect()
@@ -1471,16 +1505,18 @@ local inCombat = function()
 		survival.rot.bursthunt()
 		survival.rot.bindingshot()
 	end
+	-- Traps
 	survival.rot.freezing()
 	survival.rot.traps()
-	--
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return end
+	if AOEcheck() and survival.rot.barrage() then return end -- make a complete aoe check function
 	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 	-- Important Spells
 	survival.rot.sleep()
 	survival.rot.scatter()
 	survival.rot.killshot()
 	if survival.rot.concussion() then return end
+	if player:buff("Deterrence") then return end
 	if not AOEcheck() then
 		if survival.rot.serpentsting() then return end
 		if survival.rot.explosiveshot() then return end
