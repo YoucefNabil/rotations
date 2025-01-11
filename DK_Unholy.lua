@@ -939,7 +939,7 @@ local exeOnLoad = function()
 			end
 		end
 		local function attacklowest()
-			local target = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			local target = Object("lowestEnemyInSpellRange(Icy Touch)")
 			if target and target:alive() and target:enemy() and target:exists() then
 				if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
