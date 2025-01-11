@@ -214,13 +214,17 @@ local spelltable = {
 	[129197] = 1,   -- Insanity
 	[113656] = 2,   -- Fists of Fury
 	[9484] = 2,   -- Shackle Undead
+	["Cyclone"] = 2,   -- Shackle Undead
+	["Shackle Undead"] = 2,   -- Shackle Undead
 }
 
 local function kickcheck(unit)
 	if unit then
 		for k,_ in pairs(spelltable) do
-			if unit:iscasting(k) or unit:channeling(k) then
-				return true
+			if _A.Core:GetSpellName(k)~=nil
+				if unit:iscasting(k) or unit:channeling(k) then
+					return true
+				end
 			end
 		end
 	end
@@ -230,8 +234,10 @@ end
 local function kickcheck_nomove(unit)
 	if unit then
 		for k,_ in pairs(spelltable) do
-			if not unit:moving() and (unit:iscasting(k) or unit:channeling(k)) then
-				return true
+			if _A.Core:GetSpellName(k)~=nil
+				if not unit:moving() and (unit:iscasting(k) or unit:channeling(k)) then
+					return true
+				end
 			end
 		end
 	end
@@ -241,8 +247,10 @@ end
 local function kickcheck_nomove_highprio(unit)
 	if unit then
 		for k,v in pairs(spelltable) do
-			if v==2 and not unit:moving() and (unit:iscasting(k) or unit:channeling(k)) then
-				return true
+			if _A.Core:GetSpellName(k)~=nil
+				if v==2 and not unit:moving() and (unit:iscasting(k) or unit:channeling(k)) then
+					return true
+				end
 			end
 		end
 	end
@@ -886,6 +894,7 @@ local exeOnLoad = function()
 		---------------------------------------------------------------------
 		local badtotems = {
 			"Mana Tide",
+			"Lightwell",
 			"Mana Tide Totem",
 			"Healing Stream Totem",
 			"Healing Tide",
