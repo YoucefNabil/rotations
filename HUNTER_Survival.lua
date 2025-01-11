@@ -10,6 +10,8 @@ local Listener = _A.Listener
 local player
 local enemytreshhold = 3
 local survival = {}
+local ENEMIES_OM = {}
+local MISSILES_OM = {}
 local immunebuffs = {
 	"Deterrence",
 	-- "Anti-Magic Shell",
@@ -376,89 +378,43 @@ local exeOnLoad = function()
 		end
 		return true
 	end
-	--[[
-		_A.clusteredenemy = function()
+	--
+	_A.clusteredenemy = function()
 		local targets = {}
 		local most, mostGuid = 0
 		
 		-- Pre-filter enemies to avoid redundant checks
 		local validEnemies = {}
-		for _, enemy in pairs(_A.OM:Get('Enemy')) do
-		if enemy:InConeOf(player, 150) and 
-		(_A.pull_location == "none" or enemy:combat()) and 
-		not enemy:state("incapacitate || fear || disorient || charm || misc || sleep") and 
-		not enemy:BuffAny("Divine Shield || Deterrence") and 
-		_A.notimmune(enemy) and enemy:los() then
-		table.insert(validEnemies, enemy)
-		end
-		end
-		
-		-- Count clusters
-		for _, enemy in pairs(validEnemies) do
-		local count = 0
-		for _, enemy2 in pairs(validEnemies) do
-		if enemy ~= enemy2 and enemy:rangefrom(enemy2) <= 8 then
-		count = count + 1
-		end
-		end
-		targets[enemy.guid] = count
-		end
-		
-		-- Find the enemy with the most neighbors
-		for guid, count in pairs(targets) do
-		if count > most then
-		most = count
-		mostGuid = guid
-		end
-		end
-		
-		return most, mostGuid
-		end
-	--]]
-	--
-	_A.clusteredenemy = function() -- 8 yards
-		local most, mostGuid = 0
-		local positions = {}
-		-- Pre-filter enemies and cache positions
-		for _, enemy in pairs(_A.OM:Get('Enemy')) do
+		for _, enemy in pairs(ENEMIES_OM) do
 			if enemy:InConeOf(player, 150) and 
 				(_A.pull_location == "none" or enemy:combat()) and 
 				not enemy:state("incapacitate || fear || disorient || charm || misc || sleep") and 
 				not enemy:BuffAny("Divine Shield || Deterrence") and 
 				_A.notimmune(enemy) and enemy:los() then
-				local x, y, z = _A.ObjectPosition(enemy.guid)
-				-- local CR = _A.UnitCombatReach(enemy.guid)
-				table.insert(positions, {guid = enemy.guid, x = x, y = y, z = z})
-				positions[#positions+1] = {
-					guid = enemy.guid,
-					-- cr = CR,
-					x = x, 
-					y = y, 
-					z = z
-				}
+				table.insert(validEnemies, enemy)
 			end
 		end
-		-- Calculate clusters using positions
-		local count = {}
-		if #positions>1 then
-			for _,v1 in ipairs(positions) do
-				for _,v2 in ipairs(positions) do
-					if _A.GetDistanceBetweenPositions(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z) <= 8 then
-						count[v1.guid]=count[v1.guid] and count[v1.guid] + 1 or 1
-					end
+		-- Count clusters
+		for _, enemy in pairs(validEnemies) do
+			local count = 0
+			for _, enemy2 in pairs(validEnemies) do
+				if enemy ~= enemy2 and enemy:rangefrom(enemy2) <= 12 then
+					count = count + 1
 				end
 			end
+			targets[enemy.guid] = count
 		end
-		-- Find the best cluster
-		for guid, cnt in pairs(count) do
-			if cnt > most then
-				most = cnt
+		
+		-- Find the enemy with the most neighbors
+		for guid, count in pairs(targets) do
+			if count > most then
+				most = count
 				mostGuid = guid
 			end
 		end
+		
 		return most, mostGuid
 	end
-	--]]
 	
 	local function chanpercent(unit)
 		local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
@@ -535,7 +491,7 @@ local exeOnLoad = function()
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		for _, Obj in pairs(ENEMIES_OM) do
 			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and  Obj:combat()  and _A.notimmune(Obj)  and Obj:los() 
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -555,7 +511,7 @@ local exeOnLoad = function()
 	
 	_A.FakeUnits:Add('enemyplayercc', function(num)
 		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		for _, Obj in pairs(ENEMIES_OM) do
 			-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
 			if Obj.isplayer and Obj:spellRange("Arcane Shot") and _A.notimmune(Obj) and Obj:los() then
 				-- if Obj:state("stun") or (Obj:isCastingAny() and not Obj:moving()) then
@@ -578,7 +534,7 @@ local exeOnLoad = function()
 	
 	_A.FakeUnits:Add('meleeunits', function(num)
 		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		for _, Obj in pairs(ENEMIES_OM) do
 			if Obj.isplayer and Obj:spellRange("Arcane Shot") and meleespecs[Obj:spec()] and _A.notimmune(Obj) and Obj:los() then
 				tempTable[#tempTable+1] = {
 					range = Obj:range(),
@@ -605,7 +561,7 @@ local exeOnLoad = function()
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		for _, Obj in pairs(ENEMIES_OM) do
 			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and Obj:combat() and _A.notimmune(Obj)  
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -630,7 +586,7 @@ local exeOnLoad = function()
 	
 	_A.FakeUnits:Add('highestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		for _, Obj in pairs(ENEMIES_OM) do
 			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and Obj:combat() and _A.notimmune(Obj)  
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -684,6 +640,19 @@ local exeOnLoad = function()
 			end
 		end
 	end)
+	----------------------------- MISSILES
+	function _A.MissileExists(ID)
+		ID_CORE = _A.Core:GetSpellID(ID)
+		local missiles = _A.GetMissiles()
+		for _, missile in ipairs(missiles) do
+			local spellid, _, _, _, caster, _, _, _, target, _, _, _ = unpack(missile) -- prior Legion
+			if caster == player.guid and spellid==ID then
+				return true
+			end
+		end
+		return false
+	end
+	
 	--=========================== SPELL CHECKS
 	--=========================== SPELL CHECKS
 	--=========================== SPELL CHECKS
@@ -966,6 +935,43 @@ local exeOnLoad = function()
 		-- If all focus checks pass, Arcane Shot can be cast
 		return true
 	end
+	_A.multishotcheck = function()
+		-- Avoid focus capping
+		-- if player:focus() >= (player:FocusMax() - 5) then return true end
+		-- Check if spell exists
+		if not player:talent("Barrage") then return true end
+		
+		-- Define abilities with cooldowns and conditions
+		local spells = {
+			{ name = "Barrage", ready = true }
+		}
+		
+		-- Sort spells by cooldown (shortest first)
+		if #spells>1 then
+		table.sort(spells, function(a, b)
+			return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
+		end)
+		end
+		
+		
+		-- Track elapsed time and current focus
+		local time_elapsed = 0
+		local current_focus = player:focus() - player:spellcost("Multi-Shot")
+		
+		-- Simulate focus pooling without loops (nested conditions)
+		local focus_cost, cooldown
+		
+		-- First spell
+		if spells[1].ready then
+			cooldown = player:SpellCooldown(spells[1].name)
+			focus_cost = required_focus(spells[1].name, time_elapsed)
+			if current_focus < -focus_cost then return false end
+			current_focus = current_focus + focus_cost
+			time_elapsed = cooldown -- Update elapsed time
+		end
+		-- If all focus checks pass, Arcane Shot can be cast
+		return true
+	end
 	------------------------------------------------------------------
 	------------------------------------------------------------------
 	------------------------------------------------------------------
@@ -1059,7 +1065,7 @@ local exeOnLoad = function()
 	-------------------------------------------------------
 	-------------------------------------------------------
 	function _A.meleeonme()
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		for _, Obj in pairs(ENEMIES_OM) do
 			-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
 			if Obj.isplayer and Obj:rangefrom(player)<4 and meleespecs[Obj:spec()] and _A.notimmune(Obj) and Obj:los() then
 				return true
@@ -1067,7 +1073,7 @@ local exeOnLoad = function()
 		end
 	end
 	_A.TScheck = function()
-		if player:SpellCooldown("Tranquilizing Shot")<.3 then
+		if player:SpellCooldown("Tranquilizing Shot")<.3 and _A.MissileExists("Tranquilizing Shot")==false then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
 			if lowestmelee and lowestmelee.isplayer and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
 				return true
@@ -1076,9 +1082,23 @@ local exeOnLoad = function()
 		return false
 	end
 	_A.venomcheck = function()
-		local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
-		if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
-			return true
+		if player:SpellCooldown("Tranquilizing Shot")<.3 and _A.MissileExists("Tranquilizing Shot")==false then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
+			if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
+				-- if lowestmelee and not lowestmelee:debuff("Widow Venom") then
+				return true
+			end
+		end
+		return false
+	end
+	_A.SScheck = function()
+		if player:spellcooldown("Serpent Sting")<.3 and _A.MissileExists("Serpent Sting")==false then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee and not lowestmelee:debuff("Serpent Sting") 
+				and (lowestmelee.isplayer or _A.pull_location=="none")
+				then
+				return true
+			end
 		end
 		return false
 	end
@@ -1091,18 +1111,21 @@ local exeOnLoad = function()
 	-------------------------------------------------------
 	local badtotems = {
 		"Mana Tide",
+		"Wild Mushroom",
 		"Mana Tide Totem",
 		"Healing Stream Totem",
 		"Healing Tide",
+		"Spirit Link Totem",
 		"Healing Tide Totem",
-	"Lightning Surge Totem",
-	"Earthgrab Totem",
-	"Earthbind Totem",
-	"Grounding Totem",
+		"Lightning Surge Totem",
+		"Earthgrab Totem",
+		"Earthbind Totem",
+		"Grounding Totem",
+		"Psyfiend",
 	}
 	_A.FakeUnits:Add('HealingStreamTotem', function(num)
 		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		for _, Obj in pairs(ENEMIES_OM) do
 			for _,totems in ipairs(badtotems) do
 				if Obj.name==totems and Obj:los() then
 					tempTable[#tempTable+1] = {
@@ -1110,6 +1133,45 @@ local exeOnLoad = function()
 						range = Obj:range(),
 					}
 				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
+	_A.FakeUnits:Add('HealingStreamTotemPLAYER', function(num,spell)
+		local tempTable = {}
+		for _, Obj in pairs(ENEMIES_OM) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems then
+					if 	Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and Obj:los() then
+						tempTable[#tempTable+1] = {
+							guid = Obj.guid,
+							range = Obj:range(),
+						}
+					end
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+		return nil
+	end)
+	_A.FakeUnits:Add('Cappers', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(ENEMIES_OM) do
+			if Obj.isplayer and Obj:SpellRange("Arcane Shot") and Obj:iscasting("Capturing") then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					range = Obj:range(),
+				}
 			end
 		end
 		if #tempTable>1 then
@@ -1127,6 +1189,15 @@ local exeOnLoad = function()
 				return _A.CallWowApi("PetAttack", htotem.guid), 1
 			end
 			return 1
+		end
+	end
+	local function attackcaps()
+		local caps = Object("Cappers")
+		if caps then
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=caps.guid) then
+				return _A.CallWowApi("PetAttack", caps.guid), 0
+			end
+			return 0
 		end
 	end
 	local function attackfocus()
@@ -1186,6 +1257,7 @@ local exeOnLoad = function()
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
 		-- Rotation
+		if attackcaps() then return true end
 		if attacktotem() then return true end
 		if attackfocus() then return true end
 		if attacklowest() then return true end
@@ -1200,6 +1272,16 @@ end
 
 
 survival.rot = {
+	-- debug
+	serpentsting_debug = function()
+		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		if lowestmelee and lowestmelee:debuff("Serpent Sting")  --118253
+			and (lowestmelee.isplayer or _A.pull_location=="none")
+			then
+			return print("serpent sting applied")
+		end
+		return print("serpent sting NOT applied")
+	end,
 	-- defs
 	deterrence = function()
 		if player:health() <= 25 then
@@ -1249,7 +1331,7 @@ survival.rot = {
 	end,
 	kick = function()
 		if player:SpellCooldown("Counter Shot")==0 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
+			for _, obj in pairs(ENEMIES_OM) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Arcane Shot") and obj:InConeOf("player", 150)
 					and obj:caninterrupt() 
 					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
@@ -1277,8 +1359,10 @@ survival.rot = {
 	concussion = function()
 		if player:spellcooldown("Concussive Shot")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and lowestmelee.isplayer and not lowestmelee.debuff("player") then
-				return lowestmelee:Cast("Concussive Shot")
+			if lowestmelee and lowestmelee.isplayer and not lowestmelee.debuff("Concussive Shot") then
+				if lowestmelee:mounted() or _A.modifier_ctrl() then
+					return lowestmelee:Cast("Concussive Shot")
+				end
 			end
 		end
 	end,
@@ -1287,7 +1371,7 @@ survival.rot = {
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
 				-- cancel cast
-				if (player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena") or player:Spellcooldown("Snake Trap")<.3 or player:Spellcooldown("Explosive Trap")<.3 then
+				if (player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena") or player:Spellcooldown("Snake Trap")<.3 then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
 					end 
 				end
@@ -1295,15 +1379,26 @@ survival.rot = {
 					return _A.clickcast(lowestmelee, "Ice Trap")
 					elseif player:Spellcooldown("Snake Trap")<.3 then
 					return _A.clickcast(lowestmelee, "Snake Trap")
-					elseif player:Spellcooldown("Explosive Trap")<.3 then
-					return _A.clickcast(lowestmelee, "Explosive Trap")
 				end
 			end
 		end
 	end,
+	firecappers = function()
+		if player:buff("Trap Launcher") and _A.pull_location~="arena" and player:Spellcooldown("Explosive Trap")<.3  then
+			local lowestmelee = Object("Cappers")
+			if lowestmelee then
+				-- cancel cast
+				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
+				end 
+				return _A.clickcast(lowestmelee, "Explosive Trap")
+			end
+		end
+	end,
+	
+	
 	scatter = function()
 		if _A.pull_location=="arena" and player:SpellCooldown("Scatter Shot")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher") then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _, Obj in pairs(ENEMIES_OM) do
 				if Obj.isplayer and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] and not Obj:state("incapacitate || disorient || charm || misc || sleep || stun") 
 					and _A.notimmune(Obj) and Obj:InConeOf("player", 150) 
 					and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
@@ -1317,7 +1412,7 @@ survival.rot = {
 	end,
 	freezing = function()
 		if _A.pull_location=="arena" and player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:glyph("Glyph of Solace") then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _, Obj in pairs(ENEMIES_OM) do
 				if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] and Obj:state("disorient || charm || sleep || stun") 
 					and _A.notimmune(Obj) and Obj:los() then
 					return _A.clickcast(Obj, "Freezing Trap")
@@ -1327,7 +1422,7 @@ survival.rot = {
 	end,
 	sleep = function()
 		if _A.pull_location=="arena" and player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3 then
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _, Obj in pairs(ENEMIES_OM) do
 				if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 150) and healerspecid[Obj:spec()] 
 					and not Obj:state("incapacitate || disorient || charm || misc || sleep || stun")
 					and (Obj:drstate("Wyvern Sting")==1 or Obj:drstate("Wyvern Sting")==-1) 
@@ -1381,14 +1476,14 @@ survival.rot = {
 			if lowestmelee and lowestmelee.isplayer
 				-- and lowestmelee:health()>=35
 				then 
-				return player:cast("Stampede")
+				return lowestmelee:cast("Stampede")
 			end
 		end
 	end,
 	-- ROTATION
 	explosiveshot = function()
 		if _A.EScheck() and player:SpellUsable("Explosive Shot") and player:SpellCooldown("Explosive Shot")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Explosive Shot")
 			end
@@ -1416,9 +1511,9 @@ survival.rot = {
 		end
 	end,
 	serpentsting = function()
-		if _A.castdelay(1978, (2*player:gcd())) and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting") and player:spellcooldown("Serpent Sting")<.3  then
+		if _A.MissileExists("Serpent Sting")==false and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting") and player:spellcooldown("Serpent Sting")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and not lowestmelee:debuff("Serpent Sting") 
+			if lowestmelee and not lowestmelee:debuff(118253) 
 				and (lowestmelee.isplayer or _A.pull_location=="none")
 				then
 				return lowestmelee:Cast("Serpent Sting")
@@ -1426,7 +1521,7 @@ survival.rot = {
 		end
 	end,
 	multishot = function()
-		if player:SpellUsable("Multi-Shot") and player:spellcooldown("Multi-Shot")<.3 then
+		if player:SpellUsable("Multi-Shot") and player:spellcooldown("Multi-Shot")<.3 and _A.multishotcheck() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Multi-Shot")
@@ -1443,7 +1538,7 @@ survival.rot = {
 	end,
 	arcaneshot = function()
 		if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") and player:spellcooldown("Arcane Shot")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Arcane Shot")
 			end
@@ -1451,15 +1546,16 @@ survival.rot = {
 	end,
 	arcaneshot_proc = function()
 		if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") and player:spellcooldown("Arcane Shot")<.3 and _A.ASproccheck() then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Arcane Shot")
 			end
 		end
 	end,
 	tranquillshot = function()
-		if _A.lowpriocheck("Tranquilizing Shot") or player:glyph("Glyph of Tranquilizing Shot") and player:SpellUsable("Tranquilizing Shot") 
-			and player:spellcooldown("Tranquilizing Shot")<.3 then
+		if (_A.lowpriocheck("Tranquilizing Shot") or player:glyph("Glyph of Tranquilizing Shot")) and player:SpellUsable("Tranquilizing Shot") 
+			and player:spellcooldown("Tranquilizing Shot")<.3
+			and _A.MissileExists("Tranquilizing Shot")==false then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
 			if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
 				return lowestmelee:Cast("Tranquilizing Shot")
@@ -1467,9 +1563,10 @@ survival.rot = {
 		end
 	end,
 	venom = function()
-		if _A.lowpriocheck("Widow Venom") and _A.castdelay("Widow Venom", (player:gcd())) and player:SpellUsable("Widow Venom") and player:spellcooldown("Widow Venom")<.3 then
+		if _A.lowpriocheck("Widow Venom") and _A.MissileExists("Widow Venom")==false and player:SpellUsable("Widow Venom") and player:spellcooldown("Widow Venom")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
 			if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
+				-- if lowestmelee and not lowestmelee:debuff("Widow Venom") then
 				return lowestmelee:Cast("Widow Venom")
 			end
 		end
@@ -1510,14 +1607,19 @@ end
 ---========================
 ---========================
 ---========================
--- _A.mostclumpedenemy = nil
--- _A.clumpcount = 0
+_A.mostclumpedenemy = nil
+_A.clumpcount = 0
+_A.totemtar = nil
 local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return end
 	player = Object("player")
 	if not player then return end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
+	-- CACHING
+	ENEMIES_OM = _A.OM:Get('Enemy')
+	_A.totemtar = Object("HealingStreamTotemPLAYER(Arcane Shot)")
+	-- print(_A.MissileExists(_A.Core:GetSpellID("Serpent Sting") ))
 	if not _A.pull_location then return end
 	if _A.buttondelayfunc()  then return end
 	if player:mounted() then return end
@@ -1525,6 +1627,10 @@ local inCombat = function()
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	if player:isChanneling("Barrage") then return end
 	survival.rot.roarofsac()
+	-- DEBUG
+	-- survival.rot.serpentsting_debug()
+	-- print(_A.MissileExists("Serpent Sting"))
+	--
 	if player:lostcontrol() then return end
 	survival.rot.autoattackmanager()
 	-- Defs
@@ -1542,6 +1648,7 @@ local inCombat = function()
 	end
 	-- Traps
 	survival.rot.freezing()
+	survival.rot.firecappers()
 	survival.rot.traps()
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return end
 	if AOEcheck() and survival.rot.barrage() then return end -- make a complete aoe check function
@@ -1552,18 +1659,18 @@ local inCombat = function()
 	survival.rot.killshot()
 	if survival.rot.concussion() then return end
 	if player:buff("Deterrence") then return end
-	if not AOEcheck() then
+	if AOEcheck()==false then
 		-- important spells
 		if survival.rot.serpentsting() then return end
 		if survival.rot.explosiveshot() then return end
 		if survival.rot.amoc() then return end
 		if survival.rot.blackarrow() then return end
-		-- excess focus priority
-		-- if survival.rot.arcaneshot_proc() then return end -- is this necessary?
-		if survival.rot.venom() then return end
-		if survival.rot.tranquillshot() then return end -- find a solution for this
 		if survival.rot.glaivetoss() then return end
-		if not _A.venomcheck() and not _A.TScheck() and survival.rot.arcaneshot() then return end
+		-- excess focus priority -- these will fire from least to most expensive, the order doesnt matter much (that's why I added checks)
+		if _A.SScheck()==false and survival.rot.arcaneshot_proc() then return end -- is this necessary?
+		if _A.SScheck()==false and survival.rot.venom() then return end
+		if _A.SScheck()==false and _A.venomcheck()==false and survival.rot.tranquillshot() then return end 
+		if _A.venomcheck()==false and _A.TScheck()==false and _A.SScheck()==false and survival.rot.arcaneshot() then return end
 	end
 	-- Fills
 	if survival.rot.explosiveshot() then return end
