@@ -214,8 +214,10 @@ local spelltable = {
 	[129197] = 1,   -- Insanity
 	[113656] = 2,   -- Fists of Fury
 	[9484] = 2,   -- Shackle Undead
+	["Polymorph"] = 2,     -- Drain Life
 	["Cyclone"] = 2,   -- Shackle Undead
 	["Shackle Undead"] = 2,   -- Shackle Undead
+	["Hex"] = 2,   -- Shackle Undead
 }
 
 local function kickcheck(unit)

@@ -168,14 +168,18 @@ local spelltable = {
     [689] = 1,      -- Drain Life
     ["Polymorph"] = 2,     -- Drain Life
 	["Fists of Fury"] = 2, -- fists of fury
-	["Shackle Undead"] = 2 -- fists of fury
+	["Shackle Undead"] = 2, -- fists of fury
+	["Cyclone"] = 2, -- fists of fury
+	["Hex"] = 2, -- fists of fury
 }
 
 local function kickcheck(unit)
 	if unit then
 		for k,_ in pairs(spelltable) do
-			if unit:iscasting(k) or unit:channeling(k) then
-				return true
+			if _A.Core:GetSpellName(k)~=nil then
+				if unit:iscasting(k) or unit:channeling(k) then
+					return true
+				end
 			end
 		end
 	end
@@ -184,8 +188,10 @@ end
 local function kickcheck_highprio(unit)
 	if unit then
 		for k,v in pairs(spelltable) do
-			if v==2 and unit:iscasting(k) or unit:channeling(k) then
-				return true
+			if _A.Core:GetSpellName(k)~=nil then
+				if v==2 and unit:iscasting(k) or unit:channeling(k) then
+					return true
+				end
 			end
 		end
 	end
@@ -666,10 +672,10 @@ local exeOnLoad = function()
 	--====================================================================== -- Cleaning on Deaths
 	_A.Listener:Add("DeathCleaning", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if subevent == "UNIT_DIED" then
-				if MW_HealthUsedData[guiddest]~=nil then
-					MW_HealthUsedData[guiddest] = nil
-					MW_LastHealth[guiddest] = nil
-				end
+			if MW_HealthUsedData[guiddest]~=nil then
+				MW_HealthUsedData[guiddest] = nil
+				MW_LastHealth[guiddest] = nil
+			end
 			if guiddest == UnitGUID("player") then
 				MW_ManaUsedData = {}
 				MW_LastMana = nil
