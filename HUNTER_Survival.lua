@@ -1568,7 +1568,7 @@ local inCombat = function()
 	-- Fills
 	if survival.rot.explosiveshot() then return end
 	if player:combat() and survival.rot.mendpet() then return end
-	if (true or AOEcheck()) and survival.rot.cobrashot() then return end -- needs to be on highest HP
+	if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return end -- needs to be on highest HP
 end
 local spellIds_Loc = function()
 end
