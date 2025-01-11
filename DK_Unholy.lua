@@ -221,7 +221,7 @@ local spelltable = {
 local function kickcheck(unit)
 	if unit then
 		for k,_ in pairs(spelltable) do
-			if _A.Core:GetSpellName(k)~=nil
+			if _A.Core:GetSpellName(k)~=nil then
 				if unit:iscasting(k) or unit:channeling(k) then
 					return true
 				end
@@ -234,7 +234,7 @@ end
 local function kickcheck_nomove(unit)
 	if unit then
 		for k,_ in pairs(spelltable) do
-			if _A.Core:GetSpellName(k)~=nil
+			if _A.Core:GetSpellName(k)~=nil then
 				if not unit:moving() and (unit:iscasting(k) or unit:channeling(k)) then
 					return true
 				end
@@ -247,7 +247,7 @@ end
 local function kickcheck_nomove_highprio(unit)
 	if unit then
 		for k,v in pairs(spelltable) do
-			if _A.Core:GetSpellName(k)~=nil
+			if _A.Core:GetSpellName(k)~=nil then
 				if v==2 and not unit:moving() and (unit:iscasting(k) or unit:channeling(k)) then
 					return true
 				end
