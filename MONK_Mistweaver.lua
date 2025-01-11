@@ -2053,7 +2053,7 @@ local inCombat = function()
 	-- mw_rot.lightning_keybind()
 	if mw_rot.uplift() then return end
 	if mw_rot.expelharm() then return end
-	if mw_rot.statbuff() then return end
+	-- if mw_rot.statbuff() then return end
 	if mw_rot.dpsstance_healstance_keybind() then return end
 	if not _A.modifier_shift() then
 		if mw_rot.dpsstance_jab() then return end

@@ -973,7 +973,7 @@ local exeOnLoad = function()
 			if _A.PetGUID == nil then return end
 			-- Rotation
 			if attacktotem() then return true end
-			if attackfocus() then return true end
+			-- if attackfocus() then return true end
 			if attacklowest() then return true end
 			-- if attacktarget() then return true end
 		end
@@ -1549,7 +1549,7 @@ unholy.rot = {
 			if player:SpellCooldown("Death Coil")<.3 
 				and not player:BuffAny("Runic Corruption") 
 				then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
-				local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
+				local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 				-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 				if lowestmelee then
 					if lowestmelee:exists() then
@@ -1669,7 +1669,7 @@ unholy.rot = {
 		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or _A.dkenergy>=32)
 			and not player:BuffAny("Runic Corruption")  
 			then 
-			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 			-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 			if lowestmelee and lowestmelee:exists() then
 				return lowestmelee:Cast("Death Coil")
