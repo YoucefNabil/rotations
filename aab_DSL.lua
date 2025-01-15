@@ -108,7 +108,7 @@ _A.DSL:Register('stateduration', function(unit, args)
 	local tempTable = {}
 	for _,state in ipairs(tbl) do
 		local pattern = L.States[tostring(state):lower()]
-		if pattern and tlp:Scan_Buff(unit, pattern) then
+		if pattern and tlp:Scan_Debuff(unit, pattern) then
 			tempTable[#tempTable+1]={
 				duration = tlp:Scan_Debuff_Duration(unit, pattern)
 			}
