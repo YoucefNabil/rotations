@@ -976,6 +976,7 @@ local exeOnLoad = function()
 			if not player then return true end
 			if player:spec()~=252 then return true end
 			if not player:combat() then return true end
+			if not player:alive() then return true end
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
 			if player:mounted() then return end
 			if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end

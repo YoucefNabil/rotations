@@ -10,7 +10,7 @@ local Listener = _A.Listener
 local player
 local enemytreshhold = 3
 local survival = {}
-local ENEMIES_OM = {}
+-- local ENEMIES_OM = {}
 local MISSILES_OM = {}
 local immunebuffs = {
 	"Deterrence",
@@ -35,7 +35,7 @@ local healerspecid = {
 	[105]="Druid Resto",
 	-- [102]="Druid Balance",
 	[270]="monk mistweaver",
-	-- [65]="Paladin Holy",
+	[65]="Paladin Holy",
 	-- [66]="Paladin prot",
 	-- [70]="Paladin retri",
 	[257]="Priest Holy",
@@ -93,6 +93,8 @@ local meleespecs = {
 	[251]="Frost",
 	[252]="Unholy",
 	[103]="Feral",
+	[102]="balance",
+	[105]="resto",
 	[269]="WW",
 	[70]="Ret",
 	[66]="Prot",
@@ -269,6 +271,9 @@ local baID = _A.Core:GetSpellID("Black Arrow")
 local amocID = _A.Core:GetSpellID("A Murder of Crows") 
 local GUI = {
 }
+local scatter_x
+local scatter_y
+local scatter_z
 local exeOnLoad = function()
 	local STARTSLOT = 1
 	local STOPSLOT = 8
@@ -283,10 +288,19 @@ local exeOnLoad = function()
 	_A.pull_location = _A.pull_location or pull_location()
 	
 	_A.casttimers = {}
-	_A.Listener:Add("delaycasts_DK", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+	_A.Listener:Add("delaycasts_HUNT", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
 		if guidsrc == UnitGUID("player") then
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 				_A.casttimers[idd] = _A.GetTime()
+				--
+				if idd == 19503 then
+					scatter_x, scatter_y, scatter_z = _A.ObjectPosition(guiddest)
+					C_Timer.After(6, function()
+						scatter_x = nil
+						scatter_y = nil
+						scatter_z = nil
+					end)
+				end
 			end
 		end
 	end)
@@ -315,8 +329,6 @@ local exeOnLoad = function()
 			-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
 			-- TEST STUFF
 			-- print(player:stance())
-			-- local target = Object("target")
-			-- if target and target:exists() then print(target:creatureType()) end
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
 				_A.print("OFF")
@@ -382,37 +394,22 @@ local exeOnLoad = function()
 	_A.clusteredenemy = function()
 		local targets = {}
 		local most, mostGuid = 0
-		
-		-- Pre-filter enemies to avoid redundant checks
-		local validEnemies = {}
-		for _, enemy in pairs(ENEMIES_OM) do
-			if enemy:InConeOf(player, 150) and 
-				(_A.pull_location == "none" or enemy:combat()) and 
-				not enemy:state("incapacitate || fear || disorient || charm || misc || sleep") and 
-				not enemy:BuffAny("Divine Shield || Deterrence") and 
-				_A.notimmune(enemy) and enemy:los() then
-				table.insert(validEnemies, enemy)
-			end
-		end
-		-- Count clusters
-		for _, enemy in pairs(validEnemies) do
-			local count = 0
-			for _, enemy2 in pairs(validEnemies) do
-				if enemy ~= enemy2 and enemy:rangefrom(enemy2) <= 12 then
-					count = count + 1
+		for _, enemy in pairs(_A.OM:Get('Enemy')) do
+			if enemy:InConeOf(player, 170) and (_A.pull_location=="none" or enemy:combat()) and not enemy:state("incapacitate || fear || disorient || charm || misc || sleep") 
+				and _A.notimmune(enemy) and enemy:los()  then
+				for _, enemy2 in pairs(_A.OM:Get('Enemy')) do
+					if enemy:rangefrom(enemy2)<=13  then
+						targets[enemy.guid] = targets[enemy.guid] and targets[enemy.guid] + 1 or 1
+					end
 				end
 			end
-			targets[enemy.guid] = count
 		end
-		
-		-- Find the enemy with the most neighbors
 		for guid, count in pairs(targets) do
 			if count > most then
 				most = count
 				mostGuid = guid
 			end
 		end
-		
 		return most, mostGuid
 	end
 	
@@ -487,12 +484,12 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and  _A.notimmune(target)
+		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
-		for _, Obj in pairs(ENEMIES_OM) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and  Obj:combat()  and _A.notimmune(Obj)  and Obj:los() 
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -511,11 +508,11 @@ local exeOnLoad = function()
 	
 	_A.FakeUnits:Add('enemyplayercc', function(num)
 		local tempTable = {}
-		for _, Obj in pairs(ENEMIES_OM) do
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
 			if Obj.isplayer and Obj:spellRange("Arcane Shot") and _A.notimmune(Obj) and Obj:los() then
 				-- if Obj:state("stun") or (Obj:isCastingAny() and not Obj:moving()) then
-				if Obj:state("stun ||root") and not Obj:moving() then
+				if Obj:stateduration("stun || root")>=1 and not Obj:moving() then
 					tempTable[#tempTable+1] = {
 						range = Obj:range(),
 						guid = Obj.guid,
@@ -532,10 +529,10 @@ local exeOnLoad = function()
 		end
 	end)
 	
-	_A.FakeUnits:Add('meleeunits', function(num)
+	_A.FakeUnits:Add('meleeunitstobindshot', function(num)
 		local tempTable = {}
-		for _, Obj in pairs(ENEMIES_OM) do
-			if Obj.isplayer and Obj:spellRange("Arcane Shot") and meleespecs[Obj:spec()] and _A.notimmune(Obj) and Obj:los() then
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj.isplayer and Obj:spellRange("Arcane Shot") and meleespecs[Obj:spec()] and _A.notimmune(Obj) and not Obj:immune("stun") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					range = Obj:range(),
 					guid = Obj.guid,
@@ -553,7 +550,7 @@ local exeOnLoad = function()
 	
 	_A.FakeUnits:Add('simpletarget', function(num, spell)
 		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and  _A.notimmune(target)
+		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
@@ -561,8 +558,8 @@ local exeOnLoad = function()
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
-		for _, Obj in pairs(ENEMIES_OM) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and Obj:combat() and _A.notimmune(Obj)  
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -578,7 +575,7 @@ local exeOnLoad = function()
 			return tempTable[num] and tempTable[num].guid
 		end
 		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and  _A.notimmune(target)  
+		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)  
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
@@ -586,8 +583,8 @@ local exeOnLoad = function()
 	
 	_A.FakeUnits:Add('highestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
-		for _, Obj in pairs(ENEMIES_OM) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and Obj:combat() and _A.notimmune(Obj)  
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -603,7 +600,7 @@ local exeOnLoad = function()
 			return tempTable[num] and tempTable[num].guid
 		end
 		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and  _A.notimmune(target)
+		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
@@ -948,9 +945,9 @@ local exeOnLoad = function()
 		
 		-- Sort spells by cooldown (shortest first)
 		if #spells>1 then
-		table.sort(spells, function(a, b)
-			return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
-		end)
+			table.sort(spells, function(a, b)
+				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
+			end)
 		end
 		
 		
@@ -1059,13 +1056,24 @@ local exeOnLoad = function()
 			end
 		end
 	end
+	function _A.clickcastdetail(x, y, z, spell)
+		local px,py,pz = _A.groundpositiondetail(x, y, z)
+		if px then
+			_A.CallWowApi("CastSpellByName", spell)
+			if player:SpellIsTargeting() then
+				_A.ClickPosition(px, py, pz)
+				_A.CallWowApi("SpellStopTargeting")
+				_A.CallWowApi("SpellStopTargeting")
+			end
+		end
+	end
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-------------------------------------------------------
 	function _A.meleeonme()
-		for _, Obj in pairs(ENEMIES_OM) do
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
 			if Obj.isplayer and Obj:rangefrom(player)<4 and meleespecs[Obj:spec()] and _A.notimmune(Obj) and Obj:los() then
 				return true
@@ -1092,7 +1100,7 @@ local exeOnLoad = function()
 		return false
 	end
 	_A.SScheck = function()
-		if player:spellcooldown("Serpent Sting")<.3 and _A.MissileExists("Serpent Sting")==false then
+		if player:spellcooldown("Serpent Sting")<.3 and _A.MissileExists("Serpent Sting")==false and _A.castdelay("Serpent Sting", player:gcd()*2) then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff("Serpent Sting") 
 				and (lowestmelee.isplayer or _A.pull_location=="none")
@@ -1121,11 +1129,12 @@ local exeOnLoad = function()
 		"Earthgrab Totem",
 		"Earthbind Totem",
 		"Grounding Totem",
+		"Stormlash Totem",
 		"Psyfiend",
 	}
 	_A.FakeUnits:Add('HealingStreamTotem', function(num)
 		local tempTable = {}
-		for _, Obj in pairs(ENEMIES_OM) do
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			for _,totems in ipairs(badtotems) do
 				if Obj.name==totems and Obj:los() then
 					tempTable[#tempTable+1] = {
@@ -1144,10 +1153,10 @@ local exeOnLoad = function()
 	end)
 	_A.FakeUnits:Add('HealingStreamTotemPLAYER', function(num,spell)
 		local tempTable = {}
-		for _, Obj in pairs(ENEMIES_OM) do
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			for _,totems in ipairs(badtotems) do
 				if Obj.name==totems then
-					if 	Obj:spellRange(spell) and  Obj:InConeOf(player, 150) and Obj:los() then
+					if 	Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and Obj:los() then
 						tempTable[#tempTable+1] = {
 							guid = Obj.guid,
 							range = Obj:range(),
@@ -1164,23 +1173,6 @@ local exeOnLoad = function()
 		end
 		return nil
 	end)
-	_A.FakeUnits:Add('Cappers', function(num)
-		local tempTable = {}
-		for _, Obj in pairs(ENEMIES_OM) do
-			if Obj.isplayer and Obj:SpellRange("Arcane Shot") and Obj:iscasting("Capturing") then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					range = Obj:range(),
-				}
-			end
-		end
-		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
-		end
-		if #tempTable>=1 then
-			return tempTable[num] and tempTable[num].guid
-		end
-	end)
 	_A.PetGUID  = nil
 	local function attacktotem()
 		local htotem = Object("HealingStreamTotem")
@@ -1189,15 +1181,6 @@ local exeOnLoad = function()
 				return _A.CallWowApi("PetAttack", htotem.guid), 1
 			end
 			return 1
-		end
-	end
-	local function attackcaps()
-		local caps = Object("Cappers")
-		if caps then
-			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=caps.guid) then
-				return _A.CallWowApi("PetAttack", caps.guid), 0
-			end
-			return 0
 		end
 	end
 	local function attackfocus()
@@ -1257,21 +1240,51 @@ local exeOnLoad = function()
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
 		-- Rotation
-		if attackcaps() then return true end
-		if attacktotem() then return true end
-		if attackfocus() then return true end
-		if attacklowest() then return true end
-		if petfollow() then return true end
+		return attacktotem() or attackfocus() or attacklowest() or petfollow()
 		-- return _A.CallWowApi("RunMacroText", "/petfollow")
 		-- if attacktarget() then return true end
 	end
-	C_Timer.NewTicker(.1, petengine, false, "petengineengine")
+	C_Timer.NewTicker(.3, petengine, false, "petengineengine")
 end
 local exeOnUnload = function()
 end
 
 
 survival.rot = {
+	-- flasks
+	items_intflask = function()
+		if player:ItemCooldown(76085) == 0  
+			and player:ItemCount(76085) > 0
+			and player:ItemUsable(76085)
+			and not player:Buff(105691)
+			then
+			if pull_location()=="pvp" and player:combat() then
+				return player:useitem("Flask of the Warm Sun")
+			end
+		end
+	end,
+	
+	items_healthstone = function()
+		if player:health() <= 35    then
+			if player:ItemCooldown(5512) == 0
+				and player:ItemCount(5512) > 0
+				and player:ItemUsable(5512) then
+				return player:useitem("Healthstone")
+			end
+		end
+	end,
+	
+	items_noggenfogger = function()
+		if player:ItemCooldown(8529) == 0  
+			and player:ItemCount(8529) > 0
+			and player:ItemUsable(8529)
+			and (not player:BuffAny(16591) or not player:BuffAny(16595))
+			then
+			if pull_location()=="pvp" then
+				return player:useitem("Noggenfogger Elixir")
+			end
+		end
+	end,
 	-- debug
 	serpentsting_debug = function()
 		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -1288,8 +1301,10 @@ survival.rot = {
 			if player:SpellCooldown("Deterrence") == 0 and not player:buff("Deterrence") and _A.castdelay("Deterrence", 1.5)
 				then
 				-- cancel cast
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end 
-				return player:cast("Deterrence")
+				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")
+					else
+					return player:cast("Deterrence")
+				end
 			end
 		end
 	end,
@@ -1298,8 +1313,9 @@ survival.rot = {
 			local pet = Object("pet")
 			if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:range()<40 and pet:los() then
 				-- cancel cast
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end 
-				return player:cast("Master's Call")
+				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
+					else return player:cast("Master's Call")
+				end
 			end
 		end
 	end,
@@ -1331,8 +1347,8 @@ survival.rot = {
 	end,
 	kick = function()
 		if player:SpellCooldown("Counter Shot")==0 then
-			for _, obj in pairs(ENEMIES_OM) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Arcane Shot") and obj:InConeOf("player", 150)
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Arcane Shot") and obj:InConeOf("player", 170)
 					and obj:caninterrupt() 
 					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
 					)
@@ -1359,10 +1375,8 @@ survival.rot = {
 	concussion = function()
 		if player:spellcooldown("Concussive Shot")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and lowestmelee.isplayer and not lowestmelee.debuff("Concussive Shot") then
-				if lowestmelee:mounted() or _A.modifier_ctrl() then
-					return lowestmelee:Cast("Concussive Shot")
-				end
+			if lowestmelee and lowestmelee:stateduration("snare")<1.5 and not lowestmelee:immune("snare") then
+				return lowestmelee:Cast("Concussive Shot")
 			end
 		end
 	end,
@@ -1371,70 +1385,129 @@ survival.rot = {
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
 				-- cancel cast
-				if (player:Spellcooldown("Ice Trap")<.3 and _A.pull_location~="arena") or player:Spellcooldown("Snake Trap")<.3 then
-					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
-					end 
-				end
-				if player:Spellcooldown("Ice Trap")<.3 then
-					return _A.clickcast(lowestmelee, "Ice Trap")
-					elseif player:Spellcooldown("Snake Trap")<.3 then
-					return _A.clickcast(lowestmelee, "Snake Trap")
-				end
-			end
-		end
-	end,
-	firecappers = function()
-		if player:buff("Trap Launcher") and _A.pull_location~="arena" and player:Spellcooldown("Explosive Trap")<.3  then
-			local lowestmelee = Object("Cappers")
-			if lowestmelee then
-				-- cancel cast
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") 
+				if player:Spellcooldown("Ice Trap")<.3 
+					-- or player:Spellcooldown("Snake Trap")<.3
+					-- or player:Spellcooldown("Explosive Trap")<.3
+					then
+					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") else
+						
+						if player:Spellcooldown("Ice Trap")<.3 then
+							return _A.clickcast(lowestmelee, "Ice Trap")
+							-- elseif player:Spellcooldown("Snake Trap")<.3 then
+							-- return _A.clickcast(lowestmelee, "Snake Trap")					
+							-- elseif player:Spellcooldown("Explosive Trap")<.3 then
+							-- return _A.clickcast(lowestmelee, "Explosive Trap")
+						end
+					end					
 				end 
-				return _A.clickcast(lowestmelee, "Explosive Trap")
 			end
 		end
 	end,
-	
-	
 	scatter = function()
-		if _A.pull_location=="arena" and player:SpellCooldown("Scatter Shot")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher") then
-			for _, Obj in pairs(ENEMIES_OM) do
-				if Obj.isplayer and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] and not Obj:state("incapacitate || disorient || charm || misc || sleep || stun") 
-					and _A.notimmune(Obj) and Obj:InConeOf("player", 150) 
+		if player:SpellCooldown("Scatter Shot")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher") then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
+					and _A.notimmune(Obj) and not Obj:immune("disorient") and Obj:InConeOf("player", 170) 
 					and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
 					and (Obj:drstate("Scatter Shot")==1 or Obj:drstate("Scatter Shot")==-1)
 					and Obj:los() then
-					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end 
-					return Obj:cast("Scatter Shot")
+					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
+						else print("SCATTERING!!!!")
+						return Obj:cast("Scatter Shot")
+					end
+				end
+			end
+		end
+	end,
+	scatter_focus = function()
+		if player:SpellCooldown("Scatter Shot")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher") then
+			local focus = Object("focus")
+			if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Scatter Shot") and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
+				and _A.notimmune(focus) and not focus:immune("disorient") and focus:InConeOf("player", 170) 
+				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
+				and (focus:drstate("Scatter Shot")==1 or focus:drstate("Scatter Shot")==-1)
+				and focus:los() then
+				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
+					else print("SCATTERING!!!!")
+					return focus:cast("Scatter Shot")
 				end
 			end
 		end
 	end,
 	freezing = function()
-		if _A.pull_location=="arena" and player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:glyph("Glyph of Solace") then
-			for _, Obj in pairs(ENEMIES_OM) do
-				if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] and Obj:state("disorient || charm || sleep || stun") 
+		if player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:glyph("Glyph of Solace") then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] 
+					and (Obj:debuff("Scatter Shot") or (Obj:stateduration("disorient || charm || sleep || stun")>1 and Obj:stateduration("disorient || charm || sleep || stun")<4)) 
 					and _A.notimmune(Obj) and Obj:los() then
-					return _A.clickcast(Obj, "Freezing Trap")
+					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+					if not  player:isCastingAny() then
+						-- if not Obj:debuff("Scatter Shot") then
+							-- return _A.clickcast(Obj, "Freezing Trap")
+							-- else if scatter_x~=nil then
+								-- return _A.clickcastdetail(scatter_x, scatter_y, scatter_z, "Freezing Trap")
+								-- else 
+								return _A.clickcast(Obj, "Freezing Trap")
+							-- end
+						-- end
+					end
+				end
+			end
+		end
+	end,
+	freezing_focus = function()
+		if player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:glyph("Glyph of Solace") then
+			local focus = Object("focus")
+			if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") 
+				and (focus:debuff("Scatter Shot") or (focus:stateduration("disorient || charm || sleep || stun")>1 and focus:stateduration("disorient || charm || sleep || stun")<4))
+				and _A.notimmune(focus) and focus:los() then
+				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+				if not  player:isCastingAny() then
+					-- if not focus:debuff("Scatter Shot") then
+						-- return _A.clickcast(focus, "Freezing Trap")
+						-- else if scatter_x~=nil then
+							-- return _A.clickcastdetail(scatter_x, scatter_y, scatter_z, "Freezing Trap")
+							-- else 
+							return _A.clickcast(focus, "Freezing Trap")
+						-- end
+					-- end
 				end
 			end
 		end
 	end,
 	sleep = function()
-		if _A.pull_location=="arena" and player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3 then
-			for _, Obj in pairs(ENEMIES_OM) do
-				if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 150) and healerspecid[Obj:spec()] 
-					and not Obj:state("incapacitate || disorient || charm || misc || sleep || stun")
-					and (Obj:drstate("Wyvern Sting")==1 or Obj:drstate("Wyvern Sting")==-1) 
+		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3
+		and _A.castdelay("Freezing Trap",4) and _A.castdelay("Scatter Shot",4)
+		then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
+					-- and Obj:debuffduration("Freezing Trap")<2
+					-- and Obj:debuffduration("Freezing Trap")>0
+					and not Obj:state("dot")
 					and _A.notimmune(Obj) and Obj:los() then
 					return Obj:cast("Wyvern Sting")
 				end
 			end
 		end
 	end,
+	sleep_focus = function()
+		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3
+		and _A.castdelay("Freezing Trap",4) and _A.castdelay("Scatter Shot",4)
+		then
+			local focus = Object("focus")
+			if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") and focus:InConeOf("player", 170)
+				-- and focus:debuffduration("Freezing Trap")<2
+				-- and focus:debuffduration("Freezing Trap")>0	
+				and not focus:state("dot")
+				and _A.notimmune(focus) and focus:los() then
+				return focus:cast("Wyvern Sting")
+			end
+		end
+	end,
 	bindingshot = function()
-		if player:talent("Binding Shot") and player:SpellCooldown("Binding Shot")==0 then
-			local lowestmelee = Object("meleeunits")
+		if player:talent("Binding Shot") and player:SpellCooldown("Binding Shot")==0 and player:SpellUsable("Binding Shot") and not player:buff("Deterrence")
+			and (player:SpellCooldown("Ice Trap")<(player:gcd()*2)) then
+			local lowestmelee = Object("meleeunitstobindshot")
 			if lowestmelee then
 				-- return lowestmelee:Castground("Binding Shot")
 				return _A.clickcast(lowestmelee, "Binding Shot")
@@ -1471,8 +1544,8 @@ survival.rot = {
 		end
 	end,
 	stampede = function()
-		if player:combat() and player:buff("Rapid Fire") and player:SpellCooldown("Stampede")<.3 and player:combat() then
-			local lowestmelee = Object("simpletarget")
+		if player:combat() and player:buff("Rapid Fire") and player:SpellCooldown("Stampede")<.3 then
+			local lowestmelee = Object("simpletarget(Arcane Shot)")
 			if lowestmelee and lowestmelee.isplayer
 				-- and lowestmelee:health()>=35
 				then 
@@ -1511,7 +1584,7 @@ survival.rot = {
 		end
 	end,
 	serpentsting = function()
-		if _A.MissileExists("Serpent Sting")==false and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting") and player:spellcooldown("Serpent Sting")<.3  then
+		if _A.MissileExists("Serpent Sting")==false and _A.castdelay("Serpent Sting", player:gcd()*2) and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting") and player:spellcooldown("Serpent Sting")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff(118253) 
 				and (lowestmelee.isplayer or _A.pull_location=="none")
@@ -1573,7 +1646,7 @@ survival.rot = {
 	end,
 	glaivetoss = function()
 		if player:talent("Glaive Toss") and _A.glaivetosscheck() and player:SpellUsable("Glaive Toss") and player:SpellCooldown("Glaive Toss")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Glaive Toss")
 			end
@@ -1588,7 +1661,7 @@ survival.rot = {
 		end
 	end,
 	cobrashot = function()
-		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 		if lowestmelee then
 			if player:level()<81 then
 				return player:spellcooldown("Steady Shot")<.3 and lowestmelee:Cast("Steady Shot")
@@ -1607,75 +1680,80 @@ end
 ---========================
 ---========================
 ---========================
+local testtbl = {
+	"snare"
+}
 _A.mostclumpedenemy = nil
 _A.clumpcount = 0
 _A.totemtar = nil
 local inCombat = function()
-	if not _A.Cache.Utils.PlayerInGame then return end
+	if not _A.Cache.Utils.PlayerInGame then return true end
 	player = Object("player")
-	if not player then return end
+	if not player then return true end
+	local focus = Object("focus")
+	--debug
+	-- print(player:immuneduration("snare || all"))
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
-	-- CACHING
-	ENEMIES_OM = _A.OM:Get('Enemy')
 	_A.totemtar = Object("HealingStreamTotemPLAYER(Arcane Shot)")
-	-- print(_A.MissileExists(_A.Core:GetSpellID("Serpent Sting") ))
-	if not _A.pull_location then return end
-	if _A.buttondelayfunc()  then return end
-	if player:mounted() then return end
-	-- if not player:combat() then return end
-	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
-	if player:isChanneling("Barrage") then return end
+	if not _A.pull_location then return true end
+	if player:mounted() then return true end
+	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return true end
+	if player:isChanneling("Barrage") then return true end
 	survival.rot.roarofsac()
-	-- DEBUG
-	-- survival.rot.serpentsting_debug()
-	-- print(_A.MissileExists("Serpent Sting"))
-	--
-	if player:lostcontrol() then return end
-	survival.rot.autoattackmanager()
+	if player:lostcontrol() then return true end
+	if player:buff("Camouflage") then return true end
 	-- Defs
 	survival.rot.deterrence()
 	survival.rot.masterscall()
 	-- no gcd
 	if not player:isCastingAny() then
-		survival.rot.bindingshot()
 		survival.rot.pet_misdirect()
-		survival.rot.activetrinket()
-		-- Burst
-		survival.rot.bursthunt()
-		survival.rot.stampede()
-		survival.rot.kick()
+		survival.rot.items_healthstone()
 	end
 	-- Traps
-	survival.rot.freezing()
-	survival.rot.firecappers()
-	survival.rot.traps()
-	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return end
-	if AOEcheck() and survival.rot.barrage() then return end -- make a complete aoe check function
-	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
+	if survival.rot.freezing_focus() then return true end
+	if _A.pull_location=="arena" then
+		if survival.rot.freezing() then return true end
+	end
+	if survival.rot.traps() then return end
+	if player:buff("Deterrence") then return true end
+	survival.rot.autoattackmanager()
+	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return true end
+	survival.rot.bindingshot()
+	-- Burst
+	survival.rot.activetrinket()
+	survival.rot.bursthunt()
+	survival.rot.stampede()
+	survival.rot.kick()
+	if AOEcheck() then survival.rot.barrage() end -- make a complete aoe check function
+	if AOEcheck() then survival.rot.multishot() end -- make a complete aoe check function
 	-- Important Spells
-	survival.rot.sleep()
-	survival.rot.scatter()
+	survival.rot.scatter_focus()
+	survival.rot.sleep_focus()
+	-- if _A.pull_location=="arena" then -- on healer
+		survival.rot.scatter()
+		survival.rot.sleep()
+	-- end
 	survival.rot.killshot()
-	if survival.rot.concussion() then return end
-	if player:buff("Deterrence") then return end
+	survival.rot.concussion()
 	if AOEcheck()==false then
 		-- important spells
-		if survival.rot.serpentsting() then return end
-		if survival.rot.explosiveshot() then return end
-		if survival.rot.amoc() then return end
-		if survival.rot.blackarrow() then return end
-		if survival.rot.glaivetoss() then return end
+		survival.rot.serpentsting()
+		survival.rot.explosiveshot() 
+		survival.rot.amoc() 
+		survival.rot.blackarrow()
+		survival.rot.glaivetoss()
 		-- excess focus priority -- these will fire from least to most expensive, the order doesnt matter much (that's why I added checks)
-		if _A.SScheck()==false and survival.rot.arcaneshot_proc() then return end -- is this necessary?
-		if _A.SScheck()==false and survival.rot.venom() then return end
-		if _A.SScheck()==false and _A.venomcheck()==false and survival.rot.tranquillshot() then return end 
-		if _A.venomcheck()==false and _A.TScheck()==false and _A.SScheck()==false and survival.rot.arcaneshot() then return end
+	if _A.SScheck()==false  then survival.rot.arcaneshot_proc() end -- is this necessary?
+	if _A.SScheck()==false  then survival.rot.venom() end
+	if _A.SScheck()==false and _A.venomcheck()==false  then survival.rot.tranquillshot() end 
+	if _A.venomcheck()==false and _A.TScheck()==false and _A.SScheck()==false then survival.rot.arcaneshot() end
 	end
 	-- Fills
-	if survival.rot.explosiveshot() then return end
-	if player:combat() and survival.rot.mendpet() then return end
-	if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return end -- needs to be on highest HP
+	if player:buff("Lock and Load") then survival.rot.explosiveshot() end
+	if player:combat()  then survival.rot.mendpet() end
+	if (_A.CobraCheck() or AOEcheck())  then survival.rot.cobrashot() end -- needs to be on highest HP
 end
 local spellIds_Loc = function()
 end

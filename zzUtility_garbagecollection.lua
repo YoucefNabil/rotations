@@ -52,7 +52,7 @@ local function MyTickerCallback(ticker)
 	local battlefieldstatus = GetBattlefieldWinner()
 	if battlefieldstatus~=nil then 
 		if not _A.IsForeground() then _A.FlashWow() end
-		-- LeaveBattlefield() 
+		LeaveBattlefield() 
 	end
 	ClickthisPleasepvp()
 	local newDuration = _A.Parser.frequency or .1
