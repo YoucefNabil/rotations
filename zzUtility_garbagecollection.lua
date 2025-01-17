@@ -30,6 +30,12 @@ Listener:Add("BG", {'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS'}, function(
 		end
 	end
 end)
+Listener:Add("BG2", {'LFG_ROLE_CHECK_SHOW', 'LFG_READY_CHECK_SHOW'}, function(evt)
+	if player then
+		SetLFGRoles(false, false, true) -- q as dps (tank, healer, dps)
+		_A.CallWowApi("RunMacroText", "/click LFDRoleCheckPopupAcceptButton")
+	end
+end)
 local ClickthisPleasepvp = function()
 	-- if not _Y.pull_location or _Y.pull_location~="pvp" then return end
 	local tempTable = {}
@@ -53,10 +59,11 @@ local function MyTickerCallback(ticker)
 	if not _A.Cache.Utils.PlayerInGame then return end
 	player = player or Object("player")
 	if not player then return end
+	local battlefieldstatus = GetBattlefieldWinner()
 	if battlefieldstatus~=nil then 
 		if not _A.IsForeground() then _A.FlashWow() end
 		LeaveBattlefield() 
-		end
+	end
 	ClickthisPleasepvp()
 	local newDuration = _A.Parser.frequency or .1
 	local updatedDuration = ticker:UpdateTicker(newDuration)
