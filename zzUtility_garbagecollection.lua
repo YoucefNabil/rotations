@@ -2,6 +2,7 @@ local mediaPath, _A, _Y = ...
 local C_Timer = _A.C_Timer
 local garbagedelay = 10
 local flagclick = 0.1
+local player
 local randomDuration = 1
 local heFLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true, ["Orb of Power"] = true,}
 local function pull_location()
@@ -13,16 +14,18 @@ Listener:Add("Master", "PLAYER_ENTERING_WORLD", function(event)
 end
 )
 Listener:Add("BG", {'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS'}, function(evt)
-	if evt=="LFG_PROPOSAL_SHOW" then
-		if not _A.IsForeground() then _A.FlashWow() end
-		_A.AcceptProposal()
-		else
-		for i=1, 3 do
-			local status, _, _ = _A.GetBattlefieldStatus(i)
-			if status == "confirm" then
-				if not _A.IsForeground() then _A.FlashWow() end
-				_A.AcceptBattlefieldPort(i,1)
-				_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
+	if player then
+		if evt=="LFG_PROPOSAL_SHOW" then
+			if not _A.IsForeground() then _A.FlashWow() end
+			_A.AcceptProposal()
+			else
+			for i=1, 3 do
+				local status, _, _ = _A.GetBattlefieldStatus(i)
+				if status == "confirm" then
+					if not _A.IsForeground() then _A.FlashWow() end
+					_A.AcceptBattlefieldPort(i,1)
+					_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
+				end
 			end
 		end
 	end
@@ -47,18 +50,18 @@ end
 
 --
 local function MyTickerCallback(ticker)
-	local newDuration = math.random(5,15)/10
-	local newDuration = .1
-	local battlefieldstatus = GetBattlefieldWinner()
+	if not _A.Cache.Utils.PlayerInGame then return end
+	player = player or Object("player")
+	if not player then return end
 	if battlefieldstatus~=nil then 
 		if not _A.IsForeground() then _A.FlashWow() end
 		LeaveBattlefield() 
-	end
+		end
 	ClickthisPleasepvp()
 	local newDuration = _A.Parser.frequency or .1
 	local updatedDuration = ticker:UpdateTicker(newDuration)
 end
-C_Timer.NewTicker(1, MyTickerCallback, false, "clickpvp")
+C_Timer.NewTicker(.1, MyTickerCallback, false, "clickpvp")
 ---
 -- C_Timer.NewTicker(garbagedelay, function()
 -- collectgarbage("collect")

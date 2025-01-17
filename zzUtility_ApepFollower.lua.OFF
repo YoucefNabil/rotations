@@ -1,0 +1,322 @@
+-- CONVERT THESE TO SETTINGS
+--
+local _,class = UnitClass("player")
+local PersonalMount = "Snowy Gryphon"
+--
+local mediaPath, _A = ...
+local MyAddon = "niceAddon"
+_A.RegisterAddonMessagePrefix(MyAddon)
+local CallWowApi = _A.CallWowApi
+local ClickToMove = _A.ClickToMove
+local ObjectPosition = _A.ObjectPosition
+local FaceDirection = _A.FaceDirection
+local UnitGUID = _A.UnitGUID
+local TraceLine = _A.TraceLine
+local CalculatePath = _A.CalculatePath
+local GetUnitSpeed = _A.GetUnitSpeed
+local _tostring, _tonumber = tostring, tonumber
+local GetDistanceBetweenPositions = _A.GetDistanceBetweenPositions
+local player
+local _target
+local mapiddd
+local table_concat = table.concat
+local Listener = _A.Listener
+local minimaldist = 10
+local ObjectInteract = _A.ObjectInteract
+local enteredworldat
+local distancetomaster
+local distancetoenemy
+local mapidd_master, ppGUID, ppx, ppy, ppz, eeGUID, eex, eey, eez, beambeam
+local px, py, pz
+-- local defaultdistance = _A.OM.max_distance
+local function pull_location()
+	return string.lower(select(2, GetInstanceInfo()))
+end
+local PB = {}
+Listener:Add("Entering_timer", "PLAYER_ENTERING_WORLD", function(event)
+	enteredworldat = _A.GetTime()
+	local stuffsds = pull_location()
+	_A.pull_location = stuffsds
+	mapiddd = stuffsds
+end
+)
+PB.isrunning = false
+function PB:your_function(_self)
+	PB.isrunning = not PB.isrunning
+	_self:SetText(PB.isrunning and "Stop" or "Start")
+	-- ...
+	-- the rest of your function
+	-- you can use PB.isrunning to find out whether you should start the cycle or stop the cycle.
+end
+local gui = {
+    key = 'Apep_Follower',
+    title = 'Follow',
+    subtitle = '',
+    width = 100,
+    height = 120,
+    profiles = true,
+    config = {
+        { type = 'spacer' },
+        { type = "button", text = "Start", align = "center", key = "start_key", callback = function(_self) PB:your_function(_self) end},
+        { type = 'spacer' },
+	}
+}
+local multiseatmount = {
+	"Traveler's Tundra Mammoth", 
+	"Obsidian Nightwing",
+	"Mekgineer's Chopper",
+	"Grand Ice Mammoth"
+}
+local function tbltostr(tbl)
+	return table_concat(tbl, " || ")
+end
+function _A.guid_distance(unit1, unit2)
+	local x1, y1, z1 = unit1 and ObjectPosition(unit1)
+	local x2, y2, z2 = unit2 and ObjectPosition(unit2)
+	if x1 and x2 and y1 and y2 and z1 and z2 then return GetDistanceBetweenPositions(x1,y1,z1,x2,y2,z2)
+		else return 9999
+	end
+end
+-- Create the GUI
+PB.GUI = _A.Interface:BuildGUI(gui)
+_A.Interface:AddPlugin("Apep Follower", function() PB.GUI.parent:Show() end)
+Listener:Add("ChatMessageTest", "CHAT_MSG_ADDON", function(event, addon, msg, type, unitName)
+	if addon == MyAddon then
+		local mastermap_str, player_str, x_str, y_str, z_str, enemy_string, ex_str, ey_str, ez_str, beaming = msg:match("([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)")
+		if player_str and x_str and y_str and z_str then
+			mapidd_master = mapidd_master~="idk" and _tostring(mastermap_str)
+			ppGUID = _tostring(player_str)
+			ppx = _tonumber(x_str)
+			ppy = _tonumber(y_str)
+			ppz = _tonumber(z_str)
+			eeGUID = enemy_string~="nothing" and _tostring(enemy_string) or nil
+			eex = ex_str~=-99999999 and _tonumber(ex_str) or nil
+			eey = ey_str~=-99999999 and _tonumber(ey_str) or nil
+			eez = ez_str~=-99999999 and _tonumber(ez_str) or nil
+			beambeam = beaming or "false"
+		end
+	end
+end)
+local ph, eh, divPoint
+local collisionExists = false
+local flags = bit.bor(0x100000, 0x200000, 0x10000, 0x20000, 0x10, 0x1)
+local function trsd(tx, ty, tz)
+	if tx and ty and tz then
+		local px, py, pz = ObjectPosition("player")
+		-- local flags = bit.bor(0x100000, 0x10, 0x2, 0x1)
+		-- local flags = bit.bor(0x10, 0x2, 0x1)
+		-- local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
+		local los, cx, cy, cz = TraceLine(px, py, pz, tx, ty, tz, flags)
+		return los
+	end
+end
+local function JmpStck(x,y,z)
+	-- if not trsd(x, y, z) and GetUnitSpeed('player') > 0 then
+	if not trsd(x, y, z) and GetUnitSpeed('player') == 0 then
+		-- if not trsd(x, y, z) then
+        CallWowApi("JumpOrAscendStart")
+	end
+end
+local function raycast(startX, startY, startZ, endX, endY, endZ)
+    local hit, xx, yy, zz = _A.TraceLine(startX, startY, startZ, endX, endY, endZ, bit.bor(0x100000, 0x200000, 0x10000, 0x20000, 0x10, 0x1))
+    return hit, xx, yy, zz
+end
+local function chkCollision(x, y, z)
+    local ok, xx, yy, zz
+    local flags = bit.bor(0x100000, 0x200000, 0x10000, 0x20000, 0x10, 0x1)
+    -- Ensure that ph and eh are properly set
+    ph = 1
+    eh = IsMounted() and 3.2 or 2.2
+	
+    for i = 0.1, eh, 0.1 do
+        ok, xx, yy, zz = raycast(px, py, pz + ph, x, y, z + i)
+        if not ok then
+            return true, xx, yy, zz
+		end
+	end
+    return false
+end
+local function CalcDivertpoint(pontoA, pontoB, desvio, startPoint)
+    local vetorDiretor = {pontoB[1] - pontoA[1], pontoB[2] - pontoA[2], pontoB[3] - pontoA[3]}
+    local magnitude = math.sqrt(vetorDiretor[1]^2 + vetorDiretor[2]^2 + vetorDiretor[3]^2)
+    if magnitude == 0 then
+        return nil
+	end
+    local direcao = {vetorDiretor[1] / magnitude, vetorDiretor[2] / magnitude, vetorDiretor[3] / magnitude}
+    local vetorPerpendicular
+    local pontoDesviado
+    if startPoint then
+        vetorPerpendicular = {direcao[2], -direcao[1], 0} --Vector perpendicular à direção em 2D
+        pontoDesviado = {pontoA[1] + vetorPerpendicular[1] * desvio, pontoA[2] + vetorPerpendicular[2] * desvio, pontoA[3] + vetorPerpendicular[3] * desvio}    
+		else
+        vetorPerpendicular = {direcao[2]*2, -direcao[1]*2, 0} -- Vector perpendicular no plano XY
+        pontoDesviado = {pontoB[1] + vetorPerpendicular[1] * desvio, pontoB[2] + vetorPerpendicular[2] * desvio, pontoB[3] + vetorPerpendicular[3] * desvio}
+	end
+    return pontoDesviado
+end
+--
+local function CatmullRomSpline(p0, p1, p2, p3, t)
+    local t2 = t * t
+    local t3 = t2 * t
+	
+    local x = 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t +
+        (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+	(-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
+	
+    local y = 0.5 * ((2 * p1[2]) + (-p0[2] + p2[2]) * t +
+        (2 * p0[2] - 5 * p1[2] + 4 * p2[2] - p3[2]) * t2 +
+	(-p0[2] + 3 * p1[2] - 3 * p2[2] + p3[2]) * t3)
+	
+    local z = 0.5 * ((2 * p1[3]) + (-p0[3] + p2[3]) * t +
+        (2 * p0[3] - 5 * p1[3] + 4 * p2[3] - p3[3]) * t2 +
+	(-p0[3] + 3 * p1[3] - 3 * p2[3] + p3[3]) * t3)
+	
+    return { x, y, z }
+end
+
+-- Function to smooth the path using Catmull-Rom splines
+local function SmoothPath(path)
+    local smoothedPath = {}
+    for i = 2, #path - 2 do
+        local p0, p1, p2, p3 = path[i - 1], path[i], path[i + 1], path[i + 2]
+        table.insert(smoothedPath, p1)
+        for t = 0.5, 1, 0.5 do
+            table.insert(smoothedPath, CatmullRomSpline(p0, p1, p2, p3, t))
+		end
+	end
+    table.insert(smoothedPath, path[#path - 1])
+    table.insert(smoothedPath, path[#path])
+    return smoothedPath
+end
+--[[
+	local function gotoPath(path)
+    if not path or #path<=1 then return end
+    local point = 2
+	local treshhold = IsMounted() and 4 or 1.5
+	-- if path[point+1] and path[point+1][1] and px and py and pz then
+	if path[point+1] and path[point+1][1] and px and py and pz then
+	local distance = GetDistanceBetweenPositions(px, py, pz, path[point][1], path[point][2], path[point][3])
+	if distance <= treshhold then
+	point = point + 1
+	end
+	-- Path Adjustment
+	ph, eh = 1, IsMounted() and 3.2 or 2.2
+	local hit, xx, yy, zz = chkCollision(path[point][1], path[point][2], path[point][3])
+	if hit then
+	collisionExists = true
+	-- Try to divert to one side
+	offset = 3
+	divPoint = CalcDivertpoint({px, py, pz + ph}, {xx, yy, zz}, offset)
+	hit, xx, yy, zz = chkCollision(divPoint[1], divPoint[2], divPoint[3])
+	if hit then
+	-- Have collision, try to divert to the other side
+	offset = -offset
+	divPoint = CalcDivertpoint({px, py, pz + ph}, {xx, yy, zz}, offset)
+	end
+	-- Update the path point with the diverted point
+	path[point][1] = divPoint[1]
+	path[point][2] = divPoint[2]
+	path[point][3] = divPoint[3]
+	end
+	end
+	-- JmpStck(path[point][1], path[point][2], path[point][3])
+	ClickToMove(path[point][1], path[point][2], path[point][3])
+	end
+--]]
+local function gotoPath(path)
+    if not path or #path<=1 then return end
+    local point = 2
+    ClickToMove(path[point][1], path[point][2], path[point][3])
+    if path[point+1] and path[point+1][1] and px and py and pz then
+		local distance = GetDistanceBetweenPositions(px, py, pz, path[point][1], path[point][2], path[point][3])
+		if distance <= 1.5 then
+			point = point + 1
+			JmpStck(path[point][1], path[point][2], path[point][3])
+			ClickToMove(path[point][1], path[point][2], path[point][3])
+		end
+	end    
+end
+
+local function assisting_melee()
+	if not player then return end
+	_target = Object("target")
+	-- if not _target then CallWowApi("TargetUnit", ppGUID) end
+	if distancetoenemy and eeGUID then
+		if not _target or (_target.guid ~= eeGUID) then CallWowApi("TargetUnit", eeGUID) end
+		local eeOBJ = eeGUID and Object(eeGUID)
+		-- melee facing
+		if distancetoenemy<=5 and eeOBJ and not eeOBJ:infront() then FaceDirection(eeGUID, true) end -- make it work with range
+		-- range facing
+		-- if not player:moving() and eeOBJ and not eeOBJ:infront() then FaceDirection(eeGUID, true) end -- make it work with range
+	end
+end
+local function follow_enemy_melee()
+	if not player then return end
+	local pathing
+	pathing = CalculatePath(eex,eey,eez)
+	return pathing and gotoPath(pathing) 
+end
+local function follow_master()
+	if not player then return end
+	local pathing
+	if distancetomaster and ppGUID and ppx and ppy and ppz and (distancetomaster>=minimaldist) then
+		pathing = CalculatePath(ppx,ppy,ppz)
+		return pathing and gotoPath(pathing) 
+	end
+end
+C_Timer.NewTicker(0.1, function()
+	-- print(_A.OM.max_distance)
+	distancetomaster = nil
+	distancetoenemy = nil
+	if not mapiddd then return end
+	if not enteredworldat then return end
+	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return end
+	if not _A.pull_location then return end
+	-- if _A.pull_location~="pvp" then return end
+	if _A.IsForeground() then return end
+	player = player or Object("player")
+	if not player then return end
+	-- if player:ischanneling("Crackling Jade Lightning")  then return _A.CallWowApi("SpellStopCasting") end 
+	-- end
+	if not player:alive() or player:iscastingany() or player:ischanneling("Crackling Jade Lightning") then return end
+	if mapiddd~=mapidd_master then return end
+	if UnitInVehicle("player") then return end
+	if IsFalling() then return end
+	px,py,pz=ObjectPosition("player")
+	if px and py and pz and ppGUID and ppx and ppy and ppz then distancetomaster = GetDistanceBetweenPositions(px,py,pz,ppx,ppy,ppz) end
+	if px and py and pz and eeGUID and eex and eey and eez then distancetoenemy  = GetDistanceBetweenPositions(px,py,pz,eex,eey,eez) end
+	if PB.isrunning == true then
+		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
+			_A.Interface:toggleToggle("mastertoggle", true)
+			_A.print("ON Special")
+			return true
+		end
+		if distancetomaster then 
+			-- mounting up
+			-- if distancetomaster > 100 then
+			-- if player:SpellUsable(PersonalMount) and _A.pull_location and _A.pull_location == "pvp" and not player:buff(PersonalMount) then return CallWowApi("RunMacroText", (string.format(("/cast %s "), PersonalMount))) end -- mounting
+			-- end
+			if ppGUID and distancetomaster <= minimaldist then
+				local objtar = ppGUID and Object(ppGUID)
+				if objtar and objtar:alive() then 
+					-- dismounting
+					if distancetomaster <= 40 then
+						if player:buff(PersonalMount) then return CallWowApi("RunMacroText", (string.format(("/cancelaura %s "), PersonalMount))) end -- dismounting
+					end
+					if not player:combat() and objtar:buffany(tbltostr(multiseatmount)) then 
+					return ObjectInteract(ppGUID) end
+				end
+			end
+		end
+		-- MELEES Logic
+		if class == ("WARRIOR") and distancetoenemy and eeGUID and eex and eey and eez then
+			assisting_melee()
+			if distancetoenemy>=4 then return follow_enemy_melee() end
+			if distancetoenemy<4 then return end
+		end
+		-- Range logic
+		--
+		-- default back to following master
+		follow_master()
+	end
+end, false, "follow_unit")																				

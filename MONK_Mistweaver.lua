@@ -298,7 +298,7 @@ local exeOnLoad = function()
 		end
 	end
 	function _A.someoneislow()
-		for _, Obj in pairs(ENEMY_OM) do
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj.isplayer then
 				if Obj:Health()<=35 then
 					return true
@@ -385,7 +385,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestall', function(num, spell)
 		local tempTable = {}
 		local location = _A.pull_location
-		for _, fr in pairs(FRIEND_OM) do
+		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
 				if _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable+1] = {
@@ -406,7 +406,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestallNOHOT', function(num, spell)
 		local tempTable = {}
 		local location = pull_location()
-		for _, fr in pairs(FRIEND_OM) do
+		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
 				if not fr:Buff(132120) 
 					and _A.nothealimmune(fr) and fr:los() then
@@ -427,7 +427,7 @@ local exeOnLoad = function()
 	end)
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeMINIMAL', function(num, spell)
 		local tempTable = {}
-		for _, Obj in pairs(ENEMY_OM) do
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if _A.notimmune(Obj) and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -451,7 +451,7 @@ local exeOnLoad = function()
 		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and _A.notimmune(target) and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
-		for _, Obj in pairs(ENEMY_OM) do
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj:spellRange(spell) and _A.dontbreakcc(Obj) and _A.notimmune(Obj) and  Obj:InConeOf(player, 150) and Obj:los() then
 			if Obj:spellRange(spell) and _A.notimmune(Obj) and  Obj:InConeOf(player, 150) and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -472,7 +472,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('mostTargetedRosterPVP', function()
 		local targets = {}
 		local most, mostGuid = 0
-		for _, enemy in pairs(ENEMY_OM) do
+		for _, enemy in pairs(_A.OM:Get('Enemy')) do
 			if enemy then
 				if enemy.isplayer and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") then
 					local tguid = UnitTarget(enemy.guid)
@@ -1070,7 +1070,7 @@ local mw_rot = {
 		if player:Stance() == 1   then
 			if pull_location()=="arena" then
 				if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 then
-					for _, obj in pairs(ENEMY_OM) do
+					for _, obj in pairs(_A.OM:Get('Enemy')) do
 						if 	obj.isplayer and obj:range()<4
 							and _A.notimmune(obj)
 							and obj:los() then
@@ -1137,7 +1137,7 @@ local mw_rot = {
 	kick_legsweep = function()
 		if player:Stance() == 1 then
 			if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3   then
-				for _, obj in pairs(ENEMY_OM) do
+				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj:isCastingAny()
 						and obj:range()<5
 						and _A.notimmune(obj)
@@ -1153,7 +1153,7 @@ local mw_rot = {
 	kick_chargingox = function()
 		if player:Stance() == 1 then
 			if player:Talent("Charging Ox Wave") and player:SpellCooldown("Charging Ox Wave")<0.3   then
-				for _, obj in pairs(ENEMY_OM) do
+				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj:isCastingAny()
 						and obj:range()<30
 						and obj:InConeOf(player, 90)
@@ -1169,7 +1169,7 @@ local mw_rot = {
 	
 	kick_paralysis = function()
 		if player:SpellCooldown("Paralysis")<.3 then
-			for _, obj in pairs(ENEMY_OM) do
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer 
 					and obj:isCastingAny()
 					and obj:SpellRange("Paralysis") 
@@ -1200,7 +1200,7 @@ local mw_rot = {
 	
 	sapsnipe = function()
 		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 and _A.someoneislow() then
-			for _, obj in pairs(ENEMY_OM) do
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and healerspecid[obj:spec()] and obj:SpellRange("Paralysis")  
 					and not obj:State("silence || incapacitate || fear || disorient || charm || misc || sleep")
 					and _A.notimmune(obj)
@@ -1234,7 +1234,7 @@ local mw_rot = {
 	burstdisarm = function()
 		if player:Stance() == 1   then
 			if player:SpellCooldown("Grapple Weapon")<.3 then
-				for _, obj in pairs(ENEMY_OM) do
+				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer 
 						and obj:SpellRange("Grapple Weapon") 
 						and obj:InConeOf(player, 150)
@@ -1256,7 +1256,7 @@ local mw_rot = {
 	
 	kick_spear = function()
 		if player:SpellCooldown("Spear Hand Strik")==0   then
-			for _, obj in pairs(ENEMY_OM) do
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj:isCastingAny()
 					and obj:SpellRange("Blackout Kick") 
 					and obj:InConeOf(player, 150)
@@ -1323,7 +1323,7 @@ local mw_rot = {
 			local mostall, mostallGuid = 0
 			
 			-- Version 1: Only enemies targeting
-			for _, enemy in pairs(ENEMY_OM) do
+			for _, enemy in pairs(_A.OM:Get('Enemy')) do
 				if enemy.isplayer and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) and not enemy:state("Disarm") 
 					and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
 					and not healerspecid[enemy:spec()] then
@@ -1356,9 +1356,9 @@ local mw_rot = {
 				end
 			end
 			-- Version 2: All valid enemies in range
-			for _, friend in pairs(FRIEND_OM) do
+			for _, friend in pairs(_A.OM:Get('Friendly')) do
 				if friend.isplayer and _A.nothealimmune(friend) then
-					for _, enemy in pairs(ENEMY_OM) do
+					for _, enemy in pairs(_A.OM:Get('Enemy')) do
 						if enemy.isplayer and friend:Distancefrom(enemy) < 7 and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) 
 							and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
 							and not enemy:state("Disarm")  then
@@ -1387,9 +1387,9 @@ local mw_rot = {
 				end
 			end
 			-- version 3: interrupt high prio casts
-			for _, friend in pairs(FRIEND_OM) do
+			for _, friend in pairs(_A.OM:Get('Friendly')) do
 				if friend and friend.isplayer and _A.nothealimmune(friend) then
-					for _, enemy in pairs(ENEMY_OM) do
+					for _, enemy in pairs(_A.OM:Get('Enemy')) do
 						if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and kickcheck_highprio(enemy) 
 							and (player:SpellCooldown("Spear Hand Strike")>_A.interrupttreshhold or not enemy:caninterrupt() or not enemy:SpellRange("Blackout Kick"))
 							and _A.notimmune(enemy) and friend:los() then
@@ -1402,9 +1402,9 @@ local mw_rot = {
 			-- Version 4: Silence healers if someone is low
 			-- if _A.pull_location and _A.pull_location=="arena" then
 			if _A.someoneislow() then -- iterates through enemy players to find if a low hp enemy player exists
-				for _, friend in pairs(FRIEND_OM) do
+				for _, friend in pairs(_A.OM:Get('Friendly')) do
 					if friend and friend.isplayer and _A.nothealimmune(friend) then
-						for _, enemy in pairs(ENEMY_OM) do
+						for _, enemy in pairs(_A.OM:Get('Enemy')) do
 							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and healerspecid[enemy:spec()]  and _A.notimmune(enemy) and not enemy:state("silence") 
 								and (enemy:drState(137460)==1 or enemy:drState(137460)==-1)
 								and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
@@ -1501,7 +1501,7 @@ local mw_rot = {
 	tigerslust = function()
 		if player:Talent("Tiger's Lust") and player:SpellCooldown("Tiger's Lust")<.3   then
 			if player:Stance() == 1 then
-				for _, fr in pairs(FRIEND_OM) do
+				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr:SpellRange("Tiger's Lust") then
 						if fr.isplayer then
 							if _A.nothealimmune(fr) then
@@ -1525,7 +1525,7 @@ local mw_rot = {
 		local temptabletbl2 = {}
 		if player:Stance() == 1   then
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
-				for _, fr in pairs(FRIEND_OM) do
+				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (_A.pull_location=="arena" and fr:ispet()) then
 						if fr:SpellRange("Detox")
 							and not fr:DebuffAny("Unstable Affliction || Vampiric Touch")
@@ -1567,7 +1567,7 @@ local mw_rot = {
 		-- if player:Stance() == 1 and _A.pull_location ~="pvp"   then
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
-				for _, fr in pairs(FRIEND_OM) do
+				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurge("Detox")
 							and _A.nothealimmune(fr)
@@ -1595,7 +1595,7 @@ local mw_rot = {
 		-- if not player:lostcontrol() and player:Stance() == 1 then
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
-				for _, fr in pairs(FRIEND_OM) do
+				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") 
 							and fr:statepurge("Detox") 
@@ -1616,7 +1616,7 @@ local mw_rot = {
 		local temptabletbl1 = {}
 		if not player:lostcontrol() and player:Stance() == 1 then
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
-				for _, fr in pairs(FRIEND_OM) do
+				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurge("Detox") and fr:statepurgecheck("snare")
 							and _A.nothealimmune(fr)
@@ -1633,7 +1633,7 @@ local mw_rot = {
 		local temptabletbl1 = {}
 		if not player:lostcontrol() and player:Stance() == 1 then
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
-				for _, fr in pairs(FRIEND_OM) do
+				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurge("Detox") then
 							for _,v in ipairs(dangerousdebuffs) do
@@ -2073,8 +2073,8 @@ local inCombat = function()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
 	-- CACHE
-	ENEMY_OM = _A.OM:Get('Enemy')
-	FRIEND_OM = _A.OM:Get('Friendly')
+	-- ENEMY_OM = _A.OM:Get('Enemy')
+	-- FRIEND_OM = _A.OM:Get('Friendly')
 	--
 	mw_rot.autofocus()
 	mw_rot.autoattackmanager()

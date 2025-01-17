@@ -1,0 +1,145 @@
+local UnitName = UnitName
+local mastername
+-- CONVERT THESE TO SETTINGS
+local mediaPath, _A = ...
+local MyAddon = "niceAddon"
+_A.RegisterAddonMessagePrefix(MyAddon)
+local chatchannels = {
+	"PARTY",
+	"RAID"
+}
+local player
+local SendAddonMessage = _A.SendAddonMessage
+local ObjectPosition = _A.ObjectPosition
+local UnitTarget = _A.UnitTarget
+local Listener = _A.Listener
+local CallWowApi = _A.CallWowApi
+local string_format = string.format
+local mapiddd_master
+local function pull_location()
+	return string.lower(select(2, GetInstanceInfo()))
+end
+Listener:Add("Master", "PLAYER_ENTERING_WORLD", function(event)
+	local stuffsff = pull_location()
+	_A.pull_location = stuffsff
+	mapiddd_master = stuffsff
+end
+)
+local healerspecid = {
+	-- [265]="Lock Affli",
+	-- [266]="Lock Demono",
+	-- [267]="Lock Destro",
+	[105]="Druid Resto",
+	[102]="Druid Balance",
+	[270]="monk mistweaver",
+	-- [65]="Paladin Holy",
+	-- [66]="Paladin prot",
+	-- [70]="Paladin retri",
+	[257]="Priest Holy",
+	[256]="Priest discipline",
+	-- [258]="Priest shadow",
+	[264]="Sham Resto",
+	-- [262]="Sham Elem",
+	-- [263]="Sham enh",
+	-- [62]="Mage Arcane",
+	-- [63]="Mage Fire",
+	-- [64]="Mage Frost"
+}
+Listener:Add("Mounting", "UNIT_SPELLCAST_SUCCEEDED", function(_, unittarget, _, _, _, spellid)
+	if unittarget == "player" then
+		if spellid == 61425 then
+			_A.C_Timer.After(0.3, function()
+				CallWowApi("RunMacroText", "/run EjectPassengerFromSeat(1)")
+				CallWowApi("RunMacroText", "/run EjectPassengerFromSeat(2)")
+			end
+			)
+		end
+	end
+end)
+
+immunebuffs = {
+	"Deterrence",
+	"Hand of Protection",
+	"Dematerialize",
+	-- "Smoke Bomb",
+	"Cloak of Shadows",
+	"Ice Block",
+	"Divine Shield"
+}
+immunedebuffs = {
+	"Cyclone"
+	-- "Smoke Bomb"
+}
+
+healimmunebuffs = {
+}
+healimmunedebuffs = {
+	"Cyclone"
+}
+
+local function notimmune(unit) -- needs to be object
+	if unit then 
+		if unit:immune("all") then return false end
+	end
+	for _,v in ipairs(immunebuffs) do
+		if unit:BuffAny(v) then return false end
+	end
+	for _,v in ipairs(immunedebuffs) do
+		if unit:DebuffAny(v) then return false end
+	end
+	return true
+end
+local function nothealimmune(unit)
+	if unit then 
+		if unit:DebuffAny("Cyclone") then return false end
+	end
+	return true
+end
+_A.C_Timer.NewTicker(0.2, function()
+	if not mapiddd_master then return end
+	if UnitInVehicle("player") or not _A.IsForeground() then return end
+	if not _A.pull_location then return end
+	-- if _A.pull_location~="pvp" then return end
+	player = Object("player")
+	if not player then return end
+	if not player:alive() then return end
+	local px, py, pz = ObjectPosition("player")
+	if not px then return end
+	local ex, ey, ez
+	local tempTable = {}
+	local targetguid = UnitTarget("player")
+	-- Enemy Engine part
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		if notimmune(Obj) then
+			tempTable[#tempTable+1] = {
+				guid = Obj.guid,
+				followertarget = targetguid and (Obj.guid==targetguid) and 1 or 0,
+				range = Obj:range(),
+				isplayer = Obj.isplayer and 1 or 0
+			}
+		end
+	end
+	if #tempTable>1 then
+		table.sort( tempTable, function(a,b) 
+			return (a.isplayer > b.isplayer) -- Player priority
+			or (a.isplayer == b.isplayer and a.followertarget > b.followertarget) -- if same player return, assist followertarget
+			or (a.isplayer == b.isplayer and a.followertarget == b.followertarget and a.range < b.range) -- if same player return and same follower return, go to closest
+		end 
+		)
+	end
+	--====================================================================
+	-- Simple target assist
+	-- local objtarget = targetguid and Object(targetguid)
+	-- if objtarget and objtarget:enemy() and objtarget:alive() and objtarget:range()<=40 then
+	-- tempTable[#tempTable+1] = {
+	-- guid = objtarget.guid
+	-- }
+	-- end
+	--====================================================================
+	if tempTable[1] then ex, ey, ez = ObjectPosition(tempTable[1].guid) end
+	local jadelightning = player:ischanneling("Crackling Jade Lightning") and "true" or "false"
+	local message = string_format("%s,%s,%f,%f,%f,%s,%f,%f,%f,%s", mapiddd_master or "idk", player.guid, px, py, pz, tempTable[1] and tempTable[1].guid or "nothing", ex or -99999999, ey or -99999999, ez or -99999999, jadelightning)
+	for _,v in ipairs(chatchannels) do
+		SendAddonMessage(MyAddon, message, v)
+	end
+end)

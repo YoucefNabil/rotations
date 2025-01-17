@@ -9,7 +9,7 @@ local Listener = _A.Listener
 -- top of the CR
 local player
 _A.numtangos = 0
-local arms = {}
+local prot = {}
 local immunebuffs = {
 	"Deterrence",
 	-- "Anti-Magic Shell",
@@ -371,13 +371,10 @@ end
 local exeOnUnload = function()
 end
 
-arms.rot = {
-	stance_dance = function()
-		local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-		if player:SpellCooldown("Battle Stance")<.3 then
-			if player:stance()~=2 and player:health()<35 then player:cast("Defensive Stance")
-				elseif player:stance()~=2 and not lowestmelee then player:cast("Defensive Stance")
-				elseif player:stance()~=1 and lowestmelee and player:health()>40 then player:cast("Battle Stance")
+prot.rot = {
+	defstance = function()
+		if player:SpellCooldown("Defensive Stance")<.3 then
+			if player:stance()~=2 then player:cast("Defensive Stance")
 			end
 		end
 	end,
@@ -427,23 +424,6 @@ arms.rot = {
 		end
 	end,
 	
-	Charge = function()
-		if player:SpellCooldown("Charge")==0 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Charge") and obj:infront()
-					and obj:caninterrupt() and healerspecid[_A.UnitSpec(obj.guid)]
-					and obj:channame()~="mind sear"
-					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
-					)
-					and _A.notimmune(obj)
-					and obj:los()
-					then
-					obj:Cast("Charge")
-				end
-			end
-		end
-	end,
-	
 	Pummel = function()
 		if player:SpellCooldown("Pummel")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -456,28 +436,6 @@ arms.rot = {
 					then
 					obj:Cast("Pummel")
 				end
-			end
-		end
-	end,
-	
-	thunderclap = function()
-		if player:SpellCooldown("Thunder Clap")<.3 and player:SpellUsable("thunder clap") then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:range()<=7 and  not healerspecid[_A.UnitSpec(obj.guid)] and _A.notimmune(obj) and obj:debuffduration("Weakened Blows")<1 and obj:los() then
-					return player:cast("thunder clap")
-				end
-			end
-		end
-	end,
-	
-	hamstringpvp = function()
-		if player:SpellCooldown("Hamstring")<.3 and player:spellusable("Hamstring") then
-			local target = Object("target")
-			if target and target.isplayer and target:enemy() 
-				and target:debuffduration("Hamstring")<1
-				and _A.notimmune(target)
-				and not target:buff("Hand of Freedom") then
-				return target:cast("Hamstring")
 			end
 		end
 	end,
@@ -501,119 +459,54 @@ arms.rot = {
 		end
 	end,
 	
-	colossussmash = function()
-		if  player:SpellCooldown("Colossus Smash")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() and lowestmelee:debuffduration("Colossus Smash")<1 then
-				return lowestmelee:Cast("Colossus Smash")
+	shieldslam = function()
+		if  player:SpellCooldown("Shield Slam")<.3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Shield Slam)")
+			if lowestmelee then
+				player:cast("Shield Block")
+				return lowestmelee:Cast("Shield Slam")
 			end
 		end
 	end,
 	
-	Mortalstrike = function()
-		if  player:SpellCooldown("Mortal Strike")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Mortal Strike")
+	revenge = function()
+		if  player:SpellCooldown("Revenge")<.3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Revenge)")
+			if lowestmelee then
+				return lowestmelee:Cast("Revenge")
+			end
+		end
+	end,
+	
+	devastate = function()
+		if player:SpellCooldown("Devastate")<.3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Devastate)")
+			if lowestmelee then
+				return lowestmelee:Cast("Devastate")
 			end
 		end
 	end,
 	
 	thunderclapPVE = function()
-		if player:SpellCooldown("Thunder clap")<.3 and player:SpellUsable("Thunder clap") and _A.numtangos>=3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+		if player:SpellCooldown("Thunder clap")<.3 and player:SpellUsable("Thunder clap")then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Devastate)")
 			if lowestmelee then
 				return player:Cast("Thunder clap")
 			end
 		end
 	end,
 
-	Execute = function()
-		if player:rage()>=30 then
-			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
-			if lowestmelee and lowestmelee:health()<=20 then
-				return lowestmelee:Cast("Execute")
+	heroicstrike = function()
+		if (player:rage()>=100 or player:buff("Ultimatum")) and player:SpellCooldown("Heroic Strike")==0 and player:Spellusable("Heroic Strike") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Heroic Strike)")
+			if lowestmelee then
+				return lowestmelee:Cast("Cleave")
 			end
 		end
 	end,
 	
 	battleshout = function ()
 		if player:SpellCooldown("battle shout")<.3 and player:rage()<=75 then return player:cast("battle shout")
-		end
-	end,
-	
-	slam = function()
-		if  player:SpellCooldown("Slam")<.3 and player:SpellUsable("Slam") then
-			local lowestmeleeEXECUTE = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
-			if not lowestmeleeEXECUTE or (lowestmeleeEXECUTE and  lowestmeleeEXECUTE:health()>20) then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:health()>20 then
-				if player:level()<30 or player:buff(1719) or (player:rage()>80 and player:buffstack(60503)<3) or (lowestmelee:debuff("Colossus Smash") and player:rage()>=40) then
-					return lowestmelee:Cast("Slam")
-				end
-			end
-		end
-		end
-	end,
-	
-	burstdisarm = function()
-		if player:SpellCooldown("Disarm")<.3 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer 
-					and obj:SpellRange("Disarm") 
-					and obj:Infront()
-					and not healerspecid[_A.UnitSpec(obj.guid)] 
-					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest") or obj:BuffAny("Call of Dominance"))
-					and not obj:BuffAny("Bladestorm")
-					and not obj:LostControl()
-					and not obj:state("disarm")
-					and not obj:debuffany("Disarm") and not obj:debuffany("Grapple Weapon")
-					and (obj:drState("Disarm") == 1 or obj:drState("Disarm")==-1)
-					and _A.notimmune(obj)
-					and obj:los() then
-					return obj:Cast("Disarm")
-				end
-			end
-		end
-	end,
-	
-	chargegapclose = function()
-		local target = Object("target")
-		if target and player:SpellCooldown("Charge")==0 and player:SpellCooldown("Heroic Leap")>(player:gcd()+.3)
-			and target.isplayer
-			and not target:spellRange("Mortal Strike") 
-			and target:spellRange("Charge") 
-			and target:infront()
-			-- and _A.isthishuman("target")
-			and target:exists()
-			and target:enemy() 
-			and not target:buffany("Bladestorm")
-			and _A.notimmune(target)
-			then if target:los()
-				then 
-				return target:Cast("charge") -- slow/root
-			end
-		end
-	end,
-	
-	
-	heroicleap = function()
-		local target = Object("target")
-		if target and player:SpellCooldown("Heroic Leap")<.3
-			and target.isplayer
-			and not target:spellRange("Mortal Strike") 
-			and target:range()>=8
-			and target:range()<=40
-			and target:infront()
-			-- and _A.isthishuman("target")
-			and target:exists()
-			and target:enemy() 
-			and not target:buffany("Bladestorm")
-			and _A.notimmune(target)
-			then if target:los()
-				then 
-				return _A.clickcast(target, "Heroic Leap") -- slow/root
-			end
 		end
 	end,
 	
@@ -716,13 +609,6 @@ arms.rot = {
 		end
 	end,
 	
-	sweeping_strikes = function()
-		if _A.numtangos>=3 and player:SpellUsable("Sweeping Strikes") and player:SpellCooldown("Sweeping Strikes")==0
-			then
-			return player:cast("sweeping strikes")
-		end
-	end,
-	
 	bladestorm = function()
 		if player:combat() and player:buffany("Bloodbath") and player:SpellCooldown("bladestorm")<.3 then
 			return player:cast("Bladestorm")
@@ -731,19 +617,9 @@ arms.rot = {
 	
 	victoryrush = function()
 		if  player:SpellUsable("Victory Rush") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			local lowestmelee = Object("lowestEnemyInSpellRange(Victory Rush)")
 			if lowestmelee and lowestmelee:exists() then
 				return lowestmelee:Cast("Victory Rush")
-			end
-		end
-	end,
-	
-	
-	overpower = function()
-		if  player:SpellUsable("Overpower") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
-				return lowestmelee:Cast("Overpower")
 			end
 		end
 	end,
@@ -763,44 +639,23 @@ local inCombat = function()
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+	if prot.rot.Pummel() then return end
+	if prot.rot.defstance() then return end
+	if prot.rot.battleshout() then return end
+	if prot.rot.thunderclapPVE() then return end
+	if prot.rot.heroicstrike() then return end
+	if prot.rot.victoryrush() then return end
+	if prot.rot.shieldslam() then return end
+	if prot.rot.revenge() then return end
+	if prot.rot.devastate() then return end
 	-- if player:lostcontrol()  then return end 
-	-- Interrupts
-	arms.rot.items_strpot()
-	arms.rot.items_strflask()
-	arms.rot.activetrinket()
-	arms.rot.stance_dance()
-	arms.rot.bloodbath()
-	arms.rot.reckbanner()
-	arms.rot.bladestorm()
-	-- arms.rot.Charge()
-	arms.rot.antifear()
-	arms.rot.diebythesword()
-	arms.rot.shieldwall()
-	arms.rot.safeguard_unroot()
-	arms.rot.reflectspell()
-	arms.rot.sweeping_strikes()
-	arms.rot.chargegapclose()
-	arms.rot.heroicleap()
-	arms.rot.colossussmash()
-	arms.rot.Execute()
-	arms.rot.Pummel()
-	arms.rot.thunderclap()
-	arms.rot.burstdisarm()
-	arms.rot.battleshout()
-	arms.rot.Disruptingshout()
-	arms.rot.hamstringpvp()
-	arms.rot.victoryrush()
-	arms.rot.Mortalstrike()
-	arms.rot.thunderclapPVE()
-	arms.rot.slam()
-	arms.rot.overpower()
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
-_A.CR:Add(71, {
-	name = "Youcef's Arms Warrior",
+_A.CR:Add(73, {
+	name = "Youcef's Prot Warrior",
 	ic = inCombat,
 	ooc = inCombat,
 	use_lua_engine = true,
