@@ -260,7 +260,7 @@ local exeOnLoad = function()
 			_A.pressedbuttonat = 0
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
 				_A.Interface:toggleToggle("mastertoggle", true)
-				_A.print("ON")
+				-- _A.print("ON")
 				return true
 			end
 		end
@@ -273,7 +273,7 @@ local exeOnLoad = function()
 			-- if target then print(target:creatureType()) end
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
-				_A.print("OFF")
+				-- _A.print("OFF")
 				return true
 			end
 		end
