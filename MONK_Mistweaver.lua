@@ -1876,7 +1876,6 @@ local mw_rot = {
 		if player:Stance() == 1   then
 			if player:Chi()>=2 then
 				-- if player:Buff("Muscle Memory") then
-				
 				---------------------------------- 
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
@@ -2072,24 +2071,15 @@ local inCombat = function()
 	if not player:alive() then return end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
-	-- CACHE
-	-- ENEMY_OM = _A.OM:Get('Enemy')
-	-- FRIEND_OM = _A.OM:Get('Friendly')
-	--
 	mw_rot.autofocus()
 	mw_rot.autoattackmanager()
 	-- Out of GCD
 	mw_rot.thunderfocustea()
 	mw_rot.kick_spear()
 	mw_rot.activetrinket()
-	--
 	if _A.buttondelayfunc()  then return end
 	if player and player:mounted() then return end
 	if player and player:isChanneling("Crackling Jade Lightning") then return end
-	-- ProcessItemsCoroutine()
-	-- if player and player:isChanneling("Mana Tea") then return end
-	--
-	-- if mw_rot.healingsphere_keybind() then return end
 	if mw_rot.items_healthstone() then return end 
 	if mw_rot.items_noggenfogger() then return end
 	if mw_rot.items_intflask() then return end
@@ -2102,6 +2092,8 @@ local inCombat = function()
 	if mw_rot.ringofpeacev2() then return end
 	if mw_rot.sapsnipe() then return end
 	if mw_rot.renewingmist() then return end
+	if mw_rot.dispellunCC() then return end
+	if mw_rot.dispellDANGEROUS() then return end
 	if _A.modifier_shift() then
 		if mw_rot.uplift() then return end
 		if mw_rot.manatea_HealthRegen() then return end
@@ -2110,10 +2102,6 @@ local inCombat = function()
 	if not player:keybind("R") then
 		if mw_rot.tigerpalm_mm() then return end
 	end
-	-- if mw_rot.dispellplzany() then return end
-	-- if mw_rot.dispellplzarena() then return end
-	if mw_rot.dispellunCC() then return end
-	if mw_rot.dispellDANGEROUS() then return end
 	-- if mw_rot.dispellunSLOW() then return end
 	if mw_rot.diffusemagic() then return end
 	if mw_rot.spin_rjw() then return end
