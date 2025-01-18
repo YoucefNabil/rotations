@@ -1600,6 +1600,7 @@ local mw_rot = {
 						if fr:SpellRange("Detox") 
 							and fr:statepurge("Detox") 
 							and fr:statepurgecheck("fear || sleep || charm || disorient || incapacitate || stun || silence || root")
+							and not fr:debuffany("Unstable Affliction")
 							and _A.nothealimmune(fr)  
 							and fr:los()
 							then
@@ -1620,6 +1621,7 @@ local mw_rot = {
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurge("Detox") and fr:statepurgecheck("snare")
 							and _A.nothealimmune(fr)
+							and not fr:debuffany("Unstable Affliction")
 							and fr:los() then
 							return fr:cast("Detox")
 						end
@@ -1635,7 +1637,7 @@ local mw_rot = {
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
-						if fr:SpellRange("Detox") and fr:statepurge("Detox") then
+						if fr:SpellRange("Detox") and fr:statepurge("Detox") and not fr:DebuffAny("Unstable Affliction") then
 							for _,v in ipairs(dangerousdebuffs) do
 								if fr:DebuffAny(v) and _A.nothealimmune(fr) and fr:los() then
 									return fr:cast("Detox")
@@ -2127,7 +2129,7 @@ local inCombat = function()
 	-- mw_rot.lightning_keybind()
 	if mw_rot.uplift() then return end
 	if mw_rot.expelharm() then return end
-	-- if mw_rot.statbuff() then return end
+	if mw_rot.statbuff() then return end
 	if mw_rot.dpsstance_healstance_keybind() then return end
 	if not _A.modifier_shift() then
 		if mw_rot.dpsstance_jab() then return end
