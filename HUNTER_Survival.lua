@@ -1479,7 +1479,6 @@ survival.rot = {
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
 					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
-					-- and not Obj:state("dot")
 					and _A.notimmune(Obj) and Obj:los() then
 					return Obj:cast("Wyvern Sting")
 				end
@@ -1493,7 +1492,6 @@ survival.rot = {
 			local focus = Object("focus")
 			if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5 
-				-- and not focus:state("dot")
 				and _A.notimmune(focus) and focus:los() then
 				return focus:cast("Wyvern Sting")
 			end
