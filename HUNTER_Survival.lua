@@ -1766,14 +1766,14 @@ local inCombat = function()
 		if survival.rot.blackarrow() then return end
 		if survival.rot.glaivetoss() then return end
 		-- excess focus priority -- these will fire from least to most expensive, the order doesnt matter much (that's why I added checks)
-		if _A.SScheck()==false  then return survival.rot.arcaneshot_proc() end -- is this necessary?
-		if _A.SScheck()==false  then return survival.rot.venom() end
-		if _A.venomcheck()==false and _A.SScheck()==false then return survival.rot.arcaneshot() end
+		if _A.SScheck()==false and survival.rot.arcaneshot_proc() then return  end -- is this necessary?
+		if _A.SScheck()==false and survival.rot.venom() then return  end
+		if _A.venomcheck()==false and _A.SScheck()==false and survival.rot.arcaneshot() then return end
 	end
 	-- Fills
-	if player:buff("Lock and Load") then return survival.rot.explosiveshot() end
-	if player:combat()  then return survival.rot.mendpet() end
-	if (_A.CobraCheck() or AOEcheck())  then return survival.rot.cobrashot() end -- needs to be on highest HP
+	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return  end
+	if player:combat() and survival.rot.mendpet() then return end
+	if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return end -- needs to be on highest HP
 end
 local spellIds_Loc = function()
 end
