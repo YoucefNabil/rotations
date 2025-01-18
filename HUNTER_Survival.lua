@@ -295,11 +295,23 @@ local exeOnLoad = function()
 				--
 				if idd == 19503 then
 					scatter_x, scatter_y, scatter_z = _A.ObjectPosition(guiddest)
-					C_Timer.After(6, function()
+					print("SCATTERING!!!!!!!!!!!!!!!!!!!!!!!")
+					print(scatter_x)
+					print(scatter_y)
+					print(scatter_z)
+					C_Timer.After(10, function()
+						print("DELETING")
 						scatter_x = nil
 						scatter_y = nil
 						scatter_z = nil
 					end)
+				end
+				if idd == 60192 then
+					print("FREEZING!!!")
+					print("DELETING")
+					scatter_x = nil
+					scatter_y = nil
+					scatter_z = nil
 				end
 			end
 		end
@@ -1067,7 +1079,7 @@ local exeOnLoad = function()
 				_A.CallWowApi("SpellStopTargeting")
 			end
 		end
-	end
+	end	
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-------------------------------------------------------
@@ -1402,10 +1414,11 @@ survival.rot = {
 				if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] 
 					and (Obj:debuff("Scatter Shot") or (Obj:stateduration("disorient || charm || sleep || stun")>1 and Obj:stateduration("disorient || charm || sleep || stun")<4)) 
 					and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
-					and _A.notimmune(Obj) and Obj:los() then
+					and not Obj:debuffany("Wyvern Sting") and _A.notimmune(Obj) and Obj:los() then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 					if not  player:isCastingAny()  then
-						return _A.clickcast(Obj, "Freezing Trap")
+						return scatter_x and Obj:debuff("Scatter Shot") and _A.clickcastdetail(scatter_x, scatter_z, scatter_y, "Freezing Trap") or _A.clickcast(Obj, "Freezing Trap")
+						-- return _A.clickcast(Obj, "Freezing Trap")
 					end
 				end
 			end
@@ -1418,9 +1431,10 @@ survival.rot = {
 				and (focus:debuff("Scatter Shot") or (focus:stateduration("disorient || charm || sleep || stun")>1 and focus:stateduration("disorient || charm || sleep || stun")<4))
 				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
 				and _A.notimmune(focus) and focus:los() then
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+				if not focus:debuffany("Wyvern Sting") and player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny() then
-					return _A.clickcast(focus, "Freezing Trap")
+					return scatter_x and focus:debuff("Scatter Shot") and _A.clickcastdetail(scatter_x, scatter_z, scatter_y, "Freezing Trap") or _A.clickcast(focus, "Freezing Trap")
+					-- return _A.clickcast(focus, "Freezing Trap")
 				end
 			end
 		end
@@ -1530,7 +1544,7 @@ survival.rot = {
 			if _A.pull_location=="pvp" then
 				lowestmelee = Object("highestEnemyInSpellRangeNOTAR(Arcane Shot)")
 				else 
-			lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+				lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			end
 			if lowestmelee then
 				if _A.BAcheck() and player:SpellUsable("Black Arrow") then
