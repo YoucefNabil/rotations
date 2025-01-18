@@ -2080,8 +2080,8 @@ local inCombat = function()
 	mw_rot.kick_spear()
 	mw_rot.activetrinket()
 	if _A.buttondelayfunc()  then return end
-	if player and player:mounted() then return end
-	if player and player:isChanneling("Crackling Jade Lightning") then return end
+	if player:mounted() then return end
+	if player:isChanneling("Crackling Jade Lightning") then return end
 	if mw_rot.items_healthstone() then return end 
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
@@ -2129,7 +2129,7 @@ local inCombat = function()
 	-- mw_rot.lightning_keybind()
 	if mw_rot.uplift() then return end
 	if mw_rot.expelharm() then return end
-	if mw_rot.statbuff() then return end
+	-- if mw_rot.statbuff() then return endq
 	if mw_rot.dpsstance_healstance_keybind() then return end
 	if not _A.modifier_shift() then
 		if mw_rot.dpsstance_jab() then return end

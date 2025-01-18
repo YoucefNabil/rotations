@@ -1621,7 +1621,20 @@ survival.rot = {
 		end
 	end,
 	tranquillshot_highprio = function()
-		if player:spellcooldown("Tranquilizing Shot")<.3 
+		if player:spellcooldown("Tranquilizing Shot")<.3
+			-- and _A.castdelay("Tranquilizing Shot", player:gcd()) 
+			then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
+			if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
+				if player:SpellUsable("Tranquilizing Shot") then
+					return lowestmelee:Cast("Tranquilizing Shot")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
+			end
+		end
+	end,
+	tranquillshot_midprio = function()
+		if player:spellcooldown("Tranquilizing Shot")<.3 and _A.lowpriocheck("Tranquilizing Shot")
 			-- and _A.castdelay("Tranquilizing Shot", player:gcd()) 
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
@@ -1740,7 +1753,7 @@ local inCombat = function()
 		if survival.rot.sleep() then return end
 	end
 	survival.rot.killshot()
-	if not _A.modifier_ctrl() and survival.rot.tranquillshot_highprio() then return end
+	if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
 	survival.rot.concussion()
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return  end
 	if AOEcheck()==false then
@@ -1751,6 +1764,7 @@ local inCombat = function()
 		survival.rot.blackarrow()
 		survival.rot.glaivetoss()
 		-- excess focus priority -- these will fire from least to most expensive, the order doesnt matter much (that's why I added checks)
+		if _A.SScheck()==false then survival.rot.tranquillshot_midprio() end
 		if _A.SScheck()==false then survival.rot.arcaneshot_proc()  end -- is this necessary?
 		if _A.SScheck()==false then survival.rot.venom()  end
 		if _A.venomcheck()==false and _A.SScheck()==false then survival.rot.arcaneshot() end
