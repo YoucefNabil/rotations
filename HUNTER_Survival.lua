@@ -1090,15 +1090,6 @@ local exeOnLoad = function()
 		end
 		return false
 	end
-	_A.TScheck2 = function()
-		if player:SpellCooldown("Tranquilizing Shot")<.3 and _A.modifier_ctrl() then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
-			if lowestmelee and lowestmelee.isplayer and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
-				return true
-			end
-		end
-		return false
-	end
 	_A.venomcheck = function()
 		if player:SpellCooldown("Tranquilizing Shot")<.3 and _A.MissileExists("Tranquilizing Shot")==false then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
@@ -1550,18 +1541,24 @@ survival.rot = {
 	end,
 	-- ROTATION
 	explosiveshot = function()
-		if _A.EScheck() and player:SpellUsable("Explosive Shot") and player:SpellCooldown("Explosive Shot")<.3 then
+		if  player:SpellCooldown("Explosive Shot")<.3 then
 			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				return lowestmelee:Cast("Explosive Shot")
+				if _A.EScheck() and player:SpellUsable("Explosive Shot") then
+					return lowestmelee:Cast("Explosive Shot")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot") 
+				end
 			end
 		end
 	end,
 	amoc = function()
-		if player:talent("A Murder of Crows") and player:SpellUsable("A Murder of Crows") and player:SpellCooldown("A Murder of Crows")<.3 then
+		if player:talent("A Murder of Crows") and player:SpellCooldown("A Murder of Crows")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				return lowestmelee:Cast("A Murder of Crows")
+				if player:SpellUsable("A Murder of Crows") then
+					return lowestmelee:Cast("A Murder of Crows")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot") 
+				end
 			end
 		end
 	end,
@@ -1571,20 +1568,26 @@ survival.rot = {
 			if _A.pull_location=="pvp" then
 				lowestmelee = Object("highestEnemyInSpellRangeNOTAR(Arcane Shot)")
 				else 
-				lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			end
 			if lowestmelee then
-				return lowestmelee:Cast("Black Arrow")
+				if _A.BAcheck() and player:SpellUsable("Black Arrow") then
+					return lowestmelee:Cast("Black Arrow")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot") 
+				end
 			end
 		end
 	end,
 	serpentsting = function()
-		if _A.MissileExists("Serpent Sting")==false and _A.castdelay("Serpent Sting", player:gcd()*2) and _A.lowpriocheck("Serpent Sting") and player:SpellUsable("Serpent Sting") and player:spellcooldown("Serpent Sting")<.3  then
+		if _A.MissileExists("Serpent Sting")==false and _A.castdelay("Serpent Sting", player:gcd()*2) and player:spellcooldown("Serpent Sting")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff(118253) 
 				and (lowestmelee.isplayer or _A.pull_location=="none")
 				then
-				return lowestmelee:Cast("Serpent Sting")
+				if player:SpellUsable("Serpent Sting") then
+					return lowestmelee:Cast("Serpent Sting")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
 			end
 		end
 	end,
@@ -1634,12 +1637,12 @@ survival.rot = {
 		end
 	end,
 	tranquillshot_midprio = function()
-		if player:spellcooldown("Tranquilizing Shot")<.3 and _A.lowpriocheck("Tranquilizing Shot")
+		if player:spellcooldown("Tranquilizing Shot")<.3
 			-- and _A.castdelay("Tranquilizing Shot", player:gcd()) 
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
 			if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
-				if player:SpellUsable("Tranquilizing Shot") then
+				if player:SpellUsable("Tranquilizing Shot") and _A.lowpriocheck("Tranquilizing Shot") then
 					return lowestmelee:Cast("Tranquilizing Shot")
 					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
@@ -1647,19 +1650,25 @@ survival.rot = {
 		end
 	end,
 	venom = function()
-		if _A.lowpriocheck("Widow Venom") and _A.MissileExists("Widow Venom")==false and player:SpellUsable("Widow Venom") and player:spellcooldown("Widow Venom")<.3 then
+		if _A.lowpriocheck("Widow Venom") and _A.MissileExists("Widow Venom")==false  and player:spellcooldown("Widow Venom")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
 			if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
 				-- if lowestmelee and not lowestmelee:debuff("Widow Venom") then
-				return lowestmelee:Cast("Widow Venom")
+				if player:SpellUsable("Widow Venom") and _A.lowpriocheck("Widow Venom") then
+					return lowestmelee:Cast("Widow Venom")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
 			end
 		end
 	end,
 	glaivetoss = function()
-		if player:talent("Glaive Toss") and _A.glaivetosscheck() and player:SpellUsable("Glaive Toss") and player:SpellCooldown("Glaive Toss")<.3 then
+		if player:talent("Glaive Toss") and player:SpellCooldown("Glaive Toss")<.3 then
 			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				return lowestmelee:Cast("Glaive Toss")
+				if _A.glaivetosscheck() and player:SpellUsable("Glaive Toss") then
+					return lowestmelee:Cast("Glaive Toss")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
 			end
 		end
 	end,
@@ -1759,15 +1768,14 @@ local inCombat = function()
 	if AOEcheck()==false then
 		-- important spells
 		survival.rot.serpentsting()
-		survival.rot.explosiveshot()
 		survival.rot.amoc()
 		survival.rot.blackarrow()
+		survival.rot.explosiveshot()
 		survival.rot.glaivetoss()
 		-- excess focus priority -- these will fire from least to most expensive, the order doesnt matter much (that's why I added checks)
-		if _A.SScheck()==false then survival.rot.tranquillshot_midprio() end
-		if _A.SScheck()==false then survival.rot.arcaneshot_proc()  end -- is this necessary?
-		if _A.SScheck()==false then survival.rot.venom()  end
-		if _A.venomcheck()==false and _A.SScheck()==false then survival.rot.arcaneshot() end
+		survival.rot.venom()
+		survival.rot.tranquillshot_midprio()
+		survival.rot.arcaneshot()
 	end
 	-- Fills
 	if player:combat() and survival.rot.mendpet() then return end
@@ -1791,4 +1799,4 @@ _A.CR:Add(255, {
 	-- pooling = false,
 	load = exeOnLoad,
 	unload = exeOnUnload
-})
+})	
