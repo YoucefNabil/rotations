@@ -1722,7 +1722,7 @@ local inCombat = function()
 	if survival.rot.masterscall() then return end
 	-- no gcd
 	if not player:isCastingAny() then
-		if survival.rot.pet_misdirect() then return end
+		-- if survival.rot.pet_misdirect() then return end -- bugged
 		if survival.rot.items_healthstone() then return end
 	end
 	-- Traps
