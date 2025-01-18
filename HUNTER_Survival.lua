@@ -1396,15 +1396,15 @@ survival.rot = {
 			and player:spellusable("Ice Trap") then
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
-				if player:Spellcooldown("Ice Trap")<.3 
-					or (player:Spellcooldown("Snake Trap")<.3 and _A.castdelay("Ice Trap", 10))
+				if (player:Spellcooldown("Ice Trap")<.3 and _A.castdelay("Snake Trap", 6))
+					or (player:Spellcooldown("Snake Trap")<.3 and _A.castdelay("Ice Trap", 6))
 					-- or player:Spellcooldown("Explosive Trap")<.3
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
-						if player:Spellcooldown("Ice Trap")<.3 then
+						if player:Spellcooldown("Ice Trap")<.3 and _A.castdelay("Snake Trap", 6) then
 							return _A.clickcast(lowestmelee, "Ice Trap")
-							elseif player:Spellcooldown("Snake Trap")<.3 and _A.castdelay("Ice Trap", 10) then
+							elseif player:Spellcooldown("Snake Trap")<.3 and _A.castdelay("Ice Trap", 6) then
 							return _A.clickcast(lowestmelee, "Snake Trap")					
 							-- elseif player:Spellcooldown("Explosive Trap")<.3 then
 							-- return _A.clickcast(lowestmelee, "Explosive Trap")
@@ -1439,7 +1439,7 @@ survival.rot = {
 				and (focus:drstate("Scatter Shot")==1 or focus:drstate("Scatter Shot")==-1)
 				and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
-				if not player:isCastingAny() then  return Obj:cast("Scatter Shot") end
+				if not player:isCastingAny() then  return focus:cast("Scatter Shot") end
 			end
 		end
 	end,
@@ -1448,17 +1448,11 @@ survival.rot = {
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] 
 					and (Obj:debuff("Scatter Shot") or (Obj:stateduration("disorient || charm || sleep || stun")>1 and Obj:stateduration("disorient || charm || sleep || stun")<4)) 
+					and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
 					and _A.notimmune(Obj) and Obj:los() then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
-					if not  player:isCastingAny() then
-						-- if not Obj:debuff("Scatter Shot") then
-						-- return _A.clickcast(Obj, "Freezing Trap")
-						-- else if scatter_x~=nil then
-						-- return _A.clickcastdetail(scatter_x, scatter_y, scatter_z, "Freezing Trap")
-						-- else 
+					if not  player:isCastingAny()  then
 						return _A.clickcast(Obj, "Freezing Trap")
-						-- end
-						-- end
 					end
 				end
 			end
@@ -1469,29 +1463,23 @@ survival.rot = {
 			local focus = Object("focus")
 			if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") 
 				and (focus:debuff("Scatter Shot") or (focus:stateduration("disorient || charm || sleep || stun")>1 and focus:stateduration("disorient || charm || sleep || stun")<4))
+				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
 				and _A.notimmune(focus) and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny() then
-					-- if not focus:debuff("Scatter Shot") then
-					-- return _A.clickcast(focus, "Freezing Trap")
-					-- else if scatter_x~=nil then
-					-- return _A.clickcastdetail(scatter_x, scatter_y, scatter_z, "Freezing Trap")
-					-- else 
 					return _A.clickcast(focus, "Freezing Trap")
-					-- end
-					-- end
 				end
 			end
 		end
 	end,
 	sleep = function()
-		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3
-			and _A.castdelay("Freezing Trap",3) and _A.castdelay("Scatter Shot",3) and player:spellusable("Wyvern Sting")
+		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3  and player:spellusable("Wyvern Sting") and player:SpellCooldown("Scatter Shot")>player:gcd()
+			and _A.castdelay("Freezing Trap",3) and _A.castdelay("Scatter Shot",3) 
 			then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
 					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
-					and not Obj:state("dot")
+					-- and not Obj:state("dot")
 					and _A.notimmune(Obj) and Obj:los() then
 					return Obj:cast("Wyvern Sting")
 				end
@@ -1499,13 +1487,13 @@ survival.rot = {
 		end
 	end,
 	sleep_focus = function()
-		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3
-			and _A.castdelay("Freezing Trap",3) and _A.castdelay("Scatter Shot",3) and player:spellusable("Wyvern Sting")
+		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3  and player:spellusable("Wyvern Sting") and player:SpellCooldown("Scatter Shot")>player:gcd()
+			and _A.castdelay("Freezing Trap",3) and _A.castdelay("Scatter Shot",3)
 			then
 			local focus = Object("focus")
 			if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5 
-				and not focus:state("dot")
+				-- and not focus:state("dot")
 				and _A.notimmune(focus) and focus:los() then
 				return focus:cast("Wyvern Sting")
 			end
@@ -1716,16 +1704,16 @@ local inCombat = function()
 	if player:lostcontrol() then return true end
 	if player:buff("Camouflage") then return true end
 	-- Defs
-	if survival.rot.deterrence() then return end
-	if survival.rot.masterscall() then return end
+	survival.rot.deterrence()
+	survival.rot.masterscall()
 	-- no gcd
 	if not player:isCastingAny() then
 		-- if survival.rot.pet_misdirect() then return end -- bugged
-		if survival.rot.items_healthstone() then return end
+		survival.rot.items_healthstone()
 	end
 	-- Traps
 	if not player:buff("Deterrence") then
-		if survival.rot.bindingshot() then return end
+		survival.rot.bindingshot()
 	end
 	if survival.rot.freezing_focus() then return true end
 	if _A.pull_location=="arena" then
@@ -1739,11 +1727,11 @@ local inCombat = function()
 	survival.rot.autoattackmanager()
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return true end
 	-- Burst
-	if survival.rot.activetrinket() then return end
-	if survival.rot.items_agiflask() then return end
-	if survival.rot.bursthunt() then return end
-	if survival.rot.stampede() then return end
-	if survival.rot.kick() then return end
+	survival.rot.activetrinket()
+	survival.rot.items_agiflask()
+	survival.rot.bursthunt()
+	survival.rot.stampede()
+	survival.rot.kick()
 	if AOEcheck() then survival.rot.barrage() end -- make a complete aoe check function
 	if AOEcheck() then survival.rot.multishot() end -- make a complete aoe check function
 	-- Important Spells
@@ -1753,23 +1741,23 @@ local inCombat = function()
 		if survival.rot.scatter() then return end
 		if survival.rot.sleep() then return end
 	end
-	if survival.rot.killshot() then return end
-	if survival.rot.concussion() then return end
+	survival.rot.killshot()
 	if survival.rot.tranquillshot_highprio() then return end
+	survival.rot.concussion()
+	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return  end
 	if AOEcheck()==false then
 		-- important spells
-		if survival.rot.serpentsting() then return end
-		if survival.rot.explosiveshot()  then return end
-		if survival.rot.amoc()  then return end
-		if survival.rot.blackarrow() then return end
-		if survival.rot.glaivetoss() then return end
+		survival.rot.serpentsting()
+		survival.rot.explosiveshot()
+		survival.rot.amoc()
+		survival.rot.blackarrow()
+		survival.rot.glaivetoss()
 		-- excess focus priority -- these will fire from least to most expensive, the order doesnt matter much (that's why I added checks)
-		if _A.SScheck()==false and survival.rot.arcaneshot_proc() then return  end -- is this necessary?
-		if _A.SScheck()==false and survival.rot.venom() then return  end
-		if _A.venomcheck()==false and _A.SScheck()==false and survival.rot.arcaneshot() then return end
+		if _A.SScheck()==false then survival.rot.arcaneshot_proc()  end -- is this necessary?
+		if _A.SScheck()==false then survival.rot.venom()  end
+		if _A.venomcheck()==false and _A.SScheck()==false then survival.rot.arcaneshot() end
 	end
 	-- Fills
-	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return  end
 	if player:combat() and survival.rot.mendpet() then return end
 	if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return end -- needs to be on highest HP
 end
