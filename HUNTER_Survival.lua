@@ -1715,7 +1715,7 @@ local inCombat = function()
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return true end
 	if player:isChanneling("Barrage") then return true end
 	if survival.rot.roarofsac() then return end
-	-- if player:lostcontrol() then return true end
+	if player:lostcontrol() then return true end
 	if player:buff("Camouflage") then return true end
 	-- Defs
 	if survival.rot.deterrence() then return end
