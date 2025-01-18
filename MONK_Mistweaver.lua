@@ -2081,16 +2081,15 @@ local inCombat = function()
 	if player and player:mounted() then return end
 	if player and player:isChanneling("Crackling Jade Lightning") then return end
 	if mw_rot.items_healthstone() then return end 
-	if mw_rot.items_noggenfogger() then return end
-	if mw_rot.items_intflask() then return end
+	mw_rot.items_noggenfogger()
+	mw_rot.items_intflask()
 	if mw_rot.healingsphere_superlow() then return end
-	-- if mw_rot.paralysis_test() then return end
 	if mw_rot.Xuen() then return end
-	if mw_rot.turtletoss() then return end
+	-- if mw_rot.turtletoss() then return end
 	if mw_rot.kick_legsweep() then return end
 	if mw_rot.kick_paralysis() then return end
 	if mw_rot.ringofpeacev2() then return end
-	if mw_rot.sapsnipe() then return end
+	-- if mw_rot.sapsnipe() then return end
 	if mw_rot.renewingmist() then return end
 	if mw_rot.dispellunCC() then return end
 	if mw_rot.dispellDANGEROUS() then return end
@@ -2138,7 +2137,6 @@ local inCombat = function()
 	if not _A.modifier_shift() then
 		if mw_rot.dpsstanceswap()  then return end
 	end
-	--]]
 end
 local spellIds_Loc = function()
 end

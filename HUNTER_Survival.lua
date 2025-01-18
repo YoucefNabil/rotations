@@ -1740,7 +1740,7 @@ local inCombat = function()
 		if survival.rot.sleep() then return end
 	end
 	survival.rot.killshot()
-	if survival.rot.tranquillshot_highprio() then return end
+	if not _A.modifier_ctrl() and survival.rot.tranquillshot_highprio() then return end
 	survival.rot.concussion()
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return  end
 	if AOEcheck()==false then
