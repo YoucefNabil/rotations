@@ -325,7 +325,7 @@ local exeOnLoad = function()
 			_A.pressedbuttonat = 0
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
 				_A.Interface:toggleToggle("mastertoggle", true)
-				_A.print("ON")
+				-- _A.print("ON")
 				return true
 			end
 		end
@@ -336,7 +336,7 @@ local exeOnLoad = function()
 			-- print(player:stance())
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
-				_A.print("OFF")
+				-- _A.print("OFF")
 				return true
 			end
 		end
@@ -515,15 +515,13 @@ local exeOnLoad = function()
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
-			if Obj.isplayer and Obj:spellRange("Arcane Shot") and _A.notimmune(Obj) and Obj:los() then
-				-- if Obj:state("stun") or (Obj:isCastingAny() and not Obj:moving()) then
-				if Obj:stateduration("stun || root")>=1 and not Obj:moving() then
-					tempTable[#tempTable+1] = {
-						range = Obj:range(),
-						guid = Obj.guid,
-						health = Obj:health(),
-					}
-				end
+			if Obj.isplayer and Obj:spellRange("Arcane Shot") and _A.notimmune(Obj) 
+				and Obj:stateduration("stun || root")>=1 and not Obj:moving() and Obj:los() then
+				tempTable[#tempTable+1] = {
+					range = Obj:range(),
+					guid = Obj.guid,
+					health = Obj:health(),
+				}
 			end
 		end
 		if #tempTable>1 then
@@ -1201,7 +1199,7 @@ local exeOnLoad = function()
 		local _focus = Object("focus")
 		local htotem = Object("HealingStreamTotem")
 		if not htotem and _focus then
-			if _focus:alive() and _focus:enemy() and _focus:exists() and not _focus:state("incapacitate || disorient || charm || misc || sleep") then
+			if _focus:alive() and _focus:enemy() and _focus:exists() and not _focus:state("incapacitate || disorient || charm || misc || sleep || fear") then
 				if (_A.pull_location~="party" and _A.pull_location~="raid") or _focus:combat() then -- avoid pulling shit by accident
 					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
 						return _A.CallWowApi("PetAttack", _focus.guid), 2
@@ -1224,7 +1222,7 @@ local exeOnLoad = function()
 	end
 	local function attacktarget()
 		local target = Object("target")
-		if target and target:alive() and target:enemy() and target:exists() and not target:state("incapacitate || disorient || charm || misc || sleep") then
+		if target and target:alive() and target:enemy() and target:exists() and not target:state("incapacitate || disorient || charm || misc || sleep || fear") then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
 					return _A.CallWowApi("PetAttack", target.guid), 3
@@ -1520,11 +1518,11 @@ survival.rot = {
 			and player:spellusable("Binding Shot")
 			then
 			if (player:SpellCooldown("Ice Trap")<(player:gcd()*2)) or (player:SpellCooldown("Snake Trap")<(player:gcd()*2)) then
-			local lowestmelee = Object("meleeunitstobindshot")
-			if lowestmelee then
-				return _A.clickcast(lowestmelee, "Binding Shot")
+				local lowestmelee = Object("meleeunitstobindshot")
+				if lowestmelee then
+					return _A.clickcast(lowestmelee, "Binding Shot")
+				end
 			end
-		end
 		end
 	end,
 	-- Burst
@@ -1638,12 +1636,16 @@ survival.rot = {
 			end
 		end
 	end,
-	tranquillshot = function()
-		if (_A.lowpriocheck("Tranquilizing Shot") or player:glyph("Glyph of Tranquilizing Shot")) and player:SpellUsable("Tranquilizing Shot") 
-			and player:spellcooldown("Tranquilizing Shot")<.3 then
+	tranquillshot_highprio = function()
+		if player:spellcooldown("Tranquilizing Shot")<.3 
+			-- and _A.castdelay("Tranquilizing Shot", player:gcd()) 
+			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
 			if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
-				return lowestmelee:Cast("Tranquilizing Shot")
+				if player:SpellUsable("Tranquilizing Shot") then
+					return lowestmelee:Cast("Tranquilizing Shot")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
 			end
 		end
 	end,
@@ -1712,20 +1714,20 @@ local inCombat = function()
 	if player:mounted() then return true end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return true end
 	if player:isChanneling("Barrage") then return true end
-	survival.rot.roarofsac()
+	if survival.rot.roarofsac() then return end
 	-- if player:lostcontrol() then return true end
 	if player:buff("Camouflage") then return true end
 	-- Defs
-	survival.rot.deterrence()
-	survival.rot.masterscall()
+	if survival.rot.deterrence() then return end
+	if survival.rot.masterscall() then return end
 	-- no gcd
 	if not player:isCastingAny() then
-		survival.rot.pet_misdirect()
-		survival.rot.items_healthstone()
+		if survival.rot.pet_misdirect() then return end
+		if survival.rot.items_healthstone() then return end
 	end
 	-- Traps
 	if not player:buff("Deterrence") then
-	survival.rot.bindingshot()
+		if survival.rot.bindingshot() then return end
 	end
 	if survival.rot.freezing_focus() then return true end
 	if _A.pull_location=="arena" then
@@ -1739,11 +1741,11 @@ local inCombat = function()
 	survival.rot.autoattackmanager()
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return true end
 	-- Burst
-	survival.rot.activetrinket()
-	survival.rot.items_agiflask()
-	survival.rot.bursthunt()
-	survival.rot.stampede()
-	survival.rot.kick()
+	if survival.rot.activetrinket() then return end
+	if survival.rot.items_agiflask() then return end
+	if survival.rot.bursthunt() then return end
+	if survival.rot.stampede() then return end
+	if survival.rot.kick() then return end
 	if AOEcheck() then survival.rot.barrage() end -- make a complete aoe check function
 	if AOEcheck() then survival.rot.multishot() end -- make a complete aoe check function
 	-- Important Spells
@@ -1753,25 +1755,25 @@ local inCombat = function()
 		if survival.rot.scatter() then return end
 		if survival.rot.sleep() then return end
 	end
-	survival.rot.killshot()
-	survival.rot.concussion()
+	if survival.rot.killshot() then return end
+	if survival.rot.concussion() then return end
+	if survival.rot.tranquillshot_highprio() then return end
 	if AOEcheck()==false then
 		-- important spells
-	survival.rot.serpentsting()
-	survival.rot.explosiveshot() 
-	survival.rot.amoc() 
-	survival.rot.blackarrow()
-	survival.rot.glaivetoss()
-	-- excess focus priority -- these will fire from least to most expensive, the order doesnt matter much (that's why I added checks)
-	if _A.SScheck()==false  then survival.rot.arcaneshot_proc() end -- is this necessary?
-	if _A.SScheck()==false  then survival.rot.venom() end
-	if _A.SScheck()==false and _A.venomcheck()==false  then survival.rot.tranquillshot() end 
-	if _A.venomcheck()==false and _A.TScheck()==false and _A.SScheck()==false then survival.rot.arcaneshot() end
+		if survival.rot.serpentsting() then return end
+		if survival.rot.explosiveshot()  then return end
+		if survival.rot.amoc()  then return end
+		if survival.rot.blackarrow() then return end
+		if survival.rot.glaivetoss() then return end
+		-- excess focus priority -- these will fire from least to most expensive, the order doesnt matter much (that's why I added checks)
+		if _A.SScheck()==false  then return survival.rot.arcaneshot_proc() end -- is this necessary?
+		if _A.SScheck()==false  then return survival.rot.venom() end
+		if _A.venomcheck()==false and _A.SScheck()==false then return survival.rot.arcaneshot() end
 	end
 	-- Fills
-	if player:buff("Lock and Load") then survival.rot.explosiveshot() end
-	if player:combat()  then survival.rot.mendpet() end
-	if (_A.CobraCheck() or AOEcheck())  then survival.rot.cobrashot() end -- needs to be on highest HP
+	if player:buff("Lock and Load") then return survival.rot.explosiveshot() end
+	if player:combat()  then return survival.rot.mendpet() end
+	if (_A.CobraCheck() or AOEcheck())  then return survival.rot.cobrashot() end -- needs to be on highest HP
 end
 local spellIds_Loc = function()
 end
