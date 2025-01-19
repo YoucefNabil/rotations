@@ -1726,7 +1726,7 @@ local inCombat = function()
 	if player:isChanneling("Barrage") then return true end
 	-------------------------- UTILITY
 	if survival.rot.roarofsac() then return end
-	if player:lostcontrol() then return true end
+	-- if player:lostcontrol() then return true end
 	if player:buff("Camouflage") then return true end
 	-- Defs
 	survival.rot.deterrence()

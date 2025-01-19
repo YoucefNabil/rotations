@@ -1261,10 +1261,11 @@ survival.rot = {
 	end,
 	spiritmend = function()
 		if player:SpellCooldown("Spirit Mend(Exotic Ability)")==0 
-		and player:health()<95 and player:combat() 
+		-- and player:health()<95 and player:combat() 
 		then
 			local pet = Object("pet")
-			if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:range()<25 and pet:focus()>5 and pet:los() then
+			if pet and pet:exists() and pet:alive() and pet.name == "Spirit Beast" and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") 
+			and pet:range()<25 and pet:focus()>=5 and pet:los() then
 				-- return player:cast("Spirit Mend(Exotic Ability)")
 				return _A.CallWowApi("RunMacroText","/cast [@player] Spirit Mend(Exotic Ability)")
 			end
@@ -1527,7 +1528,7 @@ survival.rot = {
 	end,
 	-- ROTATION
 	killcommand = function()
-		if _A.KCcheck() and player:SpellUsable("Kill Command") and player:SpellCooldown("Kill Command")<.3 then
+		if _A.KCcheck() and player:SpellUsable("Kill Command") and player:SpellCooldown("Kill Command")<.3 and player:Spellusable("Kill Command") then
 			local lowestmelee = Object("lowestEnemyInSpellRangePetPOVKC")
 			if lowestmelee then
 				return lowestmelee:Cast("Kill Command")
@@ -1706,7 +1707,7 @@ local inCombat = function()
 	survival.rot.roarofsac()
 	survival.rot.killcommand()
 	survival.rot.spiritmend()
-	if player:lostcontrol() then return true end
+	-- if player:lostcontrol() then return true end
 	if player:buff("Camouflage") then return true end
 	-- Defs
 	survival.rot.deterrence()
