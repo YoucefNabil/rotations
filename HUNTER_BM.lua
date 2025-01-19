@@ -295,20 +295,13 @@ local exeOnLoad = function()
 				--
 				if idd == 19503 then
 					scatter_x, scatter_y, scatter_z = _A.ObjectPosition(guiddest)
-					print("SCATTERING!!!!!!!!!!!!!!!!!!!!!!!")
-					print(scatter_x)
-					print(scatter_y)
-					print(scatter_z)
 					C_Timer.After(10, function()
-						print("DELETING")
 						scatter_x = nil
 						scatter_y = nil
 						scatter_z = nil
 					end)
 				end
 				if idd == 60192 then
-					print("FREEZING!!!")
-					print("DELETING")
 					scatter_x = nil
 					scatter_y = nil
 					scatter_z = nil
@@ -317,6 +310,12 @@ local exeOnLoad = function()
 		end
 	end)
 	function _A.castdelay(idd, delay)
+		local spellid = idd and _A.Core:GetSpellID(idd)
+		if delay == nil then return true end
+		if _A.casttimers[spellid]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[spellid])>=delay
+	end
+	function _A.castdelaytarget(idd, delay)
 		local spellid = idd and _A.Core:GetSpellID(idd)
 		if delay == nil then return true end
 		if _A.casttimers[spellid]==nil then return true end
@@ -689,11 +688,11 @@ local exeOnLoad = function()
 	end)
 	----------------------------- MISSILES
 	function _A.MissileExists(ID)
-		ID_CORE = _A.Core:GetSpellID(ID)
+		local ID_CORE = _A.Core:GetSpellID(ID)
 		local missiles = _A.GetMissiles()
 		for _, missile in ipairs(missiles) do
 			local spellid, _, _, _, caster, _, _, _, target, _, _, _ = unpack(missile) -- prior Legion
-			if caster == player.guid and spellid==ID then
+			if caster == player.guid and spellid==ID_CORE then
 				return true
 			end
 		end
@@ -829,47 +828,6 @@ local exeOnLoad = function()
 	-------------------------------------------
 	-------------------------------------------
 	-------------------------------------------
-	_A.ASproccheck = function()
-		-- Avoid focus capping
-		-- if player:focus() >= (player:FocusMax() - 5) then return true end
-		-- Define abilities with cooldowns and conditions
-		local spells = {
-			{ name = "Kill Command", ready = true },
-			{ name = "A Murder of Crows", ready = player:talent("A Murder of Crows") }
-		}
-		-- Sort spells by cooldown (shortest first)
-		if #spells>1 then
-			table.sort(spells, function(a, b)
-				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
-			end)
-		end
-		-- Track elapsed time and current focus
-		local time_elapsed = 0
-		local current_focus = player:focus() - player:spellcost("Arcane Shot")
-		
-		-- Simulate focus pooling without loops (nested conditions)
-		local focus_cost, cooldown
-		
-		-- First spell
-		if spells[1].ready then
-			cooldown = player:SpellCooldown(spells[1].name)
-			focus_cost = required_focus(spells[1].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
-		end
-		
-		if spells[2].ready then
-			cooldown = player:SpellCooldown(spells[2].name)
-			focus_cost = required_focus(spells[2].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
-		end
-		
-		-- If all focus checks pass, Arcane Shot can be cast
-		return true
-	end
 	------------------------------------------------------------------
 	_A.KCcheck = function()
 		-- Avoid focus capping
@@ -1597,22 +1555,11 @@ survival.rot = {
 			end
 		end
 	end,
-	arcaneshot = function()
+	arcaneshot = function() --player:buff("Thrill of the Hunt")
 		if player:spellcooldown("Arcane Shot")<.3 then
 			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") then
-					return lowestmelee:Cast("Arcane Shot")
-					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
-				end
-			end
-		end
-	end,
-	arcaneshot_proc = function()
-		if player:spellcooldown("Arcane Shot")<.3 and player:buff("Thrill of the Hunt") then
-			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee then
-				if player:SpellUsable("Arcane Shot") and _A.ASproccheck() then
 					return lowestmelee:Cast("Arcane Shot")
 					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
@@ -1752,9 +1699,10 @@ local inCombat = function()
 	end
 	survival.rot.killshot()
 	-- if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
-	if not _A.modifier_ctrl() and survival.rot.tranquillshot_midprio() then return end --  highest prio in arena
+	-- if not _A.modifier_ctrl() and survival.rot.tranquillshot_midprio() then return end --  highest prio in arena
 	survival.rot.concussion()
 	-- important spells
+	if player:buff("Thrill of the Hunt") and survival.rot.arcaneshot() then return end
 	if survival.rot.serpentsting_check() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.glaivetoss() then return end

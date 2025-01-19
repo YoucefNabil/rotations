@@ -654,11 +654,11 @@ local exeOnLoad = function()
 	end)
 	----------------------------- MISSILES
 	function _A.MissileExists(ID)
-		ID_CORE = _A.Core:GetSpellID(ID)
+		local ID_CORE = _A.Core:GetSpellID(ID)
 		local missiles = _A.GetMissiles()
 		for _, missile in ipairs(missiles) do
 			local spellid, _, _, _, caster, _, _, _, target, _, _, _ = unpack(missile) -- prior Legion
-			if caster == player.guid and spellid==ID then
+			if caster == player.guid and spellid==ID_CORE then
 				return true
 			end
 		end
@@ -812,56 +812,6 @@ local exeOnLoad = function()
 	-------------------------------------------
 	-------------------------------------------
 	-------------------------------------------
-	_A.ASproccheck = function()
-		-- Avoid focus capping
-		-- if player:focus() >= (player:FocusMax() - 5) then return true end
-		-- Define abilities with cooldowns and conditions
-		local spells = {
-			{ name = "Explosive Shot", ready = true },
-			{ name = "Black Arrow", ready = _A.IsSpellKnown(3674) },
-			{ name = "A Murder of Crows", ready = player:talent("A Murder of Crows") }
-		}
-		-- Sort spells by cooldown (shortest first)
-		if #spells>1 then
-			table.sort(spells, function(a, b)
-				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
-			end)
-		end
-		-- Track elapsed time and current focus
-		local time_elapsed = 0
-		local current_focus = player:focus() - player:spellcost("Arcane Shot")
-		
-		-- Simulate focus pooling without loops (nested conditions)
-		local focus_cost, cooldown
-		
-		-- First spell
-		if spells[1].ready then
-			cooldown = player:SpellCooldown(spells[1].name)
-			focus_cost = required_focus(spells[1].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
-		end
-		
-		if spells[2].ready then
-			cooldown = player:SpellCooldown(spells[2].name)
-			focus_cost = required_focus(spells[2].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
-		end
-		
-		if spells[3].ready then
-			cooldown = player:SpellCooldown(spells[3].name)
-			focus_cost = required_focus(spells[3].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
-		end
-		
-		-- If all focus checks pass, Arcane Shot can be cast
-		return true
-	end
 	------------------------------------------------------------------
 	------------------------------------------------------------------
 	------------------------------------------------------------------
@@ -1571,7 +1521,7 @@ survival.rot = {
 		end
 	end,
 	serpentsting = function()
-		if _A.MissileExists("Serpent Sting")==false and _A.castdelay("Serpent Sting", player:gcd()*2) and player:spellcooldown("Serpent Sting")<.3  then
+		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff(118253) 
 				and (lowestmelee.isplayer or _A.pull_location=="none")
@@ -1584,7 +1534,7 @@ survival.rot = {
 		end
 	end,
 	serpentsting_check = function()
-		if _A.MissileExists("Serpent Sting")==false and _A.castdelay("Serpent Sting", player:gcd()*2) and player:spellcooldown("Serpent Sting")<.3  then
+		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff(118253) 
 				and (lowestmelee.isplayer or _A.pull_location=="none")
@@ -1618,22 +1568,11 @@ survival.rot = {
 			end
 		end
 	end,
-	arcaneshot = function()
+	arcaneshot = function() -- and player:buff("Thrill of the Hunt") 
 		if player:spellcooldown("Arcane Shot")<.3  then
 			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				if player:SpellUsable("Arcane Shot") and _A.ASproccheck() then
-					return lowestmelee:Cast("Arcane Shot")
-					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
-				end
-			end
-		end
-	end,
-	arcaneshot_proc = function()
-		if player:spellcooldown("Arcane Shot")<.3 and player:buff("Thrill of the Hunt")  then
-			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee then
-				if player:SpellUsable("Arcane Shot") and _A.ASproccheck() then
+				if player:SpellUsable("Arcane Shot") and _A.lowpriocheck("Arcane Shot") then
 					return lowestmelee:Cast("Arcane Shot")
 					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
@@ -1666,7 +1605,7 @@ survival.rot = {
 		end
 	end,
 	venom = function()
-		if _A.MissileExists("Widow Venom")==false and _A.castdelay("Widow Venom", player:gcd())  and player:spellcooldown("Widow Venom")<.3 then
+		if _A.MissileExists("Widow Venom")==false and player:spellcooldown("Widow Venom")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
 			if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
 				if player:SpellUsable("Widow Venom") and _A.lowpriocheck("Widow Venom") then
@@ -1716,6 +1655,7 @@ local inCombat = function()
 	if not player then return true end
 	local focus = Object("focus")
 	--debug
+	print(_A.MissileExists("Arcane Shot"))
 	-- print(player:immuneduration("snare || all"))
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
@@ -1773,6 +1713,7 @@ local inCombat = function()
 	survival.rot.concussion()
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
 	-- important spells
+	if player:buffduration("Thrill of the Hunt")<1.5 and not player:buff("Arcane Intensity") and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.blackarrow() then return end
 	if survival.rot.explosiveshot() then return end
@@ -1780,7 +1721,6 @@ local inCombat = function()
 	-- heal pet
 	survival.rot.mendpet()
 	-- excess focus priority
-	if survival.rot.arcaneshot_proc() then return end
 	if survival.rot.serpentsting_check() then return end
 	if survival.rot.venom() then return end
 	if survival.rot.tranquillshot_midprio() then return end
