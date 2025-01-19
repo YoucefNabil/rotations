@@ -816,7 +816,6 @@ local exeOnLoad = function()
 		-- Avoid focus capping
 		-- if player:focus() >= (player:FocusMax() - 5) then return true end
 		-- Define abilities with cooldowns and conditions
-		if not player:buff("Thrill of the Hunt") then return false end
 		local spells = {
 			{ name = "Explosive Shot", ready = true },
 			{ name = "Black Arrow", ready = _A.IsSpellKnown(3674) },
@@ -988,9 +987,11 @@ local exeOnLoad = function()
 	------------------------------------------------------------------
 	------------------------------------------------------------------
 	_A.CobraCheck = function() -- we only want to cast Cobra Shot if not enough ressources by the time important cds come up (Idk if this is necessary just yet)
-		local ct = player:level()<81 and player:SpellCasttime("Steady Shot") or player:SpellCasttime("Cobra Shot")
-		if player:focus()+((player:spellcooldown("Explosive Shot"))*manaregen())<player:spellcost("Explosive Shot") then return true end
-		return ct<=player:spellcooldown("Explosive Shot")
+		if player:Spellusable("Cobra Shot") or player:spellusable("Steady Shot") then
+			local ct = player:level()<81 and player:SpellCasttime("Steady Shot") or player:SpellCasttime("Cobra Shot")
+			if player:focus()+((player:spellcooldown("Explosive Shot"))*manaregen())<player:spellcost("Explosive Shot") then return true end
+			return ct<=player:spellcooldown("Explosive Shot")
+		end
 	end
 	-------------------------------------------------------
 	-------------------------------------------------------
@@ -1509,9 +1510,9 @@ survival.rot = {
 		end
 	end,
 	fervor = function()
-		if player:combat() and player:Talent("Fervor") and player:SpellCooldown("Fervor")==0 and player:spellusable("Fervor") and player:focus()<=40 then
+		if player:combat() and player:Talent("Fervor") and player:SpellCooldown("Fervor")==0 and player:spellusable("Fervor") and player:focus()<=30 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and lowestmelee.isplayer
+			if lowestmelee
 				-- and lowestmelee:health()>=35
 				then 
 				return player:cast("Fervor")
@@ -1535,7 +1536,7 @@ survival.rot = {
 			if lowestmelee then
 				if _A.EScheck() and player:SpellUsable("Explosive Shot") then
 					return lowestmelee:Cast("Explosive Shot")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot") 
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot") 
 				end
 			end
 		end
@@ -1546,7 +1547,7 @@ survival.rot = {
 			if lowestmelee then
 				if player:SpellUsable("A Murder of Crows") then
 					return lowestmelee:Cast("A Murder of Crows")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot") 
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot") 
 				end
 			end
 		end
@@ -1562,7 +1563,7 @@ survival.rot = {
 			if lowestmelee then
 				if _A.BAcheck() and player:SpellUsable("Black Arrow") then
 					return lowestmelee:Cast("Black Arrow")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot") 
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot") 
 				end
 			end
 		end
@@ -1575,7 +1576,7 @@ survival.rot = {
 				then
 				if player:SpellUsable("Serpent Sting") then
 					return lowestmelee:Cast("Serpent Sting")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
 			end
 		end
@@ -1588,46 +1589,52 @@ survival.rot = {
 				then
 				if player:SpellUsable("Serpent Sting") and _A.lowpriocheck("Serpent Sting") then
 					return lowestmelee:Cast("Serpent Sting")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
 			end
 		end
 	end,
 	multishot = function()
-		if player:spellcooldown("Multi-Shot")<.3 and _A.multishotcheck() then
+		if player:spellcooldown("Multi-Shot")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				if player:SpellUsable("Multi-Shot") then 
+				if player:SpellUsable("Multi-Shot") and _A.multishotcheck() then 
 					return lowestmelee:Cast("Multi-Shot")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
 			end
 		end
 	end,
 	barrage = function()
-		if player:Talent("Barrage") and player:spellcooldown("Barrage")<.3 and player:SpellUsable("Barrage") then
+		if player:Talent("Barrage") and player:spellcooldown("Barrage")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				if player:SpellUsable("Barrage") then
 					return lowestmelee:Cast("Barrage")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
 			end
 		end
 	end,
 	arcaneshot = function()
-		if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") and player:spellcooldown("Arcane Shot")<.3 then
+		if player:spellcooldown("Arcane Shot")<.3  then
 			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				return lowestmelee:Cast("Arcane Shot")
+				if player:SpellUsable("Arcane Shot") and _A.ASproccheck() then
+					return lowestmelee:Cast("Arcane Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
 			end
 		end
 	end,
 	arcaneshot_proc = function()
-		if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") and player:spellcooldown("Arcane Shot")<.3 and _A.ASproccheck() then
+		if player:spellcooldown("Arcane Shot")<.3 and player:buff("Thrill of the Hunt")  then
 			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				return lowestmelee:Cast("Arcane Shot")
+				if player:SpellUsable("Arcane Shot") and _A.ASproccheck() then
+					return lowestmelee:Cast("Arcane Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
 			end
 		end
 	end,
@@ -1636,25 +1643,22 @@ survival.rot = {
 			-- and _A.castdelay("Tranquilizing Shot", player:gcd()) 
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
-			-- if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
 			if lowestmelee and canpurge(lowestmelee.guid) then
 				if player:SpellUsable("Tranquilizing Shot") then
 					return lowestmelee:Cast("Tranquilizing Shot")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
 			end
 		end
 	end,
 	tranquillshot_midprio = function()
 		if player:spellcooldown("Tranquilizing Shot")<.3
-			-- and _A.castdelay("Tranquilizing Shot", player:gcd()) 
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
-			-- if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
 			if lowestmelee and canpurge(lowestmelee.guid) then
 				if player:SpellUsable("Tranquilizing Shot") and _A.lowpriocheck("Tranquilizing Shot") then
 					return lowestmelee:Cast("Tranquilizing Shot")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
 			end
 		end
@@ -1663,10 +1667,9 @@ survival.rot = {
 		if _A.MissileExists("Widow Venom")==false and _A.castdelay("Widow Venom", player:gcd())  and player:spellcooldown("Widow Venom")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
 			if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
-				-- if lowestmelee and not lowestmelee:debuff("Widow Venom") then
 				if player:SpellUsable("Widow Venom") and _A.lowpriocheck("Widow Venom") then
 					return lowestmelee:Cast("Widow Venom")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
 			end
 		end
@@ -1677,7 +1680,7 @@ survival.rot = {
 			if lowestmelee then
 				if _A.glaivetosscheck() and player:SpellUsable("Glaive Toss") then
 					return lowestmelee:Cast("Glaive Toss")
-					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
 			end
 		end
@@ -1687,17 +1690,6 @@ survival.rot = {
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Kill Shot)")
 			if lowestmelee and lowestmelee:health()<=20 then
 				return lowestmelee:Cast("Kill Shot")
-			end
-		end
-	end,
-	cobrashot = function()
-		if  player:SpellUsable("Cobra Shot") or player:SpellUsable("Steady Shot") then
-			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee then
-				if player:level()<81 then
-					return player:spellcooldown("Steady Shot")<.3 and lowestmelee:Cast("Steady Shot")
-					else return player:spellcooldown("Cobra Shot")<.3 and lowestmelee:Cast("Cobra Shot")
-				end
 			end
 		end
 	end,
@@ -1764,8 +1756,8 @@ local inCombat = function()
 	survival.rot.fervor()
 	survival.rot.stampede()
 	survival.rot.kick()
-	if AOEcheck() then survival.rot.barrage() end -- make a complete aoe check function
-	if AOEcheck() then survival.rot.multishot() end -- make a complete aoe check function
+	if AOEcheck() and survival.rot.barrage() then return end -- make a complete aoe check function
+	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 	-- Important Spells
 	if survival.rot.scatter_focus() then return end
 	if survival.rot.sleep_focus() then return end
@@ -1774,25 +1766,23 @@ local inCombat = function()
 		if survival.rot.sleep() then return end
 	end
 	survival.rot.killshot()
-	-- if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
+	if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
 	-- if not _A.modifier_ctrl() and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
 	survival.rot.concussion()
-	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return  end
-	if AOEcheck()==false then
-		-- important spells
-		survival.rot.amoc()
-		survival.rot.blackarrow()
-		survival.rot.explosiveshot()
-		survival.rot.glaivetoss()
-		-- excess focus priority
-		survival.rot.serpentsting_check()
-		survival.rot.venom()
-		survival.rot.tranquillshot_midprio()
-		survival.rot.arcaneshot()
-	end
-	-- Fills
-	if player:combat() and survival.rot.mendpet() then return end
-	if (_A.CobraCheck() or AOEcheck()) and survival.rot.cobrashot() then return end -- needs to be on highest HP
+	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
+	-- important spells
+	if survival.rot.amoc() then return end
+	if survival.rot.blackarrow() then return end
+	if survival.rot.explosiveshot() then return end
+	if survival.rot.glaivetoss() then return end
+	-- heal pet
+	survival.rot.mendpet()
+	-- excess focus priority
+	if survival.rot.arcaneshot_proc() then return end
+	if survival.rot.serpentsting_check() then return end
+	if survival.rot.venom() then return end
+	if survival.rot.tranquillshot_midprio() then return end
+	if survival.rot.arcaneshot() then return end
 end
 local spellIds_Loc = function()
 end
@@ -1812,4 +1802,4 @@ _A.CR:Add(255, {
 	-- pooling = false,
 	load = exeOnLoad,
 	unload = exeOnUnload
-})	
+})		
