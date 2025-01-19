@@ -1065,7 +1065,7 @@ local exeOnLoad = function()
 			if player:SpellIsTargeting() then
 				_A.ClickPosition(px, py, pz)
 				_A.CallWowApi("SpellStopTargeting")
-				_A.CallWowApi("SpellStopTargeting")
+				-- _A.CallWowApi("SpellStopTargeting")
 			end
 		end
 	end
@@ -1076,7 +1076,7 @@ local exeOnLoad = function()
 			if player:SpellIsTargeting() then
 				_A.ClickPosition(px, py, pz)
 				_A.CallWowApi("SpellStopTargeting")
-				_A.CallWowApi("SpellStopTargeting")
+				-- _A.CallWowApi("SpellStopTargeting")
 			end
 		end
 	end	
@@ -1200,7 +1200,6 @@ local exeOnLoad = function()
 			if target and target:alive() and target:enemy() and target:exists() and target:state("incapacitate || disorient || charm || misc || sleep ||fear") then
 				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
 			end
-			return 4
 		end
 	end
 	local function petengine()
@@ -1215,7 +1214,7 @@ local exeOnLoad = function()
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
 		-- Rotation
-		return petfollow() or attacktotem() or attackfocus() or attacklowest()
+		return attacktotem() or attackfocus() or attacklowest() or petfollow() 
 		-- return _A.CallWowApi("RunMacroText", "/petfollow")
 		-- if attacktarget() then return true end
 	end
@@ -1224,6 +1223,22 @@ end
 local exeOnUnload = function()
 end
 
+local dontdispell = {
+    ["Clearcasting"] = true,
+    ["Backdraft"] = true,
+}
+local function canpurge(target)
+    for i = 1, 40 do
+        local name,_,_,_,atype = _A.UnitBuff(target, i)
+        if not name then
+            break -- No more buffs
+        end
+        if name and atype and (atype == "Magic" or atype == "Enrage") and not dontdispell[name] then
+            return true
+        end
+    end
+    return false
+end
 
 survival.rot = {
 	-- flasks
@@ -1417,7 +1432,7 @@ survival.rot = {
 					and not Obj:debuffany("Wyvern Sting") and _A.notimmune(Obj) and Obj:los() then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 					if not  player:isCastingAny()  then
-						return scatter_x and Obj:debuff("Scatter Shot") and _A.clickcastdetail(scatter_x, scatter_z, scatter_y, "Freezing Trap") or _A.clickcast(Obj, "Freezing Trap")
+						return scatter_x and Obj:debuff("Scatter Shot") and _A.clickcastdetail(scatter_x, scatter_y, scatter_z, "Freezing Trap") or _A.clickcast(Obj, "Freezing Trap")
 						-- return _A.clickcast(Obj, "Freezing Trap")
 					end
 				end
@@ -1433,7 +1448,8 @@ survival.rot = {
 				and not focus:debuffany("Wyvern Sting") and _A.notimmune(focus) and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny()  then
-					return scatter_x and focus:debuff("Scatter Shot") and _A.clickcastdetail(scatter_x, scatter_z, scatter_y, "Freezing Trap") or _A.clickcast(focus, "Freezing Trap")
+					return scatter_x and focus:debuff("Scatter Shot") and _A.clickcastdetail(scatter_x, scatter_y, scatter_z, "Freezing Trap") or _A.clickcast(focus, "Freezing Trap")
+					-- return _A.clickcast(focus, "Freezing Trap")
 				end
 			end
 		end
@@ -1603,7 +1619,8 @@ survival.rot = {
 			-- and _A.castdelay("Tranquilizing Shot", player:gcd()) 
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
-			if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
+			-- if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
+			if lowestmelee and canpurge(lowestmelee.guid) then
 				if player:SpellUsable("Tranquilizing Shot") then
 					return lowestmelee:Cast("Tranquilizing Shot")
 					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
@@ -1616,7 +1633,8 @@ survival.rot = {
 			-- and _A.castdelay("Tranquilizing Shot", player:gcd()) 
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
-			if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
+			-- if lowestmelee and (lowestmelee:bufftype("Magic") or lowestmelee:bufftype("Enrage")) then
+			if lowestmelee and canpurge(lowestmelee.guid) then
 				if player:SpellUsable("Tranquilizing Shot") and _A.lowpriocheck("Tranquilizing Shot") then
 					return lowestmelee:Cast("Tranquilizing Shot")
 					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")

@@ -172,3 +172,4 @@ function _A.Tooltip.Scan_Debuff_Dispellable(_, target, pattern) -- checks if all
 	end
 	return false -- just in case
 end
+---------------------------------------------------------------------------------------------------
