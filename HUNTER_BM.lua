@@ -563,7 +563,7 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
 			if Obj.isplayer and Obj:spellRange("Arcane Shot") and _A.notimmune(Obj) 
-				and Obj:stateduration("stun || root")>=1 and not Obj:moving() and Obj:los() then
+				and Obj:stateduration("stun")>=1 and not Obj:moving() and Obj:los() then
 				tempTable[#tempTable+1] = {
 					range = Obj:range(),
 					guid = Obj.guid,
@@ -1261,7 +1261,7 @@ survival.rot = {
 	end,
 	spiritmend = function()
 		if player:SpellCooldown("Spirit Mend(Exotic Ability)")==0 
-			and player:health()<75 and player:combat() 
+			and player:health()<75
 			then
 			local pet = Object("pet")
 			if pet and pet:exists() and pet:alive() and pet.name == "Spirit Beast" and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") 
@@ -1639,7 +1639,7 @@ survival.rot = {
 		end
 	end,
 	venom = function()
-		if _A.lowpriocheck("Widow Venom") and _A.MissileExists("Widow Venom")==false  and player:spellcooldown("Widow Venom")<.3 then
+		if _A.MissileExists("Widow Venom")==false and _A.castdelay("Widow Venom", player:gcd()) and player:spellcooldown("Widow Venom")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
 			if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
 				-- if lowestmelee and not lowestmelee:debuff("Widow Venom") then
