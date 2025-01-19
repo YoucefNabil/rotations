@@ -1275,16 +1275,6 @@ survival.rot = {
 			end
 		end
 	end,
-	-- debug
-	serpentsting_debug = function()
-		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-		if lowestmelee and lowestmelee:debuff("Serpent Sting")  --118253
-			and (lowestmelee.isplayer or _A.pull_location=="none")
-			then
-			return print("serpent sting applied")
-		end
-		return print("serpent sting NOT applied")
-	end,
 	-- defs
 	deterrence = function()
 		if player:health() <= 25 and not player:buffany("Horde Flag") and not player:buffany("Alliance Flag") then
@@ -1592,6 +1582,19 @@ survival.rot = {
 			end
 		end
 	end,
+	serpentsting_check = function()
+		if _A.MissileExists("Serpent Sting")==false and _A.castdelay("Serpent Sting", player:gcd()*2) and player:spellcooldown("Serpent Sting")<.3  then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee and not lowestmelee:debuff(118253) 
+				and (lowestmelee.isplayer or _A.pull_location=="none")
+				then
+				if player:SpellUsable("Serpent Sting") and _A.lowpriocheck("Serpent Sting") then
+					return lowestmelee:Cast("Serpent Sting")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
+			end
+		end
+	end,
 	multishot = function()
 		if player:SpellUsable("Multi-Shot") and player:spellcooldown("Multi-Shot")<.3 and _A.multishotcheck() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -1766,19 +1769,19 @@ local inCombat = function()
 		if survival.rot.sleep() then return end
 	end
 	survival.rot.killshot()
-	if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
+	-- if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
+	if not _A.modifier_ctrl() and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
 	survival.rot.concussion()
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return  end
 	if AOEcheck()==false then
 		-- important spells
-		survival.rot.serpentsting()
 		survival.rot.amoc()
 		survival.rot.blackarrow()
 		survival.rot.explosiveshot()
 		survival.rot.glaivetoss()
-		-- excess focus priority -- these will fire from least to most expensive, the order doesnt matter much (that's why I added checks)
+		-- excess focus priority
+		survival.rot.serpentsting_check()
 		survival.rot.venom()
-		survival.rot.tranquillshot_midprio()
 		survival.rot.arcaneshot()
 	end
 	-- Fills
