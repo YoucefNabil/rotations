@@ -1197,7 +1197,7 @@ local exeOnLoad = function()
 	local function petfollow() -- when pet target has a breakable cc
 		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
 			local target = Object(_A.UnitTarget(_A.PetGUID))
-			if target and target:alive() and target:enemy() and target:exists() and target:state("incapacitate || disorient || charm || misc || sleep") then
+			if target and target:alive() and target:enemy() and target:exists() and target:state("incapacitate || disorient || charm || misc || sleep ||fear") then
 				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
 			end
 			return 4
