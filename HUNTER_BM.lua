@@ -1508,7 +1508,7 @@ survival.rot = {
 		end
 	end,
 	serpentsting = function()
-		if _A.MissileExists("Serpent Sting")==false and _A.castdelay("Serpent Sting", player:gcd()*2) and player:spellcooldown("Serpent Sting")<.3  then
+		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff(118253) 
 				and (lowestmelee.isplayer or _A.pull_location=="none")
@@ -1521,7 +1521,7 @@ survival.rot = {
 		end
 	end,
 	serpentsting_check = function()
-		if _A.MissileExists("Serpent Sting")==false and _A.castdelay("Serpent Sting", player:gcd()*2) and player:spellcooldown("Serpent Sting")<.3  then
+		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff(118253) 
 				and (lowestmelee.isplayer or _A.pull_location=="none")
@@ -1591,7 +1591,7 @@ survival.rot = {
 		end
 	end,
 	venom = function()
-		if _A.MissileExists("Widow Venom")==false and _A.castdelay("Widow Venom", player:gcd()) and player:spellcooldown("Widow Venom")<.3 then
+		if _A.MissileExists("Widow Venom")==false and player:spellcooldown("Widow Venom")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
 			if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
 				-- if lowestmelee and not lowestmelee:debuff("Widow Venom") then
@@ -1702,7 +1702,7 @@ local inCombat = function()
 	-- if not _A.modifier_ctrl() and survival.rot.tranquillshot_midprio() then return end --  highest prio in arena
 	survival.rot.concussion()
 	-- important spells
-	if player:buff("Thrill of the Hunt") and survival.rot.arcaneshot() then return end
+	if player:buffduration("Thrill of the Hunt")<1.5 and not player:buff("Arcane Intensity") and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
 	if survival.rot.serpentsting_check() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.glaivetoss() then return end
