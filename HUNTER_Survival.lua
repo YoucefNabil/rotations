@@ -1520,6 +1520,16 @@ survival.rot = {
 			end
 		end
 	end,
+	fervor = function()
+		if player:combat() and player:Talent("Fervor") and player:SpellCooldown("Fervor")==0 and player:spellusable("Fervor") and player:focus()<=40 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+			if lowestmelee and lowestmelee.isplayer
+				-- and lowestmelee:health()>=35
+				then 
+				return player:cast("Fervor")
+			end
+		end
+	end,
 	stampede = function()
 		if player:combat() and player:buff("Rapid Fire") and player:SpellCooldown("Stampede")<.3 and player:spellusable("Stampede") then
 			local lowestmelee = Object("simpletarget(Arcane Shot)")
@@ -1743,6 +1753,7 @@ local inCombat = function()
 	survival.rot.activetrinket()
 	survival.rot.items_agiflask()
 	survival.rot.bursthunt()
+	survival.rot.fervor()
 	survival.rot.stampede()
 	survival.rot.kick()
 	if AOEcheck() then survival.rot.barrage() end -- make a complete aoe check function
