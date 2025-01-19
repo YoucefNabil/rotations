@@ -1123,6 +1123,8 @@ local exeOnLoad = function()
 		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
+		local PetOBJ = Object(_A.PetGUID)
+		if PetOBJ and PetOBJ:state("incapacitate || disorient || charm || misc || sleep || fear || stun") then return end -- limited by the OM's range
 		-- Rotation
 		if attacktotem() then return end
 		if attacklowest() then return end
@@ -1579,7 +1581,8 @@ survival.rot = {
 		end
 	end,
 	tranquillshot_midprio = function()
-		if player:spellcooldown("Tranquilizing Shot")<.3
+		if player:spellcooldown("Tranquilizing Shot")<.3 
+		-- and _A.MissileExists("Tranquilizing Shot")==false
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
 			if lowestmelee and canpurge(lowestmelee.guid) then
@@ -1594,7 +1597,6 @@ survival.rot = {
 		if _A.MissileExists("Widow Venom")==false and player:spellcooldown("Widow Venom")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
 			if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
-				-- if lowestmelee and not lowestmelee:debuff("Widow Venom") then
 				if player:SpellUsable("Widow Venom") and _A.lowpriocheck("Widow Venom") then
 					return lowestmelee:Cast("Widow Venom")
 					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
@@ -1685,6 +1687,7 @@ local inCombat = function()
 	survival.rot.bursthunt()
 	survival.rot.fervor()
 	survival.rot.frenzy()
+	survival.rot.bestialwrath()
 	survival.rot.direbeast()
 	survival.rot.stampede()
 	survival.rot.kick()
@@ -1699,10 +1702,10 @@ local inCombat = function()
 	end
 	survival.rot.killshot()
 	-- if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
-	-- if not _A.modifier_ctrl() and survival.rot.tranquillshot_midprio() then return end --  highest prio in arena
+	if not _A.modifier_ctrl() and survival.rot.tranquillshot_midprio() then return end --  highest prio in arena
 	survival.rot.concussion()
 	-- important spells
-	if player:buffduration("Thrill of the Hunt")<1.5 and not player:buff("Arcane Intensity") and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
+	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
 	if survival.rot.serpentsting_check() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.glaivetoss() then return end

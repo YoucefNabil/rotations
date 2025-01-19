@@ -1164,6 +1164,8 @@ local exeOnLoad = function()
 		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
+		local PetOBJ = Object(_A.PetGUID)
+		if PetOBJ and PetOBJ:state("incapacitate || disorient || charm || misc || sleep || fear || stun") then return end
 		-- Rotation
 		if attacktotem() then return end
 		if attacklowest() then return end
@@ -1655,7 +1657,7 @@ local inCombat = function()
 	if not player then return true end
 	local focus = Object("focus")
 	--debug
-	print(_A.MissileExists("Arcane Shot"))
+	-- print(_A.MissileExists("Arcane Shot"))
 	-- print(player:immuneduration("snare || all"))
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
@@ -1713,7 +1715,7 @@ local inCombat = function()
 	survival.rot.concussion()
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
 	-- important spells
-	if player:buffduration("Thrill of the Hunt")<1.5 and not player:buff("Arcane Intensity") and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
+	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.blackarrow() then return end
 	if survival.rot.explosiveshot() then return end
