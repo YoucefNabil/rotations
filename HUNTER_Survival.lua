@@ -1726,6 +1726,7 @@ local inCombat = function()
 	if player:mounted() then return true end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return true end
 	if player:isChanneling("Barrage") then return true end
+	-------------------------- UTILITY
 	if survival.rot.roarofsac() then return end
 	if player:lostcontrol() then return true end
 	if player:buff("Camouflage") then return true end
@@ -1775,12 +1776,13 @@ local inCombat = function()
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return  end
 	if AOEcheck()==false then
 		-- important spells
+		survival.rot.serpentsting()
 		survival.rot.amoc()
 		survival.rot.blackarrow()
 		survival.rot.explosiveshot()
 		survival.rot.glaivetoss()
 		-- excess focus priority
-		survival.rot.serpentsting_check()
+		-- survival.rot.serpentsting_check()
 		survival.rot.venom()
 		survival.rot.arcaneshot()
 	end
