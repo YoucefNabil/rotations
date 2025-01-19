@@ -1112,7 +1112,7 @@ local exeOnLoad = function()
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			for _,totems in ipairs(badtotems) do
-				if Obj.name==totems and Obj:los() then
+				if Obj.name==totems then
 					tempTable[#tempTable+1] = {
 						guid = Obj.guid,
 						range = Obj:range(),
@@ -1215,7 +1215,9 @@ local exeOnLoad = function()
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
 		-- Rotation
-		return attacktotem() or attackfocus() or attacklowest() or petfollow() 
+		if attacktotem() then return end
+		if attacklowest() then return end
+		if petfollow() then return end
 	end
 	C_Timer.NewTicker(.1, petengine, false, "petengineengine")
 end
@@ -1766,7 +1768,7 @@ local inCombat = function()
 		if survival.rot.sleep() then return end
 	end
 	survival.rot.killshot()
-	if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
+	-- if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
 	-- if not _A.modifier_ctrl() and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
 	survival.rot.concussion()
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end

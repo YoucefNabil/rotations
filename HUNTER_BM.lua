@@ -1166,7 +1166,9 @@ local exeOnLoad = function()
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
 		-- Rotation
-		return attacktotem() or attackfocus() or attacklowest() or petfollow() 
+		if attacktotem() then return end
+		if attacklowest() then return end
+		if petfollow() then return end
 		-- return _A.CallWowApi("RunMacroText", "/petfollow")
 		-- if attacktarget() then return true end
 	end
@@ -1763,7 +1765,6 @@ local inCombat = function()
 	-- fill
 	if survival.rot.arcaneshot() then return end
 	-- Fills
-	if player:combat() and survival.rot.mendpet() then return end
 end
 local spellIds_Loc = function()
 end
