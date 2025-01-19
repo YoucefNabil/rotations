@@ -566,9 +566,9 @@ local exeOnLoad = function()
 				and Obj:stateduration("stun || root")>=1 and not Obj:moving() and Obj:los() then
 				tempTable[#tempTable+1] = {
 					range = Obj:range(),
-				guid = Obj.guid,
-				health = Obj:health(),
-			}
+					guid = Obj.guid,
+					health = Obj:health(),
+				}
 			end
 		end
 		if #tempTable>1 then
@@ -1261,11 +1261,11 @@ survival.rot = {
 	end,
 	spiritmend = function()
 		if player:SpellCooldown("Spirit Mend(Exotic Ability)")==0 
-		-- and player:health()<95 and player:combat() 
-		then
+			and player:health()<75 and player:combat() 
+			then
 			local pet = Object("pet")
 			if pet and pet:exists() and pet:alive() and pet.name == "Spirit Beast" and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") 
-			and pet:range()<25 and pet:focus()>=5 and pet:los() then
+				and pet:range()<25 and pet:focus()>=5 and pet:los() then
 				-- return player:cast("Spirit Mend(Exotic Ability)")
 				return _A.CallWowApi("RunMacroText","/cast [@player] Spirit Mend(Exotic Ability)")
 			end
@@ -1573,10 +1573,13 @@ survival.rot = {
 		end
 	end,
 	multishot = function()
-		if player:SpellUsable("Multi-Shot") and player:spellcooldown("Multi-Shot")<.3 and _A.multishotcheck() then
+		if player:spellcooldown("Multi-Shot")<.3 and _A.multishotcheck() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				return lowestmelee:Cast("Multi-Shot")
+				if player:SpellUsable("Multi-Shot") then 
+					return lowestmelee:Cast("Multi-Shot")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
 			end
 		end
 	end,
@@ -1584,7 +1587,10 @@ survival.rot = {
 		if player:Talent("Barrage") and player:spellcooldown("Barrage")<.3 and player:SpellUsable("Barrage") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				return lowestmelee:Cast("Barrage")
+				if player:SpellUsable("Barrage") then
+					return lowestmelee:Cast("Barrage")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
 			end
 		end
 	end,
@@ -1602,7 +1608,7 @@ survival.rot = {
 			if lowestmelee then
 				return lowestmelee:Cast("Arcane Shot")
 			end
-		end
+			end
 	end,
 	tranquillshot_highprio = function()
 		if player:spellcooldown("Tranquilizing Shot")<.3
@@ -1733,8 +1739,8 @@ local inCombat = function()
 	survival.rot.autoattackmanager()
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return true end
 	-- Burst
-	survival.rot.activetrinket()
 	survival.rot.items_agiflask()
+	survival.rot.activetrinket()
 	survival.rot.bursthunt()
 	survival.rot.fervor()
 	survival.rot.frenzy()

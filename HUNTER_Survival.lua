@@ -1594,10 +1594,13 @@ survival.rot = {
 		end
 	end,
 	multishot = function()
-		if player:SpellUsable("Multi-Shot") and player:spellcooldown("Multi-Shot")<.3 and _A.multishotcheck() then
+		if player:spellcooldown("Multi-Shot")<.3 and _A.multishotcheck() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				return lowestmelee:Cast("Multi-Shot")
+				if player:SpellUsable("Multi-Shot") then 
+					return lowestmelee:Cast("Multi-Shot")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
 			end
 		end
 	end,
@@ -1605,7 +1608,10 @@ survival.rot = {
 		if player:Talent("Barrage") and player:spellcooldown("Barrage")<.3 and player:SpellUsable("Barrage") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				return lowestmelee:Cast("Barrage")
+				if player:SpellUsable("Barrage") then
+					return lowestmelee:Cast("Barrage")
+					else return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
 			end
 		end
 	end,
