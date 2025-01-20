@@ -63,8 +63,14 @@ local function CalculateHP(t)
 	return 100 * ( CalculateHPRAW(t) ) / CalculateHPRAWMAX(t)
 end
 local blacklist = {
+	["Kimpackabowl"] = true,
+	-- [] = true,
+	-- [] = true,
+	-- [] = true,
 }
 --
+local donthealtheseguys = {
+}
 --
 local healerspecid = {
 	-- [265]="Lock Affli",
@@ -387,9 +393,9 @@ local exeOnLoad = function()
 		local location = _A.pull_location
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-				if _A.nothealimmune(fr) and fr:los() then
+				if not blacklist[fr.name] and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable+1] = {
-						HP = fr:healthmonk(),
+						HP = fr:health(),
 						guid = fr.guid
 					}
 				end
@@ -408,10 +414,10 @@ local exeOnLoad = function()
 		local location = pull_location()
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-				if not fr:Buff(132120) 
+				if not blacklist[fr.name] and not fr:Buff(132120) 
 					and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable+1] = {
-						HP = fr:healthmonk(),
+						HP = fr:health(),
 						guid = fr.guid
 					}
 				end
@@ -431,7 +437,7 @@ local exeOnLoad = function()
 			if _A.notimmune(Obj) and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
-					health = Obj:healthmonk(),
+					health = Obj:health(),
 					isplayer = Obj.isplayer and 1 or 0
 				}
 			end
@@ -456,7 +462,7 @@ local exeOnLoad = function()
 			if Obj:spellRange(spell) and _A.notimmune(Obj) and  Obj:InConeOf(player, 150) and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
-					health = Obj:healthmonk(),
+					health = Obj:health(),
 					isplayer = Obj.isplayer and 1 or 0
 				}
 			end
@@ -469,6 +475,32 @@ local exeOnLoad = function()
 			else return
 		end
 	end)
+	-- disarm
+	--[[
+	burstdisarm = function()
+		if player:Stance() == 1   then
+			if player:SpellCooldown("Grapple Weapon")<.3 then
+				for _, obj in pairs(_A.OM:Get('Enemy')) do
+					if obj.isplayer 
+						and obj:SpellRange("Grapple Weapon") 
+						and obj:InConeOf(player, 170)
+						and not healerspecid[obj:spec()] 
+						-- and (_A.pull_location=="arena" or UnitTarget(obj.guid)==player.guid)
+						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
+						and not obj:BuffAny("Bladestorm")
+						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm")
+						and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
+						and obj:range()<10 
+						and (_A.pull_location=="arena" or _A.UnitTarget(obj.guid)==player.guid)
+						and _A.notimmune(obj)
+						and obj:los() then
+						return obj:Cast("Grapple Weapon")
+					end
+				end
+			end
+		end
+	end
+	--]]
 	_A.FakeUnits:Add('mostTargetedRosterPVP', function()
 		local targets = {}
 		local most, mostGuid = 0
@@ -490,6 +522,7 @@ local exeOnLoad = function()
 		end
 		return mostGuid
 	end)
+	_Y.healingspheretime = nil
 	_A.SMguid = nil
 	_A.casttimers = {} -- doesnt work with channeled spells
 	_A.Listener:Add("delaycasts_Monk_and_misc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
@@ -497,7 +530,20 @@ local exeOnLoad = function()
 		-- if subevent == "SWING_DAMAGE" or subevent == "RANGE_DAMAGE" or subevent == "SPELL_PERIODIC_DAMAGE" or subevent == "SPELL_BUILDING_DAMAGE" or subevent == "ENVIRONMENTAL_DAMAGE"  then
 		-- print(subevent.." "..amount) -- too much voodoo
 		-- end
-		if guidsrc == UnitGUID("player") then
+		if guidsrc == UnitGUID("player")
+			then
+			-- DEBUG
+			-- if subevent == "SPELL_CAST_SUCCESS" then
+				-- if idd==115460 then
+					-- _Y.healingspheretime = GetTime()
+				-- end
+				-- if idd==115464 then
+					-- if _Y.healingspheretime then
+						-- print(GetTime()-_Y.healingspheretime)
+						-- _Y.healingspheretime = nil
+					-- end
+				-- end
+			-- end
 			-- print(subevent)
 			-- Delay Cast Function
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
@@ -520,6 +566,7 @@ local exeOnLoad = function()
 					-- print("RE MO V E D")
 				end
 			end
+			----------------------
 		end
 	end)
 	function _A.castdelay(idd, delay)
@@ -827,8 +874,15 @@ local exeOnLoad = function()
 		-- Determine the dynamic distance, with a minimum of 2 units for moving units
 		local facing = _A.ObjectFacing(unit)
 		local speed_raw = _A.GetUnitSpeed(unit)
-		local speed = speed_raw - 4.5
-		local distance = math.max(2, math.min(maxDistance, speed)) -- old is speed - 4.5
+		-- local latencyy = ((select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10) or 0
+		local latencyy = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
+		local speed = speed_raw * latencyy
+		-- local speed = speed_raw
+		-- local mindistances = speed * .2
+		
+		-- local distance = math.max(mindistances, math.min(maxDistance, speed + latencyy)) -- old is speed - 4.5
+		local distance = -speed
+		-- local distance = 0
 		-- UNIT IS PLAYER
 		player = player or Object("player")
 		if munit:is(player) then
@@ -1044,7 +1098,7 @@ local mw_rot = {
 	end,
 	
 	items_healthstone = function()
-		if player:healthmonk() <= 35    then
+		if player:health() <= 35    then
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) then
@@ -1231,20 +1285,19 @@ local mw_rot = {
 		end
 	end,
 	
-	burstdisarm = function()
+	burstdisarm = function() -- should be arena only
 		if player:Stance() == 1   then
 			if player:SpellCooldown("Grapple Weapon")<.3 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer 
 						and obj:SpellRange("Grapple Weapon") 
-						and obj:InConeOf(player, 150)
-						and not healerspecid[obj:spec()] 
-						-- and (_A.pull_location=="arena" or UnitTarget(obj.guid)==player.guid)
+						and obj:InConeOf(player, 170)
+						and not healerspecid[obj:spec()]
 						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
 						and not obj:BuffAny("Bladestorm")
-						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
-						and not obj:state("disarm")
-						and (obj:drState("Grapple Weapon") == 0 or obj:drState("Grapple Weapon")==-1)
+						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm || stun")
+						and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
+						and (_A.pull_location=="arena" or (UnitTarget(obj.guid)==player.guid and obj:range()<10))
 						and _A.notimmune(obj)
 						and obj:los() then
 						return obj:Cast("Grapple Weapon")
@@ -1299,12 +1352,25 @@ local mw_rot = {
 		end
 	end,
 	
+	pvp_disable_root = function()
+		if player:Stance() == 1 --and pull_location()=="arena" 
+			then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			if lowestmelee and not lowestmelee:immune("all || snare") and not lowestmelee:state("stun || root")  
+				and not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence") then
+				if lowestmelee:drState(116706)==1 or lowestmelee:drState(116706)==-1 then
+					return lowestmelee:Cast("Disable")
+				end
+			end
+		end
+	end,
+	
 	ringofpeace = function()
 		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<0.3 then
 			local peacetarget = Object("mostTargetedRosterPVP")
 			if peacetarget then
-				if peacetarget:SpellRange("Ring of Peace") and peacetarget:healthmonk()<=85 and not peacetarget:BuffAny("Ring of Peace") then
-					if ( peacetarget:areaEnemies(6) >= 3 ) or ( peacetarget:areaEnemies(6) >= 1 and peacetarget:healthmonk()<75 ) then
+				if peacetarget:SpellRange("Ring of Peace") and peacetarget:health()<=85 and not peacetarget:BuffAny("Ring of Peace") then
+					if ( peacetarget:areaEnemies(6) >= 3 ) or ( peacetarget:areaEnemies(6) >= 1 and peacetarget:health()<75 ) then
 						if peacetarget:los() then
 							return peacetarget:Cast("Ring of Peace")
 						end
@@ -1347,7 +1413,7 @@ local mw_rot = {
 			if mostGuid then peacetarget = Object(mostGuid)
 				if peacetarget then
 					if peacetarget:SpellRange("Ring of Peace") and not peacetarget:BuffAny("Ring of Peace") then
-						if (most >= 2) or (most >= 1 and (peacetarget:healthmonk() < 45 or (_A.pull_location == "arena" and peacetarget:healthmonk() < 65))) then
+						if (most >= 2) or (most >= 1 and (peacetarget:health() < 45 or (_A.pull_location == "arena" and peacetarget:health() < 65))) then
 							if peacetarget:los() then
 								return peacetarget:Cast("Ring of Peace")
 							end
@@ -1480,7 +1546,7 @@ local mw_rot = {
 	fortifyingbrew = function()
 		if player:Stance() == 1   then
 			if	player:SpellCooldown("Fortifying Brew")==0
-				and player:healthmonk()<50
+				and player:health()<50
 				then
 				player:Cast("Fortifying Brew")
 			end
@@ -1489,10 +1555,11 @@ local mw_rot = {
 	
 	thunderfocustea = function()
 		if player:Stance() == 1 and player:Chi()>=1 then
-			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea") then
+			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea")
+			and not player:state("incapacitate || fear || disorient || charm || misc || sleep || stun || silence") then
 				if _A.thunderbrewremovedat==nil or (_A.thunderbrewremovedat and (GetTime() - _A.thunderbrewremovedat)>=45)
 					then
-					player:Cast("Thunder Focus Tea")
+					return player:Cast("Thunder Focus Tea")
 				end
 			end
 		end
@@ -1536,7 +1603,7 @@ local mw_rot = {
 								then
 								if _A.nothealimmune(fr) and fr:los() then
 									temptabletbl2[#temptabletbl2+1] = {
-										HP = fr:healthmonk(),
+										HP = fr:health(),
 										obj = fr
 									}
 								end
@@ -1556,7 +1623,7 @@ local mw_rot = {
 		if player:talent("Diffuse Magic") and player:SpellCooldown("Diffuse Magic")==0 then
 			-- add the stuff that hurts
 			if 
-				player:healthmonk()<30 or player:DebuffAny("Moonfire || Sunfire || Unstable Affliction || Touch of Karma") or player:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence")
+				player:health()<30 or player:DebuffAny("Moonfire || Sunfire || Unstable Affliction || Touch of Karma") or player:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence")
 				then 
 			return player:cast("Diffuse Magic") end
 		end
@@ -1657,8 +1724,8 @@ local mw_rot = {
 				if lowest and lowest:SpellRange("Life Cocoon") then 			
 					--]]
 					if 
-						-- (lowest:healthmonk()<40 or (pull_location()=="pvp" and lowest:healthmonk()<40))
-						lowest:healthmonk()<40
+						-- (lowest:health()<40 or (pull_location()=="pvp" and lowest:health()<40))
+						lowest:health()<40
 						then
 						return lowest:Cast("Life Cocoon")
 					end
@@ -1676,7 +1743,7 @@ local mw_rot = {
 					--]]
 					
 					if  
-						lowest:healthmonk()<=85
+						lowest:health()<=85
 						
 						then
 						return lowest:Cast("Surging Mist")
@@ -1717,8 +1784,9 @@ local mw_rot = {
 							if target:Distance() < 40 then
 								if target:los() then
 									-- return target:CastGround("Healing Sphere")
-									-- return _A.clickcast(target,"Healing Sphere")
-									return _A.CastPredictedPos(target.guid, "Healing Sphere", 8)
+									return _A.clickcast(target,"Healing Sphere")
+									-- return _A.CallWowApi("CastSpellByID", 115464, "player")
+									-- return _A.CastPredictedPos(target.guid, "Healing Sphere", 88)
 								end
 							end
 						end
@@ -1736,11 +1804,11 @@ local mw_rot = {
 						--- ORBS
 						local lowest = Object("lowestall")
 						if lowest then
-							if (lowest:healthmonk() < 85) then
+							if (lowest:health() < 85) then
 								-- if lowest:los() then
 								-- return lowest:CastGround("Healing Sphere", true)
-								-- return _A.clickcast(lowest,"Healing Sphere")
-								return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 8)
+								return _A.clickcast(lowest,"Healing Sphere")
+								-- return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 88)
 								-- end
 							end
 						end
@@ -1755,8 +1823,9 @@ local mw_rot = {
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
 					local lowest = Object("lowestall")
-					if lowest and lowest:healthmonk() < 22 then
-						return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 8)
+					if lowest and lowest:health() < 22 then
+						-- return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 88)
+						return _A.clickcast(lowest,"Healing Sphere")
 					end
 				end
 			end
@@ -2070,9 +2139,12 @@ local inCombat = function()
 	if not _A.pull_location then return end
 	player = player or Object("player")
 	if not player then return end
+	-- print(player:SpellCount("Chi Brew"))
+	-- print(player.name)
 	if not player:alive() then return end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
+	if player:mounted() then return end
 	mw_rot.autofocus()
 	mw_rot.autoattackmanager()
 	-- Out of GCD
@@ -2080,12 +2152,14 @@ local inCombat = function()
 	mw_rot.kick_spear()
 	mw_rot.activetrinket()
 	if _A.buttondelayfunc()  then return end
-	if player:mounted() then return end
+
 	if player:isChanneling("Crackling Jade Lightning") then return end
 	if mw_rot.items_healthstone() then return end 
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
-	if mw_rot.healingsphere_superlow() then return end
+	-- if mw_rot.healingsphere_superlow() then return end
+	if mw_rot.healingsphere_keybind() then return end
+	--
 	if mw_rot.Xuen() then return end
 	-- if mw_rot.turtletoss() then return end
 	if mw_rot.kick_legsweep() then return end
@@ -2095,18 +2169,21 @@ local inCombat = function()
 	if mw_rot.renewingmist() then return end
 	if mw_rot.dispellunCC() then return end
 	if mw_rot.dispellDANGEROUS() then return end
-	if _A.modifier_shift() then
+	if _A.modifier_shift() or _A.manaengine() then
 		if mw_rot.uplift() then return end
-		if mw_rot.manatea_HealthRegen() then return end
+		-- if mw_rot.manatea_HealthRegen() then return end
 		if mw_rot.healingsphere() then return end
 	end
+	if mw_rot.healingsphere() then return end
+	if mw_rot.manatea() then return end
 	if not player:keybind("R") then
 		if mw_rot.tigerpalm_mm() then return end
 	end
 	-- if mw_rot.dispellunSLOW() then return end
 	if mw_rot.diffusemagic() then return end
 	if mw_rot.spin_rjw() then return end
-	if mw_rot.burstdisarm()  then return end
+	if mw_rot.burstdisarm()  then print("DISARMING") return end
+	-- if mw_rot.pvp_disable_root() then return end
 	if mw_rot.chi_wave()  then return end
 	if mw_rot.chibrew()  then return end
 	if mw_rot.fortifyingbrew() then return end
@@ -2121,10 +2198,9 @@ local inCombat = function()
 	end
 	if mw_rot.tigerpalm_mm() then return end
 	if mw_rot.surgingmist() then return end
-	if mw_rot.manatea() then return end
+	-- if mw_rot.manatea() then return end
 	if mw_rot.ctrl_mode() then return end
 	if mw_rot.healstatue() then return end
-	if mw_rot.healingsphere() then return end
 	-- old pvp slot
 	-- mw_rot.lightning_keybind()
 	if mw_rot.uplift() then return end
@@ -2139,6 +2215,7 @@ local inCombat = function()
 	if not _A.modifier_shift() then
 		if mw_rot.dpsstanceswap()  then return end
 	end
+	--]]
 end
 local spellIds_Loc = function()
 end
