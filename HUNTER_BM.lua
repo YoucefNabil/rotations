@@ -1706,7 +1706,7 @@ local inCombat = function()
 	survival.rot.concussion()
 	-- important spells
 	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
-	if survival.rot.serpentsting_check() then return end
+	if _A.pull_location~="pvp" and survival.rot.serpentsting_check() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.glaivetoss() then return end
 	-- excess focus priority

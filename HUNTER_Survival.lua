@@ -1710,7 +1710,7 @@ local inCombat = function()
 		if survival.rot.sleep() then return end
 	end
 	survival.rot.killshot()
-	-- if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
+	if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
 	-- if not _A.modifier_ctrl() and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
 	survival.rot.concussion()
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
@@ -1723,9 +1723,9 @@ local inCombat = function()
 	-- heal pet
 	survival.rot.mendpet()
 	-- excess focus priority
-	if survival.rot.serpentsting_check() then return end
+	if _A.pull_location~="pvp" and survival.rot.serpentsting_check() then return end
 	if survival.rot.venom() then return end
-	if survival.rot.tranquillshot_midprio() then return end
+	-- if survival.rot.tranquillshot_midprio() then return end
 	if survival.rot.arcaneshot() then return end
 end
 local spellIds_Loc = function()
