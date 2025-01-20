@@ -1134,22 +1134,11 @@ local exeOnLoad = function()
 	end
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRange(Arcane Shot)")
-		if target and target:alive() and target:enemy() and target:exists() then
+		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				-- if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
 				return _A.CallWowApi("PetAttack", target.guid), 3
 				-- end
-			end
-			return 3
-		end
-	end
-	local function attacktarget()
-		local target = Object("target")
-		if target and target:alive() and target:enemy() and target:exists() and not target:state("incapacitate || disorient || charm || misc || sleep || fear") then
-			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-					return _A.CallWowApi("PetAttack", target.guid), 3
-				end
 			end
 			return 3
 		end
@@ -1173,8 +1162,6 @@ local exeOnLoad = function()
 		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
-		local PetOBJ = Object(_A.PetGUID)
-		if PetOBJ and PetOBJ:state("incapacitate || disorient || charm || misc || sleep || fear || stun") then return end
 		-- Rotation
 		if attacktotem() then return end
 		if attacklowest() then return end
