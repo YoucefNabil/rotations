@@ -1711,7 +1711,8 @@ local inCombat = function()
 	if _A.modifier_alt() then survival.rot.concussion() end
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
 	-- important spells
-	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
+	if (_A.pull_location=="pvp" or _A.pull_location=="arena") 
+		and player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.blackarrow() then return end
 	if survival.rot.explosiveshot() then return end
