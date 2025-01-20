@@ -478,6 +478,15 @@ local exeOnLoad = function()
 		end
 	end
 	
+	function _A.modifier_alt()
+		local modkeyb = IsAltKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
+	
 	local function castsecond(unit)
 		local givetime = GetTime()
 		local tempvar = select(6, UnitCastingInfo(unit))
@@ -1538,7 +1547,7 @@ survival.rot = {
 	serpentsting_check = function()
 		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<.3  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-			if lowestmelee and not lowestmelee:debuff(118253) 
+			if lowestmelee and not lowestmelee:debuff(118253) and lowestmelee:health()>50
 				and (lowestmelee.isplayer or _A.pull_location=="none")
 				then
 				if player:SpellUsable("Serpent Sting") and _A.lowpriocheck("Serpent Sting") then
@@ -1710,9 +1719,9 @@ local inCombat = function()
 		if survival.rot.sleep() then return end
 	end
 	survival.rot.killshot()
-	if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
+	if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  Only worth it in arena
 	-- if not _A.modifier_ctrl() and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
-	survival.rot.concussion()
+	if _A.modifier_alt() then survival.rot.concussion() end
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
 	-- important spells
 	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
@@ -1723,9 +1732,8 @@ local inCombat = function()
 	-- heal pet
 	survival.rot.mendpet()
 	-- excess focus priority
-	if _A.pull_location~="pvp" and survival.rot.serpentsting_check() then return end
+	if survival.rot.serpentsting_check() then return end
 	if survival.rot.venom() then return end
-	-- if survival.rot.tranquillshot_midprio() then return end
 	if survival.rot.arcaneshot() then return end
 end
 local spellIds_Loc = function()
