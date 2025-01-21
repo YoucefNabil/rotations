@@ -331,9 +331,9 @@ local exeOnLoad = function()
 					scatter_x = nil
 					scatter_y = nil
 					scatter_z = nil
-					end
 				end
 			end
+		end
 	end)
 	function _A.castdelay(idd, delay)
 		local spellid = idd and _A.Core:GetSpellID(idd)
@@ -589,7 +589,8 @@ local exeOnLoad = function()
 			return target and target.guid -- this is good
 		end
 		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-		if lowestmelee and lowestmelee:rangefrom(pet)<=24 and pet:losFrom(lowestmelee) then
+		if lowestmelee then
+			-- print("YES PULLING THIS")
 			return lowestmelee.guid
 		end
 		return nil
@@ -1180,9 +1181,7 @@ local exeOnLoad = function()
 	local function petengine()
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
-		-- print(player:spec())
 		if player:spec()~=253 then return true end
-		-- print("working")
 		-- if not player:combat() then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
 		if player:mounted() then return end
@@ -1190,13 +1189,9 @@ local exeOnLoad = function()
 		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
-		-- print("working")
 		if attacktotem() then return end
-		-- if petfollow_whenselftargeting() then return end
 		if attacklowest() then return end
 		if petfollow() then return end
-		-- return _A.CallWowApi("RunMacroText", "/petfollow")
-		-- if attacktarget() then return true end
 	end
 	C_Timer.NewTicker(.1, petengine, false, "petengineengine2")
 end
@@ -1677,12 +1672,15 @@ survival.rot = {
 		end
 	end,
 	venom = function()
-		if _A.MissileExists("Widow Venom")==false and player:spellcooldown("Widow Venom")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
-			if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
-				if player:SpellUsable("Widow Venom") and _A.lowpriocheck("Widow Venom") then
-					return lowestmelee:Cast("Widow Venom")
-					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+		local pet = Object("pet")
+		if not pet or (pet and pet:exists() and pet:alive() and pet.name ~= "Devilsaur") then
+			if _A.MissileExists("Widow Venom")==false and player:spellcooldown("Widow Venom")<.3 then
+				local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
+				if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuffany("Widow Venom") and not lowestmelee:debuffany("Monstrous Bite") then
+					if player:SpellUsable("Widow Venom") and _A.lowpriocheck("Widow Venom") then
+						return lowestmelee:Cast("Widow Venom")
+						elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					end
 				end
 			end
 		end
@@ -1785,6 +1783,7 @@ local inCombat = function()
 	end
 	survival.rot.killshot()
 	if not _A.modifier_ctrl() and _A.pull_location=="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
+	-- if not _A.modifier_ctrl() and  survival.rot.tranquillshot_midprio() then return end -- for quest
 	if _A.modifier_alt() then survival.rot.concussion() end
 	-- important spells
 	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end

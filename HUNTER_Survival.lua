@@ -1173,9 +1173,9 @@ local exeOnLoad = function()
 		local target = Object("lowestEnemyInSpellRange(Arcane Shot)")
 		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				-- if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-				return _A.CallWowApi("PetAttack", target.guid), 3
-				-- end
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+					return _A.CallWowApi("PetAttack", target.guid), 3
+				end
 			end
 			return 3
 		end
@@ -1804,5 +1804,5 @@ _A.CR:Add(255, {
 	-- blacklist = blacklist,
 	-- pooling = false,
 	load = exeOnLoad,
-unload = exeOnUnload
+	unload = exeOnUnload
 })			
