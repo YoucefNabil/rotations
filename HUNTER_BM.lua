@@ -1346,8 +1346,8 @@ survival.rot = {
 	autoattackmanager = function()
 		local target = Object("target")
 		if target and target.isplayer and target:enemy() and target:alive() and target:InConeOf(player, 180) and target:los() then
-			if target:state("incapacitate || fear || disorient || charm || misc || sleep") and player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") 
-				elseif not target:state("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then  _A.CallWowApi("RunMacroText", "/startattack") 
+			if (target:state("incapacitate || fear || disorient || charm || misc || sleep") or _A.scattertargets[target.guid]) and player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") 
+				elseif not target:state("incapacitate || fear || disorient || charm || misc || sleep") and not _A.scattertargets[target.guid] and not player:autoattack() then  _A.CallWowApi("RunMacroText", "/startattack") 
 			end
 		end
 	end,
