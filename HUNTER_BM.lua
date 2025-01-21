@@ -288,10 +288,22 @@ local exeOnLoad = function()
 	_A.pull_location = _A.pull_location or pull_location()
 	
 	_A.casttimers = {}
+	_A.scattertargets = {}
+	
 	_A.Listener:Add("delaycasts_HUNT_BM", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
 		if player and player.guid and guidsrc == player.guid then
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-			-- if subevent == "SPELL_AURA_APPLIED" then -- doesnt work with channeled spells
+				if idd == 19503 or idd==19386 then -- add wyvern sting
+					if not _A.scattertargets[guiddest] then _A.scattertargets[guiddest]= true end
+					C_Timer.After(2, function()
+						if _A.scattertargets[guiddest] then
+							_A.scattertargets[guiddest]=nil
+						end
+					end)
+				end
+			end
+			-- if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+			if subevent == "SPELL_AURA_APPLIED" then -- doesnt work with channeled spells
 				_A.casttimers[idd] = _A.GetTime()
 				--
 				if idd == 19503 then
@@ -306,6 +318,11 @@ local exeOnLoad = function()
 						end
 					end)
 				end
+				if idd == 19503 or idd==19386 then
+					if _A.scattertargets[guiddest] then
+						_A.scattertargets[guiddest]=nil
+					end
+				end
 			end
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 				if idd == 60192 then
@@ -314,9 +331,9 @@ local exeOnLoad = function()
 					scatter_x = nil
 					scatter_y = nil
 					scatter_z = nil
+					end
 				end
 			end
-		end
 	end)
 	function _A.castdelay(idd, delay)
 		local spellid = idd and _A.Core:GetSpellID(idd)
@@ -518,12 +535,12 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
+			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -547,10 +564,27 @@ local exeOnLoad = function()
 		if not pet then return end
 		if pet and not pet:alive() then return end
 		if pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
-		if target and target:enemy() and target:exists() and target:alive() and target:rangefrom(pet)<=24 and _A.notimmune(target)
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and target:rangefrom(pet)<=24 and _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(target) then
 			return target and target.guid -- this is good
 		end
+		-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		-- if Obj:rangefrom(pet)<24 and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
+		-- and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(Obj) then
+		-- tempTable[#tempTable+1] = {
+		-- guid = Obj.guid,
+		-- health = Obj:health(),
+		-- range = Obj:range(),
+		-- isplayer = Obj.isplayer and 1 or 0
+		-- }
+		-- end
+		-- end
+		-- if #tempTable>1 then
+		-- table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.range < b.range) end )
+		-- end
+		-- if #tempTable>=1 then
+		-- return tempTable[num] and tempTable[num].guid -- not sure about this (pet can get lost) find a better solution
+		-- end
 		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 		if lowestmelee and lowestmelee:rangefrom(pet)<=24 and pet:losFrom(lowestmelee) then
 			return lowestmelee.guid
@@ -565,10 +599,27 @@ local exeOnLoad = function()
 		if not pet then return end
 		if pet and not pet:alive() then return end
 		if pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
-		if _A.pull_location and _A.pull_location=="arena" and target and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") then
 			return target and target.guid -- this is good
 		end
+		-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		-- if Obj:rangefrom(pet)<24 and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
+		-- and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(Obj) then
+		-- tempTable[#tempTable+1] = {
+		-- guid = Obj.guid,
+		-- health = Obj:health(),
+		-- range = Obj:range(),
+		-- isplayer = Obj.isplayer and 1 or 0
+		-- }
+		-- end
+		-- end
+		-- if #tempTable>1 then
+		-- table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.range < b.range) end )
+		-- end
+		-- if #tempTable>=1 then
+		-- return tempTable[num] and tempTable[num].guid -- not sure about this (pet can get lost) find a better solution
+		-- end
 		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 		if lowestmelee and lowestmelee:rangefrom(pet)<=24 and pet:losFrom(lowestmelee) then
 			return lowestmelee.guid
@@ -618,7 +669,7 @@ local exeOnLoad = function()
 	
 	_A.FakeUnits:Add('simpletarget', function(num, spell)
 		local target = Object("target")
-		if target and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
@@ -627,7 +678,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
+			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -652,7 +703,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('highestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
+			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -668,7 +719,7 @@ local exeOnLoad = function()
 			return tempTable[num] and tempTable[num].guid
 		end
 		local target = Object("target")
-		if target and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
@@ -1173,7 +1224,7 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return end
 		-- print("working")
 		if attacktotem() then return end
-		if petfollow_whenselftargeting() then return end
+		-- if petfollow_whenselftargeting() then return end
 		if attacklowest() then return end
 		if petfollow() then return end
 		-- return _A.CallWowApi("RunMacroText", "/petfollow")
@@ -1640,6 +1691,23 @@ survival.rot = {
 			end
 		end
 	end,
+	tranq_hop = function()
+		if player:SpellCooldown("Tranquilizing Shot")<.3 then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Tranquilizing Shot") and not Obj:state("incapacitate || disorient || charm || misc || sleep || fear")
+					and not Obj:BuffAny("Divine Shield") and Obj:InConeOf("player", 170)
+					and Obj:BuffAny("Hand of Protection")
+					and Obj:los() then
+					if player:SpellUsable("Tranquilizing Shot") then
+						return Obj:Cast("Tranquilizing Shot")
+						elseif _A.CobraCheck() then 
+						local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
+						if lowestmelee then return lowestmelee and player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")	end
+					end
+				end
+			end
+		end
+	end,
 	venom = function()
 		if _A.MissileExists("Widow Venom")==false and player:spellcooldown("Widow Venom")<.3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
@@ -1752,6 +1820,7 @@ local inCombat = function()
 	if _A.modifier_alt() then survival.rot.concussion() end
 	-- important spells
 	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
+	if survival.rot.tranq_hop() then return end
 	if survival.rot.serpentsting_check() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.glaivetoss() then return end

@@ -288,8 +288,19 @@ local exeOnLoad = function()
 	_A.pull_location = _A.pull_location or pull_location()
 	
 	_A.casttimers = {}
+	_A.scattertargets = {}
 	_A.Listener:Add("delaycasts_HUNT_SURV", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
 		if player and player.guid and guidsrc == player.guid then
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				if idd == 19503 or idd==19386 then -- add wyvern sting
+					if not _A.scattertargets[guiddest] then _A.scattertargets[guiddest]= true end
+					C_Timer.After(2, function()
+						if _A.scattertargets[guiddest] then
+							_A.scattertargets[guiddest]=nil
+						end
+					end)
+				end
+			end
 			-- if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 			if subevent == "SPELL_AURA_APPLIED" then -- doesnt work with channeled spells
 				_A.casttimers[idd] = _A.GetTime()
@@ -305,6 +316,11 @@ local exeOnLoad = function()
 							scatter_z = nil
 						end
 					end)
+				end
+				if idd == 19503 or idd==19386 then
+					if _A.scattertargets[guiddest] then
+						_A.scattertargets[guiddest]=nil
+					end
 				end
 			end
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
@@ -512,12 +528,12 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
+			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -539,7 +555,7 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
 			if Obj.isplayer and Obj:spellRange("Arcane Shot") and _A.notimmune(Obj) 
-				and Obj:stateduration("stun")>=1 and not Obj:moving() and Obj:los() then
+				and Obj:stateduration("stun || disorient")>=1 and not Obj:moving() and Obj:los() then
 				tempTable[#tempTable+1] = {
 					range = Obj:range(),
 					guid = Obj.guid,
@@ -576,7 +592,7 @@ local exeOnLoad = function()
 	
 	_A.FakeUnits:Add('simpletarget', function(num, spell)
 		local target = Object("target")
-		if target and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
@@ -585,7 +601,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
+			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -601,7 +617,7 @@ local exeOnLoad = function()
 			return tempTable[num] and tempTable[num].guid
 		end
 		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)  
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)  
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
@@ -610,7 +626,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('highestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
+			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
 				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -626,7 +642,7 @@ local exeOnLoad = function()
 			return tempTable[num] and tempTable[num].guid
 		end
 		local target = Object("target")
-		if target and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
@@ -1603,6 +1619,23 @@ survival.rot = {
 				if player:SpellUsable("Arcane Shot") and _A.lowpriocheck("Arcane Shot") then
 					return lowestmelee:Cast("Arcane Shot")
 					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
+			end
+		end
+	end,
+	tranq_hop = function()
+		if player:SpellCooldown("Tranquilizing Shot")<.3 then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Tranquilizing Shot") and not Obj:state("incapacitate || disorient || charm || misc || sleep || fear")
+					and not Obj:BuffAny("Divine Shield") and Obj:InConeOf("player", 170)
+					and Obj:BuffAny("Hand of Protection")
+					and Obj:los() then
+					if player:SpellUsable("Tranquilizing Shot") then
+						return Obj:Cast("Tranquilizing Shot")
+						elseif _A.CobraCheck() then 
+						local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
+						return lowestmelee and player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					end
 				end
 			end
 		end
