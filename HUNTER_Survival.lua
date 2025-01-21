@@ -288,24 +288,26 @@ local exeOnLoad = function()
 	_A.pull_location = _A.pull_location or pull_location()
 	
 	_A.casttimers = {}
-	_A.Listener:Add("delaycasts_HUNT", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
-		if guidsrc == UnitGUID("player") then
-			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+	_A.Listener:Add("delaycasts_HUNT_SURV", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+		if player.guid and guidsrc == player.guid then
+			-- if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+			if subevent == "SPELL_AURA_APPLIED" then -- doesnt work with channeled spells
 				_A.casttimers[idd] = _A.GetTime()
 				--
 				if idd == 19503 then
 					scatter_x, scatter_y, scatter_z = _A.ObjectPosition(guiddest)
 					print("SCATTERING!!!!!!!!!!!!!!!!!!!!!!!")
-					print(scatter_x)
-					print(scatter_y)
-					print(scatter_z)
 					C_Timer.After(10, function()
+						if scatter_x then
 						print("DELETING")
 						scatter_x = nil
 						scatter_y = nil
 						scatter_z = nil
+						end
 					end)
 				end
+			end
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 				if idd == 60192 then
 					print("FREEZING!!!")
 					print("DELETING")
@@ -330,36 +332,36 @@ local exeOnLoad = function()
 	--
 	hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
-		local Type, id, subType, spellID
-		-- print(slot)
-		local player = Object("player")
-		if slot==STARTSLOT then 
-			_A.pressedbuttonat = 0
-			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
-				_A.Interface:toggleToggle("mastertoggle", true)
-				-- _A.print("ON")
-				return true
-			end
+	local Type, id, subType, spellID
+	-- print(slot)
+	local player = Object("player")
+	if slot==STARTSLOT then 
+		_A.pressedbuttonat = 0
+		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
+			_A.Interface:toggleToggle("mastertoggle", true)
+			-- _A.print("ON")
+			return true
 		end
-		if slot==STOPSLOT then 
-			-- TEST STUFF
-			-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
-			-- TEST STUFF
-			-- print(player:stance())
-			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
-				_A.Interface:toggleToggle("mastertoggle", false)
-				-- _A.print("OFF")
-				return true
-			end
+	end
+	if slot==STOPSLOT then 
+		-- TEST STUFF
+		-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
+		-- TEST STUFF
+		-- print(player:stance())
+		if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
+			_A.Interface:toggleToggle("mastertoggle", false)
+			-- _A.print("OFF")
+			return true
 		end
-		--
-		if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
-			Type, id, subType = _A.GetActionInfo(slot)
-			if Type == "spell" or Type == "macro" -- remove macro?
-				then
-				_A.pressedbuttonat = _A.GetTime()
-			end
+	end
+	--
+	if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
+		Type, id, subType = _A.GetActionInfo(slot)
+		if Type == "spell" or Type == "macro" -- remove macro?
+			then
+			_A.pressedbuttonat = _A.GetTime()
 		end
+	end
 	end)
 	
 	function _A.unitfrozen(unit)
@@ -1173,20 +1175,20 @@ local exeOnUnload = function()
 end
 
 local dontdispell = {
-    ["Clearcasting"] = true,
-    ["Backdraft"] = true,
+	["Clearcasting"] = true,
+	["Backdraft"] = true,
 }
 local function canpurge(target)
-    for i = 1, 40 do
-        local name,_,_,_,atype = _A.UnitBuff(target, i)
-        if not name then
-            break -- No more buffs
+	for i = 1, 40 do
+		local name,_,_,_,atype = _A.UnitBuff(target, i)
+		if not name then
+			break -- No more buffs
 		end
-        if name and atype and (atype == "Magic" or atype == "Enrage") and not dontdispell[name] then
-            return true
+		if name and atype and (atype == "Magic" or atype == "Enrage") and not dontdispell[name] then
+			return true
 		end
 	end
-    return false
+	return false
 end
 
 survival.rot = {
@@ -1712,7 +1714,7 @@ local inCombat = function()
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
 	-- important spells
 	if (_A.pull_location=="pvp" or _A.pull_location=="arena") 
-		and player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
+	and player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.blackarrow() then return end
 	if survival.rot.explosiveshot() then return end
@@ -1741,5 +1743,5 @@ _A.CR:Add(255, {
 	-- blacklist = blacklist,
 	-- pooling = false,
 	load = exeOnLoad,
-	unload = exeOnUnload
-})		
+unload = exeOnUnload
+})			
