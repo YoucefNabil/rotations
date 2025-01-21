@@ -289,7 +289,7 @@ local exeOnLoad = function()
 	
 	_A.casttimers = {}
 	_A.Listener:Add("delaycasts_HUNT_SURV", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
-		if player.guid and guidsrc == player.guid then
+		if player and player.guid and guidsrc == player.guid then
 			-- if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 			if subevent == "SPELL_AURA_APPLIED" then -- doesnt work with channeled spells
 				_A.casttimers[idd] = _A.GetTime()
@@ -299,10 +299,10 @@ local exeOnLoad = function()
 					print("SCATTERING!!!!!!!!!!!!!!!!!!!!!!!")
 					C_Timer.After(10, function()
 						if scatter_x then
-						print("DELETING")
-						scatter_x = nil
-						scatter_y = nil
-						scatter_z = nil
+							print("DELETING")
+							scatter_x = nil
+							scatter_y = nil
+							scatter_z = nil
 						end
 					end)
 				end
@@ -332,36 +332,36 @@ local exeOnLoad = function()
 	--
 	hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
-	local Type, id, subType, spellID
-	-- print(slot)
-	local player = Object("player")
-	if slot==STARTSLOT then 
-		_A.pressedbuttonat = 0
-		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
-			_A.Interface:toggleToggle("mastertoggle", true)
-			-- _A.print("ON")
-			return true
+		local Type, id, subType, spellID
+		-- print(slot)
+		local player = Object("player")
+		if slot==STARTSLOT then 
+			_A.pressedbuttonat = 0
+			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
+				_A.Interface:toggleToggle("mastertoggle", true)
+				-- _A.print("ON")
+				return true
+			end
 		end
-	end
-	if slot==STOPSLOT then 
-		-- TEST STUFF
-		-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
-		-- TEST STUFF
-		-- print(player:stance())
-		if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
-			_A.Interface:toggleToggle("mastertoggle", false)
-			-- _A.print("OFF")
-			return true
+		if slot==STOPSLOT then 
+			-- TEST STUFF
+			-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
+			-- TEST STUFF
+			-- print(player:stance())
+			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
+				_A.Interface:toggleToggle("mastertoggle", false)
+				-- _A.print("OFF")
+				return true
+			end
 		end
-	end
-	--
-	if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
-		Type, id, subType = _A.GetActionInfo(slot)
-		if Type == "spell" or Type == "macro" -- remove macro?
-			then
-			_A.pressedbuttonat = _A.GetTime()
+		--
+		if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
+			Type, id, subType = _A.GetActionInfo(slot)
+			if Type == "spell" or Type == "macro" -- remove macro?
+				then
+				_A.pressedbuttonat = _A.GetTime()
+			end
 		end
-	end
 	end)
 	
 	function _A.unitfrozen(unit)
@@ -1088,6 +1088,25 @@ local exeOnLoad = function()
 			return tempTable[num] and tempTable[num].guid
 		end
 	end)
+	_A.FakeUnits:Add('HealingStreamTotemNOLOS', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						range = Obj:range(),
+					}
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
 	_A.FakeUnits:Add('HealingStreamTotemPLAYER', function(num,spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
@@ -1112,7 +1131,7 @@ local exeOnLoad = function()
 	end)
 	_A.PetGUID  = nil
 	local function attacktotem()
-		local htotem = Object("HealingStreamTotem")
+		local htotem = Object("HealingStreamTotemNOLOS")
 		if htotem then
 			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
 				return _A.CallWowApi("PetAttack", htotem.guid), 1
@@ -1145,6 +1164,14 @@ local exeOnLoad = function()
 			return 3
 		end
 	end
+	local function petfollow_whenselftargeting() -- when pet target has a breakable cc
+		local target = Object("target")
+		if target and target.guid == player.guid then
+			if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
+				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+			end
+		end
+	end
 	local function petfollow() -- when pet target has a breakable cc
 		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
 			local target = Object(_A.UnitTarget(_A.PetGUID))
@@ -1166,6 +1193,7 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return end
 		-- Rotation
 		if attacktotem() then return end
+		if petfollow_whenselftargeting() then return end
 		if attacklowest() then return end
 		if petfollow() then return end
 	end

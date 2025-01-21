@@ -14,6 +14,7 @@ local CalculatePath = _A.CalculatePath
 local FaceDirection = _A.FaceDirection
 local UnitCanCooperate, UnitHealthMax, GetTime, UnitIsPlayer, string_find = UnitCanCooperate, UnitHealthMax, GetTime, UnitIsPlayer, string.find
 local manamodifier = 0
+local arenamanamodifier = 1
 local ENEMY_OM = {}
 local FRIEND_OM = {}
 local tlp = _A.Tooltip
@@ -776,10 +777,14 @@ local exeOnLoad = function()
 		player = player or Object("player")
 		if player:buff("Lucidity") then return true end
 		-- mana based
-		if ((_A.avgDeltaPercent/1)>=(averageHPv2()-(effectivemanaregen()*manamodifier))) then return true end -- new method (less mana hungry)
+		if _A.pull_location and _A.pull_location=="arena" then
+	
+		if ((_A.avgDeltaPercent/1)>=(averageHPv2()-(effectivemanaregen()*arenamanamodifier))) then return true -- new method (less mana hungry)
+		elseif ((_A.avgDeltaPercent/1)>=(averageHPv2()-(effectivemanaregen()*manamodifier))) then return true end -- new method (less mana hungry)
 		-- if ((_A.avgDeltaPercent/1)>=(averageHPv2()-(effectivemanaregen()))) then return true end -- new method (more mana hungry)
 		-- if ((_A.avgDeltaPercent/1)>=(averageHPv2())) then return true end -- new method (more mana hungry)
 		-- HEALTH BASED (mana not taken into account, best for pvp)
+		end
 		return false
 	end
 	function _A.enoughmana(id)
@@ -1666,7 +1671,7 @@ local mw_rot = {
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") 
 							and fr:statepurge("Detox") 
-							and fr:statepurgecheck("fear || sleep || charm || disorient || incapacitate || stun || silence || root")
+							and fr:statepurgecheck("fear || sleep || charm || disorient || incapacitate || stun || silence || root || misc")
 							and not fr:debuffany("Unstable Affliction")
 							and _A.nothealimmune(fr)  
 							and fr:los()
@@ -2198,7 +2203,6 @@ local inCombat = function()
 	end
 	if mw_rot.tigerpalm_mm() then return end
 	if mw_rot.surgingmist() then return end
-	-- if mw_rot.manatea() then return end
 	if mw_rot.ctrl_mode() then return end
 	if mw_rot.healstatue() then return end
 	-- old pvp slot
