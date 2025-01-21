@@ -1413,7 +1413,7 @@ survival.rot = {
 		if player:SpellCooldown("Scatter Shot")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher") 
 			and player:spellusable("Scatter Shot") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
+				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 					and _A.notimmune(Obj) and not Obj:immune("disorient") and Obj:InConeOf("player", 170) 
 					and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
 					and (Obj:drstate("Scatter Shot")==1 or Obj:drstate("Scatter Shot")==-1)
@@ -1428,7 +1428,7 @@ survival.rot = {
 		if player:SpellCooldown("Scatter Shot")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher")
 			and player:spellusable("Scatter Shot") then
 			local focus = Object("focus")
-			if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Scatter Shot") and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
+			if focus and not _A.scattertargets[focus.guid] and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Scatter Shot") and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 				and _A.notimmune(focus) and not focus:immune("disorient") and focus:InConeOf("player", 170) 
 				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
 				and (focus:drstate("Scatter Shot")==1 or focus:drstate("Scatter Shot")==-1)
@@ -1474,7 +1474,7 @@ survival.rot = {
 			and _A.castdelay("Freezing Trap",3) and _A.castdelay("Scatter Shot",3) 
 			then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
+				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
 					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 					and not Obj:state("dot") and _A.notimmune(Obj) and Obj:los() then
 					return Obj:cast("Wyvern Sting")
@@ -1487,7 +1487,7 @@ survival.rot = {
 			and _A.castdelay("Freezing Trap",3) and _A.castdelay("Scatter Shot",3)
 			then
 			local focus = Object("focus")
-			if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") and focus:InConeOf("player", 170)
+			if focus and not _A.scattertargets[focus.guid] and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 				and not focus:state("dot") and _A.notimmune(focus) and focus:los() then
 				return focus:cast("Wyvern Sting")
