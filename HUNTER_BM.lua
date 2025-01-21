@@ -551,23 +551,6 @@ local exeOnLoad = function()
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(target) then
 			return target and target.guid -- this is good
 		end
-		-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		-- if Obj:rangefrom(pet)<24 and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
-		-- and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(Obj) then
-		-- tempTable[#tempTable+1] = {
-		-- guid = Obj.guid,
-		-- health = Obj:health(),
-		-- range = Obj:range(),
-		-- isplayer = Obj.isplayer and 1 or 0
-		-- }
-		-- end
-		-- end
-		-- if #tempTable>1 then
-		-- table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.range < b.range) end )
-		-- end
-		-- if #tempTable>=1 then
-		-- return tempTable[num] and tempTable[num].guid -- not sure about this (pet can get lost) find a better solution
-		-- end
 		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 		if lowestmelee and lowestmelee:rangefrom(pet)<=24 and pet:losFrom(lowestmelee) then
 			return lowestmelee.guid
@@ -582,27 +565,10 @@ local exeOnLoad = function()
 		if not pet then return end
 		if pet and not pet:alive() then return end
 		if pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
-		if target and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
+		if _A.pull_location and _A.pull_location=="arena" and target and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") then
 			return target and target.guid -- this is good
 		end
-		-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		-- if Obj:rangefrom(pet)<24 and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
-		-- and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(Obj) then
-		-- tempTable[#tempTable+1] = {
-		-- guid = Obj.guid,
-		-- health = Obj:health(),
-		-- range = Obj:range(),
-		-- isplayer = Obj.isplayer and 1 or 0
-		-- }
-		-- end
-		-- end
-		-- if #tempTable>1 then
-		-- table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.range < b.range) end )
-		-- end
-		-- if #tempTable>=1 then
-		-- return tempTable[num] and tempTable[num].guid -- not sure about this (pet can get lost) find a better solution
-		-- end
 		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 		if lowestmelee and lowestmelee:rangefrom(pet)<=24 and pet:losFrom(lowestmelee) then
 			return lowestmelee.guid
