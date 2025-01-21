@@ -555,7 +555,7 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
 			if Obj.isplayer and Obj:spellRange("Arcane Shot") and _A.notimmune(Obj) 
-				and Obj:stateduration("stun || disorient")>=1 and not Obj:moving() and Obj:los() then
+				and Obj:stateduration("stun")>=1 and not Obj:moving() and Obj:los() then
 				tempTable[#tempTable+1] = {
 					range = Obj:range(),
 					guid = Obj.guid,
