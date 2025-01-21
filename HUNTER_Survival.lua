@@ -1832,19 +1832,24 @@ local inCombat = function()
 		survival.rot.items_healthstone()
 	end
 	-- Traps
+	if _A.pull_location~="arena" then
+		if survival.rot.traps() then return end
+	end
 	if not player:buff("Deterrence") then
 		survival.rot.bindingshot()
 	end
 	if focus or _A.pull_location=="arena" then
-		-- if survival.rot.freezing() then return true end
-		-- if survival.rot.sleep() then return end
-		-- if survival.rot.scatter() then return end
-		if survival.rot.sleep2() then return end
-		if survival.rot.freezing2() then return end
-		if survival.rot.scatter2() then return end
-	end
-	if _A.pull_location~="arena" then
-		if survival.rot.traps() then return end
+		if player:talent("Wyvern Sting") then
+			if survival.rot.freezing2() then return true end
+			if survival.rot.sleep2() then return end
+			if survival.rot.scatter2() then return end
+			else
+			if survival.rot.freezing() then return end
+			if survival.rot.scatter() then return end
+		end
+			-- if survival.rot.sleep() then return end
+			-- if survival.rot.freezing() then return end
+			-- if survival.rot.scatter() then return end
 	end
 	-------------------------- MAIN ROTATION
 	if player:buff("Deterrence") then return true end

@@ -1476,7 +1476,7 @@ survival.rot = {
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and _A.notimmune(Obj) and Obj:los() then
 						if not  player:isCastingAny()  then
-						return Obj:cast("Wyvern Sting")
+							return Obj:cast("Wyvern Sting")
 						end
 					end
 				end
@@ -1874,22 +1874,27 @@ local inCombat = function()
 		survival.rot.items_healthstone()
 	end
 	-- Traps
+	if _A.pull_location~="arena" then
+		if survival.rot.traps() then return end
+	end
+	if player:buff("Deterrence") then return true end
 	if not player:buff("Deterrence") then
 		survival.rot.bindingshot()
 	end
 	if focus or _A.pull_location=="arena" then
-		-- if survival.rot.freezing() then return true end
-		-- if survival.rot.sleep() then return end
-		-- if survival.rot.scatter() then return end
-		if survival.rot.sleep2() then return end
-		if survival.rot.freezing2() then return end
-		if survival.rot.scatter2() then return end
-	end
-	if _A.pull_location~="arena" then
-		if survival.rot.traps() then return end
+		if player:talent("Wyvern Sting") then
+			if survival.rot.freezing2() then return true end
+			if survival.rot.sleep2() then return end
+			if survival.rot.scatter2() then return end
+			else
+			if survival.rot.freezing() then return end
+			if survival.rot.scatter() then return end
+		end
+			-- if survival.rot.sleep() then return end
+			-- if survival.rot.freezing() then return end
+			-- if survival.rot.scatter() then return end
 	end
 	-------------------------- MAIN ROTATION
-	if player:buff("Deterrence") then return true end
 	survival.rot.autoattackmanager()
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return true end
 	-- Burst
