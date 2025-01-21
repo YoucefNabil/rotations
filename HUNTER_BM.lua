@@ -1783,7 +1783,7 @@ local inCombat = function()
 	if not _A.modifier_ctrl() and _A.pull_location=="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
 	if _A.modifier_ctrl() and _A.pull_location~="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
 	-- if not _A.modifier_ctrl() and  survival.rot.tranquillshot_midprio() then return end -- for quest
-	if _A.modifier_alt() then survival.rot.concussion() end
+	if _A.modifier_alt() or _A.pull_location=="arena" then survival.rot.concussion() end
 	-- important spells
 	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
 	if survival.rot.tranq_hop() then return end

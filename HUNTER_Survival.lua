@@ -1772,7 +1772,7 @@ local inCombat = function()
 	if (not _A.modifier_ctrl() and _A.pull_location=="arena") and survival.rot.tranquillshot_highprio() then return end --  Only worth it in arena
 	if (_A.modifier_ctrl() and _A.pull_location~="arena") and survival.rot.tranquillshot_highprio() then return end --  Only worth it in arena
 	-- if not _A.modifier_ctrl() and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
-	if _A.modifier_alt() then survival.rot.concussion() end
+	if _A.modifier_alt() or _A.pull_location=="arena" then survival.rot.concussion() end
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
 	-- important spells
 	if (_A.pull_location=="pvp" or _A.pull_location=="arena") 
