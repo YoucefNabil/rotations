@@ -33,7 +33,7 @@ local healerspecid = {
 	-- [266]="Lock Demono",
 	-- [267]="Lock Destro",
 	[105]="Druid Resto",
-	[102]="Druid Balance",
+	-- [102]="Druid Balance",
 	[270]="monk mistweaver",
 	[65]="Paladin Holy",
 	-- [66]="Paladin prot",
@@ -1286,6 +1286,19 @@ survival.rot = {
 			end
 		end
 	end,
+	masterscall_party2 = function()
+		local party1 = Object("party2")
+		if _A.pull_location=="arena" and party1 and player:SpellCooldown("Master's Call")==0 and party1:state("root") then
+			local pet = Object("pet")
+			if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") 
+				and pet:rangefrom(party1)<40 and pet:losFrom(party1) then
+				-- cancel cast
+				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
+					else return party1:cast("Master's Call")
+				end
+			end
+		end
+	end,
 	roarofsac = function()
 		if player:SpellCooldown("Roar of Sacrifice(Cunning Ability)")==0 and player:health()<65 and player:combat() and not player:buff("Deterrence") and _A.castdelay("Deterrence",(5+player:gcd())) then
 			local pet = Object("pet")
@@ -1462,7 +1475,9 @@ survival.rot = {
 					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and _A.notimmune(Obj) and Obj:los() then
+						if not  player:isCastingAny()  then
 						return Obj:cast("Wyvern Sting")
+						end
 					end
 				end
 			end
@@ -1476,7 +1491,7 @@ survival.rot = {
 		local focus = Object("focus")
 		if player:SpellCooldown("Wyvern Sting")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher") 
 			and player:spellusable("Wyvern Sting") then
-			if focus and focus.isplayer and focus:enemy() and focus:alive() and not _A.scattertargets[focus.guid] and focus:spellRange("Wyvern Sting")
+			if focus and focus.isplayer and focus:enemy() and focus:alive() and not _A.scattertargets[focus.guid] and focus:spellRange("Arcane Shot")
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 				and _A.notimmune(focus) and not focus:immune("sleep") and focus:InConeOf("player", 170) 
 				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
@@ -1489,7 +1504,7 @@ survival.rot = {
 			end
 			if not focus then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
-					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Wyvern Sting") and healerspecid[Obj:spec()] 
+					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and _A.notimmune(Obj) and not Obj:immune("sleep") and Obj:InConeOf("player", 170) 
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
@@ -1508,7 +1523,8 @@ survival.rot = {
 		local focus = Object("focus")
 		if player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:glyph("Glyph of Solace") and player:spellusable("Freezing Trap") then
 			if focus and focus.isplayer and focus:alive() and focus:enemy() and focus:spellRange("Arcane Shot")
-				and focus:stateduration("sleep || stun")>1
+				and focus:stateduration("sleep || stun || misc || incapacitate")>1
+				-- and focus:stateduration("sleep || stun")<4
 				and not focus:moving()
 				and _A.notimmune(focus) and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
@@ -1519,7 +1535,8 @@ survival.rot = {
 			if not focus then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] 
-						and Obj:stateduration("sleep || stun")>1
+						and Obj:stateduration("sleep || stun || misc || incapacitate")>1
+						-- and Obj:stateduration("sleep || stun")<4
 						and not Obj:moving()
 						and _A.notimmune(Obj) and Obj:los() then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
@@ -1539,7 +1556,10 @@ survival.rot = {
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 				and (_A.castdelay("Freezing Trap",3) or (focus:debuffduration("Freezing Trap")<2 and focus:debuffduration("Freezing Trap")>0))
 				and _A.notimmune(focus) and focus:los() then
-				return focus:cast("Scatter Shot")
+				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+				if not  player:isCastingAny()  then
+					return focus:cast("Scatter Shot")
+				end
 			end
 			if not focus then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
@@ -1547,7 +1567,10 @@ survival.rot = {
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and (_A.castdelay("Freezing Trap",3) or (Obj:debuffduration("Freezing Trap")<2 and Obj:debuffduration("Freezing Trap")>0))
 						and _A.notimmune(Obj) and Obj:los() then
-						return Obj:cast("Scatter Shot")
+						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+						if not  player:isCastingAny()  then
+							return Obj:cast("Scatter Shot")
+						end
 					end
 				end
 			end
@@ -1843,7 +1866,8 @@ local inCombat = function()
 	-- Defs
 	survival.rot.deterrence()
 	survival.rot.masterscall()
-	-- survival.rot.masterscall_party1()
+	survival.rot.masterscall_party1()
+	survival.rot.masterscall_party2()
 	-- no gcd
 	if not player:isCastingAny() then
 		-- if survival.rot.pet_misdirect() then return end -- bugged
@@ -1855,7 +1879,11 @@ local inCombat = function()
 	end
 	if focus or _A.pull_location=="arena" then
 		-- if survival.rot.freezing() then return true end
-		if survival.rot.freezing2() then return true end
+		-- if survival.rot.sleep() then return end
+		-- if survival.rot.scatter() then return end
+		if survival.rot.sleep2() then return end
+		if survival.rot.freezing2() then return end
+		if survival.rot.scatter2() then return end
 	end
 	if _A.pull_location~="arena" then
 		if survival.rot.traps() then return end
@@ -1876,13 +1904,6 @@ local inCombat = function()
 	survival.rot.kick()
 	if AOEcheck() and survival.rot.barrage() then return end -- make a complete aoe check function
 	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
-	-- Important Spells
-	if focus or _A.pull_location=="arena" then -- on healer
-		-- if survival.rot.scatter() then return end		
-		-- if survival.rot.sleep() then return end
-		if survival.rot.sleep2() then return end
-		if survival.rot.scatter2() then return end
-	end
 	survival.rot.killshot()
 	if not _A.modifier_ctrl() and _A.pull_location=="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
 	if _A.modifier_ctrl() and _A.pull_location~="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
