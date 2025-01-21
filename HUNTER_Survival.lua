@@ -1209,7 +1209,7 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return end
 		-- Rotation
 		if attacktotem() then return end
-		if petfollow_whenselftargeting() then return end
+		-- if petfollow_whenselftargeting() then return end
 		if attacklowest() then return end
 		if petfollow() then return end
 	end
@@ -1769,13 +1769,15 @@ local inCombat = function()
 		if survival.rot.sleep() then return end
 	end
 	survival.rot.killshot()
-	if not _A.modifier_ctrl() and _A.pull_location=="arena" and survival.rot.tranquillshot_highprio() then return end --  Only worth it in arena
+	if (not _A.modifier_ctrl() and _A.pull_location=="arena") and survival.rot.tranquillshot_highprio() then return end --  Only worth it in arena
+	if (_A.modifier_ctrl() and _A.pull_location~="arena") and survival.rot.tranquillshot_highprio() then return end --  Only worth it in arena
 	-- if not _A.modifier_ctrl() and survival.rot.tranquillshot_highprio() then return end --  highest prio in arena
 	if _A.modifier_alt() then survival.rot.concussion() end
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
 	-- important spells
 	if (_A.pull_location=="pvp" or _A.pull_location=="arena") 
 	and player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
+	if survival.rot.tranq_hop() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.blackarrow() then return end
 	if survival.rot.explosiveshot() then return end

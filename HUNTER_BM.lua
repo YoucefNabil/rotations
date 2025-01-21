@@ -564,8 +564,7 @@ local exeOnLoad = function()
 		if not pet then return end
 		if pet and not pet:alive() then return end
 		if pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
-		if not _A.pull_location then return end
-		if  _A.pull_location=="arena" and target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and target:rangefrom(pet)<=24 and _A.notimmune(target)
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and target:rangefrom(pet)<=24 and _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(target) then
 			return target and target.guid -- this is good
 		end
@@ -583,8 +582,7 @@ local exeOnLoad = function()
 		if not pet then return end
 		if pet and not pet:alive() then return end
 		if pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
-		if not _A.pull_location then return end
-		if _A.pull_location=="arena" and target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") then
 			return target and target.guid -- this is good
 		end
@@ -1783,6 +1781,7 @@ local inCombat = function()
 	end
 	survival.rot.killshot()
 	if not _A.modifier_ctrl() and _A.pull_location=="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
+	if _A.modifier_ctrl() and _A.pull_location~="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
 	-- if not _A.modifier_ctrl() and  survival.rot.tranquillshot_midprio() then return end -- for quest
 	if _A.modifier_alt() then survival.rot.concussion() end
 	-- important spells
