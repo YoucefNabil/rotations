@@ -31,24 +31,39 @@ local immunedebuffs = {
 	-- "Smoke Bomb"
 }
 local healerspecid = {
+	-- HEALERS
+	[105]="Druid Resto",
+	[270]="monk mistweaver",
+	[65]="Paladin Holy",
+	[257]="Priest Holy",
+	[256]="Priest discipline",
+	[264]="Sham Resto",
+	-- LOCKS
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",
 	-- [267]="Lock Destro",
-	[105]="Druid Resto",
+	--DRUIDS
 	-- [102]="Druid Balance",
-	[270]="monk mistweaver",
-	[65]="Paladin Holy",
+	--PALADINS
 	-- [66]="Paladin prot",
 	-- [70]="Paladin retri",
-	[257]="Priest Holy",
-	[256]="Priest discipline",
+	-- PRIEST
 	-- [258]="Priest shadow",
-	[264]="Sham Resto",
+	-- SHAM
 	-- [262]="Sham Elem",
 	-- [263]="Sham enh",
+	-- MAGE
 	-- [62]="Mage Arcane",
 	-- [63]="Mage Fire",
-	-- [64]="Mage Frost"
+	-- [64]="Mage Frost",
+	-- Hunter
+	-- [253] = "hunter",
+	-- [254] = "hunter",
+	-- [255] = "hunter",
+	-- ROGUE
+	-- [259] = "rogue",
+	-- [260] = "rogue",
+	-- [261] = "rogue",
 }
 local darksimulacrumspecsBGS = {
 	[265]="Lock Affli",
@@ -539,6 +554,23 @@ local exeOnLoad = function()
 		return channeling and string.lower((select(1, channeling))) or " "
 	end
 	
+	local badtotems = {
+		"Mana Tide",
+		"Wild Mushroom",
+		"Mana Tide Totem",
+		"Healing Stream Totem",
+		"Healing Tide",
+		"Spirit Link Totem",
+		"Healing Tide Totem",
+		"Lightning Surge Totem",
+		"Earthgrab Totem",
+		"Earthbind Totem",
+		"Grounding Totem",
+		"Stormlash Totem",
+		"Psyfiend",
+		"Lightwell",
+	}
+	
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
@@ -572,6 +604,12 @@ local exeOnLoad = function()
 		if not pet then return end
 		if pet and not pet:alive() then return end
 		if pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
+		--
+		for _,totems in ipairs(badtotems) do
+			if Obj.name==totems and Obj:rangefrom(pet)<=24 and Obj:losfrom("pet") then
+			return Obj.guid
+			end
+		end
 		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and target:rangefrom(pet)<=24 and _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(target) then
 			return target and target.guid -- this is good
@@ -590,6 +628,7 @@ local exeOnLoad = function()
 		if not pet then return end
 		if pet and not pet:alive() then return end
 		if pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
+		--
 		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") then
 			return target and target.guid -- this is good
@@ -1059,22 +1098,6 @@ local exeOnLoad = function()
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-------------------------------------------------------
-	local badtotems = {
-		"Mana Tide",
-		"Wild Mushroom",
-		"Mana Tide Totem",
-		"Healing Stream Totem",
-		"Healing Tide",
-		"Spirit Link Totem",
-		"Healing Tide Totem",
-		"Lightning Surge Totem",
-		"Earthgrab Totem",
-		"Earthbind Totem",
-		"Grounding Totem",
-		"Stormlash Totem",
-		"Psyfiend",
-		"Lightwell",
-	}
 	_A.FakeUnits:Add('HealingStreamTotem', function(num)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
@@ -1495,7 +1518,7 @@ survival.rot = {
 				end
 			end
 		end
-		end,
+	end,
 	-----------------------------------------------------------
 	----------------------------------------------------------- SECOND SETUP
 	-----------------------------------------------------------
@@ -1690,7 +1713,7 @@ survival.rot = {
 	-- ROTATION
 	killcommand = function()
 		if _A.KCcheck() and player:SpellUsable("Kill Command") and player:SpellCooldown("Kill Command")<.3 and player:Spellusable("Kill Command") then
-			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRangePetPOVKC")
+			local lowestmelee = Object("lowestEnemyInSpellRangePetPOVKC")
 			if lowestmelee then
 				return lowestmelee:Cast("Kill Command")
 			end
