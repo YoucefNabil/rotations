@@ -281,7 +281,7 @@ local exeOnLoad = function()
 		key = "WyvernEnable", 
 		name = "Wyern Setup", 
 		text = "ON = Wyvern Sting into trap (need talent) | OFF = Scatter into trap",
-		icon = select(3,GetSpellInfo("Wyvern Sting")),
+		icon = "Interface\\Icons\\INV_SPEAR_02",
 	})
 	_A.Interface:AddToggle({
 		key = "TrapEnable", 

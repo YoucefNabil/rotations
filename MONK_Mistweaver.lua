@@ -1025,7 +1025,8 @@ local function cditemRemains(itemid)
 	end
 end
 local dangerousdebuffs = {
-	"Soul Reaper"
+	"Soul Reaper",
+	"Touch of Karma"
 }
 local mw_rot = {
 	turtletoss = function()
