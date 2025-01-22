@@ -278,10 +278,16 @@ local scatter_y
 local scatter_z
 local exeOnLoad = function()
 	_A.Interface:AddToggle({
-		key = "TrapTrap", 
+		key = "WyvernEnable", 
 		name = "Wyern Setup", 
 		text = "ON = Wyvern Sting into trap (need talent) | OFF = Scatter into trap",
-		icon = "Interface\\Icons\\ability_warrior_offensivestance",
+		icon = select(3,GetSpellInfo("Wyvern Sting")),
+	})
+	_A.Interface:AddToggle({
+		key = "TrapEnable", 
+		name = "Enable Freezing Trap", 
+		text = "ON = Scatter/freeze/sleep | OFF = Ice (good for bgs)",
+		icon = select(3,GetSpellInfo("Freezing Trap")),
 	})
 	local STARTSLOT = 1
 	local STOPSLOT = 8
@@ -1389,22 +1395,20 @@ survival.rot = {
 	end,
 	---------------------------------- CC SEQUENCE
 	---------------------------------- CC SEQUENCE
+	---------------------------------- CC SEQUENCE
 	scatter = function()
-		local focus = Object("focus")
 		local focus = Object("focus")
 		if focus and not _A.scattertargets[focus.guid] and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Scatter Shot") 
 			and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 			and _A.notimmune(focus) and not focus:immune("disorient") and focus:InConeOf("player", 170) 
 			and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
 			and (focus:drstate("Scatter Shot")==1 or focus:drstate("Scatter Shot")==-1)
-			and not focus:buffany("Spell Reflection")
-			and not focus:buffany("Mass Spell Reflection")
 			and focus:los() then
 			if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 			if not player:isCastingAny() then  return focus:cast("Scatter Shot") end
 		end
 		if not focus then
-			if player:SpellCooldown("Scatter Shot")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher") 
+			if player:SpellCooldown("Scatter Shot")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") 
 				and player:spellusable("Scatter Shot") then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] 
@@ -1412,8 +1416,6 @@ survival.rot = {
 						and _A.notimmune(Obj) and not Obj:immune("disorient") and Obj:InConeOf("player", 170) 
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
 						and (Obj:drstate("Scatter Shot")==1 or Obj:drstate("Scatter Shot")==-1)
-						and not Obj:buffany("Spell Reflection")
-						and not Obj:buffany("Mass Spell Reflection")
 						and Obj:los() then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not player:isCastingAny() then  return Obj:cast("Scatter Shot") end
@@ -1427,8 +1429,6 @@ survival.rot = {
 		if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") 
 			and (focus:debuff("Scatter Shot") or (focus:stateduration("disorient || charm || sleep || stun")>1 and focus:stateduration("disorient || charm || sleep || stun")<4)) 
 			and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
-			and not focus:buffany("Spell Reflection")
-			and not focus:buffany("Mass Spell Reflection")
 			and not focus:debuffany("Wyvern Sting") and _A.notimmune(focus) and focus:los() then
 			if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 			if not  player:isCastingAny()  then
@@ -1437,13 +1437,11 @@ survival.rot = {
 			end
 		end
 		if not focus then
-			if player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:glyph("Glyph of Solace") and player:spellusable("Freezing Trap") then
+			if player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:spellusable("Freezing Trap") then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] 
 						and (Obj:debuff("Scatter Shot") or (Obj:stateduration("disorient || charm || sleep || stun")>1 and Obj:stateduration("disorient || charm || sleep || stun")<4)) 
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
-						and not Obj:buffany("Spell Reflection")
-						and not Obj:buffany("Mass Spell Reflection")
 						and not Obj:debuffany("Wyvern Sting") and _A.notimmune(Obj) and Obj:los() then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not  player:isCastingAny()  then
@@ -1488,15 +1486,13 @@ survival.rot = {
 	-----------------------------------------------------------
 	sleep2 = function()
 		local focus = Object("focus")
-		if player:SpellCooldown("Wyvern Sting")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:glyph("Glyph of Solace") and player:buff("Trap Launcher") 
+		if player:SpellCooldown("Wyvern Sting")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") 
 			and player:spellusable("Wyvern Sting") then
 			if focus and focus.isplayer and focus:enemy() and focus:alive() and not _A.scattertargets[focus.guid] and focus:spellRange("Arcane Shot")
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 				and _A.notimmune(focus) and not focus:immune("sleep") and focus:InConeOf("player", 170) 
 				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
 				and (focus:drstate("Wyvern Sting")==1 or focus:drstate("Wyvern Sting")==-1)
-				and not focus:buffany("Spell Reflection")
-				and not focus:buffany("Mass Spell Reflection")
 				and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not player:isCastingAny() then  return focus:cast("Wyvern Sting") end
@@ -1508,8 +1504,6 @@ survival.rot = {
 						and _A.notimmune(Obj) and not Obj:immune("sleep") and Obj:InConeOf("player", 170) 
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
 						and (Obj:drstate("Wyvern Sting")==1 or Obj:drstate("Wyvern Sting")==-1)
-						and not Obj:buffany("Spell Reflection")
-						and not Obj:buffany("Mass Spell Reflection")
 						and Obj:los() then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not player:isCastingAny() then  return Obj:cast("Wyvern Sting") end
@@ -1520,13 +1514,11 @@ survival.rot = {
 	end,
 	freezing2 = function()
 		local focus = Object("focus")
-		if player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:glyph("Glyph of Solace") and player:spellusable("Freezing Trap") then
+		if player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:spellusable("Freezing Trap") then
 			if focus and focus.isplayer and focus:alive() and focus:enemy() and focus:spellRange("Arcane Shot")
 				and focus:stateduration("sleep || stun || misc || incapacitate")>1
 				and focus:stateduration("sleep || stun || misc || incapacitate")<4
 				and not focus:moving()
-				and not focus:buffany("Spell Reflection")
-				and not focus:buffany("Mass Spell Reflection")
 				and _A.notimmune(focus) and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny()  then
@@ -1539,8 +1531,6 @@ survival.rot = {
 						and Obj:stateduration("sleep || stun || misc || incapacitate")>1
 						and Obj:stateduration("sleep || stun || misc || incapacitate")<4
 						and not Obj:moving()
-						and not Obj:buffany("Spell Reflection")
-						and not Obj:buffany("Mass Spell Reflection")
 						and _A.notimmune(Obj) and Obj:los() then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not  player:isCastingAny()  then
@@ -1558,8 +1548,6 @@ survival.rot = {
 			if focus and focus:enemy() and focus:alive() and focus.isplayer and not _A.scattertargets[focus.guid] and focus:spellRange("Scatter Shot") and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 				and (_A.castdelay("Freezing Trap",3) or (focus:debuffduration("Freezing Trap")<2 and focus:debuffduration("Freezing Trap")>0))
-				and not focus:buffany("Spell Reflection")
-				and not focus:buffany("Mass Spell Reflection")
 				and _A.notimmune(focus) and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny()  then
@@ -1571,8 +1559,6 @@ survival.rot = {
 					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and (_A.castdelay("Freezing Trap",3) or (Obj:debuffduration("Freezing Trap")<2 and Obj:debuffduration("Freezing Trap")>0))
-						and not Obj:buffany("Spell Reflection")
-						and not Obj:buffany("Mass Spell Reflection")
 						and _A.notimmune(Obj) and Obj:los() then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not  player:isCastingAny()  then
@@ -1702,7 +1688,9 @@ survival.rot = {
 		end
 	end,
 	serpentsting_check = function()
-		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<.3  then
+		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<.3
+		and _A.castdelay("Serpent Sting", 10)
+		then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff(118253) and lowestmelee:health()>50
 				and (lowestmelee.isplayer or _A.pull_location=="none")
@@ -1839,6 +1827,7 @@ local inCombat = function()
 	player = Object("player")
 	if not player then return true end
 	local focus = Object("focus")
+	_A.pull_location = _A.pull_location or pull_location()
 	--debug
 	-- print(_A.MissileExists("Arcane Shot"))
 	-- print(player:immuneduration("snare || all"))
@@ -1862,14 +1851,14 @@ local inCombat = function()
 		survival.rot.items_healthstone()
 	end
 	-- Traps
-	if _A.pull_location~="arena" then
+	if not toggle("TrapEnable") then
 		if survival.rot.traps() then return end
 	end
 	if not player:buff("Deterrence") then
 		survival.rot.bindingshot()
 	end
-	if focus or _A.pull_location=="arena" then
-		if player:talent("Wyvern Sting") and toggle("TrapTrap") then
+	if toggle("TrapEnable") then
+		if player:talent("Wyvern Sting") and toggle("WyvernEnable") then
 			if survival.rot.sleep2() then return end
 			if survival.rot.freezing2() then return true end
 			if survival.rot.scatter2() then return end
