@@ -1477,7 +1477,7 @@ survival.rot = {
 				end
 			end
 		end
-		end,
+	end,
 	-----------------------------------------------------------
 	----------------------------------------------------------- SECOND SETUP
 	-----------------------------------------------------------
@@ -1740,7 +1740,7 @@ survival.rot = {
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Tranquilizing Shot") and not Obj:state("incapacitate || disorient || charm || misc || sleep || fear")
 					and not Obj:BuffAny("Divine Shield") and Obj:InConeOf("player", 170)
-					and Obj:BuffAny("Hand of Protection")
+					and Obj:BuffAny("Hand of Protection || Fear Ward")
 					and Obj:los() then
 					if player:SpellUsable("Tranquilizing Shot") then
 						return Obj:Cast("Tranquilizing Shot")

@@ -595,6 +595,7 @@ local exeOnLoad = function()
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
 		end
+		return nil
 	end)
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKC', function(num)
@@ -660,6 +661,7 @@ local exeOnLoad = function()
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
 		end
+		return nil
 	end)
 	
 	_A.FakeUnits:Add('meleeunitstobindshot', function(num)
@@ -679,6 +681,7 @@ local exeOnLoad = function()
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
 		end
+		return nil
 	end)
 	
 	_A.FakeUnits:Add('simpletarget', function(num, spell)
@@ -687,6 +690,7 @@ local exeOnLoad = function()
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
+		return nil
 	end)
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
@@ -712,6 +716,7 @@ local exeOnLoad = function()
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
+		return nil
 	end)
 	
 	_A.FakeUnits:Add('highestEnemyInSpellRangeNOTAR', function(num, spell)
@@ -737,6 +742,7 @@ local exeOnLoad = function()
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
+		return nil
 	end)
 	
 	_A.DSL:Register('caninterrupt', function(unit)
@@ -1366,8 +1372,8 @@ survival.rot = {
 	autoattackmanager = function()
 		local target = Object("target")
 		if target and target.isplayer and target:enemy() and target:alive() and target:InConeOf(player, 180) and target:los() then
-			if (target:state("incapacitate || fear || disorient || charm || misc || sleep") or _A.scattertargets[target.guid]) and player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") 
-				elseif not target:state("incapacitate || fear || disorient || charm || misc || sleep") and not _A.scattertargets[target.guid] and not player:autoattack() then  _A.CallWowApi("RunMacroText", "/startattack") 
+			if (target:state("incapacitate || fear || disorient || charm || misc || sleep") or _A.scattertargets[target.guid]) and player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") _A.CallWowApi("RunMacroText", "/target player")
+				elseif not target:state("incapacitate || fear || disorient || charm || misc || sleep") and not _A.scattertargets[target.guid] and not player:autoattack() then  _A.CallWowApi("RunMacroText", "/startattack") _A.CallWowApi("RunMacroText", "/target player")
 			end
 		end
 	end,
@@ -1819,7 +1825,7 @@ survival.rot = {
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Tranquilizing Shot") and not Obj:state("incapacitate || disorient || charm || misc || sleep || fear")
 					and not Obj:BuffAny("Divine Shield") and Obj:InConeOf("player", 170)
-					and Obj:BuffAny("Hand of Protection")
+					and Obj:BuffAny("Hand of Protection || Fear Ward")
 					and Obj:los() then
 					if player:SpellUsable("Tranquilizing Shot") then
 						return Obj:Cast("Tranquilizing Shot")
