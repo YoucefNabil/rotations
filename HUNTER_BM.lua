@@ -1,9 +1,11 @@
 local _,class = UnitClass("player")
 if class~="HUNTER" then return end
-local HarmonyMedia, _A, _Y = ...
+local mediaPath, _A, _Y = ...
 -- local _, class = UnitClass("player");
 -- if class ~= "WARRIOR" then return end;
 local DSL = function(api) return _A.DSL:Get(api) end
+local ui = function(key) return _A.DSL:Get("ui")(_, key) end
+local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
 local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 -- top of the CR
@@ -262,6 +264,9 @@ local function cditemRemains(itemid)
 end
 --
 --
+------------------------------------
+------------------------------------
+
 
 local cobraid = _A.Core:GetSpellID("Cobra Shot")
 local steadyid = _A.Core:GetSpellID("Steady Shot") 
@@ -269,12 +274,18 @@ local ESid = _A.Core:GetSpellID("Explosive Shot")
 local gtID = _A.Core:GetSpellID("Glaive Toss") 
 local baID = _A.Core:GetSpellID("Black Arrow") 
 local amocID = _A.Core:GetSpellID("A Murder of Crows") 
-local GUI = {
-}
 local scatter_x
 local scatter_y
 local scatter_z
 local exeOnLoad = function()
+	-----------------
+	_A.Interface:AddToggle({
+		key = "TrapTrap", 
+		name = "Wyern Setup", 
+		text = "ON = Wyvern Sting into trap (need talent) | OFF = Scatter into trap",
+		icon = "Interface\\Icons\\ability_warrior_offensivestance",
+	})
+	-----------------
 	local STARTSLOT = 1
 	local STOPSLOT = 8
 	_A.pressedbuttonat = 0
@@ -311,7 +322,6 @@ local exeOnLoad = function()
 					print("SCATTERING!!!!!!!!!!!!!!!!!!!!!!!")
 					C_Timer.After(10, function()
 						if scatter_x then
-							print("DELETING")
 							scatter_x = nil
 							scatter_y = nil
 							scatter_z = nil
@@ -326,8 +336,6 @@ local exeOnLoad = function()
 			end
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 				if idd == 60192 then
-					print("FREEZING!!!")
-					print("DELETING")
 					scatter_x = nil
 					scatter_y = nil
 					scatter_z = nil
@@ -769,8 +777,9 @@ local exeOnLoad = function()
 		-- if player:focus() >= (player:FocusMax() - 5) then return true end
 		-- Define abilities with cooldowns and conditions
 		-- Arcane Shot Specific
+		local lowestmelee = Object("lowestEnemyInSpellRangePetPOVKC")
 		local spells = {
-			{ name = "Kill Command", ready = _A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI()},
+			{ name = "Kill Command", ready = _A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI() and lowestmelee},
 			{ name = "Glaive Toss", ready = player:talent("Glaive Toss") },
 			{ name = "A Murder of Crows", ready = player:talent("A Murder of Crows") }
 		}
@@ -1465,7 +1474,10 @@ survival.rot = {
 		if focus and not _A.scattertargets[focus.guid] and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") and focus:InConeOf("player", 170)
 			and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 			and _A.notimmune(focus) and focus:los() then
-			return focus:cast("Wyvern Sting")
+			if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+			if not  player:isCastingAny()  then
+				return focus:cast("Wyvern Sting")
+			end
 		end
 		if not focus then
 			if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3  and player:spellusable("Wyvern Sting") and player:SpellCooldown("Scatter Shot")>player:gcd()
@@ -1475,6 +1487,7 @@ survival.rot = {
 					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and _A.notimmune(Obj) and Obj:los() then
+						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not  player:isCastingAny()  then
 							return Obj:cast("Wyvern Sting")
 						end
@@ -1482,7 +1495,7 @@ survival.rot = {
 				end
 			end
 		end
-	end,
+		end,
 	-----------------------------------------------------------
 	----------------------------------------------------------- SECOND SETUP
 	-----------------------------------------------------------
@@ -1524,7 +1537,7 @@ survival.rot = {
 		if player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") and player:glyph("Glyph of Solace") and player:spellusable("Freezing Trap") then
 			if focus and focus.isplayer and focus:alive() and focus:enemy() and focus:spellRange("Arcane Shot")
 				and focus:stateduration("sleep || stun || misc || incapacitate")>1
-				-- and focus:stateduration("sleep || stun")<4
+				and focus:stateduration("sleep || stun || misc || incapacitate")<4
 				and not focus:moving()
 				and _A.notimmune(focus) and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
@@ -1536,7 +1549,7 @@ survival.rot = {
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] 
 						and Obj:stateduration("sleep || stun || misc || incapacitate")>1
-						-- and Obj:stateduration("sleep || stun")<4
+						and Obj:stateduration("sleep || stun || misc || incapacitate")<4
 						and not Obj:moving()
 						and _A.notimmune(Obj) and Obj:los() then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
@@ -1878,21 +1891,17 @@ local inCombat = function()
 		if survival.rot.traps() then return end
 	end
 	if player:buff("Deterrence") then return true end
-	if not player:buff("Deterrence") then
-		survival.rot.bindingshot()
-	end
+	survival.rot.bindingshot()
 	if focus or _A.pull_location=="arena" then
-		if player:talent("Wyvern Sting") then
-			if survival.rot.freezing2() then return true end
+		if player:talent("Wyvern Sting") and toggle("TrapTrap") then
 			if survival.rot.sleep2() then return end
+			if survival.rot.freezing2() then return true end
 			if survival.rot.scatter2() then return end
 			else
-			if survival.rot.freezing() then return end
 			if survival.rot.scatter() then return end
+			if survival.rot.freezing() then return end
+			if survival.rot.sleep() then return end
 		end
-			-- if survival.rot.sleep() then return end
-			-- if survival.rot.freezing() then return end
-			-- if survival.rot.scatter() then return end
 	end
 	-------------------------- MAIN ROTATION
 	survival.rot.autoattackmanager()
@@ -1921,7 +1930,7 @@ local inCombat = function()
 	if survival.rot.amoc() then return end
 	if survival.rot.glaivetoss() then return end
 	-- excess focus priority
-	if survival.rot.venom() then return end
+	-- if survival.rot.venom() then return end
 	-- heal Pet
 	survival.rot.mendpet()
 	-- fill
