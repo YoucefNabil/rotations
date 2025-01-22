@@ -606,10 +606,21 @@ local exeOnLoad = function()
 		if pet and not pet:alive() then return end
 		if pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
 		--
-		for _,totems in ipairs(badtotems) do
-			if Obj.name==totems and Obj:rangefrom(pet)<=24 and Obj:losfrom("pet") then
-			return Obj.guid
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems and Obj:rangefrom(pet)<=24 and Obj:losfrom("pet") then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						range = Obj:range(),
+					}
+				end
 			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
 		end
 		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and target:rangefrom(pet)<=24 and _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(target) then
