@@ -2075,7 +2075,6 @@ local mw_rot = {
 		end
 	end,
 	
-	
 	dpsstance_spin = function()
 		if player:Stance() ~= 1 and (player:keybind("R") or _A.pull_location~="pvp") then
 			if	player:Talent("Rushing Jade Wind") 
@@ -2157,29 +2156,29 @@ local inCombat = function()
 	mw_rot.thunderfocustea()
 	mw_rot.kick_spear()
 	mw_rot.activetrinket()
+	-- mw_rot.items_noggenfogger()
+	-- mw_rot.items_intflask()
+	--
 	if _A.buttondelayfunc()  then return end
-
 	if player:isChanneling("Crackling Jade Lightning") then return end
 	if mw_rot.items_healthstone() then return end 
-	mw_rot.items_noggenfogger()
-	mw_rot.items_intflask()
 	-- if mw_rot.healingsphere_superlow() then return end
 	if mw_rot.healingsphere_keybind() then return end
-	--
 	if mw_rot.Xuen() then return end
 	-- if mw_rot.turtletoss() then return end
-	if mw_rot.kick_legsweep() then return end
-	if mw_rot.kick_paralysis() then return end
-	if mw_rot.ringofpeacev2() then return end
-	-- if mw_rot.sapsnipe() then return end
+	if not _A.modifier_shift() and mw_rot.manatea() then return end
 	if mw_rot.renewingmist() then return end
-	if mw_rot.dispellunCC() then return end
-	if mw_rot.dispellDANGEROUS() then return end
+	if mw_rot.ringofpeacev2() then return end
 	if _A.modifier_shift() or _A.manaengine() then
+		if mw_rot.healingsphere() then return end
 		if mw_rot.uplift() then return end
 		-- if mw_rot.manatea_HealthRegen() then return end
-		if mw_rot.healingsphere() then return end
 	end
+	if mw_rot.kick_legsweep() then return end
+	if mw_rot.kick_paralysis() then return end
+	-- if mw_rot.sapsnipe() then return end
+	if mw_rot.dispellunCC() then return end
+	if mw_rot.dispellDANGEROUS() then return end
 	if mw_rot.healingsphere() then return end
 	if mw_rot.manatea() then return end
 	if not player:keybind("R") then
