@@ -1370,23 +1370,34 @@ survival.rot = {
 			end
 		end
 	end,
-	traps = function()
+	traps_ICE = function()
 		if player:buff("Trap Launcher")
 			and player:spellusable("Ice Trap") then
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
-				if (player:Spellcooldown("Ice Trap")<.3 and _A.castdelay("Snake Trap", 6))
-					or (player:Spellcooldown("Snake Trap")<.3 and _A.castdelay("Ice Trap", 6))
-					-- or player:Spellcooldown("Explosive Trap")<.3
+				if player:Spellcooldown("Ice Trap")<.3 and _A.castdelay("Snake Trap", 11) 
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
-						if player:Spellcooldown("Ice Trap")<.3 and _A.castdelay("Snake Trap", 6) then
-							return _A.clickcast(lowestmelee, "Ice Trap")
-							elseif player:Spellcooldown("Snake Trap")<.3 and _A.castdelay("Ice Trap", 6) then
-							return _A.clickcast(lowestmelee, "Snake Trap")					
-							-- elseif player:Spellcooldown("Explosive Trap")<.3 then
-							-- return _A.clickcast(lowestmelee, "Explosive Trap")
+						if then
+							return _A.clickcast(lowestmelee, "Ice Trap")			
+						end
+					end					
+				end 
+			end 
+		end
+	end,
+	traps_SNAKE = function()
+		if player:buff("Trap Launcher")
+			and player:spellusable("Snake Trap") then
+			local lowestmelee = Object("enemyplayercc")
+			if lowestmelee then
+				if player:Spellcooldown("Snake Trap")<.3 and _A.castdelay("Ice Trap", 11) 
+					then
+					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
+					if not player:isCastingAny() then
+						if then
+							return _A.clickcast(lowestmelee, "Snake Trap")			
 						end
 					end					
 				end 
@@ -1852,7 +1863,8 @@ local inCombat = function()
 	end
 	-- Traps
 	if not toggle("TrapEnable") then
-		if survival.rot.traps() then return end
+		if survival.rot.traps_ICE() then return end
+		if survival.rot.traps_SNAKE() then return end
 	end
 	if not player:buff("Deterrence") then
 		survival.rot.bindingshot()
