@@ -1216,7 +1216,7 @@ local exeOnLoad = function()
 			end
 		end
 	end
-	local function petengine() -- REQUIRES RELOAD WHEN SWITCHING SPECS
+	function _Y.petengine_Surv() -- REQUIRES RELOAD WHEN SWITCHING SPECS
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
@@ -1230,7 +1230,7 @@ local exeOnLoad = function()
 		if attacklowest() then return end
 		if petfollow() then return end
 	end
-	C_Timer.NewTicker(.1, petengine, false, "petengineengine")
+	-- C_Timer.NewTicker(.1, _Y.petengine_Surv, false, "petengineengineSurvival")
 end
 local exeOnUnload = function()
 end
@@ -1863,6 +1863,7 @@ local inCombat = function()
 	if not player then return true end
 	local focus = Object("focus")
 	_A.pull_location = _A.pull_location or pull_location()
+	_Y.petengine_Surv()
 	--debug
 	-- print(_A.MissileExists("Arcane Shot"))
 	-- print(player:immuneduration("snare || all"))

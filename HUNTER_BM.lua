@@ -1215,12 +1215,12 @@ local exeOnLoad = function()
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
 		if target then
-			-- if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				-- if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
 					return _A.CallWowApi("PetAttack", target.guid), 3
-				-- end
-			-- end
-			-- return 3
+				end
+			end
+			return 3
 		end
 	end
 	local function petfollow_whenselftargeting() -- when pet target has a breakable cc
@@ -1239,7 +1239,7 @@ local exeOnLoad = function()
 			end
 		end
 	end
-	local function petengine() -- REQUIRES RELOAD WHEN SWITCHING SPECS
+	function _Y.petengine() -- REQUIRES RELOAD WHEN SWITCHING SPECS
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
@@ -1253,7 +1253,7 @@ local exeOnLoad = function()
 		if attacklowest() then return end
 		if petfollow() then return end
 	end
-	C_Timer.NewTicker(.1, petengine, false, "petengineengine2")
+	-- C_Timer.NewTicker(.1, _Y.petengine_Surv, false, "petengineengineBM")
 end
 local exeOnUnload = function()
 end
@@ -1910,6 +1910,7 @@ local inCombat = function()
 	player = Object("player")
 	if not player then return true end
 	_A.pull_location = _A.pull_location or pull_location()
+	_Y.petengine()
 	local focus = Object("focus")
 	--debug
 	-- print(player:immuneduration("snare || all"))
