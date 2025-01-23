@@ -6,6 +6,8 @@ local mediaPath, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local ui = function(key) return _A.DSL:Get("ui")(_, key) end
 local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
+local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
+local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
 local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 -- top of the CR
@@ -283,12 +285,12 @@ end
 ------------------------------------
 
 
-local cobraid = _A.Core:GetSpellID("Cobra Shot")
-local steadyid = _A.Core:GetSpellID("Steady Shot") 
-local ESid = _A.Core:GetSpellID("Explosive Shot") 
-local gtID = _A.Core:GetSpellID("Glaive Toss") 
-local baID = _A.Core:GetSpellID("Black Arrow") 
-local amocID = _A.Core:GetSpellID("A Murder of Crows") 
+local cobraid = spell_ID("Cobra Shot")
+local steadyid = spell_ID("Steady Shot") 
+local ESid = spell_ID("Explosive Shot") 
+local gtID = spell_ID("Glaive Toss") 
+local baID = spell_ID("Black Arrow") 
+local amocID = spell_ID("A Murder of Crows") 
 local scatter_x
 local scatter_y
 local scatter_z
@@ -323,9 +325,9 @@ local exeOnLoad = function()
 	_A.scattertargets = {}
 	
 	_A.Listener:Add("delaycasts_HUNT_BM", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
-		if player and player.guid and guidsrc == player.guid then
+		if guidsrc == UnitGUID("player") then
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-				_A.casttimers[idd] = _A.GetTime()
+				_A.casttimers[spell_name(idd)] = _A.GetTime()
 				if idd == 19503 or idd==19386 then -- add wyvern sting
 					if not _A.scattertargets[guiddest] then _A.scattertargets[guiddest]= true end
 					C_Timer.After(2, function()
@@ -337,9 +339,9 @@ local exeOnLoad = function()
 			end
 			-- if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 			if subevent == "SPELL_AURA_APPLIED" then -- doesnt work with channeled spells
-				_A.casttimers[idd] = _A.GetTime()
+				_A.casttimers[spell_name(idd)] = _A.GetTime()
 				--
-				if idd == 19503 then
+				if spell_name(idd) == spell_name(19503) then
 					scatter_x, scatter_y, scatter_z = _A.ObjectPosition(guiddest)
 					print("SCATTERING!!!!!!!!!!!!!!!!!!!!!!!")
 					C_Timer.After(10, function()
@@ -350,14 +352,15 @@ local exeOnLoad = function()
 						end
 					end)
 				end
-				if idd == 19503 or idd==19386 then
+				if spell_name(idd) == spell_name(19503) or spell_name(idd)==spell_name(19386) then
 					if _A.scattertargets[guiddest] then
 						_A.scattertargets[guiddest]=nil
 					end
 				end
 			end
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-				if idd == 60192 then
+				if spell_name(idd) == spell_name(60192) then
+					-- print("HEY ITS WORKING!")
 					scatter_x = nil
 					scatter_y = nil
 					scatter_z = nil
@@ -366,31 +369,19 @@ local exeOnLoad = function()
 		end
 	end)
 	function _A.castdelay(idd, delay)
-		if tonumber(idd) then 
-			local spellid = idd
-			else
-			local spellid = idd and _A.Core:GetSpellID(idd)
-		end
+		local spellid = idd and spell_name(idd)
 		if delay == nil then return true end
 		if _A.casttimers[spellid]==nil then return true end
 		return (_A.GetTime() - _A.casttimers[spellid])>=delay
 	end
 	function _A.castdelaytarget(idd, delay)
-		if tonumber(idd) then 
-			local spellid = idd
-			else
-			local spellid = idd and _A.Core:GetSpellID(idd)
-		end
+		local spellid = idd and spell_name(idd)
 		if delay == nil then return true end
 		if _A.casttimers[spellid]==nil then return true end
 		return (_A.GetTime() - _A.casttimers[spellid])>=delay
 	end
 	function _A.castwhen(idd)
-		if tonumber(idd) then 
-			local spellid = idd
-			else
-			local spellid = idd and _A.Core:GetSpellID(idd)
-		end
+		local spellid = idd and spell_name(idd)
 		if _A.casttimers[spellid]==nil then return 9999 end
 		return (_A.GetTime() - _A.casttimers[spellid])
 	end
@@ -808,7 +799,7 @@ local exeOnLoad = function()
 	end)
 	----------------------------- MISSILES
 	function _A.MissileExists(ID)
-		local ID_CORE = _A.Core:GetSpellID(ID)
+		local ID_CORE = spell_ID(ID)
 		local missiles = _A.GetMissiles()
 		for _, missile in ipairs(missiles) do
 			local spellid, _, _, _, caster, _, _, _, target, _, _, _ = unpack(missile) -- prior Legion
