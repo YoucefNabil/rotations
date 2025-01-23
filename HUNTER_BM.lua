@@ -1215,12 +1215,12 @@ local exeOnLoad = function()
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
 		if target then
-			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+			-- if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+				-- if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
 					return _A.CallWowApi("PetAttack", target.guid), 3
-				end
-			end
-			return 3
+				-- end
+			-- end
+			-- return 3
 		end
 	end
 	local function petfollow_whenselftargeting() -- when pet target has a breakable cc
@@ -1239,17 +1239,16 @@ local exeOnLoad = function()
 			end
 		end
 	end
-	local function petengine()
+	local function petengine() -- REQUIRES RELOAD WHEN SWITCHING SPECS
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
-		if player:spec()~=253 then return true end
-		-- if not player:combat() then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
 		if player:mounted() then return end
 		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
+		-------- PET ROTATION
 		if attacktotem() then return end
 		if attacklowest() then return end
 		if petfollow() then return end

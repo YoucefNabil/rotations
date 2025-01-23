@@ -1216,20 +1216,17 @@ local exeOnLoad = function()
 			end
 		end
 	end
-	local function petengine()
+	local function petengine() -- REQUIRES RELOAD WHEN SWITCHING SPECS
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
-		if player:spec()~=255 then return true end
-		-- if not player:combat() then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
 		if player:mounted() then return end
 		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
-		-- Rotation
+		-- Pet Rotation
 		if attacktotem() then return end
-		-- if petfollow_whenselftargeting() then return end
 		if attacklowest() then return end
 		if petfollow() then return end
 	end
