@@ -291,6 +291,9 @@ local exeOnLoad = function()
 		text = "ON = Scatter/freeze/sleep | OFF = Ice (good for bgs)",
 		icon = select(3,GetSpellInfo("Freezing Trap")),
 	})
+	_A.Interface:ShowToggle("cooldowns", false)
+	_A.Interface:ShowToggle("interrupts", false)
+	_A.Interface:ShowToggle("aoe", false)
 	local STARTSLOT = 1
 	local STOPSLOT = 8
 	_A.pressedbuttonat = 0
@@ -1311,6 +1314,31 @@ survival.rot = {
 			end
 		end
 	end,
+	masterscall_party1 = function()
+		local party1 = Object("party1")
+		if _A.pull_location=="arena" and party1 and player:SpellCooldown("Master's Call")==0 and party1:state("root") then
+			local pet = Object("pet")
+			if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:rangefrom(party1)<40 and pet:losFrom(party1) then
+				-- cancel cast
+				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
+					else return party1:cast("Master's Call")
+				end
+			end
+		end
+	end,
+	masterscall_party2 = function()
+		local party1 = Object("party2")
+		if _A.pull_location=="arena" and party1 and player:SpellCooldown("Master's Call")==0 and party1:state("root") then
+			local pet = Object("pet")
+			if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") 
+				and pet:rangefrom(party1)<40 and pet:losFrom(party1) then
+				-- cancel cast
+				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
+					else return party1:cast("Master's Call")
+				end
+			end
+		end
+	end,
 	roarofsac = function()
 		if player:SpellCooldown("Roar of Sacrifice(Cunning Ability)")==0 and player:health()<65 and player:combat() and not player:buff("Deterrence") and _A.castdelay("Deterrence",(5+player:gcd())) then
 			local pet = Object("pet")
@@ -1382,8 +1410,8 @@ survival.rot = {
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
-					return _A.clickcast(lowestmelee, "Ice Trap")					
-				end 
+						return _A.clickcast(lowestmelee, "Ice Trap")					
+					end 
 				end 
 			end 
 		end
@@ -1397,8 +1425,8 @@ survival.rot = {
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
-					return _A.clickcast(lowestmelee, "Snake Trap")			
-				end 
+						return _A.clickcast(lowestmelee, "Snake Trap")			
+					end 
 				end 
 			end 
 		end
@@ -1855,6 +1883,8 @@ local inCombat = function()
 	-- Defs
 	survival.rot.deterrence()
 	survival.rot.masterscall()
+	survival.rot.masterscall_party1()
+	survival.rot.masterscall_party2()
 	-- no gcd
 	if not player:isCastingAny() then
 		survival.rot.pet_misdirect()
