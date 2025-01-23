@@ -1379,9 +1379,7 @@ survival.rot = {
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
-						if then
 							return _A.clickcast(lowestmelee, "Ice Trap")			
-						end
 					end					
 				end 
 			end 
@@ -1396,9 +1394,7 @@ survival.rot = {
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
-						if then
 							return _A.clickcast(lowestmelee, "Snake Trap")			
-						end
 					end					
 				end 
 			end 
