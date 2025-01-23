@@ -307,7 +307,7 @@ local exeOnLoad = function()
 		if player and player.guid and guidsrc == player.guid then
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 				_A.casttimers[idd] = _A.GetTime()
-				print(idd.." ".._A.Core:GetSpellName(idd))
+				-- print(idd.." ".._A.Core:GetSpellName(idd))
 				if idd == 19503 or idd==19386 then -- add wyvern sting
 					if not _A.scattertargets[guiddest] then _A.scattertargets[guiddest]= true end
 					C_Timer.After(2, function()
