@@ -1337,7 +1337,7 @@ survival.rot = {
 	end,
 	masterscall = function()
 		if player:SpellCooldown("Master's Call")==0 and not player:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then 
-			if player:state("root") or (player:talent("Posthaste") and player:state("root || snare")) then
+			if player:state("root") then
 				if not player:talent("Posthaste") or (player:talent("Posthaste") and player:SpellCooldown("Disengage")>0) then
 					local pet = Object("pet")
 					if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:range()<40 and pet:los() then
