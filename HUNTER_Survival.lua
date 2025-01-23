@@ -1378,7 +1378,8 @@ survival.rot = {
 				if player:Spellcooldown("Ice Trap")<.3 and _A.castdelay("Snake Trap", 11) 
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-					 else  _A.clickcast(lowestmelee, "Ice Trap")					
+					 else  
+					return _A.clickcast(lowestmelee, "Ice Trap")					
 				end 
 			end 
 		end
@@ -1391,7 +1392,8 @@ survival.rot = {
 				if player:Spellcooldown("Snake Trap")<.3 and _A.castdelay("Ice Trap", 11) 
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-					else return _A.clickcast(lowestmelee, "Snake Trap")			
+					else 
+					return _A.clickcast(lowestmelee, "Snake Trap")			
 				end 
 			end 
 		end
@@ -1888,7 +1890,7 @@ local inCombat = function()
 	survival.rot.killshot()
 	if (not _A.modifier_ctrl() and _A.pull_location=="arena") and survival.rot.tranquillshot_highprio() then return end -- ctrl disables tranq in arena
 	if (_A.modifier_ctrl() and _A.pull_location~="arena") and survival.rot.tranquillshot_highprio() then return end -- ctrl enables tranq outisde arena
-	if _A.modifier_alt() or _A.pull_location=="arena" then survival.rot.concussion() end -- alt slows
+	if _A.modifier_alt() then survival.rot.concussion() end -- alt slows
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
 	-- important spells
 	if (_A.pull_location=="pvp" or _A.pull_location=="arena") 
