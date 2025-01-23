@@ -1438,9 +1438,7 @@ survival.rot = {
 				if player:Spellcooldown("Ice Trap")<.3 and _A.castdelay("Snake Trap", 11) 
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-					if not player:isCastingAny() then
-							return _A.clickcast(lowestmelee, "Ice Trap")			
-					end					
+					else return _A.clickcast(lowestmelee, "Ice Trap")							
 				end 
 			end 
 		end
@@ -1453,9 +1451,7 @@ survival.rot = {
 				if player:Spellcooldown("Snake Trap")<.3 and _A.castdelay("Ice Trap", 11) 
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-					if not player:isCastingAny() then
-							return _A.clickcast(lowestmelee, "Snake Trap")			
-					end					
+					else return _A.clickcast(lowestmelee, "Snake Trap")				
 				end 
 			end 
 		end
