@@ -1253,15 +1253,16 @@ local exeOnLoad = function()
 		if attacklowest() then return end
 		if petfollow() then return end
 	end
-	-- C_Timer.NewTicker(.1, _Y.petengine_Surv, false, "petengineengineBM")
+	-- C_Timer.NewTicker(.1, _Y.petengine, false, "petengineengineBM")
 end
 local exeOnUnload = function()
 end
 
 local dontdispell = {
-    ["Clearcasting"] = true,
-    ["Backdraft"] = true,
-    ["Legacy of the White Tiger"] = true,
+	["Clearcasting"] = true,
+	["Backdraft"] = true,
+	["Legacy of the Emperor"] = true,
+	["Legacy of the White Tiger"] = true,
 }
 local function canpurge(target)
     for i = 1, 40 do
@@ -1324,6 +1325,7 @@ survival.rot = {
 			end
 		end
 	end,
+	-- PET ABILITIES
 	masterscall = function()
 		if player:SpellCooldown("Master's Call")==0 and player:state("root") then
 			local pet = Object("pet")
@@ -1369,6 +1371,14 @@ survival.rot = {
 			end
 		end
 	end,
+	pet_cower = function()
+		if player:SpellCooldown("Cower(Basic Ability)")==0 then
+			local pet = Object("pet")
+			if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:health()<30 then
+				return _A.CallWowApi("RunMacroText","/cast Cower(Basic Ability)")
+			end
+		end
+	end,
 	spiritmend = function()
 		if player:SpellCooldown("Spirit Mend(Exotic Ability)")==0 
 			and player:health()<75
@@ -1386,7 +1396,7 @@ survival.rot = {
 			and player:spellusable("Mend Pet")
 			then
 			local pet = Object("pet")
-			if pet and pet:range()<=40 and pet:health()<90 and pet:combat() and not pet:buff("Mend Pet") and pet:los() then 
+			if pet and pet:range()<=40 and pet:health()<90 and pet:combat() and not pet:buffany("Mend Pet") and pet:los() then 
 				return player:cast("Mend Pet") 
 			end
 		end
@@ -1524,7 +1534,7 @@ survival.rot = {
 	sleep = function()
 		local focus = Object("focus")
 		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3  and player:spellusable("Wyvern Sting") and player:SpellCooldown("Scatter Shot")>player:gcd()
-			and _A.castdelay(60192,3) and _A.castdelay("Scatter Shot",3) then
+			and _A.castdelay(60192,2) and _A.castdelay("Scatter Shot",2) then
 			if focus and not _A.scattertargets[focus.guid] and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 				and _A.notimmune(focus) and focus:los() then
@@ -1614,7 +1624,7 @@ survival.rot = {
 			then
 			if focus and focus:enemy() and focus:alive() and focus.isplayer and not _A.scattertargets[focus.guid] and focus:spellRange("Scatter Shot") and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
-				and (_A.castdelay(60192,3) or (focus:debuffduration("Freezing Trap")<2 and focus:debuffduration("Freezing Trap")>0))
+				and (_A.castdelay(60192,2) or (focus:debuffduration("Freezing Trap")<2 and focus:debuffduration("Freezing Trap")>0))
 				and _A.notimmune(focus) and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny()  then
@@ -1625,7 +1635,7 @@ survival.rot = {
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
-						and (_A.castdelay(60192,3) or (Obj:debuffduration("Freezing Trap")<2 and Obj:debuffduration("Freezing Trap")>0))
+						and (_A.castdelay(60192,2) or (Obj:debuffduration("Freezing Trap")<2 and Obj:debuffduration("Freezing Trap")>0))
 						and _A.notimmune(Obj) and Obj:los() then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not  player:isCastingAny()  then
@@ -1923,6 +1933,7 @@ local inCombat = function()
 	if player:isChanneling("Barrage") then return true end
 	-------------------------- UTILITY
 	survival.rot.roarofsac()
+	survival.rot.pet_cower()
 	if not AOEcheck() then survival.rot.killcommand() end
 	survival.rot.spiritmend()
 	-- if player:lostcontrol() then return true end
@@ -1973,11 +1984,12 @@ local inCombat = function()
 	if AOEcheck() and survival.rot.barrage() then return end -- make a complete aoe check function
 	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 	survival.rot.killshot()
+	survival.rot.mendpet()
 	if not _A.modifier_ctrl() and _A.pull_location=="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
 	if _A.modifier_ctrl() and _A.pull_location~="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
 	-- if not _A.modifier_ctrl() and  survival.rot.tranquillshot_midprio() then return end -- for quest
 	if _A.modifier_alt() then survival.rot.concussion() end
-	-- important spells
+	-- important spell
 	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
 	if survival.rot.tranq_hop() then return end
 	if survival.rot.serpentsting_check() then return end
@@ -1986,7 +1998,6 @@ local inCombat = function()
 	-- excess focus priority
 	-- if survival.rot.venom() then return end
 	-- heal Pet
-	survival.rot.mendpet()
 	-- fill
 	if survival.rot.arcaneshot() then return end
 	-- Fills

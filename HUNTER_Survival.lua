@@ -1238,6 +1238,8 @@ end
 local dontdispell = {
 	["Clearcasting"] = true,
 	["Backdraft"] = true,
+	["Legacy of the Emperor"] = true,
+	["Legacy of the White Tiger"] = true,
 }
 local function canpurge(target)
 	for i = 1, 40 do
@@ -1344,12 +1346,20 @@ survival.rot = {
 			end
 		end
 	end,
+	pet_cower = function()
+		if player:SpellCooldown("Cower(Basic Ability)")==0 then
+			local pet = Object("pet")
+			if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:health()<30 then
+				return _A.CallWowApi("RunMacroText","/cast Cower(Basic Ability)")
+			end
+		end
+	end,
 	mendpet =  function()
 		if	_A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI() and _A.castdelay("Mend Pet", (2*player:gcd())) and player:spellcooldown("Mend Pet")<.3
 			and player:spellusable("Mend Pet")
 			then
 			local pet = Object("pet")
-			if pet and pet:range()<=40 and pet:health()<90 and pet:combat() and not pet:buff("Mend Pet") and pet:los() then 
+			if pet and pet:range()<=40 and pet:health()<90 and pet:combat() and not pet:buffany("Mend Pet") and pet:los() then 
 				return player:cast("Mend Pet") 
 			end
 		end
@@ -1491,7 +1501,7 @@ survival.rot = {
 	sleep = function()
 		local focus = Object("focus")
 		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3  and player:spellusable("Wyvern Sting") and player:SpellCooldown("Scatter Shot")>player:gcd()
-			and _A.castdelay(60192,3) and _A.castdelay("Scatter Shot",3) then
+			and _A.castdelay(60192,2) and _A.castdelay("Scatter Shot",2) then
 			if focus and not _A.scattertargets[focus.guid] and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 				and _A.notimmune(focus) and focus:los() then
@@ -1582,7 +1592,7 @@ survival.rot = {
 			then
 			if focus and focus:enemy() and focus:alive() and focus.isplayer and not _A.scattertargets[focus.guid] and focus:spellRange("Scatter Shot") and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
-				and (_A.castdelay(60192,3) or (focus:debuffduration("Freezing Trap")<2 and focus:debuffduration("Freezing Trap")>0))
+				and (_A.castdelay(60192,2) or (focus:debuffduration("Freezing Trap")<2 and focus:debuffduration("Freezing Trap")>0))
 				and _A.notimmune(focus) and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny()  then
@@ -1593,7 +1603,7 @@ survival.rot = {
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
-						and (_A.castdelay(60192,3) or (Obj:debuffduration("Freezing Trap")<2 and Obj:debuffduration("Freezing Trap")>0))
+						and (_A.castdelay(60192,2) or (Obj:debuffduration("Freezing Trap")<2 and Obj:debuffduration("Freezing Trap")>0))
 						and _A.notimmune(Obj) and Obj:los() then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not  player:isCastingAny()  then
@@ -1875,7 +1885,8 @@ local inCombat = function()
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return true end
 	if player:isChanneling("Barrage") then return true end
 	-------------------------- UTILITY
-	if survival.rot.roarofsac() then return end
+	survival.rot.roarofsac()
+	survival.rot.pet_cower()
 	-- if player:lostcontrol() then return true end
 	if player:buff("Camouflage") then return true end
 	-- Defs
@@ -1921,6 +1932,7 @@ local inCombat = function()
 	if AOEcheck() and survival.rot.barrage() then return end -- make a complete aoe check function
 	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 	survival.rot.killshot()
+	survival.rot.mendpet()
 	if (not _A.modifier_ctrl() and _A.pull_location=="arena") and survival.rot.tranquillshot_highprio() then return end -- ctrl disables tranq in arena
 	if (_A.modifier_ctrl() and _A.pull_location~="arena") and survival.rot.tranquillshot_highprio() then return end -- ctrl enables tranq outisde arena
 	if _A.modifier_alt() then survival.rot.concussion() end -- alt slows
@@ -1934,7 +1946,6 @@ local inCombat = function()
 	if survival.rot.explosiveshot() then return end
 	if survival.rot.glaivetoss() then return end
 	-- heal pet
-	survival.rot.mendpet()
 	-- excess focus priority
 	if survival.rot.serpentsting_check() then return end
 	if survival.rot.venom() then return end
