@@ -366,7 +366,7 @@ local exeOnLoad = function()
 	end)
 	function _A.castdelay(idd, delay)
 		if tonumber(idd) then 
-			local spellid == idd
+			local spellid = idd
 			else
 			local spellid = idd and _A.Core:GetSpellID(idd)
 		end
@@ -376,7 +376,7 @@ local exeOnLoad = function()
 	end
 	function _A.castdelaytarget(idd, delay)
 		if tonumber(idd) then 
-			local spellid == idd
+			local spellid = idd
 			else
 			local spellid = idd and _A.Core:GetSpellID(idd)
 		end
@@ -386,7 +386,7 @@ local exeOnLoad = function()
 	end
 	function _A.castwhen(idd)
 		if tonumber(idd) then 
-			local spellid == idd
+			local spellid = idd
 			else
 			local spellid = idd and _A.Core:GetSpellID(idd)
 		end
