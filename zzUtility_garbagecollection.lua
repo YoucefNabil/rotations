@@ -23,8 +23,10 @@ Listener:Add("BG", {'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS'}, function(
 				local status, _, _ = _A.GetBattlefieldStatus(i)
 				if status == "confirm" then
 					if not _A.IsForeground() then _A.FlashWow() end
-					_A.AcceptBattlefieldPort(i,1)
-					_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
+					if player:isparty() or player:israid() then 
+						_A.AcceptBattlefieldPort(i,1)
+						_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
+					end
 				end
 			end
 		end
@@ -45,31 +47,31 @@ local ClickthisPleasepvp = function()
 			tempTable[#tempTable+1] = {
 				guid = Obj.guid,
 				distance = Obj:distance()
-			}
-		end
+				}
+			end
 	end
 	if #tempTable > 1 then
-		table.sort(tempTable, function(a, b) return a.distance < b.distance end)
+	table.sort(tempTable, function(a, b) return a.distance < b.distance end)
 	end
 	if tempTable[1] and tempTable[1].distance <= 30 then _A.ObjectInteract(tempTable[1].guid) end
-end
-
---
-local function MyTickerCallback(ticker)
+	end
+	
+	--
+	local function MyTickerCallback(ticker)
 	if not _A.Cache.Utils.PlayerInGame then return end
 	player = player or Object("player")
 	if not player then return end
 	local battlefieldstatus = GetBattlefieldWinner()
 	if battlefieldstatus~=nil then 
-		if not _A.IsForeground() then _A.FlashWow() end
-		-- LeaveBattlefield() 
+	if not _A.IsForeground() then _A.FlashWow() end
+	-- LeaveBattlefield() 
 	end
 	ClickthisPleasepvp()
 	local newDuration = _A.Parser.frequency or .1
 	local updatedDuration = ticker:UpdateTicker(newDuration)
-end
-C_Timer.NewTicker(.1, MyTickerCallback, false, "clickpvp")
----
--- C_Timer.NewTicker(garbagedelay, function()
--- collectgarbage("collect")
--- end, false, "garbage")
+	end
+	C_Timer.NewTicker(.1, MyTickerCallback, false, "clickpvp")
+	---
+	-- C_Timer.NewTicker(garbagedelay, function()
+	-- collectgarbage("collect")
+	-- end, false, "garbage")	

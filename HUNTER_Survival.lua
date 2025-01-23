@@ -306,6 +306,8 @@ local exeOnLoad = function()
 	_A.Listener:Add("delaycasts_HUNT_SURV", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
 		if player and player.guid and guidsrc == player.guid then
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[idd] = _A.GetTime()
+				print(idd.." ".._A.Core:GetSpellName(idd))
 				if idd == 19503 or idd==19386 then -- add wyvern sting
 					if not _A.scattertargets[guiddest] then _A.scattertargets[guiddest]= true end
 					C_Timer.After(2, function()
@@ -318,7 +320,6 @@ local exeOnLoad = function()
 			-- if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 			if subevent == "SPELL_AURA_APPLIED" then -- doesnt work with channeled spells
 				_A.casttimers[idd] = _A.GetTime()
-				--
 				if idd == 19503 then
 					scatter_x, scatter_y, scatter_z = _A.ObjectPosition(guiddest)
 					print("SCATTERING!!!!!!!!!!!!!!!!!!!!!!!")
@@ -587,7 +588,7 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:state("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
 			if Obj.isplayer and Obj:spellRange("Arcane Shot") and _A.notimmune(Obj) 
-				and Obj:stateduration("stun")>=1 and not Obj:moving() and Obj:los() then
+				and Obj:stateduration("stun || root")>=1 and not Obj:moving() and Obj:los() then
 				tempTable[#tempTable+1] = {
 					range = Obj:range(),
 					guid = Obj.guid,
@@ -1396,8 +1397,9 @@ survival.rot = {
 				if player:Spellcooldown("Ice Trap")<.3 and _A.castdelay(82948, 11) 
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-					else  
+					if not player:isCastingAny() then
 					return _A.clickcast(lowestmelee, "Ice Trap")					
+				end 
 				end 
 			end 
 		end
@@ -1410,8 +1412,9 @@ survival.rot = {
 				if player:Spellcooldown("Snake Trap")<.3 and _A.castdelay(82941, 11) 
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-					else 
+					if not player:isCastingAny() then
 					return _A.clickcast(lowestmelee, "Snake Trap")			
+				end 
 				end 
 			end 
 		end
