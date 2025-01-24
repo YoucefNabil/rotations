@@ -1268,7 +1268,7 @@ local function purgenum(target)
         if not name then
             break -- No more buffs
 		end
-        if name and atype and (atype == "Magic" or atype == "Enrage") and not dontdispell[name] then
+        if name and atype and (atype == "Magic" or atype == "Enrage") then
             purge_number = purge_number + 1
 		end
 	end
