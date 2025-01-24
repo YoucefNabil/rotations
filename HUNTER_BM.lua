@@ -585,6 +585,7 @@ local exeOnLoad = function()
 		"Stormlash Totem",
 		"Psyfiend",
 		"Lightwell",
+		"Tremor Totem",
 	}
 	
 	

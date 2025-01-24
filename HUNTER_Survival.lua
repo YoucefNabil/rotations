@@ -1141,6 +1141,8 @@ local exeOnLoad = function()
 		"Grounding Totem",
 		"Stormlash Totem",
 		"Psyfiend",
+		"Lightwell",
+		"Tremor Totem",
 	}
 	_A.FakeUnits:Add('HealingStreamTotem', function(num)
 		local tempTable = {}
@@ -1212,20 +1214,6 @@ local exeOnLoad = function()
 			return 1
 		end
 	end
-	local function attackfocus()
-		local _focus = Object("focus")
-		local htotem = Object("HealingStreamTotem")
-		if not htotem and _focus then
-			if _focus:alive() and _focus:enemy() and _focus:exists() and not _focus:state("incapacitate || disorient || charm || misc || sleep || fear") then
-				if (_A.pull_location~="party" and _A.pull_location~="raid") or _focus:combat() then -- avoid pulling shit by accident
-					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
-						return _A.CallWowApi("PetAttack", _focus.guid), 2
-					end
-				end
-				return 2
-			end
-		end
-	end
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
 		if target then
@@ -1235,14 +1223,6 @@ local exeOnLoad = function()
 				end
 			end
 			return 3
-		end
-	end
-	local function petfollow_whenselftargeting() -- when pet target has a breakable cc
-		local target = Object("target")
-		if target and target.guid == player.guid then
-			if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
-				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
-			end
 		end
 	end
 	local function petfollow() -- when pet target has a breakable cc
@@ -2044,10 +2024,10 @@ local inCombat = function()
 	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 	survival.rot.killshot()
 	survival.rot.mendpet()
+	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
 	if (not _A.modifier_ctrl() and _A.pull_location=="arena") and survival.rot.tranquillshot_highprio() then return end -- ctrl disables tranq in arena
 	if (_A.modifier_ctrl() and _A.pull_location~="arena") and survival.rot.tranquillshot_highprio() then return end -- ctrl enables tranq outisde arena
 	if _A.modifier_alt() then survival.rot.concussion() end -- alt slows
-	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return end
 	-- important spells
 	if (_A.pull_location=="pvp" or _A.pull_location=="arena") 
 	and player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
