@@ -394,7 +394,9 @@ local exeOnLoad = function()
 		local location = _A.pull_location
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-				if not blacklist[fr.name] and _A.nothealimmune(fr) and fr:los() then
+				if not blacklist[fr.name] 
+				and fr:SpellRange("Renewing Mist") 
+				and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable+1] = {
 						HP = fr:health(),
 						guid = fr.guid
@@ -416,7 +418,7 @@ local exeOnLoad = function()
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
 				if not blacklist[fr.name] and not fr:Buff(132120) 
-					and _A.nothealimmune(fr) and fr:los() then
+					and fr:SpellRange("Renewing Mist") and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable+1] = {
 						HP = fr:health(),
 						guid = fr.guid
@@ -435,7 +437,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeMINIMAL', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if _A.notimmune(Obj) and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") then
+			if _A.notimmune(Obj) and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:spellRange(spell) then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
