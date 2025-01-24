@@ -1523,7 +1523,8 @@ survival.rot = {
 			end
 			if not focus then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
-					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] 
+					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") 
+						and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and _A.notimmune(Obj) and not Obj:immune("disorient") and Obj:InConeOf("player", 170) 
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
@@ -1687,7 +1688,7 @@ survival.rot = {
 		if player:SpellCooldown("Wyvern Sting")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") 
 			and player:spellusable("Wyvern Sting") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot")
+				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot")
 					and (Obj:iscasting("Fists of Fury") or Obj:channeling("Fists of Fury"))
 					and _A.notimmune(Obj) and Obj:InConeOf("player", 170) 
 					and Obj:los() then

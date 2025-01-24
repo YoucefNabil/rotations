@@ -1490,7 +1490,8 @@ survival.rot = {
 			end
 			if not focus then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
-					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") and healerspecid[Obj:spec()] 
+					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") 
+						and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and _A.notimmune(Obj) and not Obj:immune("disorient") and Obj:InConeOf("player", 170) 
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
@@ -1518,7 +1519,8 @@ survival.rot = {
 			end
 			if not focus then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
-					if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] 
+					if Obj.isplayer and Obj:spellRange("Arcane Shot") 
+						and healerspecid[Obj:spec()] 
 						and (Obj:debuff("Scatter Shot") or (Obj:stateduration("disorient || charm || sleep || stun")>1 and Obj:stateduration("disorient || charm || sleep || stun")<4)) 
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
 						and not Obj:debuffany("Wyvern Sting") and _A.notimmune(Obj) and Obj:los() then
@@ -1547,7 +1549,8 @@ survival.rot = {
 			if not focus then
 				
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
-					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
+					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 170) 
+						and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and _A.notimmune(Obj) and Obj:los() then
 						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
@@ -1578,7 +1581,8 @@ survival.rot = {
 			end
 			if not focus then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
-					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] 
+					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot") 
+						and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and _A.notimmune(Obj) and not Obj:immune("sleep") and Obj:InConeOf("player", 170) 
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
@@ -1606,7 +1610,8 @@ survival.rot = {
 			end
 			if not focus then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
-					if Obj.isplayer and Obj:spellRange("Arcane Shot") and healerspecid[Obj:spec()] 
+					if Obj.isplayer and Obj:spellRange("Arcane Shot") 
+						and healerspecid[Obj:spec()] 
 						and Obj:stateduration("sleep || stun || misc || incapacitate")>1
 						and Obj:stateduration("sleep || stun || misc || incapacitate")<4
 						and not Obj:moving()
@@ -1635,7 +1640,8 @@ survival.rot = {
 			end
 			if not focus then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
-					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") and Obj:InConeOf("player", 170) and healerspecid[Obj:spec()] 
+					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot") and Obj:InConeOf("player", 170) 
+						and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and (_A.castdelay(60192,2) or (Obj:debuffduration("Freezing Trap")<2 and Obj:debuffduration("Freezing Trap")>0))
 						and _A.notimmune(Obj) and Obj:los() then
@@ -1669,7 +1675,7 @@ survival.rot = {
 		if player:SpellCooldown("Scatter Shot")<.3  and player:spellusable("Scatter Shot")
 			then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot")
+				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot")
 					and (Obj:iscasting("Fists of Fury") or Obj:channeling("Fists of Fury"))
 					and _A.notimmune(Obj) and Obj:InConeOf("player", 170) 
 					and Obj:los() then
