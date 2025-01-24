@@ -1236,10 +1236,18 @@ local exeOnUnload = function()
 end
 
 local dontdispell = {
+	-- shaman irrelevent
 	["Clearcasting"] = true,
 	["Backdraft"] = true,
+	-- Buffs (not worth it)
 	["Legacy of the Emperor"] = true,
 	["Legacy of the White Tiger"] = true,
+	["Arcane Brilliance"] = true,
+	["Mark of the Wild"] = true,
+	["Blessing of Kings"] = true,
+	["Blessing of Might"] = true,
+	["Power Word: Fortitude"] = true,
+	["Searing Flame"] = true,
 }
 local function canpurge(target)
 	for i = 1, 40 do
@@ -1252,6 +1260,19 @@ local function canpurge(target)
 		end
 	end
 	return false
+end
+local function purgenum(target)
+	local purge_number = 0
+    for i = 1, 40 do
+        local name,_,_,_,atype = _A.UnitBuff(target, i)
+        if not name then
+            break -- No more buffs
+		end
+        if name and atype and (atype == "Magic" or atype == "Enrage") and not dontdispell[name] then
+            purge_number = purge_number + 1
+		end
+	end
+    return purge_number
 end
 
 survival.rot = {
@@ -1304,7 +1325,7 @@ survival.rot = {
 	end,
 	disengage_freemovement = function()
 		if player:talent("Posthaste") and player:SpellCooldown("Disengage")==0 and player:state("root || snare") 
-		and not player:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then
+			and not player:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then
 			-- cancel cast
 			if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
 				else return player:cast("Disengage")
@@ -1314,7 +1335,7 @@ survival.rot = {
 	masterscall = function()
 		if player:SpellCooldown("Master's Call")==0 and not player:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then 
 			if player:state("root") then
-				if not player:talent("Posthaste") or (player:talent("Posthaste") and player:SpellCooldown("Disengage")>0) then
+				if (player:talent("Posthaste") and player:SpellCooldown("Disengage")>0) or (not player:talent("Posthaste"))  then
 					local pet = Object("pet")
 					if pet and pet:exists() and pet:alive() and not pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:range()<40 and pet:los() then
 						-- cancel cast
@@ -1426,7 +1447,7 @@ survival.rot = {
 			and player:spellusable("Ice Trap") then
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
-				if player:Spellcooldown("Ice Trap")<.3 and _A.castdelay(82948, 11) 
+				if player:Spellcooldown("Ice Trap")<.3
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
@@ -1441,7 +1462,7 @@ survival.rot = {
 			and player:spellusable("Snake Trap") then
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
-				if player:Spellcooldown("Snake Trap")<.3 and _A.castdelay(82941, 11) 
+				if player:Spellcooldown("Snake Trap")<.3 and _A.castdelay(82941, 6) 
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
@@ -1544,7 +1565,7 @@ survival.rot = {
 	-----------------------------------------------------------
 	sleep2 = function()
 		local focus = Object("focus")
-		if player:SpellCooldown("Wyvern Sting")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") 
+		if player:talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") 
 			and player:spellusable("Wyvern Sting") then
 			if focus and focus.isplayer and focus:enemy() and focus:alive() and not _A.scattertargets[focus.guid] and focus:spellRange("Arcane Shot")
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
@@ -1630,6 +1651,34 @@ survival.rot = {
 	
 	-----------------------------------------------------------
 	-----------------------------------------------------------
+	sleepKick = function()
+		if player:SpellCooldown("Wyvern Sting")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") 
+			and player:spellusable("Wyvern Sting") then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot")
+					and (Obj:iscasting("Fists of Fury") or Obj:channeling("Fists of Fury"))
+					and _A.notimmune(Obj) and Obj:InConeOf("player", 170) 
+					and Obj:los() then
+					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+					if not player:isCastingAny() then  return Obj:cast("Wyvern Sting") end
+				end
+			end
+		end
+	end,
+	scatterKick = function()
+		if player:SpellCooldown("Scatter Shot")<.3  and player:spellusable("Scatter Shot")
+			then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot")
+					and (Obj:iscasting("Fists of Fury") or Obj:channeling("Fists of Fury"))
+					and _A.notimmune(Obj) and Obj:InConeOf("player", 170) 
+					and Obj:los() then
+					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+					if not player:isCastingAny() then  return Obj:cast("Wyvern Sting") end
+				end
+			end
+		end
+	end,
 	-----------------------------------------------------------
 	-----------------------------------------------------------
 	bindingshot = function()
@@ -1816,9 +1865,11 @@ survival.rot = {
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
 			if lowestmelee and canpurge(lowestmelee.guid) then
-				if player:SpellUsable("Tranquilizing Shot") then
-					return lowestmelee:Cast("Tranquilizing Shot")
-					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				if purgenum(lowestmelee.guid)>=2 or not _A.MissileExists("Tranquilizing Shot") then
+					if player:SpellUsable("Tranquilizing Shot") then
+						return lowestmelee:Cast("Tranquilizing Shot")
+						elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					end
 				end
 			end
 		end
@@ -1828,9 +1879,11 @@ survival.rot = {
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
 			if lowestmelee and canpurge(lowestmelee.guid) then
-				if player:SpellUsable("Tranquilizing Shot") and _A.lowpriocheck("Tranquilizing Shot") then
-					return lowestmelee:Cast("Tranquilizing Shot")
-					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				if purgenum(lowestmelee.guid)>=2 or not _A.MissileExists("Tranquilizing Shot") then
+					if player:SpellUsable("Tranquilizing Shot") and _A.lowpriocheck("Tranquilizing Shot") then
+						return lowestmelee:Cast("Tranquilizing Shot")
+						elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+					end
 				end
 			end
 		end
@@ -1919,6 +1972,8 @@ local inCombat = function()
 		if survival.rot.traps_SNAKE() then return end
 	end
 	if not player:buff("Deterrence") then
+		survival.rot.sleepKick()
+		survival.rot.scatterKick()
 		survival.rot.bindingshot()
 	end
 	if toggle("TrapEnable") then
