@@ -1680,7 +1680,7 @@ survival.rot = {
 					and _A.notimmune(Obj) and Obj:InConeOf("player", 170) 
 					and Obj:los() then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
-					if not player:isCastingAny() then  return Obj:cast("Wyvern Sting") end
+					if not player:isCastingAny() then  return Obj:cast("Scatter Shot") end
 				end
 			end
 		end

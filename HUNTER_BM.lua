@@ -1688,7 +1688,7 @@ survival.rot = {
 		if player:SpellCooldown("Wyvern Sting")<.3 and player:SpellCooldown("Freezing Trap")<.3 and player:buff("Trap Launcher") 
 			and player:spellusable("Wyvern Sting") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot")
+				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot")
 					and (Obj:iscasting("Fists of Fury") or Obj:channeling("Fists of Fury"))
 					and _A.notimmune(Obj) and Obj:InConeOf("player", 170) 
 					and Obj:los() then
@@ -1702,12 +1702,12 @@ survival.rot = {
 		if player:SpellCooldown("Scatter Shot")<.3  and player:spellusable("Scatter Shot")
 			then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot")
+				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot")
 					and (Obj:iscasting("Fists of Fury") or Obj:channeling("Fists of Fury"))
 					and _A.notimmune(Obj) and Obj:InConeOf("player", 170) 
 					and Obj:los() then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
-					if not player:isCastingAny() then  return Obj:cast("Wyvern Sting") end
+					if not player:isCastingAny() then  return Obj:cast("Scatter Shot") end
 				end
 			end
 		end
