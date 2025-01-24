@@ -33,24 +33,42 @@ local immunedebuffs = {
 	-- "Smoke Bomb"
 }
 local healerspecid = {
+	-- HEALERS
+	[105]="Druid Resto",
+	[270]="monk mistweaver",
+	[65]="Paladin Holy",
+	[257]="Priest Holy",
+	[256]="Priest discipline",
+	[264]="Sham Resto",
+	--DRUIDS
+	-- [102]="Druid Balance",
+	-- [103]="Druid Balance",
+	-- LOCKS
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",
 	-- [267]="Lock Destro",
-	[105]="Druid Resto",
-	-- [102]="Druid Balance",
-	[270]="monk mistweaver",
-	[65]="Paladin Holy",
+	--PALADINS
 	-- [66]="Paladin prot",
 	-- [70]="Paladin retri",
-	[257]="Priest Holy",
-	[256]="Priest discipline",
+	-- PRIEST
 	-- [258]="Priest shadow",
-	[264]="Sham Resto",
+	-- SHAM
 	-- [262]="Sham Elem",
 	-- [263]="Sham enh",
+	-- MAGE
 	-- [62]="Mage Arcane",
 	-- [63]="Mage Fire",
-	-- [64]="Mage Frost"
+	-- [64]="Mage Frost",
+	-- Hunter
+	-- [253] = "hunter",
+	-- [254] = "hunter",
+	-- [255] = "hunter",
+	-- ROGUE
+	-- [259] = "rogue",
+	-- [260] = "rogue",
+	-- [261] = "rogue",
+	-- MONK
+	-- [269] = "ww monk",
 }
 local darksimulacrumspecsBGS = {
 	[265]="Lock Affli",
@@ -568,6 +586,25 @@ local exeOnLoad = function()
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
 		end
+	end)
+	
+	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKCNOLOS', function(num)
+		local tempTable = {}
+		local target = Object("target")
+		local pet = Object("pet")
+		if not pet then return end
+		if pet and not pet:alive() then return end
+		if pet:state("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
+		--
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
+			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") then
+			return target and target.guid -- this is good
+		end
+		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		if lowestmelee then
+			return lowestmelee.guid
+		end
+		return nil
 	end)
 	
 	_A.FakeUnits:Add('enemyplayercc', function(num)
@@ -1190,7 +1227,7 @@ local exeOnLoad = function()
 		end
 	end
 	local function attacklowest()
-		local target = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
 		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
@@ -1547,7 +1584,6 @@ survival.rot = {
 				end
 			end
 			if not focus then
-				
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot") and Obj:InConeOf("player", 170) 
 						and healerspecid[Obj:spec()] 

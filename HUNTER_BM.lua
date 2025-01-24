@@ -40,12 +40,13 @@ local healerspecid = {
 	[257]="Priest Holy",
 	[256]="Priest discipline",
 	[264]="Sham Resto",
+	--DRUIDS
+	-- [102]="Druid Balance",
+	-- [103]="Druid Balance",
 	-- LOCKS
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",
 	-- [267]="Lock Destro",
-	--DRUIDS
-	-- [102]="Druid Balance",
 	--PALADINS
 	-- [66]="Paladin prot",
 	-- [70]="Paladin retri",
@@ -66,6 +67,8 @@ local healerspecid = {
 	-- [259] = "rogue",
 	-- [260] = "rogue",
 	-- [261] = "rogue",
+	-- MONK
+	-- [269] = "ww monk",
 }
 local darksimulacrumspecsBGS = {
 	[265]="Lock Affli",
