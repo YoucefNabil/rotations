@@ -6,6 +6,8 @@ local HarmonyMedia, _A, Harmony = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
+local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
+local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
 -- top of the CR
 local player
 _A.numtangos = 0
@@ -139,6 +141,8 @@ local function cditemRemains(itemid)
 		return 0
 	end
 end
+
+
 --
 --
 
@@ -158,6 +162,43 @@ local exeOnLoad = function()
 	end)
 	_A.pull_location = _A.pull_location or pull_location()
 	--
+	_A.casttimers = {}
+	_A.casttimers_tars = {}
+	_A.scattertargets = {}
+	Listener:Add("warArms_delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+		if guidsrc == UnitGUID("player") then
+			-- if spell_name(idd) == "Throw" then print(subevent) end
+			if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START" then -- doesnt work with channeled spells
+				_A.casttimers[spell_name(idd)] = _A.GetTime()
+				if not _A.casttimers_tars[guiddest] then
+					_A.casttimers_tars[guiddest] = {}
+					_A.casttimers_tars[guiddest][spell_name(idd)]=_A.GetTime()
+					print(_A.casttimers_tars[guiddest][spell_name(idd)])
+					else 
+					_A.casttimers_tars[guiddest][spell_name(idd)]=_A.GetTime()
+					print(_A.casttimers_tars[guiddest][spell_name(idd)])
+				end
+			end
+		end
+	end)
+	function _A.castdelay(idd, delay)
+		local spellid = idd and spell_name(idd)
+		if delay == nil then return true end
+		if _A.casttimers[spellid]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[spellid])>=delay
+	end
+	function _A.castdelaytarget(idd, target, delay)
+		local spellid = idd and spell_name(idd)
+		if delay == nil then return true end
+		if _A.casttimers_tars[target]==nil then return true end
+		if _A.casttimers_tars[target][spellid]==nil then return true end
+		return (_A.GetTime() - _A.casttimers_tars[target][spellid])>=delay
+	end
+	function _A.castwhen(idd)
+		local spellid = idd and spell_name(idd)
+		if _A.casttimers[spellid]==nil then return 9999 end
+		return (_A.GetTime() - _A.casttimers[spellid])
+	end
 	hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
@@ -193,6 +234,20 @@ local exeOnLoad = function()
 			end
 		end
 	end)
+	
+	function _A.MissileExists(ID, tartar)
+		local ID_CORE = spell_ID(ID)
+		local missiles = _A.GetMissiles()
+		for _, missile in ipairs(missiles) do
+			local spellid, _, _, _, caster, _, _, _, target, _, _, _ = unpack(missile) -- prior Legion
+			if caster == player.guid and spellid==ID_CORE then
+				if tartar == nil or tartar==target then
+					return true
+				end
+			end
+		end
+		return false
+	end
 	
 	function _A.unitfrozen(unit)
 		if unit then 
@@ -329,7 +384,7 @@ local exeOnLoad = function()
 			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		if #tempTable>=1 then
-		return tempTable[num] and tempTable[num].guid
+			return tempTable[num] and tempTable[num].guid
 		end
 	end)
 	
@@ -348,7 +403,7 @@ local exeOnLoad = function()
 			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		if #tempTable>=1 then
-		return tempTable[num] and tempTable[num].guid
+			return tempTable[num] and tempTable[num].guid
 		end
 	end)
 	
@@ -440,6 +495,17 @@ prot.rot = {
 		end
 	end,
 	
+	knife_pullcombat = function()
+	 if not player:moving() and not player:iscasting("Throw") then
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange("Throw") and not Obj:combat() and _A.castdelaytarget("Throw", Obj.guid, 5) 
+				and not Obj.isplayer and  Obj:Infront() and Obj:los()  then
+				return Obj:cast("Throw")
+			end
+		end
+		end
+	end,
+	
 	Disruptingshout = function()
 		if player:talent("Disrupting Shout") and player:SpellCooldown("Disrupting Shout")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -495,7 +561,7 @@ prot.rot = {
 			end
 		end
 	end,
-
+	
 	heroicstrike = function()
 		if (player:rage()>=100 or player:buff("Ultimatum")) and player:SpellCooldown("Heroic Strike")==0 and player:Spellusable("Heroic Strike") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Heroic Strike)")
@@ -643,8 +709,9 @@ local inCombat = function()
 	if prot.rot.defstance() then return end
 	if prot.rot.battleshout() then return end
 	if prot.rot.thunderclapPVE() then return end
-	if prot.rot.heroicstrike() then return end
+	if prot.rot.knife_pullcombat() then return end
 	if prot.rot.victoryrush() then return end
+	if prot.rot.heroicstrike() then return end
 	if prot.rot.shieldslam() then return end
 	if prot.rot.revenge() then return end
 	if prot.rot.devastate() then return end

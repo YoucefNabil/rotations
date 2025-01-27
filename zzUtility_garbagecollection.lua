@@ -23,10 +23,10 @@ Listener:Add("BG", {'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS'}, function(
 				local status, _, _ = _A.GetBattlefieldStatus(i)
 				if status == "confirm" then
 					if not _A.IsForeground() then _A.FlashWow() end
-					if player:isparty() or player:israid() then 
+					-- if player:isparty() or player:israid() then 
 						_A.AcceptBattlefieldPort(i,1)
 						_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
-					end
+					-- end
 				end
 			end
 		end

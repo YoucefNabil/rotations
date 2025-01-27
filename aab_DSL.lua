@@ -9,14 +9,14 @@ _A.DSL:Register('state.purge', function(target, spell)
 end)
 
 _A.locale = _A.locale or {}
-local L = _A.locale
-L.locale = GetLocale()
+local YL = _A.locale
+YL.locale = GetLocale()
 
 
-L.States = {}
-L.Immune = {}
-if L.locale == "enUS" then
-	L.States = {
+YL.States = {}
+YL.Immune = {}
+if YL.locale == "enUS" then
+	YL.States = {
 		charm        = {'^charmed'},
 		disarm       = {'disarmed'},
 		disorient    = {'^disoriented'},
@@ -30,7 +30,7 @@ if L.locale == "enUS" then
 		sleep        = {'^asleep'},
 		snare        = {'^movement.*slowed', 'movement speed reduced', '^slowed by', '^dazed', '^reduces movement speed'}
 	}
-	L.Immune = {
+	YL.Immune = {
 		all          = {'dematerialize', 'deterrence', 'divine shield', 'ice block', 'desoriented and invulnerable', 'cyclone'},
 		charm        = {'bladestorm', 'desecrated ground', 'grounding totem effect', 'lichborne'},
 		disorient    = {'bladestorm', 'desecrated ground'},
@@ -45,8 +45,8 @@ if L.locale == "enUS" then
 		spell        = {'anti-magic shell', 'cloak of shadows', 'diffuse magic', 'dispersion','massspell reflection', 'ring of peace', 'spell reflection', 'touch of karma'},
 		stun         = {'bestial wrath', 'bladestorm', 'desecrated ground', 'icebound fortitude','grounding totem', 'nimble brew'}
 	}
-	elseif L.locale == "ruRU" then
-	L.States = {
+	elseif YL.locale == "ruRU" then
+	YL.States = {
 		charm        = {'^charmed'},
 		disarm       = {'disarmed'},
 		disorient    = {'^disoriented'},
@@ -60,7 +60,7 @@ if L.locale == "enUS" then
 		sleep        = {'^asleep'},
 		snare        = {'^movement.*slowed', 'скорость передвижения снижена', '^slowed by', '^dazed', '^reduces movement speed'}
 	}
-	L.Immune = {
+	YL.Immune = {
 		all          = {'dematerialize', 'deterrence', 'divine shield', 'ice block', 'desoriented and invulnerable', 'cyclone'},
 		charm        = {'bladestorm', 'desecrated ground', 'grounding totem effect', 'lichborne'},
 		disorient    = {'bladestorm', 'desecrated ground'},
@@ -77,10 +77,10 @@ if L.locale == "enUS" then
 	}
 end
 ------ THESE ARE THE FUNCTIONS LIFTED FROM MORB, they work fine
-_A.DSL:Register('state', function(unit, args)
+_A.DSL:Register('stateYOUCEF', function(unit, args)
 	local tbl = {_A.StrExplode(args, "||")}
 	for _,state in ipairs(tbl) do
-		local pattern = L.States[tostring(state):lower()]
+		local pattern = YL.States[tostring(state):lower()]
 		if pattern then
 			if tlp:Scan_Debuff(unit, pattern) then
 				return true
@@ -90,10 +90,10 @@ _A.DSL:Register('state', function(unit, args)
 	return false
 end)
 
-_A.DSL:Register('immune', function(unit, args)
+_A.DSL:Register('immuneYOUCEF', function(unit, args)
 	local tbl = {_A.StrExplode(args, "||")}
 	for _,imm in ipairs(tbl) do
-		local pattern = L.Immune[tostring(imm):lower()]
+		local pattern = YL.Immune[tostring(imm):lower()]
 		if pattern then
 			if tlp:Scan_Buff(unit, pattern) then --
 				return true
@@ -107,7 +107,7 @@ _A.DSL:Register('stateduration', function(unit, args)
 	local tbl = {_A.StrExplode(args, "||")}
 	local tempTable = {}
 	for _,state in ipairs(tbl) do
-		local pattern = L.States[tostring(state):lower()]
+		local pattern = YL.States[tostring(state):lower()]
 		if pattern and tlp:Scan_Debuff(unit, pattern) then
 			tempTable[#tempTable+1]={
 				duration = tlp:Scan_Debuff_Duration(unit, pattern)
@@ -123,7 +123,7 @@ _A.DSL:Register('immuneduration', function(unit, args)
 	local tbl = {_A.StrExplode(args, "||")}
 	local tempTable = {}
 	for _,imm in ipairs(tbl) do
-		local pattern = L.Immune[tostring(imm):lower()]
+		local pattern = YL.Immune[tostring(imm):lower()]
 		if pattern and tlp:Scan_Buff(unit, pattern) then
 			tempTable[#tempTable+1]={
 				duration = tlp:Scan_Buff_Duration(unit, pattern)
@@ -140,12 +140,12 @@ _A.DSL:Register('statepurgecheck', function(unit, args)
 	local tbl = {_A.StrExplode(args, "||")}
 	local tempTable = {}
 	for _,state in ipairs(tbl) do
-		local pattern = L.States[tostring(state):lower()]
+		local pattern = YL.States[tostring(state):lower()]
 		if pattern and tlp:Scan_Debuff(unit, pattern) then
-				tempTable[#tempTable+1]={
-					check = tlp:Scan_Debuff_Dispellable(unit, pattern)
-				}
-			end
+			tempTable[#tempTable+1]={
+				check = tlp:Scan_Debuff_Dispellable(unit, pattern)
+			}
+		end
 	end
 	if #tempTable>=1 then
 		for _,v in ipairs(tempTable) do

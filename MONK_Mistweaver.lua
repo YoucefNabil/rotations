@@ -65,6 +65,8 @@ local function CalculateHP(t)
 end
 local blacklist = {
 	["Kimpackabowl"] = true,
+	["Rauteeins"] = true,
+	["Jimmyiwnl"] = true,
 	-- [] = true,
 	-- [] = true,
 	-- [] = true,
@@ -393,7 +395,10 @@ local exeOnLoad = function()
 		local tempTable = {}
 		local location = _A.pull_location
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
-			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
+			if fr.isplayer
+			or string.lower(fr.name)=="ebon gargoyle" 
+			or string.lower(fr.name)=="vanndar stormpike"
+			or (location=="arena" and fr:ispet()) then
 				if not blacklist[fr.name] 
 				and fr:SpellRange("Renewing Mist") 
 				and _A.nothealimmune(fr) and fr:los() then
@@ -778,6 +783,8 @@ local exeOnLoad = function()
 	function _A.manaengine() -- make it so it's tied with group hp
 		player = player or Object("player")
 		if player:buff("Lucidity") then return true end
+		if player:mana()>=95 then return true end
+		-- mana based
 		-- mana based
 		if _A.pull_location and _A.pull_location=="arena" then
 	
@@ -2148,6 +2155,7 @@ local inCombat = function()
 	if not player then return end
 	-- print(player:SpellCount("Chi Brew"))
 	-- print(player.name)
+	print(player:state("snare || root"))
 	if not player:alive() then return end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
@@ -2180,7 +2188,7 @@ local inCombat = function()
 	if mw_rot.kick_paralysis() then return end
 	-- if mw_rot.sapsnipe() then return end
 	if mw_rot.dispellunCC() then return end
-	if mw_rot.dispellDANGEROUS() then return end
+	-- if mw_rot.dispellDANGEROUS() then return end
 	if mw_rot.healingsphere() then return end
 	if mw_rot.manatea() then return end
 	if not player:keybind("R") then
