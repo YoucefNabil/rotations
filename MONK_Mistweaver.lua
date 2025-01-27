@@ -2155,7 +2155,7 @@ local inCombat = function()
 	if not player then return end
 	-- print(player:SpellCount("Chi Brew"))
 	-- print(player.name)
-	print(player:state("snare || root"))
+	-- print(player:state("snare || root"))
 	if not player:alive() then return end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
