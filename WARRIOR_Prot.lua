@@ -1,6 +1,6 @@
 local _,class = UnitClass("player")
 if class~="WARRIOR" then return end
-local HarmonyMedia, _A, Harmony = ...
+local HarmonyMedia, _A, _Y = ...
 -- local _, class = UnitClass("player");
 -- if class ~= "WARRIOR" then return end;
 local DSL = function(api) return _A.DSL:Get(api) end
@@ -165,22 +165,56 @@ local exeOnLoad = function()
 	_A.casttimers = {}
 	_A.casttimers_tars = {}
 	_A.scattertargets = {}
+	_Y.enemyGuid = {}
+	_A.ImIcastingsomething = {}
 	Listener:Add("warArms_delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
 		if guidsrc == UnitGUID("player") then
-			-- if spell_name(idd) == "Throw" then print(subevent) end
-			if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START" then -- doesnt work with channeled spells
+			-- if spell_name(idd)=="Throw" then print(subevent) end
+			if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START" or subevent == "SPELL_CAST_FAILED" or subevent == "RANGE_DAMAGE" then -- doesnt work with channeled spells
+				_Y.enemyGuid[guiddest]=true
+				C_Timer.After(10, function()
+					if _Y.enemyGuid[guiddest] then
+						_Y.enemyGuid[guiddest]=nil
+					end
+				end)
+			end
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 				_A.casttimers[spell_name(idd)] = _A.GetTime()
+				_A.ImIcastingsomething[spell_name(idd)]=false
 				if not _A.casttimers_tars[guiddest] then
 					_A.casttimers_tars[guiddest] = {}
 					_A.casttimers_tars[guiddest][spell_name(idd)]=_A.GetTime()
-					print(_A.casttimers_tars[guiddest][spell_name(idd)])
+					-- if spell_name(idd)=="Throw" then print(spell_name(idd), guiddest) end
 					else 
 					_A.casttimers_tars[guiddest][spell_name(idd)]=_A.GetTime()
-					print(_A.casttimers_tars[guiddest][spell_name(idd)])
+					-- if spell_name(idd)=="Throw" then print(spell_name(idd), guiddest) end
 				end
+			end
+			if subevent == "SPELL_CAST_START" then
+				_A.ImIcastingsomething[spell_name(idd)]=true
+				C_Timer.After(10, function()
+					if _A.ImIcastingsomething[spell_name(idd)] and not player:isCastingAny() then
+						_A.ImIcastingsomething[spell_name(idd)]=false
+					end
+				end)
 			end
 		end
 	end)
+	_Y.spellqueuestuff = {}
+	Listener:Add("warArms_spellqueue", {"UNIT_SPELLCAST_SUCCEEDED","UNIT_SPELLCAST_SENT"}, function(event, source, spellname, targetname)
+		if source == "player" then
+			local SPELLNN = spell_ID(spellname)
+			if SPELLNN and not _Y.spellqueuestuff[SPELLNN] then
+				_Y.spellqueuestuff[SPELLNN]=true
+			end
+		end
+	end)
+	function _Y.spellqcheck()
+		for k,_ in pairs(_Y.spellqueuestuff) do
+			if k and IsCurrentSpell(k) then return true end
+		end
+		return false
+	end
 	function _A.castdelay(idd, delay)
 		local spellid = idd and spell_name(idd)
 		if delay == nil then return true end
@@ -188,11 +222,12 @@ local exeOnLoad = function()
 		return (_A.GetTime() - _A.casttimers[spellid])>=delay
 	end
 	function _A.castdelaytarget(idd, target, delay)
-		local spellid = idd and spell_name(idd)
-		if delay == nil then return true end
-		if _A.casttimers_tars[target]==nil then return true end
-		if _A.casttimers_tars[target][spellid]==nil then return true end
-		return (_A.GetTime() - _A.casttimers_tars[target][spellid])>=delay
+		local spellid = spell_name(idd)
+		if _A.casttimers_tars[target] and _A.casttimers_tars[target][spellid] and (_A.GetTime() - _A.casttimers_tars[target][spellid])then
+			-- print("IT PASSED THE CHECK", (_A.GetTime() - _A.casttimers_tars[target][spellid]))
+			return (_A.GetTime() - _A.casttimers_tars[target][spellid])>=delay
+		end
+		return true
 	end
 	function _A.castwhen(idd)
 		local spellid = idd and spell_name(idd)
@@ -215,6 +250,7 @@ local exeOnLoad = function()
 		if slot==STOPSLOT then 
 			-- TEST STUFF
 			-- _A.print(string.lower(player.name)==string.lower("PfiZeR"))
+			print(_A.ObjectFacing("player"))
 			-- TEST STUFF
 			-- print(player:stance())
 			-- local target = Object("target")
@@ -422,13 +458,50 @@ local exeOnLoad = function()
 	_A.DSL:Register('channame', function(unit)
 		return channelinfo(unit)
 	end)
+	function _Y.bestfacing(coneDegrees, Range, stepRadians)
+		local coneRadians = math.rad(coneDegrees)
+		local halfCone = coneRadians / 2
+		local playerFacing = _A.ObjectFacing("player")
+		local maxEnemies = 0
+		local range = Range or 40
+		local optimalFacing = playerFacing
+		for facing = 0, 2 * math.pi, stepRadians do
+			local count = 0
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				local yaw, _ = _A.GetAnglesBetweenObjects("player", Obj.guid)
+				local relativeYaw = (yaw - facing + math.pi) % (2 * math.pi) - math.pi
+				if math.abs(relativeYaw) <= halfCone then
+					if Obj:range()<range and _A.notimmune(Obj) and Obj:los() then
+						count = count + 1
+					end
+				end
+			end
+			if count > maxEnemies then
+				maxEnemies = count
+				optimalFacing = facing
+			end
+		end
+		return optimalFacing, maxEnemies
+	end
+	function _Y.IsFacingEqual(CurrentFacing, TargetFacing, Tolerance)
+		local tolerance = Tolerance or 0.1
+		local currentFacing = CurrentFacing % (2 * math.pi)
+		local targetFacing = TargetFacing % (2 * math.pi)
+		local difference = math.abs(currentFacing - targetFacing)
+		-- Handle wrapping around the circle
+		if difference > math.pi then
+			difference = (2 * math.pi) - difference
+		end
+		-- Check if the difference is within the tolerance
+		return difference <= tolerance
+	end
 end
 local exeOnUnload = function()
 end
 
 prot.rot = {
 	defstance = function()
-		if player:SpellCooldown("Defensive Stance")<.3 then
+		if player:SpellCooldown("Defensive Stance")<player:gcd() then
 			if player:stance()~=2 then player:cast("Defensive Stance")
 			end
 		end
@@ -496,13 +569,22 @@ prot.rot = {
 	end,
 	
 	knife_pullcombat = function()
-	 if not player:moving() and not player:iscasting("Throw") then
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange("Throw") and not Obj:combat() and _A.castdelaytarget("Throw", Obj.guid, 5) 
-				and not Obj.isplayer and  Obj:Infront() and Obj:los()  then
-				return Obj:cast("Throw")
+		local target = nil
+		if not player:moving() and player:SpellCooldown("Throw")==0 and not _Y.spellqcheck() and player:health()>60 then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if (Obj:spellRange("Taunt") or Obj:spellRange("Throw")) and (not UnitTarget(Obj.guid) or UnitTarget(Obj.guid)~=player.guid)
+					and not Obj.isplayer and Obj:los() then
+					if Obj:Infront() then
+						if Obj:spellrange("Taunt") and player:SpellCooldown("Taunt")==0 then
+							return Obj:cast("Taunt")
+						end
+						if Obj:spellrange("Throw") and not UnitTarget(Obj.guid) then
+							return Obj:cast("Throw")
+						end
+						else return _A.FaceDirection(Obj.guid, true)
+					end
+				end
 			end
-		end
 		end
 	end,
 	
@@ -526,7 +608,7 @@ prot.rot = {
 	end,
 	
 	shieldslam = function()
-		if  player:SpellCooldown("Shield Slam")<.3 then
+		if  player:SpellCooldown("Shield Slam")<player:gcd() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Shield Slam)")
 			if lowestmelee then
 				player:cast("Shield Block")
@@ -536,7 +618,7 @@ prot.rot = {
 	end,
 	
 	revenge = function()
-		if  player:SpellCooldown("Revenge")<.3 then
+		if  player:SpellCooldown("Revenge")<player:gcd() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Revenge)")
 			if lowestmelee then
 				return lowestmelee:Cast("Revenge")
@@ -545,7 +627,7 @@ prot.rot = {
 	end,
 	
 	devastate = function()
-		if player:SpellCooldown("Devastate")<.3 then
+		if player:SpellCooldown("Devastate")<player:gcd() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Devastate)")
 			if lowestmelee then
 				return lowestmelee:Cast("Devastate")
@@ -554,10 +636,23 @@ prot.rot = {
 	end,
 	
 	thunderclapPVE = function()
-		if player:SpellCooldown("Thunder clap")<.3 and player:SpellUsable("Thunder clap")then
+		if player:SpellCooldown("Thunder clap")<player:gcd() and player:SpellUsable("Thunder clap")then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Devastate)")
 			if lowestmelee then
 				return player:Cast("Thunder clap")
+			end
+		end
+	end,
+	
+	shockwaves = function()
+		if player:Talent("Shockwave") and player:SpellCooldown("Shockwave")<player:gcd() then
+			local bestfacing, bestfacing_number = _Y.bestfacing(90, 10, 0.1)
+			local playerfacing = _A.ObjectFacing("player")
+			if bestfacing_number>=3 then
+				if not _Y.IsFacingEqual(bestfacing, playerfacing, 0.05) then _A.FaceDirection(bestfacing, true)
+					else
+					return player:Cast("Shockwave")
+				end
 			end
 		end
 	end,
@@ -572,7 +667,7 @@ prot.rot = {
 	end,
 	
 	battleshout = function ()
-		if player:SpellCooldown("battle shout")<.3 and player:rage()<=75 then return player:cast("battle shout")
+		if player:SpellCooldown("battle shout")<player:gcd() and player:rage()<=75 then return player:cast("battle shout")
 		end
 	end,
 	
@@ -676,7 +771,7 @@ prot.rot = {
 	end,
 	
 	bladestorm = function()
-		if player:combat() and player:buffany("Bloodbath") and player:SpellCooldown("bladestorm")<.3 then
+		if player:combat() and player:buffany("Bloodbath") and player:SpellCooldown("bladestorm")<player:gcd() then
 			return player:cast("Bladestorm")
 		end
 	end,
@@ -686,6 +781,17 @@ prot.rot = {
 			local lowestmelee = Object("lowestEnemyInSpellRange(Victory Rush)")
 			if lowestmelee and lowestmelee:exists() then
 				return lowestmelee:Cast("Victory Rush")
+			end
+		end
+	end,
+	
+	faceafk = function()
+		local lowestmelee = Object("lowestEnemyInSpellRange(Shield Slam)")
+		if not lowestmelee then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj:spellRange("Shield Slam") and not Obj:Infront() and Obj:combat() and _A.UnitTarget(Obj.guid)==player.guid and _A.notimmune(Obj) and Obj:los() then
+					_A.FaceDirection(Obj.guid, true)
+				end
 			end
 		end
 	end,
@@ -701,21 +807,28 @@ local inCombat = function()
 	_A.numenemiesinfront()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
-	if _A.buttondelayfunc()  then return end
-	if  player:isCastingAny() then return end
-	if player:mounted() then return end
-	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
-	if prot.rot.Pummel() then return end
-	if prot.rot.defstance() then return end
-	if prot.rot.battleshout() then return end
-	if prot.rot.thunderclapPVE() then return end
-	if prot.rot.knife_pullcombat() then return end
-	if prot.rot.victoryrush() then return end
-	if prot.rot.heroicstrike() then return end
-	if prot.rot.shieldslam() then return end
-	if prot.rot.revenge() then return end
-	if prot.rot.devastate() then return end
+	if _A.buttondelayfunc()  then return true end
+	if  player:isCastingAny() then return true end
+	if player:iscasting("Throw") then return true end
+	-- print(player:iscasting("Throw"))
 	-- if player:lostcontrol()  then return end 
+	if player:mounted() then return true end
+	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return true end
+	-- out of gcd
+	if prot.rot.Pummel() then return true end
+	if prot.rot.defstance() then return true end
+	--
+	-- if _Y.spellqcheck() then return true end
+	if prot.rot.shockwaves() then return true end
+	if prot.rot.battleshout() then return true end
+	if prot.rot.thunderclapPVE() then return true end
+	if prot.rot.victoryrush() then return true end
+	if prot.rot.heroicstrike() then return true end
+	if prot.rot.shieldslam() then return true end
+	if prot.rot.revenge() then return true end
+	if prot.rot.devastate() then return true end
+	if not player:moving() and prot.rot.knife_pullcombat() then return true end
+	if not player:moving() then prot.rot.faceafk() end
 end
 local spellIds_Loc = function()
 end

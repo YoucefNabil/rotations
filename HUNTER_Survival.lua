@@ -12,7 +12,7 @@ local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 -- top of the CR
 local player
-local enemytreshhold = 3
+local enemytreshhold = 6
 local survival = {}
 -- local ENEMIES_OM = {}
 local MISSILES_OM = {}
@@ -1114,7 +1114,42 @@ local exeOnLoad = function()
 				-- _A.CallWowApi("SpellStopTargeting")
 			end
 		end
-	end	
+	end
+	function _Y.mostclumpedenemy(Range, Radius)
+		local tempTable = {}
+		local count = {}
+		local radius = Radius and (Radius + 1.5) or 10
+		local range = Range or 40
+		local most, mostGuid = 0
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:range()<range and not _A.scattertargets[Obj.guid] and Obj:InConeOf(player, 170) and _A.notimmune(Obj) and Obj:los() then
+				local X,Y = _A.ObjectPosition(Obj.guid)
+				tempTable[Obj.guid] = {
+					x = X,
+					y = Y,
+					-- z = Z,
+				}
+			end
+		end
+		-- no longer using methods/api from this point on
+		for k,v in pairs(tempTable) do
+			count[k] = 1
+			for k2, v2 in pairs(tempTable) do
+				if k~=k2 then
+					if (((v2.x - v.x)^2) + ((v2.y - v.y)^2)) <= (radius * radius) then
+						count[k] = count[k] + 1
+					end
+				end
+			end
+		end
+		for guid, number in pairs(count) do
+			if number > most then
+				most = number
+				mostGuid = guid
+			end
+		end
+		return most, mostGuid
+	end
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-------------------------------------------------------
@@ -1207,7 +1242,7 @@ local exeOnLoad = function()
 	_A.PetGUID  = nil
 	local function attacktotem()
 		local htotem = Object("HealingStreamTotemNOLOS")
-		if htotem then
+		if htotem and (_A.pull_location=="arena" or htotem:range()<=80) then
 			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
 				return _A.CallWowApi("PetAttack", htotem.guid), 1
 			end
@@ -1832,8 +1867,8 @@ survival.rot = {
 		end
 	end,
 	multishot = function()
-		if player:spellcooldown("Multi-Shot")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		if player:spellcooldown("Multi-Shot")<.3 and _Y.clumpguid and _Y.clumpnumber>=1 then
+			local lowestmelee = Object(_Y.clumpguid)
 			if lowestmelee then
 				if player:SpellUsable("Multi-Shot") and _A.multishotcheck() then 
 					return lowestmelee:Cast("Multi-Shot")
@@ -1859,6 +1894,17 @@ survival.rot = {
 			if lowestmelee then
 				if player:SpellUsable("Arcane Shot") and _A.lowpriocheck("Arcane Shot") then
 					return lowestmelee:Cast("Arcane Shot")
+					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+				end
+			end
+		end
+	end,
+	auto_multishot = function() -- and player:buff("Thrill of the Hunt") 
+		if _A.pull_location~="arena" and player:spellcooldown("Multi-Shot")<.3 and _Y.clumpnumber and _Y.clumpnumber>=3  then
+			local lowestmelee =  Object(_Y.clumpguid)
+			if lowestmelee then
+				if player:SpellUsable("Multi-Shot") and _A.lowpriocheck("Multi-Shot") then
+					return lowestmelee:Cast("Multi-Shot")
 					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
 				end
 			end
@@ -1942,8 +1988,9 @@ survival.rot = {
 	end,
 }
 local function AOEcheck()
+	if _A.pull_location=="arena" then return false end
 	if _A.modifier_shift() then return true end
-	-- if (_A.clumpcount>=enemytreshhold) then return true end
+	if (_Y.clumpnumber>=enemytreshhold) then return true end
 	return false
 end
 ---========================
@@ -1955,6 +2002,8 @@ local testtbl = {
 	"snare"
 }
 _A.totemtar = nil
+_Y.clumpnumber = nil
+_Y.clumpguid = nil
 local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return true end
 	player = Object("player")
@@ -1962,11 +2011,13 @@ local inCombat = function()
 	local focus = Object("focus")
 	_A.pull_location = _A.pull_location or pull_location()
 	_Y.petengine_Surv()
+	_Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,10)
+	-- print(_Y.clumpnumber)
 	--debug
 	-- print(_A.MissileExists("Arcane Shot"))
 	-- print(player:immuneduration("snare || all"))
 	-- if player:alive() then
-		-- print(player:stateYOUCEF("snare || root"))
+	-- print(player:stateYOUCEF("snare || root"))
 	-- end
 	if player:keybindUp("F7") and player:timeout("F7", 1) then
 		_A.texplore(_A.Cache.Tooltip)
@@ -2044,6 +2095,7 @@ local inCombat = function()
 	if survival.rot.glaivetoss() then return true end
 	-- heal pet
 	-- excess focus priority
+	if survival.rot.auto_multishot() then return true end
 	if survival.rot.serpentsting_check() then return true end
 	if survival.rot.venom() then return true end
 	if survival.rot.arcaneshot() then return true end

@@ -2188,7 +2188,7 @@ local inCombat = function()
 	if mw_rot.kick_paralysis() then return end
 	-- if mw_rot.sapsnipe() then return end
 	if mw_rot.dispellunCC() then return end
-	-- if mw_rot.dispellDANGEROUS() then return end
+	if mw_rot.dispellDANGEROUS() then return end
 	if mw_rot.healingsphere() then return end
 	if mw_rot.manatea() then return end
 	if not player:keybind("R") then
