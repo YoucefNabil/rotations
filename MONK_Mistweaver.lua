@@ -2245,10 +2245,10 @@ local inCombat = function()
 	if mw_rot.tigerpalm_mm() then return true end
 	if mw_rot.uplift() then return true end
 	if mw_rot.renewingmist() then return true end
+	if mw_rot.manatea() then return true end
 	if mw_rot.surgingmist() then return true end
 	if mw_rot.chi_wave()  then return true end
 	if mw_rot.healingsphere() then return true end
-	if mw_rot.manatea() then return true end
 	if mw_rot.spin_rjw() then return true end
 	-- if mw_rot.pvp_disable_root() then return end
 	if mw_rot.pvp_disable_keybind() then return true end
