@@ -138,21 +138,15 @@ end)
 ----------------------------------------------------------
 _A.DSL:Register('statepurgecheck', function(unit, args)
 	local tbl = {_A.StrExplode(args, "||")}
-	local tempTable = {}
+	local var = false
 	for _,state in ipairs(tbl) do
 		local pattern = YL.States[tostring(state):lower()]
 		if pattern and tlp:Scan_Debuff(unit, pattern) then
-			tempTable[#tempTable+1]={
-				check = tlp:Scan_Debuff_Dispellable(unit, pattern)
-			}
-		end
-	end
-	if #tempTable>=1 then
-		for _,v in ipairs(tempTable) do
-			if v.check==false then return false -- found an undispellable thing, return false
+			if tlp:Scan_Debuff_Dispellable(unit, pattern) then
+				var = true
+				else return false
 			end
 		end
-		return true -- passed all checks, return true
 	end
-	return false
-end)
+	return var
+end)	

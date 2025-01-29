@@ -14,7 +14,6 @@ local CalculatePath = _A.CalculatePath
 local FaceDirection = _A.FaceDirection
 local UnitCanCooperate, UnitHealthMax, GetTime, UnitIsPlayer, string_find = UnitCanCooperate, UnitHealthMax, GetTime, UnitIsPlayer, string.find
 local manamodifier = 1
-local arenamanamodifier = 1
 local ENEMY_OM = {}
 local FRIEND_OM = {}
 local tlp = _A.Tooltip
@@ -782,19 +781,7 @@ local exeOnLoad = function()
 	end 
 	function _A.manaengine() -- make it so it's tied with group hp
 		player = player or Object("player")
-		if player:buff("Lucidity") then return true end
-		if player:mana()>=95 then return true end
-		-- mana based
-		-- mana based
-		if _A.pull_location and _A.pull_location=="arena" then
-	
-		if ((_A.avgDeltaPercent/1)>=(averageHPv2()-(effectivemanaregen()*arenamanamodifier))) then return true -- new method (less mana hungry)
-		elseif ((_A.avgDeltaPercent/1)>=(averageHPv2()-(effectivemanaregen()*manamodifier))) then return true end -- new method (less mana hungry)
-		-- if ((_A.avgDeltaPercent/1)>=(averageHPv2()-(effectivemanaregen()))) then return true end -- new method (more mana hungry)
-		-- if ((_A.avgDeltaPercent/1)>=(averageHPv2())) then return true end -- new method (more mana hungry)
-		-- HEALTH BASED (mana not taken into account, best for pvp)
-		end
-		return false
+		return ((_A.avgDeltaPercent/1)>=(averageHPv2()-(effectivemanaregen()*manamodifier))) or player:buff("Lucidity") or player:mana()>=95
 	end
 	function _A.enoughmana(id)
 		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
@@ -1035,6 +1022,10 @@ local function cditemRemains(itemid)
 end
 local dangerousdebuffs = {
 	"Soul Reaper",
+	"Deep Freeze",
+	"Ring of Frost",
+	"Freeze",
+	"Frost Nova",
 	"Touch of Karma"
 }
 local mw_rot = {
@@ -1308,7 +1299,7 @@ local mw_rot = {
 						and obj:SpellRange("Grapple Weapon") 
 						and obj:InConeOf(player, 170)
 						and not healerspecid[obj:spec()]
-						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
+						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest") or obj:BuffAny("Call of Dominance"))
 						and not obj:BuffAny("Bladestorm")
 						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm || stun")
 						and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
@@ -1323,7 +1314,7 @@ local mw_rot = {
 	end,
 	
 	kick_spear = function()
-		if player:SpellCooldown("Spear Hand Strik")==0   then
+		if player:SpellCooldown("Spear Hand Strik")==0 and not IsCurrentSpell(116705)  then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj:isCastingAny()
 					and obj:SpellRange("Blackout Kick") 
@@ -1547,8 +1538,7 @@ local mw_rot = {
 	end,
 	
 	chibrew = function()
-		if player:Stance() == 1   then
-			
+		if player:Stance() == 1  and not IsCurrentSpell(115399)  then
 			if player:Talent("Chi Brew")
 				and player:SpellCooldown("Chi Brew")==0
 				and player:Chi()<=2
@@ -1561,7 +1551,8 @@ local mw_rot = {
 	fortifyingbrew = function()
 		if player:Stance() == 1   then
 			if	player:SpellCooldown("Fortifying Brew")==0
-				and player:health()<50
+				and not IsCurrentSpell(115203)
+				and player:health()<40
 				then
 				player:Cast("Fortifying Brew")
 			end
@@ -1570,7 +1561,7 @@ local mw_rot = {
 	
 	thunderfocustea = function()
 		if player:Stance() == 1 and player:Chi()>=1 then
-			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea")
+			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea") and not IsCurrentSpell(116680)
 			and not player:state("incapacitate || fear || disorient || charm || misc || sleep || stun || silence") then
 				if _A.thunderbrewremovedat==nil or (_A.thunderbrewremovedat and (GetTime() - _A.thunderbrewremovedat)>=45)
 					then
@@ -1679,10 +1670,18 @@ local mw_rot = {
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
-						if fr:SpellRange("Detox") 
-							and fr:statepurge("Detox") 
-							and fr:statepurgecheck("fear || sleep || charm || disorient || incapacitate || stun || silence || root || misc")
-							and not fr:debuffany("Unstable Affliction")
+						if fr:SpellRange("Detox")
+							and fr:statepurgecheck("stun || sleep || charm || disorient || incapacitate || fear || silence || misc") or fr:statepurgecheck("root")
+							-- and (fr:statepurgecheck("fear")
+							-- or fr:statepurgecheck("sleep")
+							-- or fr:statepurgecheck("charm")
+							-- or fr:statepurgecheck("disorient")
+							-- or fr:statepurgecheck("incapacitate")
+							-- or fr:statepurgecheck("stun")
+							-- or fr:statepurgecheck("silence")
+							-- or fr:statepurgecheck("root")
+							-- or fr:statepurgecheck("misc")
+							-- or not fr:debuffany("Unstable Affliction"))
 							and _A.nothealimmune(fr)  
 							and fr:los()
 							then
@@ -1701,9 +1700,9 @@ local mw_rot = {
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
-						if fr:SpellRange("Detox") and fr:statepurge("Detox") and fr:statepurgecheck("snare")
+						if fr:SpellRange("Detox") and fr:statepurgecheck("snare")
 							and _A.nothealimmune(fr)
-							and not fr:debuffany("Unstable Affliction")
+							-- and not fr:debuffany("Unstable Affliction")
 							and fr:los() then
 							return fr:cast("Detox")
 						end
@@ -1740,7 +1739,7 @@ local mw_rot = {
 					--]]
 					if 
 						-- (lowest:health()<40 or (pull_location()=="pvp" and lowest:health()<40))
-						lowest:health()<40
+						lowest:health()<30
 						then
 						return lowest:Cast("Life Cocoon")
 					end
@@ -2160,76 +2159,72 @@ local inCombat = function()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
 	if player:mounted() then return end
+	if player:isChanneling("Crackling Jade Lightning") then return end -- ¨pausing when casting this
 	mw_rot.autofocus()
 	mw_rot.autoattackmanager()
 	-- Out of GCD
 	mw_rot.thunderfocustea()
 	mw_rot.kick_spear()
 	mw_rot.activetrinket()
-	-- mw_rot.items_noggenfogger()
-	-- mw_rot.items_intflask()
-	--
-	if _A.buttondelayfunc()  then return end
-	if player:isChanneling("Crackling Jade Lightning") then return end
-	if mw_rot.items_healthstone() then return end 
-	-- if mw_rot.healingsphere_superlow() then return end
-	if mw_rot.healingsphere_keybind() then return end
-	if mw_rot.Xuen() then return end
-	-- if mw_rot.turtletoss() then return end
-	if not _A.modifier_shift() and mw_rot.manatea() then return end
-	if mw_rot.renewingmist() then return end
-	if mw_rot.ringofpeacev2() then return end
-	if _A.modifier_shift() or _A.manaengine() then
-		if mw_rot.healingsphere() then return end
-		if mw_rot.uplift() then return end
-		-- if mw_rot.manatea_HealthRegen() then return end
+	mw_rot.diffusemagic()
+	mw_rot.chibrew()
+	mw_rot.items_healthstone()
+	mw_rot.fortifyingbrew()
+	mw_rot.items_noggenfogger()
+	mw_rot.items_intflask()
+	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
+	------------------------------------------------ Rotation Proper
+	------------------ High Prio
+	if mw_rot.lifecocoon()  then return true end
+	if mw_rot.healingsphere_keybind() then return true end
+	if _A.modifier_shift() then
+		if mw_rot.healingsphere() then return true end
+		if mw_rot.uplift() then return true end
 	end
-	if mw_rot.kick_legsweep() then return end
-	if mw_rot.kick_paralysis() then return end
-	-- if mw_rot.sapsnipe() then return end
-	if mw_rot.dispellunCC() then return end
-	if mw_rot.dispellDANGEROUS() then return end
-	if mw_rot.healingsphere() then return end
-	if mw_rot.manatea() then return end
-	if not player:keybind("R") then
-		if mw_rot.tigerpalm_mm() then return end
-	end
-	-- if mw_rot.dispellunSLOW() then return end
-	if mw_rot.diffusemagic() then return end
-	if mw_rot.spin_rjw() then return end
-	if mw_rot.burstdisarm()  then print("DISARMING") return end
-	-- if mw_rot.pvp_disable_root() then return end
-	if mw_rot.chi_wave()  then return end
-	if mw_rot.chibrew()  then return end
-	if mw_rot.fortifyingbrew() then return end
-	if mw_rot.tigerslust()  then return end
-	if mw_rot.lifecocoon()  then return end
-	if mw_rot.pvp_disable_keybind() then return end
+	if mw_rot.ctrl_mode() then return true end
+	-- DPS
 	if player:keybind("R") or (_A.pull_location=="none" and not player:israid())  then
-		if mw_rot.manatea() then return end
-		if mw_rot.tp_buff_keybind() then return end
-		if mw_rot.blackout_keybind()  then return end
-		if mw_rot.dpsstanceswap_keybind()  then return end
+		if mw_rot.manatea() then return true end
+		if mw_rot.tp_buff_keybind() then return true end
+		if mw_rot.blackout_keybind()  then return true end
+		if mw_rot.dpsstanceswap_keybind()  then return true end
 	end
-	if mw_rot.tigerpalm_mm() then return end
-	if mw_rot.surgingmist() then return end
-	if mw_rot.ctrl_mode() then return end
-	if mw_rot.healstatue() then return end
-	-- old pvp slot
-	-- mw_rot.lightning_keybind()
-	if mw_rot.uplift() then return end
-	if mw_rot.expelharm() then return end
-	-- if mw_rot.statbuff() then return endq
-	if mw_rot.dpsstance_healstance_keybind() then return end
+	--
+	if mw_rot.Xuen() then return true end
+	if mw_rot.burstdisarm()  then print("DISARMING") return true end
+	if mw_rot.ringofpeacev2() then return true end
+	if mw_rot.kick_legsweep() then return true end
+	if mw_rot.kick_paralysis() then return true end
+	if mw_rot.sapsnipe() then return true end
+	if mw_rot.dispellunCC() then return true end
+	if mw_rot.dispellDANGEROUS() then return true end
+	-- if mw_rot.dispellplzany() then return end
+	-- if mw_rot.dispellunSLOW() then return end
+	if mw_rot.tigerslust()  then return true end
+	------------------ Rotation Proper
+	if mw_rot.tigerpalm_mm() then return true end
+	if mw_rot.uplift() then return true end
+	if mw_rot.renewingmist() then return true end
+	if mw_rot.surgingmist() then return true end
+	if mw_rot.chi_wave()  then return true end
+	if mw_rot.healingsphere() then return true end
+	if mw_rot.manatea() then return true end
+	if mw_rot.spin_rjw() then return true end
+	-- if mw_rot.pvp_disable_root() then return end
+	if mw_rot.pvp_disable_keybind() then return true end
+	if mw_rot.healstatue() then return true end
+	if mw_rot.expelharm() then return true end
+	-- if mw_rot.statbuff() then return end
+	------------------ STANCE SWAP FILL
+	if mw_rot.dpsstance_healstance_keybind() then return true end
 	if not _A.modifier_shift() then
-		if mw_rot.dpsstance_jab() then return end
-		if mw_rot.dpsstance_spin()  then return end
+		if mw_rot.dpsstance_jab() then return true end
+		if mw_rot.dpsstance_spin()  then return true end
 	end
-	if mw_rot.dpsstance_healstance()  then return end
+	if mw_rot.dpsstance_healstance()  then return true end
 	if not _A.modifier_shift() then
-		if mw_rot.dpsstanceswap()  then return end
+		if mw_rot.dpsstanceswap()  then return true end
 	end
-	--]]
 end
 local spellIds_Loc = function()
 end

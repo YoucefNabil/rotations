@@ -1114,42 +1114,138 @@ local exeOnLoad = function()
 				-- _A.CallWowApi("SpellStopTargeting")
 			end
 		end
-	end
+	end	
 	function _Y.mostclumpedenemy(Range, Radius)
 		local tempTable = {}
-		local count = {}
 		local radius = Radius and (Radius + 1.5) or 10
 		local range = Range or 40
-		local most, mostGuid = 0
+		local most, mostGuid = 0, nil
+		local radiusSq = radius * radius
+		
+		-- First phase: Collect valid enemies
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:range()<range and not _A.scattertargets[Obj.guid] and Obj:InConeOf(player, 170) and _A.notimmune(Obj) and Obj:los() then
-				local X,Y = _A.ObjectPosition(Obj.guid)
-				tempTable[Obj.guid] = {
-					x = X,
-					y = Y,
-					-- z = Z,
-				}
+			if Obj:range() < range and not _A.scattertargets[Obj.guid] 
+				and Obj:InConeOf(player, 170) and _A.notimmune(Obj) and Obj:los() then
+				local X, Y = _A.ObjectPosition(Obj.guid)
+				tempTable[Obj.guid] = { x = X, y = Y }
 			end
 		end
-		-- no longer using methods/api from this point on
-		for k,v in pairs(tempTable) do
-			count[k] = 1
-			for k2, v2 in pairs(tempTable) do
-				if k~=k2 then
-					if (((v2.x - v.x)^2) + ((v2.y - v.y)^2)) <= (radius * radius) then
-						count[k] = count[k] + 1
+		
+		-- Convert to array for efficient pairwise processing
+		local entries = {}
+		for guid, data in pairs(tempTable) do
+			entries[#entries+1] = {guid = guid, x = data.x, y = data.y}
+		end
+		
+		-- Initialize counts with self (1)
+		local count = {}
+		for _, entry in ipairs(entries) do
+			count[entry.guid] = 1
+		end
+		
+		-- Optimized pairwise check (O(n²/2) complexity)
+		for i = 1, #entries do
+			local a = entries[i]
+			for j = i + 1, #entries do
+				local b = entries[j]
+				local dx = b.x - a.x
+				local dy = b.y - a.y
+				if (dx*dx + dy*dy) <= radiusSq then
+					count[a.guid] = count[a.guid] + 1
+					count[b.guid] = count[b.guid] + 1
+				end
+			end
+		end
+		
+		-- Find maximum cluster
+		for guid, number in pairs(count) do
+			if number > most then
+				most, mostGuid = number, guid
+			end
+		end
+		
+		return most, mostGuid
+	end
+	--]]
+	--[[
+	function _Y.mostclumpedenemy(Range, Radius)
+		local floor = math.floor
+		local pairs = pairs
+		local ipairs = ipairs
+		local radius = Radius and (Radius + 1.5) or 10
+		local range = Range or 40
+		local radiusSq = radius * radius
+		local most, mostGuid = 0, nil
+		
+		-- Phase 1: Collect valid enemies and build spatial grid
+		local grid = {}
+		local enemies = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:range() < range 
+				and not _A.scattertargets[Obj.guid]
+				and Obj:InConeOf(player, 170)
+				and _A.notimmune(Obj)
+				and Obj:los() then
+				local x, y = _A.ObjectPosition(Obj.guid)
+				local cx, cy = floor(x / radius), floor(y / radius)
+				local cellKey = cx .. ":" .. cy
+				
+				grid[cellKey] = grid[cellKey] or {}
+				local enemy = { guid = Obj.guid, x = x, y = y, count = 1 }
+				enemies[Obj.guid] = enemy
+				grid[cellKey][#grid[cellKey]+1] = enemy
+			end
+		end
+		
+		-- Phase 2: Precomputed neighbor offsets for 2D grid
+		local neighborOffsets = {
+			{0, 0},  -- Same cell
+			{1, 0},  -- Right
+			{0, 1},  -- Top
+			{1, 1},  -- Top-right
+			{-1, 1}  -- Top-left
+		}
+		
+		-- Phase 3: Efficient pairwise comparisons
+		for cellKey, cellEnemies in pairs(grid) do
+			local cx, cy = cellKey:match("([%-%d]+):([%-%d]+)")
+			cx, cy = tonumber(cx), tonumber(cy)
+			
+			for _, offset in ipairs(neighborOffsets) do
+				local tcx = cx + offset[1]
+				local tcy = cy + offset[2]
+				local targetKey = tcx .. ":" .. tcy
+				
+				if grid[targetKey] then
+					for _, enemy1 in ipairs(cellEnemies) do
+						for _, enemy2 in ipairs(grid[targetKey]) do
+							-- Avoid duplicate comparisons in same cell
+							if (cellKey ~= targetKey) or (enemy1.guid < enemy2.guid) then
+								local dx = enemy1.x - enemy2.x
+								local dy = enemy1.y - enemy2.y
+								if (dx*dx + dy*dy) <= radiusSq then
+									enemy1.count = enemy1.count + 1
+									if cellKey == targetKey then
+										enemy2.count = enemy2.count + 1
+									end
+								end
+							end
+						end
 					end
 				end
 			end
 		end
-		for guid, number in pairs(count) do
-			if number > most then
-				most = number
-				mostGuid = guid
+		
+		-- Phase 4: Find maximum cluster
+		for guid, enemy in pairs(enemies) do
+			if enemy.count > most then
+				most, mostGuid = enemy.count, guid
 			end
 		end
+		
 		return most, mostGuid
 	end
+	--]]
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-------------------------------------------------------
@@ -1242,7 +1338,7 @@ local exeOnLoad = function()
 	_A.PetGUID  = nil
 	local function attacktotem()
 		local htotem = Object("HealingStreamTotemNOLOS")
-		if htotem and (_A.pull_location=="arena" or htotem:range()<=80) then
+		if htotem and (_A.pull_location=="arena" or htotem:range()<=60) then
 			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
 				return _A.CallWowApi("PetAttack", htotem.guid), 1
 			end
@@ -2011,7 +2107,6 @@ local inCombat = function()
 	local focus = Object("focus")
 	_A.pull_location = _A.pull_location or pull_location()
 	_Y.petengine_Surv()
-	_Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,10)
 	-- print(_Y.clumpnumber)
 	--debug
 	-- print(_A.MissileExists("Arcane Shot"))
@@ -2077,6 +2172,8 @@ local inCombat = function()
 	survival.rot.fervor()
 	survival.rot.stampede()
 	survival.rot.kick()
+	_Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,10)
+	print(_Y.clumpnumber)
 	if AOEcheck() and survival.rot.barrage() then return true end -- make a complete aoe check function
 	if AOEcheck() and survival.rot.multishot() then return true end -- make a complete aoe check function
 	survival.rot.killshot()

@@ -24,7 +24,6 @@ local function Scan_Buff(target)
 	if not tBuffs[target] then
 		local i, tooltip = 1, true
 		while tooltip do
-			-- _A[youcefrnd.."_ScanningTooltipTextLeft1"]:SetText()
 			frame:SetOwner(_A.UIParent, 'ANCHOR_NONE')
 			frame:SetUnitBuff(target, i)
 			tooltip = _A[youcefrnd.."_ScanningTooltipTextLeft1"]:GetText()
@@ -46,21 +45,12 @@ local function Scan_Buff(target)
 end
 local function Scan_Debuff(target)
 	if not tDebuffs[target] then
-		-- if UnitIsUnit(target, "player") then
-		-- print("TESTING!!!!","PLAYER") 
-		-- else print("testing",target)
-		-- end
 		local i, tooltip = 1, true
 		while tooltip do
-			-- _A[youcefrnd.."_ScanningTooltipTextLeft1"]:SetText()
 			frame:SetOwner(_A.UIParent, 'ANCHOR_NONE')
 			frame:SetUnitDebuff(target, i)
 			tooltip = _A[youcefrnd.."_ScanningTooltipTextLeft1"]:GetText()
 			if tooltip then
-				-- if UnitIsUnit(target, "player") then
-					-- print("TESTING!!!!","PLAYER") 
-					-- else print("testing",target)
-				-- end
 				tDebuffs[target] = tDebuffs[target] or {}
 				tDebuffs[target][i] = tDebuffs[target][i] or {}
 				local totalText = ""
