@@ -75,24 +75,42 @@ local donthealtheseguys = {
 }
 --
 local healerspecid = {
+	-- HEALERS
+	[105]="Druid Resto",
+	[270]="monk mistweaver",
+	[65]="Paladin Holy",
+	[257]="Priest Holy",
+	[256]="Priest discipline",
+	[264]="Sham Resto",
+	--DRUIDS
+	-- [102]="Druid Balance",
+	-- [103]="Druid Balance",
+	-- LOCKS
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",
 	-- [267]="Lock Destro",
-	[105]="Druid Resto",
-	-- [102]="Druid Balance",
-	[270]="monk mistweaver",
-	[65]="Paladin Holy",
+	--PALADINS
 	-- [66]="Paladin prot",
 	-- [70]="Paladin retri",
-	[257]="Priest Holy",
-	[256]="Priest discipline",
+	-- PRIEST
 	-- [258]="Priest shadow",
-	[264]="Sham Resto",
+	-- SHAM
 	-- [262]="Sham Elem",
 	-- [263]="Sham enh",
+	-- MAGE
 	-- [62]="Mage Arcane",
 	-- [63]="Mage Fire",
-	-- [64]="Mage Frost"
+	-- [64]="Mage Frost",
+	-- Hunter
+	-- [253] = "hunter",
+	-- [254] = "hunter",
+	-- [255] = "hunter",
+	-- ROGUE
+	-- [259] = "rogue",
+	-- [260] = "rogue",
+	-- [261] = "rogue",
+	-- MONK
+	-- [269] = "ww monk",
 }
 --
 local spelltable = {
@@ -814,6 +832,15 @@ local exeOnLoad = function()
 		end
 	end
 	
+	function _A.modifier_alt()
+		local modkeyb = IsAltKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
+	
 	-- _A.DSL:Register("debuff.count.type", function(target, args)
 	-- local count = 0
 	-- local fno_filter = target .. '-no_filter'
@@ -1025,6 +1052,7 @@ local dangerousdebuffs = {
 	"Deep Freeze",
 	"Ring of Frost",
 	"Freeze",
+	"Denounce",
 	"Frost Nova",
 	"Touch of Karma"
 }
@@ -1198,7 +1226,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3   then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj:isCastingAny()
+					if obj.isplayer and obj:isCastingAny()
 						and obj:range()<5
 						and _A.notimmune(obj)
 						and (kickcheck_highprio(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
@@ -1212,20 +1240,19 @@ local mw_rot = {
 	
 	stun_legsweep = function()
 		local enemycount = 0
-		local check = UnitExists("focus")
 		if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if 	obj:range()<5
+				if 	obj.isplayer and obj:range()<5
 					and (obj:drstate("Leg Sweep")==-1 or obj:drstate("Leg Sweep")==1)
 					and _A.notimmune(obj)
 					and obj:los() then
 					enemycount = enemycount + 1
-					if ((check and UnitIsUnit("focus", obj.guid)) or healerspecid[obj:spec()]) then
+					if healerspecid[obj:spec()] then
 						return player:cast("Leg Sweep")
 					end
 				end
 			end
-			if enemycount>=2 then return player:cast("Leg Sweep") end
+			if enemycount>=2 or (enemycount>=1 and _A.modifier_alt()) then return player:cast("Leg Sweep") end
 		end
 	end,
 	kick_chargingox = function()
@@ -1254,7 +1281,7 @@ local mw_rot = {
 					and (player:SpellCooldown("Spear Hand Strike")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Blackout Kick"))
 					and obj:InConeOf(player, 150)
 					and _A.notimmune(obj)
-					and (kickcheck(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
+					and (kickcheck_highprio(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 					and obj:los() then
 					return obj:Cast("Paralysis")
 				end
@@ -1276,29 +1303,36 @@ local mw_rot = {
 	end,
 	
 	sapsnipe = function()
-		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 and _A.someoneislow() then
-			local check = UnitExists("focus")
+		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:SpellRange("Paralysis")  
-					and (healerspecid[obj:spec()] or (check and UnitIsUnit("focus", obj.guid)))
-					and not obj:State("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")
-					and (obj:drState("Paralysis")==-1 or obj:drState("Paralysis")==1)
-					and _A.notimmune(obj)
-					and obj:los() then
-					return obj:Cast("Paralysis")
+				if obj.isplayer and obj:SpellRange("Paralysis")  and obj:infront() then
+					
+					if 
+						-- (healerspecid[obj:spec()] and _A.pull_location~="arena") or
+						(healerspecid[obj:spec()] and _A.pull_location=="arena" and UnitExists("party1") and UnitTarget("party1")~=obj.guid ) or
+						(_A.pull_location=="arena" and UnitExists("party1") and UnitTarget("party1")~=obj.guid) 
+						then
+						
+						if not obj:State("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")
+							and (obj:drState("Paralysis")==-1 or obj:drState("Paralysis")==1)
+							and _A.notimmune(obj)
+							and obj:los() then
+							return obj:Cast("Paralysis")
+						end
+					end
 				end
 			end
 		end
 	end,
 	
 	sapsextendcc = function()
-		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 and _A.someoneislow() then
+		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 then
 			local check = UnitExists("focus")
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:SpellRange("Paralysis")  
-					and (healerspecid[obj:spec()] or (check and UnitIsUnit("focus", obj.guid)))
+				if obj.isplayer and obj:SpellRange("Paralysis") and obj:infront()
+					and (healerspecid[obj:spec()])
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")>0
-					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")<2
+					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")<2.5
 					and _A.notimmune(obj)
 					and obj:los() then
 					return obj:Cast("Paralysis")
@@ -1662,7 +1696,7 @@ local mw_rot = {
 	end,
 	
 	diffusemagic = function()
-		if player:talent("Diffuse Magic") and player:SpellCooldown("Diffuse Magic")==0 then
+		if player:talent("Diffuse Magic") and player:SpellCooldown("Diffuse Magic")==0 and not IsCurrentSpell(122783) then
 			-- add the stuff that hurts
 			if 
 				player:health()<30 or player:DebuffAny("Moonfire || Sunfire || Unstable Affliction || Touch of Karma") or player:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence")
@@ -1717,7 +1751,7 @@ local mw_rot = {
 							-- or fr:statepurgecheck("silence")
 							-- or fr:statepurgecheck("root")
 							-- or fr:statepurgecheck("misc"))
-							and not fr:debuffany("Unstable Affliction")
+							-- and not fr:debuffany("Unstable Affliction")
 							and _A.nothealimmune(fr)  
 							and fr:los()
 							then
@@ -1738,7 +1772,7 @@ local mw_rot = {
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurgecheck("snare")
 							and _A.nothealimmune(fr)
-							and not fr:debuffany("Unstable Affliction")
+							-- and not fr:debuffany("Unstable Affliction")
 							and fr:los() then
 							return fr:cast("Detox")
 						end
@@ -1754,7 +1788,9 @@ local mw_rot = {
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
-						if fr:SpellRange("Detox") and fr:statepurge("Detox") and not fr:DebuffAny("Unstable Affliction") then
+						if fr:SpellRange("Detox") and fr:statepurge("Detox") 
+							-- and not fr:DebuffAny("Unstable Affliction") 
+							then
 							for _,v in ipairs(dangerousdebuffs) do
 								if fr:DebuffAny(v) and _A.nothealimmune(fr) and fr:los() then
 									return fr:cast("Detox")
@@ -2217,6 +2253,7 @@ local inCombat = function()
 		if mw_rot.healingsphere() then return true end
 		if mw_rot.uplift() then return true end
 	end
+	if mw_rot.pvp_disable_keybind() then return true end
 	if mw_rot.ctrl_mode() then return true end
 	-- DPS
 	if player:keybind("R") or (_A.pull_location=="none" and not player:israid())  then
@@ -2230,15 +2267,14 @@ local inCombat = function()
 	--------------------- CC
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
 	if mw_rot.ringofpeacev2() then return true end
-	-- if mw_rot.kick_legsweep() then return true end
-	-- if mw_rot.stun_legsweep() then return true end
+	if mw_rot.kick_legsweep() then return true end
+	if mw_rot.stun_legsweep() then return true end
 	if mw_rot.kick_paralysis() then return true end
-	-- if mw_rot.sapsnipe() then return true end
-	-- if mw_rot.sapsextendcc() then return true end
+	if mw_rot.sapsnipe() then return true end
+	if mw_rot.sapsextendcc() then return true end
 	--------------------- dispells and root freedom
 	if mw_rot.dispellunCC() then return true end
 	if mw_rot.dispellDANGEROUS() then return true end
-	-- 
 	-- if mw_rot.dispellunSLOW() then return end
 	if mw_rot.tigerslust()  then return true end
 	------------------ Rotation Proper
@@ -2251,7 +2287,6 @@ local inCombat = function()
 	if mw_rot.healingsphere() then return true end
 	if mw_rot.spin_rjw() then return true end
 	-- if mw_rot.pvp_disable_root() then return end
-	if mw_rot.pvp_disable_keybind() then return true end
 	if mw_rot.healstatue() then return true end
 	if mw_rot.expelharm() then return true end
 	-- if mw_rot.dispellplzany() then return end
