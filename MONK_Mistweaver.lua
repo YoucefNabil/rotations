@@ -395,12 +395,12 @@ local exeOnLoad = function()
 		local location = _A.pull_location
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer
-			or string.lower(fr.name)=="ebon gargoyle" 
-			or string.lower(fr.name)=="vanndar stormpike"
-			or (location=="arena" and fr:ispet()) then
+				or string.lower(fr.name)=="ebon gargoyle" 
+				or string.lower(fr.name)=="vanndar stormpike"
+				or (location=="arena" and fr:ispet()) then
 				if not blacklist[fr.name] 
-				and fr:SpellRange("Renewing Mist") 
-				and _A.nothealimmune(fr) and fr:los() then
+					and fr:SpellRange("Renewing Mist") 
+					and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable+1] = {
 						HP = fr:health(),
 						guid = fr.guid
@@ -484,29 +484,29 @@ local exeOnLoad = function()
 	end)
 	-- disarm
 	--[[
-	burstdisarm = function()
+		burstdisarm = function()
 		if player:Stance() == 1   then
-			if player:SpellCooldown("Grapple Weapon")<.3 then
-				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj.isplayer 
-						and obj:SpellRange("Grapple Weapon") 
-						and obj:InConeOf(player, 170)
-						and not healerspecid[obj:spec()] 
-						-- and (_A.pull_location=="arena" or UnitTarget(obj.guid)==player.guid)
-						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
-						and not obj:BuffAny("Bladestorm")
-						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm")
-						and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
-						and obj:range()<10 
-						and (_A.pull_location=="arena" or _A.UnitTarget(obj.guid)==player.guid)
-						and _A.notimmune(obj)
-						and obj:los() then
-						return obj:Cast("Grapple Weapon")
-					end
-				end
-			end
+		if player:SpellCooldown("Grapple Weapon")<.3 then
+		for _, obj in pairs(_A.OM:Get('Enemy')) do
+		if obj.isplayer 
+		and obj:SpellRange("Grapple Weapon") 
+		and obj:InConeOf(player, 170)
+		and not healerspecid[obj:spec()] 
+		-- and (_A.pull_location=="arena" or UnitTarget(obj.guid)==player.guid)
+		and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
+		and not obj:BuffAny("Bladestorm")
+		and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm")
+		and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
+		and obj:range()<10 
+		and (_A.pull_location=="arena" or _A.UnitTarget(obj.guid)==player.guid)
+		and _A.notimmune(obj)
+		and obj:los() then
+		return obj:Cast("Grapple Weapon")
 		end
-	end
+		end
+		end
+		end
+		end
 	--]]
 	_A.FakeUnits:Add('mostTargetedRosterPVP', function()
 		local targets = {}
@@ -541,15 +541,15 @@ local exeOnLoad = function()
 			then
 			-- DEBUG
 			-- if subevent == "SPELL_CAST_SUCCESS" then
-				-- if idd==115460 then
-					-- _Y.healingspheretime = GetTime()
-				-- end
-				-- if idd==115464 then
-					-- if _Y.healingspheretime then
-						-- print(GetTime()-_Y.healingspheretime)
-						-- _Y.healingspheretime = nil
-					-- end
-				-- end
+			-- if idd==115460 then
+			-- _Y.healingspheretime = GetTime()
+			-- end
+			-- if idd==115464 then
+			-- if _Y.healingspheretime then
+			-- print(GetTime()-_Y.healingspheretime)
+			-- _Y.healingspheretime = nil
+			-- end
+			-- end
 			-- end
 			-- print(subevent)
 			-- Delay Cast Function
@@ -1203,13 +1203,31 @@ local mw_rot = {
 						and _A.notimmune(obj)
 						and (kickcheck_highprio(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 						and obj:los() then
-						return obj:Cast("Leg Sweep")
+						return player:Cast("Leg Sweep")
 					end 
 				end
 			end
 		end
 	end,
 	
+	stun_legsweep = function()
+		local enemycount = 0
+		local check = UnitExists("focus")
+		if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if 	obj:range()<5
+					and (obj:drstate("Leg Sweep")==-1 or obj:drstate("Leg Sweep")==1)
+					and _A.notimmune(obj)
+					and obj:los() then
+					enemycount = enemycount + 1
+					if ((check and UnitIsUnit("focus", obj.guid)) or healerspecid[obj:spec()]) then
+						return player:cast("Leg Sweep")
+					end
+				end
+			end
+			if enemycount>=2 then return player:cast("Leg Sweep") end
+		end
+	end,
 	kick_chargingox = function()
 		if player:Stance() == 1 then
 			if player:Talent("Charging Ox Wave") and player:SpellCooldown("Charging Ox Wave")<0.3   then
@@ -1220,13 +1238,12 @@ local mw_rot = {
 						and _A.notimmune(obj)
 						and (kickcheck(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 						and obj:los() then
-						return obj:Cast("Charging Ox Wave")
+						return player:Cast("Charging Ox Wave")
 					end 
 				end
 			end
 		end
 	end,
-	
 	kick_paralysis = function()
 		if player:SpellCooldown("Paralysis")<.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -1237,7 +1254,7 @@ local mw_rot = {
 					and (player:SpellCooldown("Spear Hand Strike")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Blackout Kick"))
 					and obj:InConeOf(player, 150)
 					and _A.notimmune(obj)
-					and (kickcheck_highprio(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
+					and (kickcheck(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 					and obj:los() then
 					return obj:Cast("Paralysis")
 				end
@@ -1260,9 +1277,28 @@ local mw_rot = {
 	
 	sapsnipe = function()
 		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 and _A.someoneislow() then
+			local check = UnitExists("focus")
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and healerspecid[obj:spec()] and obj:SpellRange("Paralysis")  
-					and not obj:State("silence || incapacitate || fear || disorient || charm || misc || sleep")
+				if obj.isplayer and obj:SpellRange("Paralysis")  
+					and (healerspecid[obj:spec()] or (check and UnitIsUnit("focus", obj.guid)))
+					and not obj:State("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")
+					and (obj:drState("Paralysis")==-1 or obj:drState("Paralysis")==1)
+					and _A.notimmune(obj)
+					and obj:los() then
+					return obj:Cast("Paralysis")
+				end
+			end
+		end
+	end,
+	
+	sapsextendcc = function()
+		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 and _A.someoneislow() then
+			local check = UnitExists("focus")
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:SpellRange("Paralysis")  
+					and (healerspecid[obj:spec()] or (check and UnitIsUnit("focus", obj.guid)))
+					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")>0
+					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")<2
 					and _A.notimmune(obj)
 					and obj:los() then
 					return obj:Cast("Paralysis")
@@ -1562,7 +1598,7 @@ local mw_rot = {
 	thunderfocustea = function()
 		if player:Stance() == 1 and player:Chi()>=1 then
 			if	player:SpellCooldown("Thunder Focus Tea")==0 and player:SpellUsable("Thunder Focus Tea") and not IsCurrentSpell(116680)
-			and not player:state("incapacitate || fear || disorient || charm || misc || sleep || stun || silence") then
+				and not player:state("incapacitate || fear || disorient || charm || misc || sleep || stun || silence") then
 				if _A.thunderbrewremovedat==nil or (_A.thunderbrewremovedat and (GetTime() - _A.thunderbrewremovedat)>=45)
 					then
 					return player:Cast("Thunder Focus Tea")
@@ -1680,8 +1716,8 @@ local mw_rot = {
 							-- or fr:statepurgecheck("stun")
 							-- or fr:statepurgecheck("silence")
 							-- or fr:statepurgecheck("root")
-							-- or fr:statepurgecheck("misc")
-							-- or not fr:debuffany("Unstable Affliction"))
+							-- or fr:statepurgecheck("misc"))
+							and not fr:debuffany("Unstable Affliction")
 							and _A.nothealimmune(fr)  
 							and fr:los()
 							then
@@ -1702,7 +1738,7 @@ local mw_rot = {
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurgecheck("snare")
 							and _A.nothealimmune(fr)
-							-- and not fr:debuffany("Unstable Affliction")
+							and not fr:debuffany("Unstable Affliction")
 							and fr:los() then
 							return fr:cast("Detox")
 						end
@@ -2160,9 +2196,9 @@ local inCombat = function()
 	_A.interrupttreshhold = .3 + _A.latency
 	if player:mounted() then return end
 	if player:isChanneling("Crackling Jade Lightning") then return end -- ¨pausing when casting this
+	-- Out of GCD
 	mw_rot.autofocus()
 	mw_rot.autoattackmanager()
-	-- Out of GCD
 	mw_rot.thunderfocustea()
 	mw_rot.kick_spear()
 	mw_rot.activetrinket()
@@ -2170,7 +2206,7 @@ local inCombat = function()
 	mw_rot.chibrew()
 	mw_rot.items_healthstone()
 	mw_rot.fortifyingbrew()
-	mw_rot.items_noggenfogger()
+	-- mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
@@ -2191,14 +2227,18 @@ local inCombat = function()
 	end
 	--
 	if mw_rot.Xuen() then return true end
+	--------------------- CC
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
 	if mw_rot.ringofpeacev2() then return true end
-	if mw_rot.kick_legsweep() then return true end
+	-- if mw_rot.kick_legsweep() then return true end
+	-- if mw_rot.stun_legsweep() then return true end
 	if mw_rot.kick_paralysis() then return true end
-	if mw_rot.sapsnipe() then return true end
+	-- if mw_rot.sapsnipe() then return true end
+	-- if mw_rot.sapsextendcc() then return true end
+	--------------------- dispells and root freedom
 	if mw_rot.dispellunCC() then return true end
 	if mw_rot.dispellDANGEROUS() then return true end
-	-- if mw_rot.dispellplzany() then return end
+	-- 
 	-- if mw_rot.dispellunSLOW() then return end
 	if mw_rot.tigerslust()  then return true end
 	------------------ Rotation Proper
@@ -2214,6 +2254,7 @@ local inCombat = function()
 	if mw_rot.pvp_disable_keybind() then return true end
 	if mw_rot.healstatue() then return true end
 	if mw_rot.expelharm() then return true end
+	-- if mw_rot.dispellplzany() then return end
 	-- if mw_rot.statbuff() then return end
 	------------------ STANCE SWAP FILL
 	if mw_rot.dpsstance_healstance_keybind() then return true end
