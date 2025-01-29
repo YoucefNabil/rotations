@@ -472,28 +472,6 @@ local exeOnLoad = function()
 		return true
 	end
 	--
-	_A.clusteredenemy = function()
-		local targets = {}
-		local most, mostGuid = 0
-		for _, enemy in pairs(_A.OM:Get('Enemy')) do
-			if enemy:InConeOf(player, 170) and (_A.pull_location=="none" or enemy:combat()) and not enemy:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") 
-				and _A.notimmune(enemy) and enemy:los()  then
-				for _, enemy2 in pairs(_A.OM:Get('Enemy')) do
-					if enemy:rangefrom(enemy2)<=13  then
-						targets[enemy.guid] = targets[enemy.guid] and targets[enemy.guid] + 1 or 1
-					end
-				end
-			end
-		end
-		for guid, count in pairs(targets) do
-			if count > most then
-				most = count
-				mostGuid = guid
-			end
-		end
-		return most, mostGuid
-	end
-	
 	local function chanpercent(unit)
 		local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
 		local givetime = GetTime()
@@ -1173,9 +1151,9 @@ local exeOnLoad = function()
 		return most, mostGuid
 	end
 	
-	--[[ 
-		-- Grid Based
-		function _Y.mostclumpedenemy(Range, Radius)
+	--[[
+	-- Grid Based
+	function _Y.mostclumpedenemy(Range, Radius)
 		local floor = math.floor
 		local pairs = pairs
 		local ipairs = ipairs
@@ -1188,70 +1166,70 @@ local exeOnLoad = function()
 		local grid = {}
 		local enemies = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-		if Obj:range() < range 
-		and not _A.scattertargets[Obj.guid]
-		and Obj:InConeOf(player, 170)
-		and _A.notimmune(Obj)
-		and Obj:los() then
-		local x, y = _A.ObjectPosition(Obj.guid)
-		local cx, cy = floor(x / radius), floor(y / radius)
-		local cellKey = cx .. ":" .. cy
-		
-		grid[cellKey] = grid[cellKey] or {}
-		local enemy = { guid = Obj.guid, x = x, y = y, count = 1 }
-		enemies[Obj.guid] = enemy
-		grid[cellKey][#grid[cellKey]+1] = enemy
-		end
+			if Obj:range() < range 
+				and not _A.scattertargets[Obj.guid]
+				and Obj:InConeOf(player, 170)
+				and _A.notimmune(Obj)
+				and Obj:los() then
+				local x, y = _A.ObjectPosition(Obj.guid)
+				local cx, cy = floor(x / radius), floor(y / radius)
+				local cellKey = cx .. ":" .. cy
+				
+				grid[cellKey] = grid[cellKey] or {}
+				local enemy = { guid = Obj.guid, x = x, y = y, count = 1 }
+				enemies[Obj.guid] = enemy
+				grid[cellKey][#grid[cellKey]+1] = enemy
+			end
 		end
 		
 		-- Phase 2: Precomputed neighbor offsets for 2D grid
 		local neighborOffsets = {
-		{0, 0},  -- Same cell
-		{1, 0},  -- Right
-		{0, 1},  -- Top
-		{1, 1},  -- Top-right
-		{-1, 1}  -- Top-left
+			{0, 0},  -- Same cell
+			{1, 0},  -- Right
+			{0, 1},  -- Top
+			{1, 1},  -- Top-right
+			{-1, 1}  -- Top-left
 		}
 		
-		-- Phase 3: Efficient pairwise comparisons
+		-- Phase 3: Efficient pairwise comparisons (Checks every pair once: Half the compute for the same results)
 		for cellKey, cellEnemies in pairs(grid) do
-		local cx, cy = cellKey:match("([%-%d]+):([%-%d]+)")
-		cx, cy = tonumber(cx), tonumber(cy)
-		
-		for _, offset in ipairs(neighborOffsets) do
-		local tcx = cx + offset[1]
-		local tcy = cy + offset[2]
-		local targetKey = tcx .. ":" .. tcy
-		
-		if grid[targetKey] then
-		for _, enemy1 in ipairs(cellEnemies) do
-		for _, enemy2 in ipairs(grid[targetKey]) do
-		-- Avoid duplicate comparisons in same cell
-		if (cellKey ~= targetKey) or (enemy1.guid < enemy2.guid) then
-		local dx = enemy1.x - enemy2.x
-		local dy = enemy1.y - enemy2.y
-		if (dx*dx + dy*dy) <= radiusSq then
-		enemy1.count = enemy1.count + 1
-		if cellKey == targetKey then
-		enemy2.count = enemy2.count + 1
-		end
-		end
-		end
-		end
-		end
-		end
-		end
+			local cx, cy = cellKey:match("([%-%d]+):([%-%d]+)")
+			cx, cy = tonumber(cx), tonumber(cy)
+			
+			for _, offset in ipairs(neighborOffsets) do
+				local tcx = cx + offset[1]
+				local tcy = cy + offset[2]
+				local targetKey = tcx .. ":" .. tcy
+				
+				if grid[targetKey] then
+					for _, enemy1 in ipairs(cellEnemies) do
+						for _, enemy2 in ipairs(grid[targetKey]) do
+							-- Avoid duplicate comparisons in same cell
+							if (cellKey ~= targetKey) or (enemy1.guid < enemy2.guid) then
+								local dx = enemy1.x - enemy2.x
+								local dy = enemy1.y - enemy2.y
+								if (dx*dx + dy*dy) <= radiusSq then
+									enemy1.count = enemy1.count + 1
+									if cellKey == targetKey then
+										enemy2.count = enemy2.count + 1
+									end
+								end
+							end
+						end
+					end
+				end
+			end
 		end
 		
 		-- Phase 4: Find maximum cluster
 		for guid, enemy in pairs(enemies) do
-		if enemy.count > most then
-		most, mostGuid = enemy.count, guid
-		end
+			if enemy.count > most then
+				most, mostGuid = enemy.count, guid
+			end
 		end
 		
 		return most, mostGuid
-		end
+	end
 	--]]
 	-------------------------------------------------------
 	-------------------------------------------------------
@@ -1266,23 +1244,23 @@ local exeOnLoad = function()
 	-------------------------------------------------------
 	-------------------------------------------------------
 	_A.FakeUnits:Add('HealingStreamTotem', function(num)
-	local tempTable = {}
-	for _, Obj in pairs(_A.OM:Get('Enemy')) do
-	for _,totems in ipairs(badtotems) do
-		if Obj.name==totems and Obj:los() then
-			tempTable[#tempTable+1] = {
-				guid = Obj.guid,
-				range = Obj:range(),
-			}
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems and Obj:los() then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						range = Obj:range(),
+					}
+				end
+			end
 		end
-	end
-	end
-	if #tempTable>1 then
-		table.sort( tempTable, function(a,b) return a.range < b.range end )
-	end
-	if #tempTable>=1 then
-		return tempTable[num] and tempTable[num].guid
-	end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
 	end)
 	_A.FakeUnits:Add('HealingStreamTotemNOLOS', function(num)
 		local tempTable = {}

@@ -1751,7 +1751,7 @@ local mw_rot = {
 							-- or fr:statepurgecheck("silence")
 							-- or fr:statepurgecheck("root")
 							-- or fr:statepurgecheck("misc"))
-							-- and not fr:debuffany("Unstable Affliction")
+							and (not fr:debuffany("Unstable Affliction") or _A.pull_location=="arena")
 							and _A.nothealimmune(fr)  
 							and fr:los()
 							then
@@ -1772,7 +1772,7 @@ local mw_rot = {
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurgecheck("snare")
 							and _A.nothealimmune(fr)
-							-- and not fr:debuffany("Unstable Affliction")
+							and (not fr:debuffany("Unstable Affliction") or _A.pull_location=="arena")
 							and fr:los() then
 							return fr:cast("Detox")
 						end
@@ -1789,7 +1789,7 @@ local mw_rot = {
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurge("Detox") 
-							-- and not fr:DebuffAny("Unstable Affliction") 
+							and (not fr:debuffany("Unstable Affliction") or _A.pull_location=="arena")
 							then
 							for _,v in ipairs(dangerousdebuffs) do
 								if fr:DebuffAny(v) and _A.nothealimmune(fr) and fr:los() then
@@ -2249,6 +2249,7 @@ local inCombat = function()
 	------------------ High Prio
 	if mw_rot.lifecocoon()  then return true end
 	if mw_rot.healingsphere_keybind() then return true end
+	if mw_rot.burstdisarm()  then print("DISARMING") return true end
 	if _A.modifier_shift() then
 		if mw_rot.healingsphere() then return true end
 		if mw_rot.uplift() then return true end
@@ -2265,7 +2266,6 @@ local inCombat = function()
 	--
 	if mw_rot.Xuen() then return true end
 	--------------------- CC
-	if mw_rot.burstdisarm()  then print("DISARMING") return true end
 	if mw_rot.ringofpeacev2() then return true end
 	if mw_rot.kick_legsweep() then return true end
 	if mw_rot.stun_legsweep() then return true end
