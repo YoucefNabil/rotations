@@ -403,6 +403,16 @@ local exeOnLoad = function()
 		end
 	end
 	-----------------------------------
+	function _Y.rushing_number()
+		local numnum = 0
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if (Obj.isplayer or Obj:ispet()) and Obj:range()<8 and _A.notimmune(Obj) and Obj:los() then
+				numnum = numnum + 1
+			end
+		end
+		return numnum
+	end
+	-----------------------------------
 	_A.buttondelayfunc = function()
 		if player:stance()~=1  then return false end
 		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end
@@ -1017,6 +1027,163 @@ local exeOnLoad = function()
 	_A.DSL:Register('caninterrupt', function(unit)
 		return interruptable(unit)
 	end)
+	-------------------------------------------------------
+	-------------------------------------------------------
+	-------------------------------------------------------
+	-------------------------------------------------------
+	-------------------------------------------------------
+	------------------------------------------------------- PET
+	------------------------------------------------------- ENGINE
+	-------------------------------------------------------
+	-------------------------------------------------------
+	-------------------------------------------------------
+	-------------------------------------------------------
+	-------------------------------------------------------
+	local badtotems = {
+		"Mana Tide",
+		"Wild Mushroom",
+		"Mana Tide Totem",
+		"Healing Stream Totem",
+		"Healing Tide",
+		"Spirit Link Totem",
+		"Healing Tide Totem",
+		"Lightning Surge Totem",
+		"Earthgrab Totem",
+		"Earthbind Totem",
+		"Grounding Totem",
+		"Stormlash Totem",
+		"Psyfiend",
+		"Lightwell",
+		"Tremor Totem",
+	}
+	_A.FakeUnits:Add('HealingStreamTotem', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						range = Obj:range(),
+					}
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
+	_A.FakeUnits:Add('HealingStreamTotemNOLOS', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						range = Obj:range(),
+					}
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
+	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKCNOLOS', function(num)
+		local tempTable = {}
+		local target = Object("target")
+		local pet = Object("pet")
+		if not pet then return end
+		if pet and not pet:alive() then return end
+		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
+		--
+		if target and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
+			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") then
+			return target and target.guid -- this is good
+		end
+		local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
+		if lowestmelee then
+			return lowestmelee.guid
+		end
+		return nil
+	end)
+	_A.PetGUID  = nil
+	local function attacktotem()
+		local htotem = Object("HealingStreamTotemNOLOS")
+		if htotem and (_A.pull_location=="arena" or htotem:range()<=60) then
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
+				return _A.CallWowApi("PetAttack", htotem.guid), 1
+			end
+			return 1
+		end
+	end
+	local function attacklowest()
+		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
+		if target then
+			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+					return _A.CallWowApi("PetAttack", target.guid), 3
+				end
+			end
+			return 3
+		end
+	end
+	local function petfollow() -- when pet target has a breakable cc
+		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
+			local target = Object(_A.UnitTarget(_A.PetGUID))
+			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
+				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+			end
+		end
+	end	
+	function _Y.GetPetStance()
+		local STANCE_ICONS = {
+			"PET_MODE_PASSIVE",
+			"PET_MODE_ASSIST",
+			"PET_MODE_DEFENSIVE"
+		}
+		-- Check each pet action slot (1-10)
+		for i = 1, 10 do
+			local icon,_,_,_,isActive = GetPetActionInfo(i)
+			if icon and isActive then
+				-- Determine which stance is active based on the icon
+				for _, stanceName in pairs(STANCE_ICONS) do
+					if icon == stanceName then
+						return stanceName
+					end
+				end
+			end
+		end
+		return " "  -- No active stance found
+	end
+	local function petpassive() -- when pet target has a breakable cc
+		if _Y.GetPetStance()~="PET_MODE_PASSIVE" then
+			return _A.CallWowApi("RunMacroText", "/petpassive"), 4
+		end
+	end
+	
+	function _Y.petengine_MONK() -- REQUIRES RELOAD WHEN SWITCHING SPECS
+		if not _A.Cache.Utils.PlayerInGame then return end
+		if not player then return true end
+		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
+		if player:mounted() then return end
+		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") then if _A.PetGUID then _A.PetGUID = nil end return true end
+		_A.PetGUID = _A.UnitGUID("pet")
+		if _A.PetGUID == nil then return end
+		-- print(_A.PetGUID)
+		-- print(_Y.GetPetStance())
+		-------- PET ROTATION
+		-- if petpassive() then return end
+		if attacktotem() then return end
+		if attacklowest() then return end
+		-- if petfollow() then return end
+	end
 end
 local exeOnUnload = function()
 end
@@ -1084,16 +1251,14 @@ local mw_rot = {
 		-- end
 		-- end
 	end,
-	
 	autoattackmanager = function()
 		local target = Object("target")
-		if target and target.isplayer and target:enemy() and target:alive() and target:inmelee() and target:InConeOf(player, 150) and target:los() then
-			if target:state("incapacitate || fear || disorient || charm || misc || sleep") and player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") 
-				elseif not target:state("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then  _A.CallWowApi("RunMacroText", "/startattack") 
+		if target and target.isplayer and target:enemy() and target:alive() and target:InConeOf(player, 180) and target:los() then
+			if (target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep")) and player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") 
+				elseif not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then  _A.CallWowApi("RunMacroText", "/startattack") 
 			end
 		end
 	end,
-	
 	activetrinket = function()
 		if player:combat() and player:buff("Surge of Dominance") then
 			for i=1, #usableitems do
@@ -1107,18 +1272,19 @@ local mw_rot = {
 			end
 		end
 	end,
-	
 	Xuen = function()
 		if player:combat() and player:talent("Invoke Xuen, the White Tiger") and player:SpellCooldown("Invoke Xuen, the White Tiger")==0 then
 			if player:buff("Call of Dominance") then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
 				if lowestmelee then
-				return	lowestmelee:cast("Invoke Xuen, the White Tiger") end
+					lowestmelee:cast("Invoke Xuen, the White Tiger")
+					return C_Timer.After(2, function()
+						_A.RunMacroText("/petpassive")
+					end)
+				end
 			end
 		end
 	end,
-	
-	
 	items_intflask = function()
 		if player:ItemCooldown(76085) == 0  
 			and player:ItemCount(76085) > 0
@@ -1362,22 +1528,20 @@ local mw_rot = {
 	end,
 	
 	burstdisarm = function() -- should be arena only
-		if player:Stance() == 1   then
-			if player:SpellCooldown("Grapple Weapon")<.3 then
-				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj.isplayer 
-						and obj:SpellRange("Grapple Weapon") 
-						and obj:InConeOf(player, 170)
-						and not healerspecid[obj:spec()]
-						and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest") or obj:BuffAny("Call of Dominance"))
-						and not obj:BuffAny("Bladestorm")
-						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm || stun")
-						and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
-						and (_A.pull_location=="arena" or (UnitTarget(obj.guid)==player.guid and obj:range()<10))
-						and _A.notimmune(obj)
-						and obj:los() then
-						return obj:Cast("Grapple Weapon")
-					end
+		if player:SpellCooldown("Grapple Weapon")<.3 then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer 
+					and obj:SpellRange("Grapple Weapon") 
+					and obj:InConeOf(player, 170)
+					and not healerspecid[obj:spec()]
+					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest") or obj:BuffAny("Call of Dominance"))
+					and not obj:BuffAny("Bladestorm")
+					and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm || stun")
+					and (obj:drState("Grapple Weapon") == 1 or obj:drState("Grapple Weapon")==-1)
+					and (_A.pull_location=="arena" or (UnitTarget(obj.guid)==player.guid and obj:range()<10))
+					and _A.notimmune(obj)
+					and obj:los() then
+					return obj:Cast("Grapple Weapon")
 				end
 			end
 		end
@@ -1734,28 +1898,16 @@ local mw_rot = {
 	end,
 	
 	dispellunCC = function()
-		local temptabletbl1 = {}
-		-- if not player:lostcontrol() and player:Stance() == 1 then
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox")
 							and fr:statepurgecheck("stun || sleep || charm || disorient || incapacitate || fear || silence || misc") or fr:statepurgecheck("root")
-							-- and (fr:statepurgecheck("fear")
-							-- or fr:statepurgecheck("sleep")
-							-- or fr:statepurgecheck("charm")
-							-- or fr:statepurgecheck("disorient")
-							-- or fr:statepurgecheck("incapacitate")
-							-- or fr:statepurgecheck("stun")
-							-- or fr:statepurgecheck("silence")
-							-- or fr:statepurgecheck("root")
-							-- or fr:statepurgecheck("misc"))
 							and (not fr:debuffany("Unstable Affliction") or _A.pull_location=="arena")
 							and _A.nothealimmune(fr)  
 							and fr:los()
 							then
-							-- print("REMOVING CC")
 							return fr:cast("Detox")
 						end
 					end
@@ -1765,7 +1917,6 @@ local mw_rot = {
 	end,
 	
 	dispellunSLOW = function()
-		local temptabletbl1 = {}
 		if not player:lostcontrol() and player:Stance() == 1 then
 			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
@@ -2059,27 +2210,14 @@ local mw_rot = {
 	end,
 	
 	dpsstance_jab = function()
-		if player:Stance() ~= 1 then
+		if player:Stance() ~= 1 and not player:buff("Rushing Jade Wind") then
 			if not player:Buff("Muscle Memory")
 				-- or player:Chi()==0 then
-				or player:Chi()<=1 then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
-				if lowestmelee then
-					return lowestmelee:Cast("Jab")
-				end
-			end
-		end
-	end,
-	
-	spin_keybind = function()
-		if player:Stance() == 1 and not _A.modifier_shift() then
-			if	player:Talent("Rushing Jade Wind") 
-				and player:SpellCooldown("Rushing Jade Wind")<.3
-				and player:SpellUsable(116847)
+				-- or player:Chi()<=1 
 				then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
-					return player:Cast("Rushing Jade Wind")
+					return lowestmelee:Cast("Jab")
 				end
 			end
 		end
@@ -2154,7 +2292,6 @@ local mw_rot = {
 			elseif _focus then _A.CallWowApi("ClearFocus")
 		end
 	end,
-	
 	dpsstance_spin = function()
 		if player:Stance() ~= 1 and (player:keybind("R") or _A.pull_location~="pvp") then
 			if	player:Talent("Rushing Jade Wind") 
@@ -2164,10 +2301,34 @@ local mw_rot = {
 			end
 		end
 	end,
-	
+	dpsstance_spin_musclememory = function()
+		if player:Stance() ~= 1 and player:Talent("Rushing Jade Wind") 
+			and player:SpellCooldown("Rushing Jade Wind")<.3
+			and (_Y.rushing_number()>=3 or player:keybind("R")) then
+			return player:Cast("Rushing Jade Wind")
+		end
+	end,
+	healstance_spin_musclememory = function()
+		if player:Stance() ~= 1 and _Y.rushing_number()>=3 and not _A.modifier_shift() then
+			if	player:Talent("Rushing Jade Wind") 
+				and player:SpellCooldown("Rushing Jade Wind")<.3
+				then
+				return player:Cast("Rushing Jade Wind")
+			end
+		end
+	end,
 	dpsstance_healstance = function()
 		if player:Stance() ~= 1 then
 			if	player:SpellCooldown("Stance of the Wise Serpent")<.3
+				then
+				return player:Cast("Stance of the Wise Serpent")
+			end
+		end
+	end,
+	
+	dpsstance_healstance_special = function()
+		if player:Stance() ~= 1 then
+			if player:SpellCooldown("Stance of the Wise Serpent")<.3
 				then
 				return player:Cast("Stance of the Wise Serpent")
 			end
@@ -2183,31 +2344,14 @@ local mw_rot = {
 		end
 	end,
 	
+	
 	dpsstanceswap = function()
 		if player:Stance() ~= 2 then
 			if player:SpellCooldown("Stance of the Fierce Tiger")<.3
 				and not player:Buff("Rushing Jade Wind") 
 				and not player:Buff("lucidity") 
 				then
-				if player:Talent("Rushing Jade Wind") and (player:keybind("R") or _A.pull_location~="pvp") then
-					return player:Cast("Stance of the Fierce Tiger")
-				end
-				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
-				if lowestmelee then
-					return player:Cast("Stance of the Fierce Tiger")
-				end
-			end
-		end
-	end,
-	
-	dpsstanceswap_keybind = function()
-		if player:Stance() ~= 2
-			then
-			if player:SpellCooldown("Stance of the Fierce Tiger")<.3
-				and not player:Buff("Rushing Jade Wind") 
-				and not player:Buff("lucidity") 
-				then
-				if player:Talent("Rushing Jade Wind") then
+				if player:Talent("Rushing Jade Wind") and (player:keybind("R") or _A.pull_location~="pvp" or _Y.rushing_number()>=3) then
 					return player:Cast("Stance of the Fierce Tiger")
 				end
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
@@ -2233,8 +2377,8 @@ local inCombat = function()
 	if player:mounted() then return end
 	if player:isChanneling("Crackling Jade Lightning") then return end -- ¨pausing when casting this
 	-- Out of GCD
-	mw_rot.autofocus()
 	mw_rot.autoattackmanager()
+	_Y.petengine_MONK()
 	mw_rot.thunderfocustea()
 	mw_rot.kick_spear()
 	mw_rot.activetrinket()
@@ -2242,11 +2386,13 @@ local inCombat = function()
 	mw_rot.chibrew()
 	mw_rot.items_healthstone()
 	mw_rot.fortifyingbrew()
-	-- mw_rot.items_noggenfogger()
+	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
+	-- print(_Y.rushing_number())
 	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
+	if mw_rot.dpsstance_healstance_keybind() then return true end
 	if mw_rot.lifecocoon()  then return true end
 	if mw_rot.healingsphere_keybind() then return true end
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
@@ -2261,7 +2407,7 @@ local inCombat = function()
 		if mw_rot.manatea() then return true end
 		if mw_rot.tp_buff_keybind() then return true end
 		if mw_rot.blackout_keybind()  then return true end
-		if mw_rot.dpsstanceswap_keybind()  then return true end
+		if mw_rot.dpsstanceswap()  then return true end
 	end
 	--
 	if mw_rot.Xuen() then return true end
@@ -2284,16 +2430,16 @@ local inCombat = function()
 	if mw_rot.manatea() then return true end
 	if mw_rot.surgingmist() then return true end
 	if mw_rot.chi_wave()  then return true end
+	if mw_rot.healstance_spin_musclememory() then return end
 	if mw_rot.healingsphere() then return true end
 	if mw_rot.spin_rjw() then return true end
-	-- if mw_rot.pvp_disable_root() then return end
 	if mw_rot.healstatue() then return true end
 	if mw_rot.expelharm() then return true end
 	-- if mw_rot.dispellplzany() then return end
 	-- if mw_rot.statbuff() then return end
 	------------------ STANCE SWAP FILL
-	if mw_rot.dpsstance_healstance_keybind() then return true end
 	if not _A.modifier_shift() then
+		if mw_rot.dpsstance_spin_musclememory() then return true end
 		if mw_rot.dpsstance_jab() then return true end
 		if mw_rot.dpsstance_spin()  then return true end
 	end
