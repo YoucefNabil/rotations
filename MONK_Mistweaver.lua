@@ -63,9 +63,9 @@ local function CalculateHP(t)
 	return 100 * ( CalculateHPRAW(t) ) / CalculateHPRAWMAX(t)
 end
 local blacklist = {
-	["Kimpackabowl"] = true,
-	["Rauteeins"] = true,
-	["Jimmyiwnl"] = true,
+	-- ["Kimpackabowl"] = true,
+	-- ["Rauteeins"] = true,
+	-- ["Jimmyiwnl"] = true,
 	-- [] = true,
 	-- [] = true,
 	-- [] = true,
@@ -610,21 +610,25 @@ local exeOnLoad = function()
 		return (_A.GetTime() - _A.casttimers[idd])>=delay
 	end
 	
+	local function someonebursting()
+		for _, obj in pairs(_A.OM:Get('Enemy')) do
+			if obj.isplayer 
+				and obj:range()<40
+				and not healerspecid[obj:spec()]
+				and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest") or obj:BuffAny("Call of Dominance"))
+				and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm || stun")
+				and obj:los() then
+				return true
+			end
+		end
+		return false
+	end
+	
 	-- ====
 	local MW_HealthUsedData = {}
 	local MW_LastHealth = {}
-	local startedcombat_at
-	local minimum_MW_HealthAnalyzedTimespan = 30
-	local MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
+	local MW_HealthAnalyzedTimespan = 25
 	--====================================================== Testing
-	_A.Listener:Add("COMBAT_TRACK", {"PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED"}, function(event, firstArg, secondArg)
-		if event == "PLAYER_REGEN_DISABLED" then
-			startedcombat_at = GetTime()
-		end
-		if event == "PLAYER_REGEN_ENABLED" then
-			MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
-		end
-	end)
 	_A.Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") then -- does this work with absorbs? I don't remember testing this
 			if UnitIsPlayer(guiddest) then -- only players
@@ -651,13 +655,8 @@ local exeOnLoad = function()
 	end
 	function PlayerHealthChanged(unit, Current, Max, Usage)
 		local uptime = GetTime()
-		-- Variable MW_HealthAnalyzedTimespan
-		if startedcombat_at and (uptime - startedcombat_at)>minimum_MW_HealthAnalyzedTimespan then
-			MW_HealthAnalyzedTimespan = (uptime - startedcombat_at)
-			elseif MW_HealthAnalyzedTimespan ~= minimum_MW_HealthAnalyzedTimespan then MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan
-		end
 		-- Fixed
-		-- if MW_HealthAnalyzedTimespan ~= minimum_MW_HealthAnalyzedTimespan then MW_HealthAnalyzedTimespan = minimum_MW_HealthAnalyzedTimespan end
+		if someonebursting() then MW_HealthAnalyzedTimespan = 18 else MW_HealthAnalyzedTimespan = 25 end
 		--
 		if MW_HealthUsedData[unit] then
 			MW_HealthUsedData[unit].healthUsed = 0
@@ -702,9 +701,7 @@ local exeOnLoad = function()
 	--====================================================== MANA
 	local MW_ManaUsedData = {}
 	local MW_LastMana = UnitPower("player", 0)
-	local minimumMW_AnalyzedTimespan = 30
-	local manacombatstart
-	local MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan
+	local MW_AnalyzedTimespan = 30
 	local avgDelta = 0
 	_A.avgDeltaPercent = 0
 	local secondsTillOOM = 99999
@@ -712,12 +709,6 @@ local exeOnLoad = function()
 		if event == "UNIT_POWER" and firstArg == "player" and secondArg == "MANA" then
 			if MW_LastMana == nil then MW_LastMana = UnitPower("player", 0) end
 			_A.UnitManaHandler(firstArg)
-		end
-		if event == "PLAYER_REGEN_DISABLED" then
-			manacombatstart = GetTime()
-		end
-		if event == "PLAYER_REGEN_ENABLED" then
-			MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan
 		end
 	end)
 	function _A.UnitManaHandler(unitID)
@@ -731,13 +722,8 @@ local exeOnLoad = function()
 	end
 	function _A.PlayerManaChanged(Current, Max, Usage)
 		local uptime = GetTime()
-		-- Variable MW_AnalyzedTimespan
-		if manacombatstart and (uptime - manacombatstart)>minimumMW_AnalyzedTimespan then
-			MW_AnalyzedTimespan = (uptime - manacombatstart)
-			elseif MW_AnalyzedTimespan~=minimumMW_AnalyzedTimespan then MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan
-		end
-		-- fixed 
-		-- if MW_AnalyzedTimespan~=minimumMW_AnalyzedTimespan then MW_AnalyzedTimespan = minimumMW_AnalyzedTimespan end
+		-- FIXED
+		MW_AnalyzedTimespan = 30
 		local manaUsed = 0
 		MW_ManaUsedData[uptime] = Usage
 		for Time, Mana in pairs(MW_ManaUsedData) do
@@ -841,6 +827,64 @@ local exeOnLoad = function()
 		local manaBudget = (_A.avgDeltaPercent + effectivemanaregen())
 		return manaBudget>=hpDelta
 	end
+	--------------------------------------------------------
+	-- Helper functions needed for the high-prio check
+	local deficitHistory = {}
+	
+	function isDeficitWorsening()
+		-- Track last 6 entries (12 second window) for faster response
+		table.insert(deficitHistory, 1, {time = GetTime(), value = deficit})
+		
+		-- Remove entries older than 12 seconds
+		local cutoff = GetTime() - 12
+		for i = #deficitHistory, 1, -1 do
+			if deficitHistory[i].time < cutoff then
+				table.remove(deficitHistory, i)
+			end
+		end
+		
+		-- Require minimum 4 data points for trend analysis
+		if #deficitHistory < 4 then return false end
+		
+		-- Calculate weighted moving average trend
+		local totalWeight = 0
+		local weightedSum = 0
+		local previousValue = deficitHistory[1].value
+		
+		for i = 1, #deficitHistory do
+			local weight = 1.5 ^ (i-1)  -- Exponential weighting (newer = more important)
+			weightedSum = weightedSum + (deficitHistory[i].value - previousValue) * weight
+			totalWeight = totalWeight + weight
+			previousValue = deficitHistory[i].value
+		end
+		
+		-- Normalize and check trend
+		local avgTrend = weightedSum / totalWeight
+		return avgTrend < -0.4  -- Worsening by 0.4% per second
+	end
+
+	function _A.manaengine_highprio()
+		local player = Object("player")
+		
+		-- Get metrics
+		local hpDelta = maxHPv2()
+		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
+		local deficit = manaBudget - hpDelta
+		
+		-- Battle-tested PvP thresholds
+		local emergencyFactors = {
+			immediateDeficit = deficit < -3.2,  -- 3.2% deficit
+			trendDanger = isDeficitWorsening(),  -- From previous tuned version
+		}
+		
+		-- Scoring system (either can trigger)
+		local emergencyScore = 0
+		emergencyScore = emergencyScore + (emergencyFactors.immediateDeficit and 2.5 or 0)
+		emergencyScore = emergencyScore + (emergencyFactors.trendDanger and 2.5 or 0)
+		
+		return emergencyScore >= 2.5
+	end
+	
 	function _A.enoughmana(id)
 		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
 		if powertype then
@@ -2421,7 +2465,7 @@ local inCombat = function()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	-- print(_Y.rushing_number())
-	print(_A.avgDeltaPercent, maxHPv2())
+	-- print(_A.avgDeltaPercent, maxHPv2())
 	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
@@ -2429,9 +2473,9 @@ local inCombat = function()
 	if mw_rot.lifecocoon()  then return true end
 	if mw_rot.healingsphere_keybind() then return true end
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
-	if _A.modifier_shift() then
+	if _A.modifier_shift() or _A.manaengine_highprio() then
 		if mw_rot.healingsphere() then return true end
-		if mw_rot.uplift() then return true end
+		if not _A.manaengine_highprio() and mw_rot.uplift() then return true end
 	end
 	if mw_rot.pvp_disable_keybind() then return true end
 	if mw_rot.ctrl_mode() then return true end

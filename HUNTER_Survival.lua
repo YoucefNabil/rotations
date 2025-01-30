@@ -2167,7 +2167,7 @@ local inCombat = function()
 	local focus = Object("focus")
 	_A.pull_location = _A.pull_location or pull_location()
 	_Y.petengine_Surv()
-	print(_Y.clumpnumber)
+	-- print(_Y.clumpnumber)
 	--debug
 	-- print(_A.MissileExists("Arcane Shot"))
 	-- print(player:immuneduration("snare || all"))
