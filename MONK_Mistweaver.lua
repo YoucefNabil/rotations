@@ -807,7 +807,7 @@ local exeOnLoad = function()
 		return num>0 and sum/num or 0
 	end 
 	function maxHPv2()
-		local maxx = 0
+		local maxx = 999
 		if next(MW_HealthUsedData)==nil then
 			return 0
 			else
@@ -1842,11 +1842,12 @@ local mw_rot = {
 					if fr:SpellRange("Tiger's Lust") then
 						if fr.isplayer then
 							if _A.nothealimmune(fr) then
-								if (not fr:state("incapacitate || fear || disorient || charm || misc || sleep")) and (fr:State("root") or fr:State("snare")) and fr:los()
+								if not fr:state("incapacitate || fear || disorient || charm || misc || sleep") and fr:State("root || snare") and fr:los()
 									then
 									if fr.guid ~= player.guid then
 										return fr:Cast("Tiger's Lust")
-										else
+										-- elseif
+										-- _A.pull_location~=arena then
 										return fr:Cast("Tiger's Lust")
 									end
 								end
