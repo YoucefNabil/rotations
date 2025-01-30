@@ -1848,6 +1848,7 @@ local mw_rot = {
 										return fr:Cast("Tiger's Lust")
 										-- elseif
 										-- _A.pull_location~=arena then
+										else
 										return fr:Cast("Tiger's Lust")
 									end
 								end
