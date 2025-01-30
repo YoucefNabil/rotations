@@ -831,7 +831,7 @@ local exeOnLoad = function()
 	-- Helper functions needed for the high-prio check
 	local deficitHistory = {}
 	
-	function isDeficitWorsening()
+	function isDeficitWorsening(deficit)
 		-- Track last 6 entries (12 second window) for faster response
 		table.insert(deficitHistory, 1, {time = GetTime(), value = deficit})
 		
@@ -868,13 +868,15 @@ local exeOnLoad = function()
 		
 		-- Get metrics
 		local hpDelta = maxHPv2()
+		local hpdelta2 = averageHPv2()
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-		local deficit = manaBudget - hpDelta
+		local deficit = hpDelta - manaBudget
+		local specialdeficit = hpdelta2 - manaBudget
 		
 		-- Battle-tested PvP thresholds
 		local emergencyFactors = {
 			immediateDeficit = deficit < -3.2,  -- 3.2% deficit
-			trendDanger = isDeficitWorsening(),  -- From previous tuned version
+			trendDanger = isDeficitWorsening(specialdeficit),  -- From previous tuned version
 		}
 		
 		-- Scoring system (either can trigger)
@@ -2466,6 +2468,7 @@ local inCombat = function()
 	mw_rot.items_intflask()
 	-- print(_Y.rushing_number())
 	-- print(_A.avgDeltaPercent, maxHPv2())
+	if _A.manaengine_highprio()==true then print(true) end
 	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
