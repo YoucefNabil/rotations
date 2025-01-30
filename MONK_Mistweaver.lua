@@ -796,7 +796,6 @@ local exeOnLoad = function()
 								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:distance()<=45 then
 									num = num + 1
 									sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
-									return sum/num
 								end
 								-- end
 							end
@@ -805,11 +804,42 @@ local exeOnLoad = function()
 				end
 			end
 		end
-		return 0
+		return num>0 and sum/num or 0
+	end 
+	function maxHPv2()
+		local maxx = 0
+		if next(MW_HealthUsedData)==nil then
+			return 0
+			else
+			for k in pairs(MW_HealthUsedData) do
+				if MW_HealthUsedData[k]~=nil then
+					if next(MW_HealthUsedData[k])~=nil then
+						if MW_HealthUsedData[k].avgHDeltaPercent~=nil then 	
+							if UnitIsDeadOrGhost(k)==nil then
+								-- if UnitHealth(k)<UnitHealthMax(k) then
+								local unitObject = Object(k)
+								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:distance()<=45 then
+									if MW_HealthUsedData[k].avgHDeltaPercent < maxx then
+										maxx = MW_HealthUsedData[k].avgHDeltaPercent
+									end
+									-- end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+		return maxx
 	end 
 	function _A.manaengine() -- make it so it's tied with group hp
 		player = player or Object("player")
-		return ((_A.avgDeltaPercent/1)>=(averageHPv2()-(effectivemanaregen()*manamodifier))) or player:buff("Lucidity") or player:mana()>=95
+		if player:buff("Lucidity") or player:mana()>=95 then return true end
+		-- local hpDelta = averageHPv2()
+		local hpDelta = maxHPv2()
+		-- local manaBudget = _A.avgDeltaPercent
+		local manaBudget = (_A.avgDeltaPercent + effectivemanaregen())
+		return manaBudget>=hpDelta
 	end
 	function _A.enoughmana(id)
 		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
@@ -2389,6 +2419,7 @@ local inCombat = function()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	-- print(_Y.rushing_number())
+	print(_A.avgDeltaPercent, maxHPv2())
 	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio

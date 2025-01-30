@@ -652,7 +652,7 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			-- if Obj.isplayer and Obj:spellRange("Arcane Shot") and Obj:stateYOUCEF("incapacitate || disorient || charm || misc || sleep || stun") and _A.notimmune(Obj) and Obj:los() then
 			if Obj.isplayer and Obj:spellRange("Arcane Shot") and _A.notimmune(Obj) 
-				and Obj:stateduration("stun")>=1 and not Obj:moving() and Obj:los() then
+				and Obj:stateduration("stun || root")>=1 and not Obj:moving() and Obj:los() then
 				tempTable[#tempTable+1] = {
 					range = Obj:range(),
 					guid = Obj.guid,
@@ -1098,139 +1098,63 @@ local exeOnLoad = function()
 			end
 		end
 	end	
-	
-	function _Y.mostclumpedenemy(Range, Radius)
-		local tempTable = {}
-		local radius = Radius and (Radius + 1.5) or 10
-		local range = Range or 40
-		local most, mostGuid = 0, nil
-		local radiusSq = radius * radius
-		
-		-- First phase: Collect valid enemies
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:range() < range and not _A.scattertargets[Obj.guid] 
-				and Obj:InConeOf(player, 170) and _A.notimmune(Obj) and Obj:los() then
-				local X, Y = _A.ObjectPosition(Obj.guid)
-				tempTable[Obj.guid] = { x = X, y = Y }
-			end
-		end
-		
-		-- Convert to array for efficient pairwise processing
-		local entries = {}
-		for guid, data in pairs(tempTable) do
-			entries[#entries+1] = {guid = guid, x = data.x, y = data.y}
-		end
-		
-		-- Initialize counts with self (1)
-		local count = {}
-		for _, entry in ipairs(entries) do
-			count[entry.guid] = 1
-		end
-		
-		-- Optimized pairwise check (O(n²/2) complexity)
-		for i = 1, #entries do
-			local a = entries[i]
-			for j = i + 1, #entries do
-				local b = entries[j]
-				local dx = b.x - a.x
-				local dy = b.y - a.y
-				if (dx*dx + dy*dy) <= radiusSq then
-					count[a.guid] = count[a.guid] + 1
-					count[b.guid] = count[b.guid] + 1
-				end
-			end
-		end
-		
-		-- Find maximum cluster
-		for guid, number in pairs(count) do
-			if number > most then
-				most, mostGuid = number, guid
-			end
-		end
-		
-		return most, mostGuid
-	end
-	
-	--[[
-	-- Grid Based
-	function _Y.mostclumpedenemy(Range, Radius)
-		local floor = math.floor
-		local pairs = pairs
-		local ipairs = ipairs
-		local radius = Radius and (Radius + 1.5) or 10
-		local range = Range or 40
-		local radiusSq = radius * radius
-		local most, mostGuid = 0, nil
-		
-		-- Phase 1: Collect valid enemies and build spatial grid
-		local grid = {}
-		local enemies = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:range() < range 
-				and not _A.scattertargets[Obj.guid]
-				and Obj:InConeOf(player, 170)
-				and _A.notimmune(Obj)
-				and Obj:los() then
-				local x, y = _A.ObjectPosition(Obj.guid)
-				local cx, cy = floor(x / radius), floor(y / radius)
-				local cellKey = cx .. ":" .. cy
-				
-				grid[cellKey] = grid[cellKey] or {}
-				local enemy = { guid = Obj.guid, x = x, y = y, count = 1 }
-				enemies[Obj.guid] = enemy
-				grid[cellKey][#grid[cellKey]+1] = enemy
-			end
-		end
-		
-		-- Phase 2: Precomputed neighbor offsets for 2D grid
-		local neighborOffsets = {
-			{0, 0},  -- Same cell
-			{1, 0},  -- Right
-			{0, 1},  -- Top
-			{1, 1},  -- Top-right
-			{-1, 1}  -- Top-left
-		}
-		
-		-- Phase 3: Efficient pairwise comparisons (Checks every pair once: Half the compute for the same results)
-		for cellKey, cellEnemies in pairs(grid) do
-			local cx, cy = cellKey:match("([%-%d]+):([%-%d]+)")
-			cx, cy = tonumber(cx), tonumber(cy)
-			
-			for _, offset in ipairs(neighborOffsets) do
-				local tcx = cx + offset[1]
-				local tcy = cy + offset[2]
-				local targetKey = tcx .. ":" .. tcy
-				
-				if grid[targetKey] then
-					for _, enemy1 in ipairs(cellEnemies) do
-						for _, enemy2 in ipairs(grid[targetKey]) do
-							-- Avoid duplicate comparisons in same cell
-							if (cellKey ~= targetKey) or (enemy1.guid < enemy2.guid) then
-								local dx = enemy1.x - enemy2.x
-								local dy = enemy1.y - enemy2.y
-								if (dx*dx + dy*dy) <= radiusSq then
-									enemy1.count = enemy1.count + 1
-									if cellKey == targetKey then
-										enemy2.count = enemy2.count + 1
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-		
-		-- Phase 4: Find maximum cluster
-		for guid, enemy in pairs(enemies) do
-			if enemy.count > most then
-				most, mostGuid = enemy.count, guid
-			end
-		end
-		
-		return most, mostGuid
-	end
-	--]]
+local abs = math.abs
+function _Y.mostclumpedenemy(Range, Radius)
+    local tempTable = {}
+    local radius = Radius and (Radius + 1.5) or 10
+    local range = Range or 40
+    local most, mostGuid = 0, nil
+    local radiusSq = radius * radius
+
+    -- First phase: Collect valid enemies
+    for _, Obj in pairs(_A.OM:Get('Enemy')) do
+        if Obj:range() < range and not _A.scattertargets[Obj.guid] 
+            and Obj:InConeOf(player, 170) and _A.notimmune(Obj) and Obj:los() then
+            local X, Y = _A.ObjectPosition(Obj.guid)
+            tempTable[Obj.guid] = { x = X, y = Y }
+        end
+    end
+
+    -- Convert to arrays for efficient access
+    local guids, x, y = {}, {}, {}
+    local count = {}
+    for guid, data in pairs(tempTable) do
+        guids[#guids + 1] = guid
+        x[#x + 1] = data.x
+        y[#y + 1] = data.y
+        count[guid] = 1  -- Initialize count with self
+    end
+    local numEntries = #guids
+
+    -- Optimized pairwise check with early exits (Lua 5.1 compatible)
+    for i = 1, numEntries do
+        local ax = x[i]
+        local ay = y[i]
+        local guid_a = guids[i]
+        for j = i + 1, numEntries do
+            local bx = x[j]
+            local by = y[j]
+            local dx = bx - ax
+            local dy = by - ay
+            -- Early exit using logical checks instead of goto
+            if abs(dx) <= radius and abs(dy) <= radius then
+                if (dx*dx + dy*dy) <= radiusSq then
+                    count[guid_a] = count[guid_a] + 1
+                    count[guids[j]] = count[guids[j]] + 1
+                end
+            end
+        end
+    end
+
+    -- Find maximum cluster
+    for guid, number in pairs(count) do
+        if number > most then
+            most, mostGuid = number, guid
+        end
+    end
+
+    return most, mostGuid
+end
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-------------------------------------------------------
@@ -1588,8 +1512,9 @@ survival.rot = {
 				if player:Spellcooldown("Ice Trap")<.3
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-					else 
-					return _A.clickcast(lowestmelee, "Ice Trap")							
+					if not player:isCastingAny() then
+						return _A.clickcast(lowestmelee, "Ice Trap")					
+					end 
 				end 
 			end 
 		end
@@ -1599,11 +1524,12 @@ survival.rot = {
 			and player:spellusable("Snake Trap") then
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
-				if player:Spellcooldown("Snake Trap")<.3 and _A.castdelay("Ice Trap", 6) 
+				if player:Spellcooldown("Snake Trap")<.3 and _A.castdelay(82941, 6) 
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-					else 
-					return _A.clickcast(lowestmelee, "Snake Trap")				
+					if not player:isCastingAny() then
+						return _A.clickcast(lowestmelee, "Snake Trap")			
+					end 
 				end 
 			end 
 		end
