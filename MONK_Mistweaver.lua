@@ -405,12 +405,18 @@ local exeOnLoad = function()
 	-----------------------------------
 	function _Y.rushing_number()
 		local numnum = 0
+		local numnum2 = 0
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if (Obj.isplayer or Obj:ispet()) and Obj:range()<8 and _A.notimmune(Obj) and Obj:los() then
 				numnum = numnum + 1
 			end
 		end
-		return numnum
+		for _, Obj in pairs(_A.OM:Get('Friendly')) do
+			if (Obj.isplayer or Obj:ispet()) and Obj:range()<8 and Obj:health()<90 and _A.nothealimmune(Obj) and Obj:los() then
+				numnum2 = numnum2 + 1
+			end
+		end
+		return math.max(numnum,numnum2)
 	end
 	-----------------------------------
 	_A.buttondelayfunc = function()
@@ -2335,7 +2341,7 @@ local mw_rot = {
 		end
 	end,
 	dpsstance_spin_musclememory = function()
-		if player:Stance() ~= 1 and player:Talent("Rushing Jade Wind") 
+		if player:Stance() ~= 1 and player:Talent("Rushing Jade Wind")  and not player:buff("Muscle Memory")
 			and player:SpellCooldown("Rushing Jade Wind")<.3
 			and (_Y.rushing_number()>=3 or player:keybind("R")) then
 			return player:Cast("Rushing Jade Wind")
