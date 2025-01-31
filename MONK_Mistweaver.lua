@@ -407,12 +407,12 @@ local exeOnLoad = function()
 		local numnum = 0
 		local numnum2 = 0
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if (Obj.isplayer or Obj:ispet()) and Obj:range()<8 and _A.notimmune(Obj) and Obj:los() then
+			if Obj.isplayer and Obj:range()<8 and _A.notimmune(Obj) and Obj:los() then
 				numnum = numnum + 1
 			end
 		end
 		for _, Obj in pairs(_A.OM:Get('Friendly')) do
-			if (Obj.isplayer or Obj:ispet()) and Obj:range()<8 and Obj:health()<90 and _A.nothealimmune(Obj) and Obj:los() then
+			if Obj.isplayer and Obj:range()<8 and Obj:health()<90 and _A.nothealimmune(Obj) and Obj:los() then
 				numnum2 = numnum2 + 1
 			end
 		end
@@ -2083,6 +2083,7 @@ local mw_rot = {
 							if (lowest:health() < 85) then
 								-- if lowest:los() then
 								-- return lowest:CastGround("Healing Sphere", true)
+								if _A.manaengine_highprio() then print("HIGH PRIO ORB") end
 								return _A.clickcast(lowest,"Healing Sphere")
 								-- return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 88)
 								-- end
@@ -2439,7 +2440,6 @@ local inCombat = function()
 	if mw_rot.healingsphere_keybind() then return true end
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
 	if _A.modifier_shift() or _A.manaengine_highprio() then
-		if _A.manaengine_highprio() then print("HIGH PRIo!!!") end
 		if mw_rot.healingsphere() then return true end
 		if not _A.manaengine_highprio() and mw_rot.uplift() then return true end
 	end
