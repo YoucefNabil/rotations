@@ -488,13 +488,11 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		-- if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and _A.dontbreakcc(target) and _A.notimmune(target)  and target:los() then
-		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 150) and _A.notimmune(target) and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
+		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 170) and _A.notimmune(target) and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			-- if Obj:spellRange(spell) and _A.dontbreakcc(Obj) and _A.notimmune(Obj) and  Obj:InConeOf(player, 150) and Obj:los() then
-			if Obj:spellRange(spell) and _A.notimmune(Obj) and  Obj:InConeOf(player, 150) and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
+			if Obj:spellRange(spell) and _A.notimmune(Obj) and  Obj:InConeOf(player, 170) and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -627,7 +625,7 @@ local exeOnLoad = function()
 	-- ====
 	local MW_HealthUsedData = {}
 	local MW_LastHealth = {}
-	local MW_HealthAnalyzedTimespan = 25
+	local MW_HealthAnalyzedTimespan = 18
 	--====================================================== Testing
 	_A.Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") then -- does this work with absorbs? I don't remember testing this
@@ -656,7 +654,7 @@ local exeOnLoad = function()
 	function PlayerHealthChanged(unit, Current, Max, Usage)
 		local uptime = GetTime()
 		-- Fixed
-		if someonebursting() then MW_HealthAnalyzedTimespan = 18 else MW_HealthAnalyzedTimespan = 25 end
+		if someonebursting() then MW_HealthAnalyzedTimespan = 14 else MW_HealthAnalyzedTimespan = 18 end
 		--
 		if MW_HealthUsedData[unit] then
 			MW_HealthUsedData[unit].healthUsed = 0
@@ -828,63 +826,11 @@ local exeOnLoad = function()
 		return manaBudget>=hpDelta
 	end
 	--------------------------------------------------------
-	-- Helper functions needed for the high-prio check
-	local deficitHistory = {}
-	
-	function isDeficitWorsening(deficit)
-		-- Track last 6 entries (12 second window) for faster response
-		table.insert(deficitHistory, 1, {time = GetTime(), value = deficit})
-		
-		-- Remove entries older than 12 seconds
-		local cutoff = GetTime() - 12
-		for i = #deficitHistory, 1, -1 do
-			if deficitHistory[i].time < cutoff then
-				table.remove(deficitHistory, i)
-			end
-		end
-		
-		-- Require minimum 4 data points for trend analysis
-		if #deficitHistory < 4 then return false end
-		
-		-- Calculate weighted moving average trend
-		local totalWeight = 0
-		local weightedSum = 0
-		local previousValue = deficitHistory[1].value
-		
-		for i = 1, #deficitHistory do
-			local weight = 1.5 ^ (i-1)  -- Exponential weighting (newer = more important)
-			weightedSum = weightedSum + (deficitHistory[i].value - previousValue) * weight
-			totalWeight = totalWeight + weight
-			previousValue = deficitHistory[i].value
-		end
-		
-		-- Normalize and check trend
-		local avgTrend = weightedSum / totalWeight
-		return avgTrend < -0.4  -- Worsening by 0.4% per second
-	end
-
 	function _A.manaengine_highprio()
-		local player = Object("player")
-		
-		-- Get metrics
-		local hpDelta = maxHPv2()
-		local hpdelta2 = averageHPv2()
+		local hpDelta = maxHPv2() 
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-		local deficit = hpDelta - manaBudget
-		local specialdeficit = hpdelta2 - manaBudget
-		
-		-- Battle-tested PvP thresholds
-		local emergencyFactors = {
-			immediateDeficit = deficit < -3.2,  -- 3.2% deficit
-			trendDanger = isDeficitWorsening(specialdeficit),  -- From previous tuned version
-		}
-		
-		-- Scoring system (either can trigger)
-		local emergencyScore = 0
-		emergencyScore = emergencyScore + (emergencyFactors.immediateDeficit and 2.5 or 0)
-		emergencyScore = emergencyScore + (emergencyFactors.trendDanger and 2.5 or 0)
-		
-		return emergencyScore >= 2.5
+		local deficit = manaBudget - hpDelta 
+		return deficit > 2.8
 	end
 	
 	function _A.enoughmana(id)
@@ -960,7 +906,7 @@ local exeOnLoad = function()
 	
 	_A.faceunit = function(unit)
 		if unit then
-			if not unit:InConeOf(player, 150) then
+			if not unit:InConeOf(player, 170) then
 				_A.FaceDirection(unit.guid, true)
 			end
 		end
@@ -1521,7 +1467,8 @@ local mw_rot = {
 					and obj:SpellRange("Paralysis") 
 					and not obj:iscasting("Frostbolt")
 					and (player:SpellCooldown("Spear Hand Strike")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Blackout Kick"))
-					and obj:InConeOf(player, 150)
+					and obj:InConeOf(player, 170)
+					and obj:infront()
 					and _A.notimmune(obj)
 					and (kickcheck_highprio(obj) or (_A.pull_location=="raid" or _A.pull_location=="party"))
 					and obj:los() then
@@ -1536,7 +1483,8 @@ local mw_rot = {
 			local obj = Object("target")
 			if obj and obj.isplayer 
 				and obj:SpellRange("Paralysis") 
-				and obj:InConeOf(player, 150)
+				and obj:InConeOf(player, 170)
+				and obj:infront()
 				and _A.notimmune(obj)
 				and obj:los() then
 				return obj:Cast("Paralysis")
@@ -1547,7 +1495,7 @@ local mw_rot = {
 	sapsnipe = function()
 		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:SpellRange("Paralysis")  and obj:infront() then
+				if obj.isplayer and obj:SpellRange("Paralysis") then
 					
 					if 
 						-- (healerspecid[obj:spec()] and _A.pull_location~="arena") or
@@ -1556,6 +1504,8 @@ local mw_rot = {
 						then
 						
 						if not obj:State("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")
+							and obj:InConeOf(player, 170)
+							and obj:infront()
 							and (obj:drState("Paralysis")==-1 or obj:drState("Paralysis")==1)
 							and _A.notimmune(obj)
 							and obj:los() then
@@ -1571,8 +1521,10 @@ local mw_rot = {
 		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 then
 			local check = UnitExists("focus")
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:SpellRange("Paralysis") and obj:infront()
+				if obj.isplayer and obj:SpellRange("Paralysis")
 					and (healerspecid[obj:spec()])
+					and obj:InConeOf(player, 170)
+					and obj:infront()
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")>0
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")<2.5
 					and _A.notimmune(obj)
@@ -1628,7 +1580,7 @@ local mw_rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj:isCastingAny()
 					and obj:SpellRange("Blackout Kick") 
-					and obj:InConeOf(player, 150)
+					and obj:InConeOf(player, 170)
 					and not obj:State("silence")
 					and not obj:iscasting("Frostbolt")
 					and obj:caninterrupt() 
@@ -1982,10 +1934,11 @@ local mw_rot = {
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox")
 							and fr:statepurgecheck("stun || sleep || charm || disorient || incapacitate || fear || silence || misc") or fr:statepurgecheck("root")
-							and (not fr:debuffany("Unstable Affliction") or _A.pull_location=="arena")
-							and _A.nothealimmune(fr)  
+							and (not fr:DebuffAny("Unstable Affliction") or _A.pull_location=="arena")
+							and _A.nothealimmune(fr) 
 							and fr:los()
 							then
+							print("UNCCING")
 							return fr:cast("Detox")
 						end
 					end
@@ -2003,6 +1956,7 @@ local mw_rot = {
 							and _A.nothealimmune(fr)
 							and (not fr:debuffany("Unstable Affliction") or _A.pull_location=="arena")
 							and fr:los() then
+							print("UNSLOWING")
 							return fr:cast("Detox")
 						end
 					end
@@ -2022,6 +1976,7 @@ local mw_rot = {
 							then
 							for _,v in ipairs(dangerousdebuffs) do
 								if fr:DebuffAny(v) and _A.nothealimmune(fr) and fr:los() then
+									print("REMOVING DANGEROUS")
 									return fr:cast("Detox")
 								end
 							end
@@ -2036,7 +1991,7 @@ local mw_rot = {
 		if player:SpellCooldown("Life Cocoon")<.3 and player:SpellUsable(116849)   then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
-				if lowest and lowest:SpellRange("Life Cocoon") then 			
+				if lowest and lowest:SpellRange("Life Cocoon") and lowest:combat() then 			
 					--]]
 					if 
 						-- (lowest:health()<40 or (pull_location()=="pvp" and lowest:health()<40))
@@ -2115,7 +2070,7 @@ local mw_rot = {
 		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere")  then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
-					if _A.manaengine()==true or _A.modifier_shift() then
+					if _A.manaengine()==true or _A.modifier_shift() or _A.manaengine_highprio() then
 						--- ORBS
 						local lowest = Object("lowestall")
 						if lowest then
@@ -2414,7 +2369,7 @@ local mw_rot = {
 	end,
 	
 	dpsstance_healstance_keybind = function()
-		if player:Stance() ~= 1 and _A.modifier_shift() then
+		if player:Stance() ~= 1 and (_A.modifier_shift() or _A.manaengine_highprio()) then
 			if	player:SpellCooldown("Stance of the Wise Serpent")<.3
 				then
 				return player:Cast("Stance of the Wise Serpent")
@@ -2467,9 +2422,10 @@ local inCombat = function()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	-- print(_Y.rushing_number())
-	-- print(_A.avgDeltaPercent, maxHPv2())
-	if _A.manaengine_highprio()==true then print(true) end
+	-- print(maxHPv2())
+	-- print(_A.manaengine_highprio()) 
 	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
+	if player:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")>.1 then return true end
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	if mw_rot.dpsstance_healstance_keybind() then return true end
@@ -2477,6 +2433,7 @@ local inCombat = function()
 	if mw_rot.healingsphere_keybind() then return true end
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
 	if _A.modifier_shift() or _A.manaengine_highprio() then
+		if _A.manaengine_highprio() then print("HIGH PRIo!!!") end
 		if mw_rot.healingsphere() then return true end
 		if not _A.manaengine_highprio() and mw_rot.uplift() then return true end
 	end
