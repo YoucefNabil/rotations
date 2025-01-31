@@ -2107,7 +2107,7 @@ local inCombat = function()
 	survival.rot.stampede()
 	survival.rot.kick()
 	_Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,8.5)
-	print(_Y.clumpnumber)
+	-- print(_Y.clumpnumber)
 	if AOEcheck() and survival.rot.barrage() then return true end -- make a complete aoe check function
 	if AOEcheck() and survival.rot.multishot() then return true end -- make a complete aoe check function
 	survival.rot.killshot()

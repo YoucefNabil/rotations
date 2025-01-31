@@ -529,8 +529,8 @@ affliction.rot = {
 	end,
 	
 	Darkregeneration = function()
-		if player:health() <= 55 then
-			if player:SpellCooldown("Dark Regeneration") == 0
+		if player:health() <= 55 and player:talent("Dark Regeneration") then
+			if player:SpellCooldown("Dark Regeneration") == 0 and not IsCurrentSpell(108359)
 				then
 				player:cast("Dark Regeneration")
 				player:useitem("Healthstone")
@@ -602,7 +602,7 @@ affliction.rot = {
 	end,
 	
 	hasteburst = function()
-		if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) then
+		if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
 			if player:buff("Call of Dominance") then
 				player:cast("Lifeblood")
 				player:cast("Dark Soul: Misery")
@@ -639,7 +639,7 @@ affliction.rot = {
 					if player:buff(74434) or ( not player:moving() ) then
 						return player:cast(112866)
 					end
-					if (not player:buff(74434) and player:combat() and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:combat() and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
 					end	
 				end
@@ -786,7 +786,7 @@ affliction.rot = {
 			if player:buff(74434) then
 				return _A.temptabletbl[1].obj:Cast(119678)
 			end
-			if  _A.shards>=1 and not player:buff(74434) and player:SpellCooldown(74434)==0 --or player:buff("Shadow Trance")
+			if  _A.shards>=1 and not player:buff(74434) and player:SpellCooldown(74434)==0  and not IsCurrentSpell(74434)--or player:buff("Shadow Trance")
 				then player:cast(74434) -- shadowburn
 			end
 		end -- improved soul swap (dots instead)
@@ -801,7 +801,7 @@ affliction.rot = {
 			end )
 		end
 		if _A.temptabletbl[1] and not player:buff(74434) and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
-			if not player:moving() and not player:Iscasting("Unstable Affliction") then
+			if not player:moving() and not player:Iscasting("Unstable Affliction") and _A.shards==0 then
 				return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
 			end
 		end
@@ -933,7 +933,7 @@ local inCombat = function()
 	if affliction.rot.corruptionsnap()  then return end
 	-- if affliction.rot.sneedofcorruption()  then return end
 	if affliction.rot.unstablesnapinstant()  then return end
-	if affliction.rot.unstablesnap()  then return end
+	-- if affliction.rot.unstablesnap()  then return end
 	-- SOUL SWAP
 	if affliction.rot.soulswapopti()  then return end
 	--buff
