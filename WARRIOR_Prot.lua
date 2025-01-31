@@ -497,6 +497,9 @@ local exeOnLoad = function()
 	end
 end
 local exeOnUnload = function()
+	Listener:Remove("warrior_stuff")
+	Listener:Remove("warArms_delaycasts")
+	Listener:Remove("warrior_stuff")
 end
 
 prot.rot = {

@@ -1,7 +1,13 @@
 local _,class = UnitClass("player")
 if class~="WARLOCK"  then return end
-local HarmonyMedia, _A, Harmony = ...
+local media, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
+local ui = function(key) return _A.DSL:Get("ui")(_, key) end
+local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
+local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
+local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
+local hooksecurefunc =_A.hooksecurefunc
+local Listener = _A.Listener
 -- top of the CR
 local player
 local CallWowApi = _A.CallWowApi
@@ -134,132 +140,6 @@ local ijustsoulswapped = false
 local ijustsoulswappedattime = 0
 local ijustexhaled = false
 local ijustexhaledattime = 0
---Cleaning
-_A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
-	-- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
-	if next(corruptiontbl)~=nil then
-		for k in pairs(corruptiontbl) do
-			corruptiontbl[k]=nil
-		end
-	end	
-	if next(agonytbl)~=nil then
-		for k in pairs(agonytbl) do
-			agonytbl[k]=nil
-		end
-	end	
-	if next(unstabletbl)~=nil then
-		for k in pairs(unstabletbl) do
-			unstabletbl[k]=nil
-		end
-	end
-	if next(seeds)~=nil then
-		for k in pairs(seeds) do
-			seeds[k]=nil
-		end
-	end
-	soulswaporigin = nil
-	ijustsoulswapped = false
-end)
--- dots
-_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
-	if guidsrc == UnitGUID("player") then -- only filter by me
-		if (idd==146739) or (idd==172) then -- Corruption
-			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				then
-				corruptiontbl[guiddest]=_A.myscore() 
-			end
-			if subevent=="SPELL_AURA_REMOVED" 
-				then
-				corruptiontbl[guiddest]=nil
-			end
-		end
-		if (idd==980) then -- AGONY
-			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				then
-				agonytbl[guiddest]=_A.myscore()
-			end
-			if subevent=="SPELL_AURA_REMOVED" 
-				then
-				agonytbl[guiddest]=nil
-			end
-		end
-		if (idd==30108) then -- Unstable Affli
-			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				then
-				unstabletbl[guiddest]=_A.myscore() 
-			end
-			if subevent=="SPELL_AURA_REMOVED" 
-				then
-				unstabletbl[guiddest]=nil
-			end
-		end
-		if (idd==27243) then -- seed of corruption
-			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				then
-				seeds[guiddest]=_A.myscore() 
-			end
-			if subevent=="SPELL_AURA_REMOVED" 
-				then
-				seeds[guiddest]=nil
-			end
-		end
-		if (idd==119678) then -- Soulburn soul swap (applies all three)
-			if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				then
-				corruptiontbl[guiddest]=_A.myscore() 
-				unstabletbl[guiddest]=_A.myscore() 
-				agonytbl[guiddest]=_A.myscore()
-				-- ONLY APPLIES THESE 3 (and nothing else)
-			end
-		end
-	end
-end
-)
-Harmony.exitedvehicleat = GetTime()
-_A.Listener:Add("EXITING_VEHICLE", "UNIT_EXITING_VEHICLE", function(event, arg1)
-	if arg1=="player" then
-		Harmony.exitedvehicleat = GetTime()
-		print(event, arg1)
-	end
-end)
--- Soul Swap
-_A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-	if guidsrc == UnitGUID("player") then -- only filter by me
-		if subevent =="SPELL_CAST_SUCCESS" then
-			if idd==86121 then -- Soul Swap 86213
-				soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
-				ijustsoulswapped = true
-				ijustsoulswappedattime = GetTime() -- time at which I used soulswap
-			end
-			if idd==86213 then -- exhale
-				unstabletbl[guiddest]=unstabletbl[soulswaporigin]
-				agonytbl[guiddest]=agonytbl[soulswaporigin]
-				corruptiontbl[guiddest]=corruptiontbl[soulswaporigin]
-				seeds[guiddest]=seeds[soulswaporigin]
-				ijustsoulswapped = false
-				ijustexhaled = true
-				ijustexhaledattime = _A.GetTime()
-				soulswaporigin = nil -- remove after 3 seconds or after exhaling
-			end
-		end
-	end
-end)
-local timerframe = CreateFrame("Frame")
-local timerframeinterval = 0.1 -- default
-timerframe.TimeSinceLastUpdate2 = 0
-timerframe:SetScript("OnUpdate", function(self,elapsed)
-	self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 + elapsed;
-	if self.TimeSinceLastUpdate2 >= timerframeinterval then
-		if ijustsoulswapped == true and GetTime()-ijustsoulswappedattime>=3 then
-			soulswaporigin = nil
-			ijustsoulswapped=false -- so I wouldn't overwrite stats wrongfully
-		end
-		if ijustexhaled == true and GetTime() - ijustexhaledattime >= .3 then
-			ijustexhaled = false
-		end
-		self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 - timerframeinterval
-	end
-end)
 --============================================
 --============================================
 --============================================
@@ -279,22 +159,291 @@ end)
 local GUI = {
 }
 local exeOnLoad = function()
+	--Cleaning
+	_A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
+		-- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
+		if next(corruptiontbl)~=nil then
+			for k in pairs(corruptiontbl) do
+				corruptiontbl[k]=nil
+			end
+		end	
+		if next(agonytbl)~=nil then
+			for k in pairs(agonytbl) do
+				agonytbl[k]=nil
+			end
+		end	
+		if next(unstabletbl)~=nil then
+			for k in pairs(unstabletbl) do
+				unstabletbl[k]=nil
+			end
+		end
+		if next(seeds)~=nil then
+			for k in pairs(seeds) do
+				seeds[k]=nil
+			end
+		end
+		soulswaporigin = nil
+		ijustsoulswapped = false
+	end)
+	-- dots
+	_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+		if guidsrc == UnitGUID("player") then -- only filter by me
+			if (idd==146739) or (idd==172) then -- Corruption
+				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+					then
+					corruptiontbl[guiddest]=_A.myscore() 
+				end
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					corruptiontbl[guiddest]=nil
+				end
+			end
+			if (idd==980) then -- AGONY
+				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+					then
+					agonytbl[guiddest]=_A.myscore()
+				end
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					agonytbl[guiddest]=nil
+				end
+			end
+			if (idd==30108) then -- Unstable Affli
+				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+					then
+					unstabletbl[guiddest]=_A.myscore() 
+				end
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					unstabletbl[guiddest]=nil
+				end
+			end
+			if (idd==27243) then -- seed of corruption
+				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+					then
+					seeds[guiddest]=_A.myscore() 
+				end
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					seeds[guiddest]=nil
+				end
+			end
+			if (idd==119678) then -- Soulburn soul swap (applies all three)
+				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+					then
+					corruptiontbl[guiddest]=_A.myscore() 
+					unstabletbl[guiddest]=_A.myscore() 
+					agonytbl[guiddest]=_A.myscore()
+					-- ONLY APPLIES THESE 3 (and nothing else)
+				end
+			end
+		end
+	end
+	)
+	_Y.exitedvehicleat = GetTime()
+	_A.Listener:Add("EXITING_VEHICLE", "UNIT_EXITING_VEHICLE", function(event, arg1)
+		if arg1=="player" then
+			_Y.exitedvehicleat = GetTime()
+			print(event, arg1)
+		end
+	end)
+	-- Soul Swap
+	_A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+		if guidsrc == UnitGUID("player") then -- only filter by me
+			if subevent =="SPELL_CAST_SUCCESS" then
+				if idd==86121 then -- Soul Swap 86213
+					soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
+					ijustsoulswapped = true
+					ijustsoulswappedattime = GetTime() -- time at which I used soulswap
+				end
+				if idd==86213 then -- exhale
+					unstabletbl[guiddest]=unstabletbl[soulswaporigin]
+					agonytbl[guiddest]=agonytbl[soulswaporigin]
+					corruptiontbl[guiddest]=corruptiontbl[soulswaporigin]
+					seeds[guiddest]=seeds[soulswaporigin]
+					ijustsoulswapped = false
+					ijustexhaled = true
+					ijustexhaledattime = _A.GetTime()
+					soulswaporigin = nil -- remove after 3 seconds or after exhaling
+				end
+			end
+		end
+	end)
 	_A.casttimers = {} -- doesnt work with channeled spells
 	_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if guidsrc == UnitGUID("player") then
 			-- print(subevent.." "..idd)
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-				_A.casttimers[idd] = _A.GetTime()
+				_A.casttimers[spell_name(idd)] = _A.GetTime()
 			end
 		end
 	end)
 	function _A.castdelay(idd, delay)
+		local ID = spell_name(idd)
 		if delay == nil then return true end
-		if _A.casttimers[idd]==nil then return true end
-		return (_A.GetTime() - _A.casttimers[idd])>=delay
+		if _A.casttimers[ID]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[ID])>=delay
+	end
+	-------------------------
+	-------------------------
+	-------------------------
+	-------------------------
+	local badtotems = {
+		"Mana Tide",
+		"Wild Mushroom",
+		"Mana Tide Totem",
+		"Healing Stream Totem",
+		"Healing Tide",
+		"Spirit Link Totem",
+		"Healing Tide Totem",
+		"Lightning Surge Totem",
+		"Earthgrab Totem",
+		"Earthbind Totem",
+		"Grounding Totem",
+		"Stormlash Totem",
+		"Psyfiend",
+		"Lightwell",
+		"Tremor Totem",
+	}
+	_A.FakeUnits:Add('HealingStreamTotem', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						range = Obj:range(),
+					}
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
+	_A.FakeUnits:Add('HealingStreamTotemNOLOS', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						range = Obj:range(),
+					}
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
+	_A.FakeUnits:Add('HealingStreamTotemPLAYER', function(num,spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems then
+					if 	Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and Obj:los() then
+						tempTable[#tempTable+1] = {
+							guid = Obj.guid,
+							range = Obj:range(),
+						}
+					end
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+		return nil
+	end)
+	_A.PetGUID  = nil
+	local function attacktotem()
+		local htotem = Object("HealingStreamTotemNOLOS")
+		if htotem and (_A.pull_location=="arena" or (toggle("pet_attacktotem") and htotem:range()<=60)) then
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
+				return _A.CallWowApi("PetAttack", htotem.guid), 1
+			end
+			return 1
+		end
+	end
+	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKCNOLOS', function(num)
+		local tempTable = {}
+		local target = Object("target")
+		local pet = Object("pet")
+		if not pet then return end
+		if pet and not pet:alive() then return end
+		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
+		--
+		local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+		if lowestmelee then
+			return lowestmelee.guid
+		end
+		return nil
+	end)
+	local function attacklowest()
+		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
+		if target then
+			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+					return _A.CallWowApi("PetAttack", target.guid), 3
+				end
+			end
+			return 3
+		end
+	end
+	local function petfollow() -- when pet target has a breakable cc
+		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
+			local target = Object(_A.UnitTarget(_A.PetGUID))
+			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
+				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+			end
+		end
+	end
+	function _Y.petengine_affli() -- REQUIRES RELOAD WHEN SWITCHING SPECS
+		if not _A.Cache.Utils.PlayerInGame then return end
+		if not player then return true end
+		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
+		-- if player:mounted() then return end
+		-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
+		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
+		if _A.PetGUID == nil then return end
+		-- Pet Rotation
+		if attacklowest() then return end
+		if petfollow() then return end
 	end
 end
+local timerframe = CreateFrame("Frame")
+local timerframeinterval = 0.1 -- default
+timerframe.TimeSinceLastUpdate2 = 0
+timerframe:SetScript("OnUpdate", function(self,elapsed)
+	self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 + elapsed;
+	if self.TimeSinceLastUpdate2 >= timerframeinterval then
+		if ijustsoulswapped == true and GetTime()-ijustsoulswappedattime>=3 then
+			soulswaporigin = nil
+			ijustsoulswapped=false -- so I wouldn't overwrite stats wrongfully
+		end
+		if ijustexhaled == true and GetTime() - ijustexhaledattime >= .3 then
+			ijustexhaled = false
+		end
+		self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 - timerframeinterval
+	end
+end)
 local exeOnUnload = function()
+	Listener:Remove("lock_cleantbls")
+	Listener:Remove("EXITING_VEHICLE")
+	Listener:Remove("soulswaprelated")
+	Listener:Remove("delaycasts")
+	Listener:Remove("dotstables")
 end
 local FLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true,}
 local usableitems= { -- item slots
@@ -480,7 +629,7 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy = function()
-		if Harmony.exitedvehicleat and GetTime()-Harmony.exitedvehicleat>= 2 then
+		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
 			if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112866)<.3 and _A.castdelay(112866, 1.5) and not player:iscasting(112866) and _A.enoughmana(112866)  then
 				if 
 					not _A.UnitExists("pet")
@@ -499,7 +648,7 @@ affliction.rot = {
 	end,
 	
 	healthfunnel = function()
-		if Harmony.exitedvehicleat and GetTime()-Harmony.exitedvehicleat>= 2 then
+		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
 			if player:talent("Grimoire of Supremacy") then
 				if 
 					_A.UnitExists("pet")
@@ -742,7 +891,14 @@ local inCombat = function()
 	player = player or Object("player")
 	if not player then return end
 	affliction.rot.caching()
+	_Y.petengine_affli()
 	if player:Mounted() then return end
+	--bursts
+	affliction.rot.activetrinket()
+	affliction.rot.hasteburst()
+	--HEALS
+	affliction.rot.Darkregeneration()
+	affliction.rot.items_healthstone()
 	if _A.buttondelayfunc()  then return end
 	-- if player:lostcontrol()  then return end 
 	--delayed lifetap
@@ -756,12 +912,6 @@ local inCombat = function()
 	if affliction.rot.petres()  then return end
 	if affliction.rot.petres_supremacy() then return end
 	if affliction.rot.summ_healthstone() then return end
-	--bursts
-	affliction.rot.activetrinket()
-	affliction.rot.hasteburst()
-	--HEALS
-	affliction.rot.Darkregeneration()
-	affliction.rot.items_healthstone()
 	if affliction.rot.CauterizeMaster()  then return end
 	if affliction.rot.MortalCoil()  then return end
 	if affliction.rot.twilightward()  then return end
@@ -816,4 +966,4 @@ _A.CR:Add(265, {
 	-- pooling = false,
 	load = exeOnLoad,
 	unload = exeOnUnload
-})		
+})							

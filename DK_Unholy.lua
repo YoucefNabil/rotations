@@ -971,7 +971,7 @@ local exeOnLoad = function()
 				return 3
 			end
 		end
-		local function petengine()
+		function _Y.petengine()
 			if not _A.Cache.Utils.PlayerInGame then return end
 			if not player then return true end
 			if player:spec()~=252 then return true end
@@ -989,10 +989,12 @@ local exeOnLoad = function()
 			if attacklowest() then return true end
 			-- if attacktarget() then return true end
 		end
-		C_Timer.NewTicker(.3, petengine, false, "petengineengine")
 	end)
 end
 local exeOnUnload = function()
+	Listener:Remove("Entering_timerPLZ")
+	Listener:Remove("delaycasts_DK")
+	Listener:Remove("DK_STUFF")
 end
 
 unholy.rot = {
@@ -1737,6 +1739,7 @@ local inCombat = function()
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return end
 	player = Object("player")
 	if not player then return end
+	_Y.petengine()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .2 + _A.latency
 	if not _A.latency and not _A.interrupttreshhold then return end

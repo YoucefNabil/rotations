@@ -1312,6 +1312,9 @@ local exeOnLoad = function()
 	-- C_Timer.NewTicker(.1, _Y.petengine_Surv, false, "petengineengineSurvival")
 end
 local exeOnUnload = function()
+	Listener:Remove("steadycasting")
+	Listener:Remove("delaycasts_HUNT_SURV")
+	Listener:Remove("warrior_stuff")
 end
 
 local dontdispell = {

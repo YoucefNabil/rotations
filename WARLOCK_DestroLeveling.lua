@@ -1,6 +1,6 @@
 local _,class = UnitClass("player")
 if class~="WARLOCK" then return end
-local HarmonyMedia, _A, Harmony = ...
+local HarmonyMedia, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
 -- top of the CR
@@ -136,72 +136,76 @@ end
 --============================================
 --============================================
 --============================================
-_A.casttimers = {} -- doesnt work with channeled spells
-local havoctable = {}
-Listener:Add("destro_cleaning", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
-	_A.pull_location = pull_location()
-	havoctable = {}
-	_A.casttimers = {}
-	-- print("location successfully set to ".._A.pull_location)
-end)
-Listener:Add("Destro_Havoc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
-	if guidsrc == UnitGUID("player") then -- only filter by me
-		-- print(subevent.." "..idd)
-		if (idd==80240) then
-			if subevent == "SPELL_CAST_SUCCESS" or subevent=="SPELL_AURA_APPLIED" then
-				-- print("havoc "..subevent)
-				havoctable[guiddest]=true
-			end
-			if subevent=="SPELL_AURA_REMOVED" 
-				then
-				havoctable[guiddest]=nil
-			end
-		end
-	end
-end)
-_A.casttbl = {}
-Listener:Add("iscasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
-	if guidsrc == UnitGUID("player") then -- only filter by me
-		if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED"   then
-			_A.casttbl[idd] = nil
-		end
-		if subevent == "SPELL_CAST_START" then
-			_A.casttbl[idd] = true
-		end
-	end
-end)
-function _A.overkillcheck(id)
-	if not id then return false end
-	if not player:Iscasting(id) and _A.casttbl[idd] == true then
-		_A.casttbl[idd] = nil return false
-	end
-	return _A.casttbl[idd] or false
-end
---============================================
---============================================
---============================================
-Listener:Add("destrodelaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-	if guidsrc == UnitGUID("player") then
-		-- print(subevent.." "..idd)
-		if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-			_A.casttimers[idd] = _A.GetTime()
-		end
-	end
-end)
-function _A.castdelay(idd, delay)
-	if delay == nil then return true end
-	if _A.casttimers[idd]==nil then return true end
-	return (_A.GetTime() - _A.casttimers[idd])>=delay
-end
 --============================================
 --============================================
 --============================================
 --============================================
 local GUI = {
 }
+local havoctable = {}
 local exeOnLoad = function()
+	_A.casttimers = {} -- doesnt work with channeled spells
+	Listener:Add("destro_cleaning", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
+		_A.pull_location = pull_location()
+		havoctable = {}
+		_A.casttimers = {}
+		-- print("location successfully set to ".._A.pull_location)
+	end)
+	Listener:Add("Destro_Havoc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+		if guidsrc == UnitGUID("player") then -- only filter by me
+			-- print(subevent.." "..idd)
+			if (idd==80240) then
+				if subevent == "SPELL_CAST_SUCCESS" or subevent=="SPELL_AURA_APPLIED" then
+					-- print("havoc "..subevent)
+					havoctable[guiddest]=true
+				end
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					havoctable[guiddest]=nil
+				end
+			end
+		end
+	end)
+	_A.casttbl = {}
+	Listener:Add("iscasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+		if guidsrc == UnitGUID("player") then -- only filter by me
+			if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED"   then
+				_A.casttbl[idd] = nil
+			end
+			if subevent == "SPELL_CAST_START" then
+				_A.casttbl[idd] = true
+			end
+		end
+	end)
+	function _A.overkillcheck(id)
+		if not id then return false end
+		if not player:Iscasting(id) and _A.casttbl[idd] == true then
+			_A.casttbl[idd] = nil return false
+		end
+		return _A.casttbl[idd] or false
+	end
+	--============================================
+	--============================================
+	--============================================
+	Listener:Add("destrodelaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+		if guidsrc == UnitGUID("player") then
+			-- print(subevent.." "..idd)
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[idd] = _A.GetTime()
+			end
+		end
+	end)
+	function _A.castdelay(idd, delay)
+		if delay == nil then return true end
+		if _A.casttimers[idd]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[idd])>=delay
+	end
 end
 local exeOnUnload = function()
+	Listener:Remove("destrodelaycasts")
+	Listener:Remove("iscasting")
+	Listener:Remove("Destro_Havoc")
+	Listener:Remove("destro_cleaning")
 end
 local usableitems= { -- item slots
 	13, --first trinket
@@ -441,10 +445,10 @@ destro.rot = {
 	end,
 	
 	facetarget = function()
-	local target = Object("target")
-	if target and target:enemy() and target:alive() and not target:infront() and target:range()<=40 then
-	_A.FaceDirection(target, true) 
-	end
+		local target = Object("target")
+		if target and target:enemy() and target:alive() and not target:infront() and target:range()<=40 then
+			_A.FaceDirection(target, true) 
+		end
 	end,
 }
 ---========================

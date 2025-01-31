@@ -369,6 +369,7 @@ local exeOnLoad = function()
 	end)
 end
 local exeOnUnload = function()
+	Listener:Remove("warrior_stuff")
 end
 
 arms.rot = {

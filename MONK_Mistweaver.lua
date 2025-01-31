@@ -228,15 +228,16 @@ local function kickcheck_highprio(unit)
 end
 local GUI = {
 }
-_A.Listener:Add("Entering_timerPLZ2", "PLAYER_ENTERING_WORLD", function(event)
-	enteredworldat = _A.GetTime()
-	local stuffsds = pull_location()
-	_A.pull_location = stuffsds
-end
-)
-_A.pull_location = _A.pull_location or pull_location()
-enteredworldat = enteredworldat or _A.GetTime()
+
 local exeOnLoad = function()
+	_A.Listener:Add("Entering_timerPLZ2", "PLAYER_ENTERING_WORLD", function(event)
+		enteredworldat = _A.GetTime()
+		local stuffsds = pull_location()
+		_A.pull_location = stuffsds
+	end
+	)
+	_A.pull_location = _A.pull_location or pull_location()
+	enteredworldat = enteredworldat or _A.GetTime()
 	_A.DSL:Register('healthmonk', function(unit)
 		return CalculateHP(unit)
 	end)
@@ -1214,6 +1215,12 @@ local exeOnLoad = function()
 	end
 end
 local exeOnUnload = function()
+	Listener:Remove("DeathCleaning")
+	Listener:Remove("Entering_timerPLZ2")
+	Listener:Remove("delaycasts_Monk_and_misc")
+	Listener:Remove("Health_change_track")
+	Listener:Remove("holy_mana")
+	Listener:Remove("DeathCleaning")
 end
 local usableitems= { -- item slots
 	13, --first trinket
@@ -1597,6 +1604,22 @@ local mw_rot = {
 					then
 					obj:Cast("Spear Hand Strike")
 				end
+			end
+		end
+	end,
+	
+	everyman = function()
+		if _A.pull_location~="arena" and not player:State("incapacitate || fear || disorient || charm || misc || sleep || stun") then
+			if player:SpellCooldown("Every Man for Himself")==0 and not IsCurrentSpell(59752) and player:Stateduration("silence")>=4  then
+				return player:cast("Every Man for Himself")
+			end
+		end
+	end,
+	
+	nimble = function()
+		if _A.pull_location~="arena" and not player:State("incapacitate || fear || disorient || charm || misc || sleep") then
+			if player:SpellCooldown("Nimble Brew")==0 and not IsCurrentSpell(137562) and player:health()<=70 and not player:buff("Dematerialize") and player:Stateduration("stun")>=3.5  then
+				return player:cast("Nimble Brew")
 			end
 		end
 	end,
@@ -2423,6 +2446,8 @@ local inCombat = function()
 	mw_rot.kick_spear()
 	mw_rot.activetrinket()
 	mw_rot.diffusemagic()
+	mw_rot.everyman()
+	mw_rot.nimble()
 	mw_rot.chibrew()
 	mw_rot.items_healthstone()
 	mw_rot.fortifyingbrew()

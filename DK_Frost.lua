@@ -744,6 +744,8 @@ local exeOnLoad = function()
 	C_Timer.NewTicker(.1, MyTickerCallback, false, "dkstuff")
 end
 local exeOnUnload = function()
+	Listener:Remove("delaycasts")
+	Listener:Remove("DK_STUFF")
 end
 
 frost.rot = {
