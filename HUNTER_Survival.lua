@@ -1363,6 +1363,7 @@ survival.rot = {
 		if player:ItemCooldown(76084) == 0  
 			and player:ItemCount(76084) > 0
 			and player:ItemUsable(76084)
+			and not IsCurrentItem(76084)
 			and not player:Buff(105689)
 			then
 			if pull_location()=="pvp" and player:combat() then
@@ -1375,6 +1376,7 @@ survival.rot = {
 		if player:health() <= 35    then
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
+				and not IsCurrentItem(5512)
 				and player:ItemUsable(5512) then
 				return player:useitem("Healthstone")
 			end
@@ -1385,6 +1387,7 @@ survival.rot = {
 		if player:ItemCooldown(8529) == 0  
 			and player:ItemCount(8529) > 0
 			and player:ItemUsable(8529)
+			and not IsCurrentItem(8529)
 			and (not player:BuffAny(16591) or not player:BuffAny(16595))
 			then
 			if pull_location()=="pvp" then
