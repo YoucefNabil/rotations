@@ -1,6 +1,6 @@
 local _,class = UnitClass("player")
 if class~="WARRIOR" then return end
-local HarmonyMedia, _A, Harmony = ...
+local media, _A, _Y = ...
 -- local _, class = UnitClass("player");
 -- if class ~= "WARRIOR" then return end;
 local DSL = function(api) return _A.DSL:Get(api) end
@@ -352,6 +352,25 @@ local exeOnLoad = function()
 		end
 	end)
 	
+	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTARNOFACE', function(num, spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and _A.notimmune(Obj)  and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		if #tempTable>=1 then
+		return tempTable[num] and tempTable[num].guid
+		end
+	end)
+	
 	_A.DSL:Register('caninterrupt', function(unit)
 		return interruptable(unit)
 	end)
@@ -367,6 +386,43 @@ local exeOnLoad = function()
 	_A.DSL:Register('channame', function(unit)
 		return channelinfo(unit)
 	end)
+	function _Y.bestfacing(coneDegrees, Range, stepRadians)
+		local coneRadians = math.rad(coneDegrees)
+		local halfCone = coneRadians / 2
+		local playerFacing = _A.ObjectFacing("player")
+		local maxEnemies = 0
+		local range = Range or 40
+		local optimalFacing = playerFacing
+		for facing = 0, 2 * math.pi, stepRadians do
+			local count = 0
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				local yaw, _ = _A.GetAnglesBetweenObjects("player", Obj.guid)
+				local relativeYaw = (yaw - facing + math.pi) % (2 * math.pi) - math.pi
+				if math.abs(relativeYaw) <= halfCone then
+					if Obj:range()<range and _A.notimmune(Obj) and Obj:los() then
+						count = count + 1
+					end
+				end
+			end
+			if count > maxEnemies then
+				maxEnemies = count
+				optimalFacing = facing
+			end
+		end
+		return optimalFacing, maxEnemies
+	end
+	function _Y.IsFacingEqual(CurrentFacing, TargetFacing, Tolerance)
+		local tolerance = Tolerance or 0.1
+		local currentFacing = CurrentFacing % (2 * math.pi)
+		local targetFacing = TargetFacing % (2 * math.pi)
+		local difference = math.abs(currentFacing - targetFacing)
+		-- Handle wrapping around the circle
+		if difference > math.pi then
+			difference = (2 * math.pi) - difference
+		end
+		-- Check if the difference is within the tolerance
+		return difference <= tolerance
+	end
 end
 local exeOnUnload = function()
 	Listener:Remove("warrior_stuff")
@@ -374,11 +430,11 @@ end
 
 arms.rot = {
 	stance_dance = function()
-		local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-		if player:SpellCooldown("Battle Stance")<.3 then
-			if player:stance()~=2 and player:health()<35 then player:cast("Defensive Stance")
-				elseif player:stance()~=2 and not lowestmelee then player:cast("Defensive Stance")
-				elseif player:stance()~=1 and lowestmelee and player:health()>40 then player:cast("Battle Stance")
+		local lowestmelee = Object("lowestEnemyInSpellRangeNOTARNOFACE(Mortal Strike)")
+		if player:SpellCooldown("Battle Stance")==0 then
+			if player:stance()~=2 and player:health()<35 then return not IsCurrentSpell(71) and player:cast("Defensive Stance")
+				elseif player:stance()~=2 and not lowestmelee then return not IsCurrentSpell(71) and  player:cast("Defensive Stance")
+				elseif player:stance()~=1 and lowestmelee and player:health()>40 then return not IsCurrentSpell(2457) and player:cast("Battle Stance")
 			end
 		end
 	end,
@@ -391,7 +447,6 @@ arms.rot = {
 			end
 		end
 	end,
-	
 	items_noggenfogger = function()
 		if player:ItemCooldown(8529) == 0
 			and player:ItemCount(8529) > 0
@@ -724,8 +779,21 @@ arms.rot = {
 		end
 	end,
 	
+	shockwave = function()
+		if player:Talent("Shockwave") and player:SpellCooldown("Shockwave")<player:gcd() then
+			local bestfacing, bestfacing_number = _Y.bestfacing(90, 10, 0.1)
+			local playerfacing = _A.ObjectFacing("player")
+			if bestfacing_number>=3 then
+				if not _Y.IsFacingEqual(bestfacing, playerfacing, 0.05) then _A.FaceDirection(bestfacing, true)
+					else
+					return player:Cast("Shockwave")
+				end
+			end
+		end
+	end,
+	
 	bladestorm = function()
-		if player:combat() and player:buffany("Bloodbath") and player:SpellCooldown("bladestorm")<.3 then
+		if player:combat() and player:buff("Call of Victory") and player:SpellCooldown("bladestorm")<.3 then
 			return player:cast("Bladestorm")
 		end
 	end,
@@ -772,29 +840,30 @@ local inCombat = function()
 	arms.rot.stance_dance()
 	arms.rot.bloodbath()
 	arms.rot.reckbanner()
-	arms.rot.bladestorm()
-	-- arms.rot.Charge()
 	arms.rot.antifear()
-	arms.rot.diebythesword()
 	arms.rot.shieldwall()
 	arms.rot.safeguard_unroot()
 	arms.rot.reflectspell()
-	arms.rot.sweeping_strikes()
-	arms.rot.chargegapclose()
-	arms.rot.heroicleap()
-	arms.rot.colossussmash()
-	arms.rot.Execute()
 	arms.rot.Pummel()
-	arms.rot.thunderclap()
-	arms.rot.burstdisarm()
-	arms.rot.battleshout()
-	arms.rot.Disruptingshout()
-	arms.rot.hamstringpvp()
-	arms.rot.victoryrush()
-	arms.rot.Mortalstrike()
-	arms.rot.thunderclapPVE()
-	arms.rot.slam()
-	arms.rot.overpower()
+	--
+	if arms.rot.bladestorm() then return end
+	if arms.rot.shockwave() then return end
+	if arms.rot.diebythesword() then return end
+	if arms.rot.sweeping_strikes() then return end
+	if arms.rot.chargegapclose() then return end
+	if arms.rot.heroicleap() then return end
+	if arms.rot.colossussmash() then return end
+	if arms.rot.Execute() then return end
+	if arms.rot.thunderclap() then return end
+	if arms.rot.burstdisarm() then return end
+	if arms.rot.battleshout() then return end
+	if arms.rot.Disruptingshout() then return end
+	if arms.rot.hamstringpvp() then return end
+	if arms.rot.victoryrush() then return end
+	if arms.rot.Mortalstrike() then return end
+	if arms.rot.thunderclapPVE() then return end
+	if arms.rot.slam() then return end
+	if arms.rot.overpower() then return end
 end
 local spellIds_Loc = function()
 end

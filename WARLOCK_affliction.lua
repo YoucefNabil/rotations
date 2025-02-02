@@ -933,7 +933,7 @@ local inCombat = function()
 	if affliction.rot.corruptionsnap()  then return end
 	-- if affliction.rot.sneedofcorruption()  then return end
 	if affliction.rot.unstablesnapinstant()  then return end
-	-- if affliction.rot.unstablesnap()  then return end
+	if affliction.rot.unstablesnap()  then return end
 	-- SOUL SWAP
 	if affliction.rot.soulswapopti()  then return end
 	--buff

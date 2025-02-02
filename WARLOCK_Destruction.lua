@@ -1,6 +1,6 @@
 local _,class = UnitClass("player")
 if class~="WARLOCK" then return end
-local HarmonyMedia, _A, Harmony = ...
+local media, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
 -- top of the CR
@@ -136,122 +136,277 @@ end
 --============================================
 --============================================
 --============================================
-_A.casttimers = {} -- doesnt work with channeled spells
-local havoctable = {}
-Listener:Add("destro_cleaning", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
-	_A.pull_location = pull_location()
-	havoctable = {}
-	_A.casttimers = {}
-	-- print("location successfully set to ".._A.pull_location)
-end)
-Listener:Add("Destro_Havoc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
-	if guidsrc == UnitGUID("player") then -- only filter by me
-		-- print(subevent.." "..idd)
-		if (idd==80240) then
-			if subevent == "SPELL_CAST_SUCCESS" or subevent=="SPELL_AURA_APPLIED" then
-				-- print("havoc "..subevent)
-				havoctable[guiddest]=true
-			end
-			if subevent=="SPELL_AURA_REMOVED" 
-				then
-				havoctable[guiddest]=nil
-			end
-		end
-	end
-end)
-_A.casttbl = {}
-Listener:Add("iscasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
-	if guidsrc == UnitGUID("player") then -- only filter by me
-		if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED"   then
-			_A.casttbl[idd] = nil
-		end
-		if subevent == "SPELL_CAST_START" then
-			_A.casttbl[idd] = true
-		end
-	end
-end)
-function _A.overkillcheck(id)
-	if not id then return false end
-	if not player:Iscasting(id) and _A.casttbl[idd] == true then
-		_A.casttbl[idd] = nil return false
-	end
-	return _A.casttbl[idd] or false
-end
---============================================
---============================================
---============================================
 
-Listener:Add("destrodelaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-	if guidsrc == UnitGUID("player") then
-		-- print(subevent.." "..idd)
-		if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-			_A.casttimers[idd] = _A.GetTime()
-		end
-	end
-end)
-function _A.castdelay(idd, delay)
-	if delay == nil then return true end
-	if _A.casttimers[idd]==nil then return true end
-	return (_A.GetTime() - _A.casttimers[idd])>=delay
-end
---============================================
---============================================
---============================================
+local havoctable = {}
 --============================================
 local GUI = {
 }
 local exeOnLoad = function()
-	_A.FakeUnits:Add('mostgroupedenemyDESTRO', function(num, area_min)
-		local area, min = _A.StrExplode(area_min)
-		area = tonumber(area) or 8
+	_A.casttimers = {} -- doesnt work with channeled spells
+	Listener:Add("destro_cleaning", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
+		_A.pull_location = pull_location()
+		havoctable = {}
+		_A.casttimers = {}
+		-- print("location successfully set to ".._A.pull_location)
+	end)
+	Listener:Add("Destro_Havoc", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+		if guidsrc == UnitGUID("player") then -- only filter by me
+			-- print(subevent.." "..idd)
+			if (idd==80240) then
+				if subevent == "SPELL_CAST_SUCCESS" or subevent=="SPELL_AURA_APPLIED" then
+					-- print("havoc "..subevent)
+					havoctable[guiddest]=true
+				end
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					havoctable[guiddest]=nil
+				end
+			end
+		end
+	end)
+	_A.casttbl = {}
+	Listener:Add("iscasting", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+		if guidsrc == UnitGUID("player") then -- only filter by me
+			if subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_FAILED"   then
+				_A.casttbl[idd] = nil
+			end
+			if subevent == "SPELL_CAST_START" then
+				_A.casttbl[idd] = true
+			end
+		end
+	end)
+	function _A.overkillcheck(id)
+		if not id then return false end
+		if not player:Iscasting(id) and _A.casttbl[idd] == true then
+			_A.casttbl[idd] = nil return false
+		end
+		return _A.casttbl[idd] or false
+	end
+	--============================================
+	--============================================
+	--============================================
+	
+	Listener:Add("destrodelaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+		if guidsrc == UnitGUID("player") then
+			-- print(subevent.." "..idd)
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[idd] = _A.GetTime()
+			end
+		end
+	end)
+	function _A.castdelay(idd, delay)
+		if delay == nil then return true end
+		if _A.casttimers[idd]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[idd])>=delay
+	end
+	--============================================
+	--============================================
+	--============================================
+	_A.FakeUnits:Add('mostgroupedenemyDESTRO', function(num, radius_min)
+		local radius, min = _A.StrExplode(radius_min)
 		min = tonumber(min) or 3
-		local tempTable, count, enemiesCombat = {}, {}, _A.OM:Get('EnemyCombat')
-		for _, obj in pairs(enemiesCombat) do
-			if obj:infront() and not obj:Debuff(80240) and _A.attackable(obj) and _A.notimmune(obj)  and obj:los() then -- 80240 = HAVOC
-				count[obj.guid] = 1
-				for _, obj2 in pairs(enemiesCombat) do
-					if obj2.guid~=obj.guid and  _A.attackable(obj) and obj:rangeFrom(obj2)<=area then
-						count[obj.guid] = count[obj.guid] and count[obj.guid] + 1 or 0
+		local radius = Radius and (tonumber(Radius) + 1.5) or 10
+		local range = Range or 40
+		local most, mostGuid = 0, nil
+		local radiusSq = radius * radius
+		-- Phase 1: Directly collect into arrays (no temp table)
+		local guids, x, y = {}, {}, {}
+		local count = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:range() < range
+				and Obj:InConeOf(player, 170) and _A.notimmune(Obj) and Obj:los() then
+				local X, Y = _A.ObjectPosition(Obj.guid)
+				guids[#guids + 1] = Obj.guid
+				x[#x + 1] = X
+				y[#y + 1] = Y
+				count[Obj.guid] = 1
+			end
+		end
+		local numEntries = #guids
+		-- Phase 2: Spatial grid with cell size = radius
+		local grid = {}
+		for i = 1, numEntries do
+			local cx = math.floor(x[i] / radius)
+			local cy = math.floor(y[i] / radius)
+			grid[cx] = grid[cx] or {}
+			grid[cx][cy] = grid[cx][cy] or {}
+			table.insert(grid[cx][cy], i)
+		end
+		-- Phase 3: Optimized neighbor checking with early exits
+		for i = 1, numEntries do
+			local xi, yi = x[i], y[i]
+			local cx, cy = math.floor(xi / radius), math.floor(yi / radius)
+			local guid_i = guids[i]
+			
+			-- Check 3x3 grid cells around current position
+			for dx = -1, 1 do
+				local cell_x = grid[cx + dx]
+				if cell_x then
+					for dy = -1, 1 do
+						local cell = cell_x[cy + dy]
+						if cell then
+							for _, j in ipairs(cell) do
+								-- Ensure j > i to avoid duplicate checks
+								if j > i then
+									local dx_val = x[j] - xi
+									if abs(dx_val) <= radius then
+										local dy_val = y[j] - yi
+										if abs(dy_val) <= radius then
+											if (dx_val*dx_val + dy_val*dy_val) <= radiusSq then
+												count[guid_i] = count[guid_i] + 1
+												count[guids[j]] = count[guids[j]] + 1
+											end
+										end
+									end
+								end
+							end
+						end
 					end
 				end
-				tempTable[#tempTable+1] = { guid = obj.guid, mobsNear = count[obj.guid] }
+			end
+		end
+		-- Phase 4: Find maximum cluster
+		for guid, num in pairs(count) do
+			if num > most then
+				most, mostGuid = num, guid
+			end
+		end
+		return most and most>=min and mostGuid
+	end)
+	local badtotems = {
+		"Mana Tide",
+		"Wild Mushroom",
+		"Mana Tide Totem",
+		"Healing Stream Totem",
+		"Healing Tide",
+		"Spirit Link Totem",
+		"Healing Tide Totem",
+		"Lightning Surge Totem",
+		"Earthgrab Totem",
+		"Earthbind Totem",
+		"Grounding Totem",
+		"Stormlash Totem",
+		"Psyfiend",
+		"Lightwell",
+		"Tremor Totem",
+	}
+	_A.FakeUnits:Add('HealingStreamTotem', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						range = Obj:range(),
+					}
+				end
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.mobsNear and b.mobsNear and a.mobsNear > b.mobsNear end )
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
 		end
-		return tempTable[num] and tempTable[num].mobsNear and tempTable[num].mobsNear>=min and tempTable[num].guid  
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
+	_A.FakeUnits:Add('HealingStreamTotemNOLOS', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						range = Obj:range(),
+					}
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
+	_A.FakeUnits:Add('HealingStreamTotemPLAYER', function(num,spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems then
+					if 	Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and Obj:los() then
+						tempTable[#tempTable+1] = {
+							guid = Obj.guid,
+							range = Obj:range(),
+						}
+					end
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+		return nil
+	end)
+	_A.PetGUID  = nil
+	local function attacktotem()
+		local htotem = Object("HealingStreamTotemNOLOS")
+		if htotem and (_A.pull_location=="arena" or (toggle("pet_attacktotem") and htotem:range()<=60)) then
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
+				return _A.CallWowApi("PetAttack", htotem.guid), 1
+			end
+			return 1
+		end
 	end
-	)
+	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKCNOLOS', function(num)
+		local tempTable = {}
+		local target = Object("target")
+		local pet = Object("pet")
+		if not pet then return end
+		if pet and not pet:alive() then return end
+		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
+		--
+		local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Conflagrate)")
+		if lowestmelee then
+			return lowestmelee.guid
+		end
+		return nil
+	end)
+	local function attacklowest()
+		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
+		if target then
+			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+					return _A.CallWowApi("PetAttack", target.guid), 3
+				end
+			end
+			return 3
+		end
+	end
+	local function petfollow() -- when pet target has a breakable cc
+		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
+			local target = Object(_A.UnitTarget(_A.PetGUID))
+			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
+				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+			end
+		end
+	end
+	function _Y.petengine() -- REQUIRES RELOAD WHEN SWITCHING SPECS
+		if not _A.Cache.Utils.PlayerInGame then return end
+		if not player then return true end
+		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
+		-- if player:mounted() then return end
+		-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
+		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
+		if _A.PetGUID == nil then return end
+		-- Pet Rotation
+		if attacklowest() then return end
+		if petfollow() then return end
+	end
 end
-_A.FakeUnits:Add('mostCbEnemies', function(num, area_distance_min)
-    local count, tempTable = {}, {}
-    local area, distance, min = _A.StrExplode(area_distance_min)
-    area = tonumber(area) or 8
-    distance = tonumber(distance) or 40
-    min = tonumber(min) or 1
-    local enemiesCombat = _A.OM:Get('EnemyCombat')
-    for _, o in pairs(enemiesCombat) do
-        if o:distance() <= distance
-           and o:los() then
-            count = 0
-            for _, o2 in pairs(enemiesCombat) do
-                if o.guid~=o2.guid
-                  and o:distancefrom(o2) <= area then
-                    count = count + 1
-                end
-            end
-            tempTable[#tempTable+1] = {
-                guid = o.key,
-                mobsNear = count
-            }
-        end     
-    end
-    if #tempTable>1 then
-        table.sort( tempTable, function(a,b) return a.mobsNear > b.mobsNear end )
-    end
-    return tempTable[num] and tempTable[num].mobsNear>=min and tempTable[num].guid
-end)
 local exeOnUnload = function()
 end
 local usableitems= { -- item slots
@@ -314,7 +469,7 @@ destro.rot = {
 	
 	Darkregeneration = function()
 		if player:health() <= 55 then
-			if player:SpellCooldown("Dark Regeneration") == 0
+			if player:SpellCooldown("Dark Regeneration") == 0 and not IsCurrentSpell(108359)
 				then
 				player:cast("Dark Regeneration")
 				player:useitem("Healthstone")
@@ -404,7 +559,7 @@ destro.rot = {
 	end,
 	
 	critburst = function()
-		if player:combat() and player:SpellCooldown("Dark Soul: Instability")==0 and not player:buff("Dark Soul: Instability") then
+		if player:combat() and player:SpellCooldown("Dark Soul: Instability")==0 and not player:buff("Dark Soul: Instability") and not IsCurrentSpell(113858) then
 			if player:buff("Call of Dominance") then
 				player:cast("Lifeblood")
 				player:cast("Dark Soul: Instability")
@@ -473,11 +628,10 @@ destro.rot = {
 	--======================================
 	--AOE REWORK
 	brimstone = function()
-		local lowestaoe = Object("mostgroupedenemyDESTRO(10, 3)")
-		if _A.BurningEmbers>=2 and lowestaoe and lowestaoe:exists() then
-			if not player:buff("Fire and Brimstone") then
-					return player:cast("Fire and Brimstone")
-				end
+		if _A.BurningEmbers>=2 and lowestaoe  then
+			if not player:buff("Fire and Brimstone") and not IsCurrentSpell(108683) then
+				return player:cast("Fire and Brimstone")
+			end
 			else
 			if player:buff("Fire and Brimstone") then
 				return _A.RunMacroText("/cancelaura Fire and Brimstone")
@@ -506,7 +660,7 @@ destro.rot = {
 	bloodhorrorremoval = function() -- rework this
 		reflectcheck = false
 		if player:buff("Blood Horror") then
-	 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and warriorspecs[_A.UnitSpec(Obj.guid)] and (UnitTarget(Obj.guid)==player.guid) and (Obj:range(1)<16) and Obj:BuffAny("Spell Reflection") and Obj:los() then
 					reflectcheck = true
 				end
@@ -520,9 +674,8 @@ destro.rot = {
 	
 	incinerateaoe = function()
 		if player:buff("Fire and Brimstone") then
-			local lowestaoe = Object("mostgroupedenemyDESTRO(10, 3)")
 			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
-				if lowestaoe and lowestaoe:exists() then
+				if lowestaoe then
 					return lowestaoe:cast("Incinerate")
 				end
 			end
@@ -532,7 +685,7 @@ destro.rot = {
 	conflagrateaoe = function()
 		if player:buff("Fire and Brimstone") then
 			if player:SpellCharges("Conflagrate") >= 1 then
-				if lowestaoe and lowestaoe:exists() then
+				if lowestaoe then
 					return lowestaoe:cast("Conflagrate")
 				end
 			end
@@ -576,7 +729,7 @@ destro.rot = {
 				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
 			end )
 		end
-		if _A.targetless[1] and not player:isCastingAny() then
+		if _A.targetless[1] and not player:isCastingAny() and not IsCurrentSpell(17962) then
 			if player:SpellCooldown("Conflagrate") == 0 or player:spellcount("Conflagrate")>=1 then
 				return _A.targetless[1].obj:cast("Conflagrate")
 			end
@@ -594,23 +747,21 @@ destro.rot = {
 				end )
 			end
 			if _A.targetless[1] and _A.targetless[1].health<=20 then
+				if not player:isCastingAny() then
+					-- player:cast("Dark Soul: Instability")
+					return _A.targetless[1].obj:cast("Shadowburn", true)
+				end
 				if player:isCastingAny() then
 					print("stop casting")	
-					-- _A.SpellStopCasting()
-					-- _A.RunMacroText("/stopcasting")
 					_A.CallWowApi("SpellStopCasting")
-					-- _A.CallWowApi("RunMacroText", "/stopcasting")
 				end
-				-- player:cast("Dark Soul: Instability")
-				_A.targetless[1].obj:cast("Shadowburn", true)
-				return true
 			end
 		end
 	end,
 	
 	chaosbolt = function()
 		if 
-		-- _A.BurningEmbers >= 3 or 
+			-- _A.BurningEmbers >= 3 or 
 			-- (_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability")) or
 			(_A.BurningEmbers >= 1 and modifier_ctrl())
 			then
@@ -635,7 +786,7 @@ destro.rot = {
 				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
 			end )
 		end
-		if _A.targetless[1] and (_A.targetless[1].health>20 or  _A.BurningEmbers<1) and not player:isCastingAny()  then
+		if _A.targetless[1] and (_A.targetless[1].health>20 or _A.BurningEmbers<1) and not player:isCastingAny()  then
 			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
 				return _A.targetless[1].obj:cast("Incinerate")
 			end
@@ -664,14 +815,14 @@ destro.rot = {
 	--==================================================================================
 	incinerate_tar = function()
 		if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
-			if _A.target and (_A.target:health()>20 or  _A.BurningEmbers<1)  then
+			if _A.target and (_A.target:health()>20 or _A.BurningEmbers<1)  then
 				return _A.target:cast("Incinerate")
 			end
 		end
 	end,
 	
 	conflagrate_tar = function()
-		if _A.target and (_A.target:health()>20 or  _A.BurningEmbers<1)  then
+		if _A.target and (_A.target:health()>20 or  _A.BurningEmbers<1) and not IsCurrentSpell(17962)  then
 			if player:SpellCooldown("Conflagrate") == 0 then
 				return _A.target:cast("Conflagrate")
 			end
@@ -684,7 +835,6 @@ destro.rot = {
 ---========================
 ---========================
 local inCombat = function()	
-	lowestaoe = nil
 	player = player or Object("player")
 	if not player then return end
 	destro.rot.caching()
@@ -712,6 +862,7 @@ local inCombat = function()
 	destro.rot.bloodhorror()
 	--rotation
 	--AOE
+	lowestaoe = Object("mostgroupedenemyDESTRO(10, 3)")
 	destro.rot.brimstone()
 	destro.rot.incinerateaoe()
 	

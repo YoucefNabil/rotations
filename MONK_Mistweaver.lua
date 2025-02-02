@@ -833,11 +833,60 @@ local exeOnLoad = function()
 		return manaBudget>=hpDelta
 	end
 	--------------------------------------------------------
+	local deficitHistory = {}
+	local CHANGE_THRESHOLD = 0.03  -- Minimum % change to record (0.05% for PvP precision)
+	
+	local function isDeficitWorsening()
+		-- Only store value if it's meaningfully different from last entry
+		local hpDelta = averageHPv2() 
+		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
+		local currentDeficit = manaBudget - hpDelta 
+		if #deficitHistory > 0 then
+			local lastValue = deficitHistory[#deficitHistory].value
+			if math.abs(currentDeficit - lastValue) < CHANGE_THRESHOLD then
+				return false  -- No significant change, abort early
+			end
+		end
+		-- Add new entry with timestamp
+		table.insert(deficitHistory, {
+			time = GetTime(),
+			value = currentDeficit
+		})
+		-- Maintain 5-second window for PvP burst tracking
+		local timetocount = MW_HealthAnalyzedTimespan * .5
+		local cutoff = GetTime() - timetocount
+		for i = #deficitHistory, 1, -1 do
+			if deficitHistory[i].time < cutoff then
+				table.remove(deficitHistory, i)
+			end
+		end
+		-- Require minimum 3 meaningful points for trend analysis
+		if #deficitHistory < 3 then return false end
+		-- Calculate momentum-based trend with time weighting
+		local totalWeight = 0
+		local weightedTrend = 0
+		local previousTime, previousValue = deficitHistory[1].time, deficitHistory[1].value
+		for i = 2, #deficitHistory do
+			local timeDiff = deficitHistory[i].time - previousTime
+			local valueDiff = deficitHistory[i].value - previousValue
+			local timeWeight = 1 / (1 + timeDiff)  -- Penalize long gaps
+			local trend = valueDiff / timeDiff
+			weightedTrend = weightedTrend + trend * timeWeight
+			totalWeight = totalWeight + timeWeight
+			previousTime = deficitHistory[i].time
+			previousValue = deficitHistory[i].value
+		end
+		if (weightedTrend / totalWeight > 0.3) then print(weightedTrend / totalWeight, " ", "HIGH PRIO DEFICIT") end
+		return (weightedTrend / totalWeight) > 0.3 -- Worsening trend threshold
+	end
 	function _A.manaengine_highprio()
 		local hpDelta = maxHPv2() 
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 		local deficit = manaBudget - hpDelta 
-		return deficit > 2.8
+		-- return isDeficitWorsening() or (deficit > 2.8)
+		return (deficit > 1.5)
+		-- print(deficit)
+		-- return (deficit > 2.8)
 	end
 	
 	function _A.enoughmana(id)
@@ -1220,7 +1269,6 @@ local exeOnUnload = function()
 	Listener:Remove("delaycasts_Monk_and_misc")
 	Listener:Remove("Health_change_track")
 	Listener:Remove("holy_mana")
-	Listener:Remove("DeathCleaning")
 end
 local usableitems= { -- item slots
 	13, --first trinket
@@ -1610,7 +1658,7 @@ local mw_rot = {
 	
 	everyman = function()
 		if _A.pull_location~="arena" and not player:State("incapacitate || fear || disorient || charm || misc || sleep || stun") then
-			if player:SpellCooldown("Every Man for Himself")==0 and not IsCurrentSpell(59752) and player:Stateduration("silence")>=4  then
+			if player:SpellCooldown("Every Man for Himself")==0 and not IsCurrentSpell(59752) and player:Stateduration("silence")>=3  then
 				return player:cast("Every Man for Himself")
 			end
 		end
@@ -1962,8 +2010,9 @@ local mw_rot = {
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox")
-							and fr:statepurgecheck("stun || sleep || charm || disorient || incapacitate || fear || silence || misc") or fr:statepurgecheck("root")
-							and (not fr:DebuffAny("Unstable Affliction") or _A.pull_location=="arena")
+							and fr:statepurgecheck("stun || sleep || charm || disorient || incapacitate || fear || silence || misc || root")
+							-- and (not fr:DebuffAny("Unstable Affliction") or _A.pull_location=="arena")
+							and not fr:DebuffAny("Unstable Affliction")
 							and _A.nothealimmune(fr) 
 							and fr:los()
 							then
@@ -1983,7 +2032,8 @@ local mw_rot = {
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurgecheck("snare")
 							and _A.nothealimmune(fr)
-							and (not fr:debuffany("Unstable Affliction") or _A.pull_location=="arena")
+							and not fr:DebuffAny("Unstable Affliction")
+							-- and (not fr:debuffany("Unstable Affliction") or _A.pull_location=="arena")
 							and fr:los() then
 							print("UNSLOWING")
 							return fr:cast("Detox")
@@ -2099,17 +2149,12 @@ local mw_rot = {
 		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere")  then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
-					if _A.manaengine()==true or _A.modifier_shift() or _A.manaengine_highprio() then
+					if _A.modifier_shift() or _A.manaengine() then
 						--- ORBS
 						local lowest = Object("lowestall")
 						if lowest then
 							if (lowest:health() < 85) then
-								-- if lowest:los() then
-								-- return lowest:CastGround("Healing Sphere", true)
-								if _A.manaengine_highprio() then print("HIGH PRIO ORB") end
 								return _A.clickcast(lowest,"Healing Sphere")
-								-- return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 88)
-								-- end
 							end
 						end
 					end
@@ -2457,16 +2502,17 @@ local inCombat = function()
 	-- print(maxHPv2())
 	-- print(_A.manaengine_highprio()) 
 	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
-	if player:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")>.1 then return true end
+	-- if player:Stateduration("silence || incapacitate || fear || disorient || charm || sleep || stun")>.1 then return true end
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	if mw_rot.dpsstance_healstance_keybind() then return true end
 	if mw_rot.lifecocoon()  then return true end
 	if mw_rot.healingsphere_keybind() then return true end
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
+	if mw_rot.renewingmist() then return true end
 	if _A.modifier_shift() or _A.manaengine_highprio() then
 		if mw_rot.healingsphere() then return true end
-		if not _A.manaengine_highprio() and mw_rot.uplift() then return true end
+		if mw_rot.uplift() then return true end
 	end
 	if mw_rot.pvp_disable_keybind() then return true end
 	if mw_rot.ctrl_mode() then return true end
@@ -2494,7 +2540,6 @@ local inCombat = function()
 	------------------ Rotation Proper
 	if mw_rot.tigerpalm_mm() then return true end
 	if mw_rot.uplift() then return true end
-	if mw_rot.renewingmist() then return true end
 	if mw_rot.manatea() then return true end
 	if mw_rot.surgingmist() then return true end
 	if mw_rot.chi_wave()  then return true end
@@ -2521,17 +2566,17 @@ end
 local blacklist = function()
 end
 _A.CR:Add(270, {
-	name = "Monk Heal EFFICIENT",
-	ic = inCombat,
-	ooc = inCombat,
-	use_lua_engine = true,
-	gui = GUI,
-	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-	wow_ver = "5.4.8",
-	apep_ver = "1.1",
-	-- ids = spellIds_Loc,
-	-- blacklist = blacklist,
-	-- pooling = false,
-	load = exeOnLoad,
-	unload = exeOnUnload
+name = "Monk Heal EFFICIENT",
+ic = inCombat,
+ooc = inCombat,
+use_lua_engine = true,
+gui = GUI,
+gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+wow_ver = "5.4.8",
+apep_ver = "1.1",
+-- ids = spellIds_Loc,
+-- blacklist = blacklist,
+-- pooling = false,
+load = exeOnLoad,
+unload = exeOnUnload
 })
