@@ -519,7 +519,7 @@ local exeOnLoad = function()
 	--[[
 		burstdisarm = function()
 		if player:Stance() == 1   then
-		if player:SpellCooldown("Grapple Weapon")<.3 then
+		if player:SpellCooldown("Grapple Weapon")<player:gcd() then
 		for _, obj in pairs(_A.OM:Get('Enemy')) do
 		if obj.isplayer 
 		and obj:SpellRange("Grapple Weapon") 
@@ -833,60 +833,23 @@ local exeOnLoad = function()
 		return manaBudget>=hpDelta
 	end
 	--------------------------------------------------------
-	local deficitHistory = {}
-	local CHANGE_THRESHOLD = 0.03  -- Minimum % change to record (0.05% for PvP precision)
-	
-	local function isDeficitWorsening()
-		-- Only store value if it's meaningfully different from last entry
-		local hpDelta = averageHPv2() 
-		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-		local currentDeficit = manaBudget - hpDelta 
-		if #deficitHistory > 0 then
-			local lastValue = deficitHistory[#deficitHistory].value
-			if math.abs(currentDeficit - lastValue) < CHANGE_THRESHOLD then
-				return false  -- No significant change, abort early
-			end
-		end
-		-- Add new entry with timestamp
-		table.insert(deficitHistory, {
-			time = GetTime(),
-			value = currentDeficit
-		})
-		-- Maintain 5-second window for PvP burst tracking
-		local timetocount = MW_HealthAnalyzedTimespan * .5
-		local cutoff = GetTime() - timetocount
-		for i = #deficitHistory, 1, -1 do
-			if deficitHistory[i].time < cutoff then
-				table.remove(deficitHistory, i)
-			end
-		end
-		-- Require minimum 3 meaningful points for trend analysis
-		if #deficitHistory < 3 then return false end
-		-- Calculate momentum-based trend with time weighting
-		local totalWeight = 0
-		local weightedTrend = 0
-		local previousTime, previousValue = deficitHistory[1].time, deficitHistory[1].value
-		for i = 2, #deficitHistory do
-			local timeDiff = deficitHistory[i].time - previousTime
-			local valueDiff = deficitHistory[i].value - previousValue
-			local timeWeight = 1 / (1 + timeDiff)  -- Penalize long gaps
-			local trend = valueDiff / timeDiff
-			weightedTrend = weightedTrend + trend * timeWeight
-			totalWeight = totalWeight + timeWeight
-			previousTime = deficitHistory[i].time
-			previousValue = deficitHistory[i].value
-		end
-		if (weightedTrend / totalWeight > 0.3) then print(weightedTrend / totalWeight, " ", "HIGH PRIO DEFICIT") end
-		return (weightedTrend / totalWeight) > 0.3 -- Worsening trend threshold
-	end
 	function _A.manaengine_highprio()
 		local hpDelta = maxHPv2() 
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 		local deficit = manaBudget - hpDelta 
-		-- return isDeficitWorsening() or (deficit > 2.8)
 		return (deficit > 1.5)
-		-- print(deficit)
-		-- return (deficit > 2.8)
+	end
+	
+	function _A.enoughmana(id)
+		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
+		if powertype then
+			local currentmana = _A.UnitPower("player", powertype)
+			if currentmana>=cost then
+				return true
+				else return false
+			end
+		end
+		return true
 	end
 	
 	function _A.enoughmana(id)
@@ -1258,7 +1221,7 @@ local exeOnLoad = function()
 		-- print(_Y.GetPetStance())
 		-------- PET ROTATION
 		-- if petpassive() then return end
-		if attacktotem() then return end
+		-- if attacktotem() then return end
 		if attacklowest() then return end
 		-- if petfollow() then return end
 	end
@@ -1299,6 +1262,7 @@ local function cditemRemains(itemid)
 end
 local dangerousdebuffs = {
 	"Soul Reaper",
+	"Paralytic Poison",
 	"Deep Freeze",
 	"Ring of Frost",
 	"Freeze",
@@ -1372,6 +1336,7 @@ local mw_rot = {
 		if player:ItemCooldown(76085) == 0  
 			and player:ItemCount(76085) > 0
 			and player:ItemUsable(76085)
+			and not IsCurrentItem(76085)
 			and not player:Buff(105691)
 			then
 			if pull_location()=="pvp" and player:combat() then
@@ -1384,6 +1349,7 @@ local mw_rot = {
 		if player:health() <= 35    then
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
+				and not IsCurrentItem(5512)
 				and player:ItemUsable(5512) then
 				return player:useitem("Healthstone")
 			end
@@ -1394,7 +1360,9 @@ local mw_rot = {
 		if player:ItemCooldown(8529) == 0  
 			and player:ItemCount(8529) > 0
 			and player:ItemUsable(8529)
-			and (not player:BuffAny(16591) or not player:BuffAny(16595))
+			and not IsCurrentItem(8529)
+			-- and (not player:BuffAny(16591) or not player:BuffAny(16595))
+			and (not player:BuffAny(16595))
 			then
 			if pull_location()=="pvp" then
 				return player:useitem("Noggenfogger Elixir")
@@ -1521,7 +1489,7 @@ local mw_rot = {
 		end
 	end,
 	kick_paralysis = function()
-		if player:SpellCooldown("Paralysis")<.3 then
+		if player:SpellCooldown("Paralysis")<player:gcd() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer 
 					and obj:isCastingAny()
@@ -1539,28 +1507,14 @@ local mw_rot = {
 		end
 	end,
 	
-	paralysis_test = function()
-		if player:Stance() == 1  and player:SpellCooldown("Paralysis")<.3 then
-			local obj = Object("target")
-			if obj and obj.isplayer 
-				and obj:SpellRange("Paralysis") 
-				and obj:InConeOf(player, 170)
-				and obj:infront()
-				and _A.notimmune(obj)
-				and obj:los() then
-				return obj:Cast("Paralysis")
-			end
-		end
-	end,
-	
 	sapsnipe = function()
-		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 then
+		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<player:gcd() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:SpellRange("Paralysis") then
 					
 					if 
-						-- (healerspecid[obj:spec()] and _A.pull_location~="arena") or
-						(healerspecid[obj:spec()] and _A.pull_location=="arena" and UnitExists("party1") and UnitTarget("party1")~=obj.guid ) or
+						(healerspecid[obj:spec()] and _A.pull_location~="arena") or
+						-- (healerspecid[obj:spec()] and _A.pull_location=="arena" and UnitExists("party1") and UnitTarget("party1")~=obj.guid ) or
 						(_A.pull_location=="arena" and UnitExists("party1") and UnitTarget("party1")~=obj.guid) 
 						then
 						
@@ -1579,11 +1533,12 @@ local mw_rot = {
 	end,
 	
 	sapsextendcc = function()
-		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<.3 then
+		if player:Stance() == 1 and player:SpellCooldown("Paralysis")<player:gcd() then
 			local check = UnitExists("focus")
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:SpellRange("Paralysis")
-					and (healerspecid[obj:spec()])
+					and (_A.pull_location=="arena" and UnitExists("party1") and UnitTarget("party1")~=obj.guid) 
+					-- and (healerspecid[obj:spec()])
 					and obj:InConeOf(player, 170)
 					and obj:infront()
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun")>0
@@ -1617,7 +1572,7 @@ local mw_rot = {
 	end,
 	
 	burstdisarm = function() -- should be arena only
-		if player:SpellCooldown("Grapple Weapon")<.3 then
+		if player:SpellCooldown("Grapple Weapon")<player:gcd() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer 
 					and obj:SpellRange("Grapple Weapon") 
@@ -1657,8 +1612,8 @@ local mw_rot = {
 	end,
 	
 	everyman = function()
-		if _A.pull_location~="arena" and not player:State("incapacitate || fear || disorient || charm || misc || sleep || stun") then
-			if player:SpellCooldown("Every Man for Himself")==0 and not IsCurrentSpell(59752) and player:Stateduration("silence")>=3  then
+		if _A.pull_location~="arena" and not player:State("incapacitate || fear || disorient || charm || misc || sleep || stun") and not player:debuffany("Solar Beam")  then
+			if player:SpellCooldown("Every Man for Himself")==0  and player:Stateduration("silence")>=3 and not IsCurrentSpell(59752)  then
 				return player:cast("Every Man for Himself")
 			end
 		end
@@ -1833,7 +1788,7 @@ local mw_rot = {
 	
 	chi_wave = function()
 		if player:Talent("Chi Wave")  
-			and player:SpellCooldown("Chi Wave")<.3 then
+			and player:SpellCooldown("Chi Wave")<player:gcd() then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
 				if lowest then
@@ -1848,7 +1803,7 @@ local mw_rot = {
 	
 	manatea = function()
 		if player:Stance() == 1   then
-			if player:SpellCooldown("Mana Tea")<.3
+			if player:SpellCooldown("Mana Tea")<player:gcd()
 				and player:Glyph("Glyph of Mana Tea")
 				and player:mana()<= 92
 				and player:BuffStack("Mana Tea")>=2
@@ -1861,7 +1816,7 @@ local mw_rot = {
 	
 	manatea_HealthRegen = function()
 		if player:Stance() == 1  and player:talent("Healing Elixirs") and player:buff("Healing Elixirs") then
-			if player:SpellCooldown("Mana Tea")<.3
+			if player:SpellCooldown("Mana Tea")<player:gcd()
 				and player:Glyph("Glyph of Mana Tea")
 				and player:mana()<= 92
 				and player:health()<=85
@@ -1911,7 +1866,7 @@ local mw_rot = {
 	end,
 	
 	tigerslust = function()
-		if player:Talent("Tiger's Lust") and player:SpellCooldown("Tiger's Lust")<.3   then
+		if player:Talent("Tiger's Lust") and player:SpellCooldown("Tiger's Lust")<player:gcd()   then
 			if player:Stance() == 1 then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr:SpellRange("Tiger's Lust") then
@@ -1938,7 +1893,7 @@ local mw_rot = {
 	dispellplzarena = function()
 		local temptabletbl2 = {}
 		if player:Stance() == 1   then
-			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
+			if player:SpellCooldown("Detox")<player:gcd() and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (_A.pull_location=="arena" and fr:ispet()) then
 						if fr:SpellRange("Detox")
@@ -1980,7 +1935,7 @@ local mw_rot = {
 		local temptabletbl1 = {}
 		-- if player:Stance() == 1 and _A.pull_location ~="pvp"   then
 		if player:Stance() == 1 then
-			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
+			if player:SpellCooldown("Detox")<player:gcd() and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurge("Detox")
@@ -2006,7 +1961,7 @@ local mw_rot = {
 	
 	dispellunCC = function()
 		if player:Stance() == 1 then
-			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
+			if player:SpellCooldown("Detox")<player:gcd() and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox")
@@ -2027,7 +1982,7 @@ local mw_rot = {
 	
 	dispellunSLOW = function()
 		if not player:lostcontrol() and player:Stance() == 1 then
-			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
+			if player:SpellCooldown("Detox")<player:gcd() and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurgecheck("snare")
@@ -2047,7 +2002,7 @@ local mw_rot = {
 	dispellDANGEROUS = function()
 		local temptabletbl1 = {}
 		if not player:lostcontrol() and player:Stance() == 1 then
-			if player:SpellCooldown("Detox")<.3 and player:SpellUsable("Detox") then
+			if player:SpellCooldown("Detox")<player:gcd() and player:SpellUsable("Detox") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurge("Detox") 
@@ -2067,7 +2022,7 @@ local mw_rot = {
 	end,
 	
 	lifecocoon = function()
-		if player:SpellCooldown("Life Cocoon")<.3 and player:SpellUsable(116849)   then
+		if player:SpellCooldown("Life Cocoon")<player:gcd() and player:SpellUsable(116849)   then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
 				if lowest and lowest:SpellRange("Life Cocoon") and lowest:combat() then 			
@@ -2103,7 +2058,7 @@ local mw_rot = {
 	end,
 	
 	renewingmist = function()
-		if player:SpellCooldown("Renewing Mist")<.3 and player:SpellUsable(115151)   then
+		if player:SpellCooldown("Renewing Mist")<player:gcd() and player:SpellUsable(115151)   then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
 				if lowest and lowest:SpellRange("Renewing Mist") then 
@@ -2115,7 +2070,7 @@ local mw_rot = {
 	
 	healstatue = function()
 		if player:Stance() == 1   then
-			if	player:SpellCooldown("Summon Jade Serpent Statue")<.3 and player:SpellUsable(115313) 
+			if	player:SpellCooldown("Summon Jade Serpent Statue")<player:gcd() and player:SpellUsable(115313) 
 				then
 				-- return player:CastGround("Summon Jade Serpent Statue")
 				return _A.clickcast(player,"Summon Jade Serpent Statue")
@@ -2124,7 +2079,7 @@ local mw_rot = {
 	end,
 	
 	healingsphere_keybind = function()
-		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere") then
+		if player:SpellCooldown("Healing Sphere")<player:gcd()  and  player:SpellUsable("Healing Sphere") then
 			if player:Stance() == 1 then
 				if player:keybind("E") then
 					if player:SpellUsable(115460) then
@@ -2146,7 +2101,7 @@ local mw_rot = {
 	end,
 	
 	healingsphere = function()
-		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere")  then
+		if player:SpellCooldown("Healing Sphere")<player:gcd()  and  player:SpellUsable("Healing Sphere")  then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
 					if _A.modifier_shift() or _A.manaengine() then
@@ -2164,7 +2119,7 @@ local mw_rot = {
 	end,
 	
 	healingsphere_superlow = function()
-		if player:SpellCooldown("Healing Sphere")<.3  and  player:SpellUsable("Healing Sphere")  then
+		if player:SpellCooldown("Healing Sphere")<player:gcd()  and  player:SpellUsable("Healing Sphere")  then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
 					local lowest = Object("lowestall")
@@ -2267,7 +2222,7 @@ local mw_rot = {
 	expelharm = function()
 		if player:Stance() == 1   then
 			if	player:Chi()<player:ChiMax()
-				and player:SpellCooldown("Expel Harm")<.3
+				and player:SpellCooldown("Expel Harm")<player:gcd()
 				and player:SpellUsable(115072)
 				then
 				return player:Cast("Expel Harm")
@@ -2320,8 +2275,6 @@ local mw_rot = {
 	dpsstance_jab = function()
 		if player:Stance() ~= 1 and not player:buff("Rushing Jade Wind") then
 			if not player:Buff("Muscle Memory")
-				-- or player:Chi()==0 then
-				-- or player:Chi()<=1 
 				then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
@@ -2335,7 +2288,7 @@ local mw_rot = {
 		if (player:Stance() == 1)
 			and player:buffany("Lucidity") then
 			if	player:Talent("Rushing Jade Wind") 
-				and player:SpellCooldown("Rushing Jade Wind")<.3
+				and player:SpellCooldown("Rushing Jade Wind")<player:gcd()
 				then
 				return player:Cast("Rushing Jade Wind")
 			end
@@ -2403,7 +2356,7 @@ local mw_rot = {
 	dpsstance_spin = function()
 		if player:Stance() ~= 1 and (player:keybind("R") or _A.pull_location~="pvp") then
 			if	player:Talent("Rushing Jade Wind") 
-				and player:SpellCooldown("Rushing Jade Wind")<.3
+				and player:SpellCooldown("Rushing Jade Wind")<player:gcd()
 				then
 				return player:Cast("Rushing Jade Wind")
 			end
@@ -2411,15 +2364,15 @@ local mw_rot = {
 	end,
 	dpsstance_spin_musclememory = function()
 		if player:Stance() ~= 1 and player:Talent("Rushing Jade Wind")  and not player:buff("Muscle Memory")
-			and player:SpellCooldown("Rushing Jade Wind")<.3
-			and (_Y.rushing_number()>=3 or player:keybind("R")) then
+			and player:SpellCooldown("Rushing Jade Wind")<player:gcd()
+			and (_Y.rushing_number()>=3) then
 			return player:Cast("Rushing Jade Wind")
 		end
 	end,
 	healstance_spin_musclememory = function()
 		if player:Stance() ~= 1 and _Y.rushing_number()>=3 and not _A.modifier_shift() then
 			if	player:Talent("Rushing Jade Wind") 
-				and player:SpellCooldown("Rushing Jade Wind")<.3
+				and player:SpellCooldown("Rushing Jade Wind")<player:gcd()
 				then
 				return player:Cast("Rushing Jade Wind")
 			end
@@ -2427,7 +2380,7 @@ local mw_rot = {
 	end,
 	dpsstance_healstance = function()
 		if player:Stance() ~= 1 then
-			if	player:SpellCooldown("Stance of the Wise Serpent")<.3
+			if	player:SpellCooldown("Stance of the Wise Serpent")<player:gcd()
 				then
 				return player:Cast("Stance of the Wise Serpent")
 			end
@@ -2436,7 +2389,7 @@ local mw_rot = {
 	
 	dpsstance_healstance_special = function()
 		if player:Stance() ~= 1 then
-			if player:SpellCooldown("Stance of the Wise Serpent")<.3
+			if player:SpellCooldown("Stance of the Wise Serpent")<player:gcd()
 				then
 				return player:Cast("Stance of the Wise Serpent")
 			end
@@ -2444,8 +2397,8 @@ local mw_rot = {
 	end,
 	
 	dpsstance_healstance_keybind = function()
-		if player:Stance() ~= 1 and (_A.modifier_shift() or _A.manaengine_highprio()) then
-			if	player:SpellCooldown("Stance of the Wise Serpent")<.3
+		if player:Stance() ~= 1 and (_A.modifier_shift() or _A.manaengine_highprio()) and player:manaraw()>=12000 then
+			if	player:SpellCooldown("Stance of the Wise Serpent")<player:gcd()
 				then
 				return player:Cast("Stance of the Wise Serpent")
 			end
@@ -2455,7 +2408,7 @@ local mw_rot = {
 	
 	dpsstanceswap = function()
 		if player:Stance() ~= 2 then
-			if player:SpellCooldown("Stance of the Fierce Tiger")<.3
+			if player:SpellCooldown("Stance of the Fierce Tiger")<player:gcd()
 				and not player:Buff("Rushing Jade Wind") 
 				and not player:Buff("lucidity") 
 				then
@@ -2502,28 +2455,27 @@ local inCombat = function()
 	-- print(maxHPv2())
 	-- print(_A.manaengine_highprio()) 
 	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
-	-- if player:Stateduration("silence || incapacitate || fear || disorient || charm || sleep || stun")>.1 then return true end
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
+	-- DPS
+	if player:keybind("R") then
+		if mw_rot.manatea() then return true end
+		if mw_rot.tp_buff_keybind() then return true end
+		if mw_rot.blackout_keybind()  then return true end
+		if mw_rot.dpsstanceswap()  then return true end
+	end
 	if mw_rot.dpsstance_healstance_keybind() then return true end
 	if mw_rot.lifecocoon()  then return true end
 	if mw_rot.healingsphere_keybind() then return true end
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
-	if mw_rot.renewingmist() then return true end
+	if player:mana()<=40 and mw_rot.manatea() then return true end
 	if _A.modifier_shift() or _A.manaengine_highprio() then
 		if mw_rot.healingsphere() then return true end
 		if mw_rot.uplift() then return true end
 	end
 	if mw_rot.pvp_disable_keybind() then return true end
 	if mw_rot.ctrl_mode() then return true end
-	-- DPS
-	if player:keybind("R") or (_A.pull_location=="none" and not player:israid())  then
-		if mw_rot.manatea() then return true end
-		if mw_rot.tp_buff_keybind() then return true end
-		if mw_rot.blackout_keybind()  then return true end
-		if mw_rot.dpsstanceswap()  then return true end
-	end
-	--
+	if mw_rot.renewingmist() then return true end
 	if mw_rot.Xuen() then return true end
 	--------------------- CC
 	if mw_rot.ringofpeacev2() then return true end
@@ -2551,32 +2503,28 @@ local inCombat = function()
 	-- if mw_rot.dispellplzany() then return end
 	-- if mw_rot.statbuff() then return end
 	------------------ STANCE SWAP FILL
-	if not _A.modifier_shift() then
-		if mw_rot.dpsstance_spin_musclememory() then return true end
-		if mw_rot.dpsstance_jab() then return true end
-		if mw_rot.dpsstance_spin()  then return true end
-	end
+	if mw_rot.dpsstance_spin_musclememory() then return true end
+	if mw_rot.dpsstance_jab() then return true end
+	if mw_rot.dpsstance_spin()  then return true end
 	if mw_rot.dpsstance_healstance()  then return true end
-	if not _A.modifier_shift() then
-		if mw_rot.dpsstanceswap()  then return true end
-	end
+	if not _A.modifier_shift() and mw_rot.dpsstanceswap()  then return true end
 end
 local spellIds_Loc = function()
 end
 local blacklist = function()
 end
 _A.CR:Add(270, {
-name = "Monk Heal EFFICIENT",
-ic = inCombat,
-ooc = inCombat,
-use_lua_engine = true,
-gui = GUI,
-gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
-wow_ver = "5.4.8",
-apep_ver = "1.1",
--- ids = spellIds_Loc,
--- blacklist = blacklist,
--- pooling = false,
-load = exeOnLoad,
-unload = exeOnUnload
+	name = "Monk Heal EFFICIENT",
+	ic = inCombat,
+	ooc = inCombat,
+	use_lua_engine = true,
+	gui = GUI,
+	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
+	wow_ver = "5.4.8",
+	apep_ver = "1.1",
+	-- ids = spellIds_Loc,
+	-- blacklist = blacklist,
+	-- pooling = false,
+	load = exeOnLoad,
+	unload = exeOnUnload
 })
