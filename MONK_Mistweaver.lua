@@ -1645,7 +1645,6 @@ local mw_rot = {
 	end,
 	
 	pvp_disable_keybind = function()
-		if player:keybind("X") then
 			if player:Stance() == 1 --and pull_location()=="arena" 
 				then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
@@ -1654,7 +1653,6 @@ local mw_rot = {
 					return lowestmelee:Cast("Disable")
 				end
 			end
-		end
 	end,
 	
 	pvp_disable_root = function()
@@ -2193,7 +2191,7 @@ local mw_rot = {
 		if player:SpellUsable("Healing Sphere") then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
-					if _A.pull_location=="pvp"
+					if _A.pull_location=="pvp" or _A.pull_location=="arena"
 						then target = Object("lowestall")
 						else
 						target = Object("target")
@@ -2568,7 +2566,7 @@ local inCombat = function()
 		if mw_rot.dpsstanceswap()  then return true end
 	end
 	if mw_rot.dpsstance_healstance_keybind() then return true end
-	if mw_rot.pvp_disable_keybind() then return true end
+	if player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
 	if mw_rot.ctrl_mode() then return true end
 	-- GCD CDS
 	if mw_rot.lifecocoon()  then return true end
