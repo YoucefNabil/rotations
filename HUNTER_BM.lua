@@ -6,6 +6,7 @@ local mediaPath, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local ui = function(key) return _A.DSL:Get("ui")(_, key) end
 local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
+local cdcd = .3
 local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
 local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
 local hooksecurefunc =_A.hooksecurefunc
@@ -1479,7 +1480,7 @@ survival.rot = {
 		end
 	end,
 	mendpet =  function()
-		if	_A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI() and _A.castdelay("Mend Pet", (2*player:gcd())) and player:spellcooldown("Mend Pet")<player:gcd()
+		if	_A.UnitExists("pet") and not _A.UnitIsDeadOrGhost("pet") and _A.HasPetUI() and _A.castdelay("Mend Pet", (2*player:gcd())) and player:spellcooldown("Mend Pet")<cdcd
 			and player:spellusable("Mend Pet")
 			then
 			local pet = Object("pet")
@@ -1525,7 +1526,7 @@ survival.rot = {
 	end,
 	-- Traps and CC
 	concussion = function()
-		if player:spellcooldown("Concussive Shot")<player:gcd() and player:spellusable("Concussive Shot") then
+		if player:spellcooldown("Concussive Shot")<cdcd and player:spellusable("Concussive Shot") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and lowestmelee:stateduration("snare")<1.5 and not lowestmelee:immuneYOUCEF("snare") then
 				return lowestmelee:Cast("Concussive Shot")
@@ -1537,7 +1538,7 @@ survival.rot = {
 			and player:spellusable("Ice Trap") then
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
-				if player:Spellcooldown("Ice Trap")<player:gcd()
+				if player:Spellcooldown("Ice Trap")<cdcd
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
@@ -1552,7 +1553,7 @@ survival.rot = {
 			and player:spellusable("Snake Trap") then
 			local lowestmelee = Object("enemyplayercc")
 			if lowestmelee then
-				if player:Spellcooldown("Snake Trap")<player:gcd() and _A.castdelay(82941, 6) 
+				if player:Spellcooldown("Snake Trap")<cdcd and _A.castdelay(82941, 6) 
 					then
 					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
@@ -1565,7 +1566,7 @@ survival.rot = {
 	---------------------------------- CC SEQUENCE
 	scatter = function()
 		local focus = Object("focus")
-		if player:SpellCooldown("Scatter Shot")<player:gcd() and player:SpellCooldown("Freezing Trap")<player:gcd() and player:buff("Trap Launcher") 
+		if player:SpellCooldown("Scatter Shot")<cdcd and player:SpellCooldown("Freezing Trap")<cdcd and player:buff("Trap Launcher") 
 			and player:spellusable("Scatter Shot") then
 			if focus and not _A.scattertargets[focus.guid] and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Scatter Shot") 
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
@@ -1594,7 +1595,7 @@ survival.rot = {
 	end,
 	freezing = function()
 		local focus = Object("focus")
-		if player:SpellCooldown("Freezing Trap")<player:gcd() and player:buff("Trap Launcher") and player:spellusable("Freezing Trap") then
+		if player:SpellCooldown("Freezing Trap")<cdcd and player:buff("Trap Launcher") and player:spellusable("Freezing Trap") then
 			if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") 
 				and (focus:debuff("Scatter Shot") or (focus:stateduration("disorient || charm || sleep || stun")>1 and focus:stateduration("disorient || charm || sleep || stun")<4)) 
 				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
@@ -1623,7 +1624,7 @@ survival.rot = {
 	end,
 	sleep = function()
 		local focus = Object("focus")
-		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<player:gcd()  and player:spellusable("Wyvern Sting") and player:SpellCooldown("Scatter Shot")>player:gcd()
+		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<cdcd  and player:spellusable("Wyvern Sting") and player:SpellCooldown("Scatter Shot")>player:gcd()
 			and _A.castdelay(60192,3) and _A.castdelay("Scatter Shot",3) then
 			if focus and not _A.scattertargets[focus.guid] and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
@@ -1653,7 +1654,7 @@ survival.rot = {
 	-----------------------------------------------------------
 	sleep2 = function()
 		local focus = Object("focus")
-		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<player:gcd() and player:SpellCooldown("Freezing Trap")<player:gcd() and player:buff("Trap Launcher") 
+		if player:Talent("Wyvern Sting") and player:SpellCooldown("Wyvern Sting")<cdcd and player:SpellCooldown("Freezing Trap")<cdcd and player:buff("Trap Launcher") 
 			and player:spellusable("Wyvern Sting") then
 			if focus and focus.isplayer and focus:enemy() and focus:alive() and not _A.scattertargets[focus.guid] and focus:spellRange("Arcane Shot")
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
@@ -1681,7 +1682,7 @@ survival.rot = {
 	end,
 	freezing2 = function()
 		local focus = Object("focus")
-		if player:SpellCooldown("Freezing Trap")<player:gcd() and player:buff("Trap Launcher") and player:spellusable("Freezing Trap") then
+		if player:SpellCooldown("Freezing Trap")<cdcd and player:buff("Trap Launcher") and player:spellusable("Freezing Trap") then
 			if focus and focus.isplayer and focus:alive() and focus:enemy() and focus:spellRange("Arcane Shot")
 				and focus:stateduration("sleep || stun || misc || incapacitate")>1
 				and focus:stateduration("sleep || stun || misc || incapacitate")<4
@@ -1710,7 +1711,7 @@ survival.rot = {
 	end,
 	scatter2 = function()
 		local focus = Object("focus")
-		if player:SpellCooldown("Scatter Shot")<player:gcd()  and player:spellusable("Scatter Shot")
+		if player:SpellCooldown("Scatter Shot")<cdcd  and player:spellusable("Scatter Shot")
 			then
 			if focus and focus:enemy() and focus:alive() and focus.isplayer and not _A.scattertargets[focus.guid] and focus:spellRange("Scatter Shot") and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
@@ -1740,7 +1741,7 @@ survival.rot = {
 	-----------------------------------------------------------
 	-----------------------------------------------------------
 	sleepKick = function()
-		if player:SpellCooldown("Wyvern Sting")<player:gcd() and player:SpellCooldown("Freezing Trap")<player:gcd() and player:buff("Trap Launcher") 
+		if player:SpellCooldown("Wyvern Sting")<cdcd and player:SpellCooldown("Freezing Trap")<cdcd and player:buff("Trap Launcher") 
 			and player:spellusable("Wyvern Sting") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Arcane Shot")
@@ -1754,7 +1755,7 @@ survival.rot = {
 		end
 	end,
 	scatterKick = function()
-		if player:SpellCooldown("Scatter Shot")<player:gcd()  and player:spellusable("Scatter Shot")
+		if player:SpellCooldown("Scatter Shot")<cdcd  and player:spellusable("Scatter Shot")
 			then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and not _A.scattertargets[Obj.guid] and Obj:spellRange("Scatter Shot")
@@ -1823,7 +1824,7 @@ survival.rot = {
 		end
 	end,
 	stampede = function()
-		if player:combat() and player:buff("Rapid Fire") and player:SpellCooldown("Stampede")<player:gcd() and player:spellusable("Stampede") then
+		if player:combat() and player:buff("Rapid Fire") and player:SpellCooldown("Stampede")<cdcd and player:spellusable("Stampede") then
 			local lowestmelee = Object("simpletarget(Arcane Shot)")
 			if lowestmelee and lowestmelee.isplayer
 				-- and lowestmelee:health()>=35
@@ -1856,7 +1857,7 @@ survival.rot = {
 		end
 	end,
 	direbeast = function()
-		if player:combat() and player:talent("Dire Beast") and player:SpellCooldown("Dire Beast")<player:gcd() and player:combat() then
+		if player:combat() and player:talent("Dire Beast") and player:SpellCooldown("Dire Beast")<cdcd and player:combat() then
 			local lowestmelee = Object("simpletarget(Arcane Shot)")
 			if lowestmelee
 				then 
@@ -1866,7 +1867,7 @@ survival.rot = {
 	end,
 	-- ROTATION
 	killcommand = function()
-		if _A.KCcheck() and player:SpellUsable("Kill Command") and player:SpellCooldown("Kill Command")<player:gcd() and player:Spellusable("Kill Command") then
+		if _A.KCcheck() and player:SpellUsable("Kill Command") and player:SpellCooldown("Kill Command")<cdcd and player:Spellusable("Kill Command") then
 			local lowestmelee = Object("lowestEnemyInSpellRangePetPOVKC")
 			if lowestmelee then
 				return lowestmelee:Cast("Kill Command")
@@ -1874,7 +1875,7 @@ survival.rot = {
 		end
 	end,
 	amoc = function()
-		if player:talent("A Murder of Crows") and player:SpellCooldown("A Murder of Crows")<player:gcd() then
+		if player:talent("A Murder of Crows") and player:SpellCooldown("A Murder of Crows")<cdcd then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				if player:SpellUsable("A Murder of Crows") then
@@ -1885,7 +1886,7 @@ survival.rot = {
 		end
 	end,
 	serpentsting = function()
-		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<player:gcd()  then
+		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<cdcd  then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee and not lowestmelee:debuff(118253) 
 				and (lowestmelee.isplayer or _A.pull_location=="none")
@@ -1898,7 +1899,7 @@ survival.rot = {
 		end
 	end,
 	serpentsting_check = function()
-		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<player:gcd() 
+		if _A.MissileExists("Serpent Sting")==false and player:spellcooldown("Serpent Sting")<cdcd 
 			and _A.castdelay("Serpent Sting", 10)
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
@@ -1913,7 +1914,7 @@ survival.rot = {
 		end
 	end,
 	multishot = function()
-		if player:spellcooldown("Multi-Shot")<player:gcd() and _Y.clumpguid and _Y.clumpnumber>=1 then
+		if player:spellcooldown("Multi-Shot")<cdcd and _Y.clumpguid and _Y.clumpnumber>=1 then
 			local lowestmelee = Object(_Y.clumpguid)
 			if lowestmelee then
 				if player:SpellUsable("Multi-Shot") and _A.multishotcheck() then 
@@ -1924,7 +1925,7 @@ survival.rot = {
 		end
 	end,
 	auto_multishot = function() -- and player:buff("Thrill of the Hunt") 
-		if _A.pull_location~="arena" and player:spellcooldown("Multi-Shot")<player:gcd() and _Y.clumpnumber and _Y.clumpnumber>=3  then
+		if _A.pull_location~="arena" and player:spellcooldown("Multi-Shot")<cdcd and _Y.clumpnumber and _Y.clumpnumber>=3  then
 			local lowestmelee =  Object(_Y.clumpguid)
 			if lowestmelee then
 				if player:SpellUsable("Multi-Shot") and _A.lowpriocheck("Multi-Shot") then
@@ -1935,7 +1936,7 @@ survival.rot = {
 		end
 	end,
 	barrage = function()
-		if player:Talent("Barrage") and player:spellcooldown("Barrage")<player:gcd() then
+		if player:Talent("Barrage") and player:spellcooldown("Barrage")<cdcd then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				if player:SpellUsable("Barrage") then
@@ -1946,7 +1947,7 @@ survival.rot = {
 		end
 	end,
 	arcaneshot = function() --player:buff("Thrill of the Hunt")
-		if player:spellcooldown("Arcane Shot")<player:gcd() then
+		if player:spellcooldown("Arcane Shot")<cdcd then
 			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				if _A.lowpriocheck("Arcane Shot") and player:SpellUsable("Arcane Shot") then
@@ -1957,7 +1958,7 @@ survival.rot = {
 		end
 	end,
 	tranquillshot_highprio = function()
-		if player:spellcooldown("Tranquilizing Shot")<player:gcd()
+		if player:spellcooldown("Tranquilizing Shot")<cdcd
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
 			if lowestmelee and canpurge(lowestmelee.guid) then
@@ -1971,7 +1972,7 @@ survival.rot = {
 		end
 	end,
 	tranquillshot_midprio = function()
-		if player:spellcooldown("Tranquilizing Shot")<player:gcd() 
+		if player:spellcooldown("Tranquilizing Shot")<cdcd 
 			-- and _A.MissileExists("Tranquilizing Shot")==false
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Tranquilizing Shot)")
@@ -1986,7 +1987,7 @@ survival.rot = {
 		end
 	end,
 	tranq_hop = function()
-		if player:SpellCooldown("Tranquilizing Shot")<player:gcd() then
+		if player:SpellCooldown("Tranquilizing Shot")<cdcd then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Tranquilizing Shot") and not Obj:stateYOUCEF("incapacitate || disorient || charm || misc || sleep || fear")
 					and not Obj:BuffAny("Divine Shield") and Obj:InConeOf("player", 170)
@@ -2005,7 +2006,7 @@ survival.rot = {
 	venom = function()
 		local pet = Object("pet")
 		if not pet or (pet and pet:exists() and pet:alive() and pet.name ~= "Devilsaur") then
-			if _A.MissileExists("Widow Venom")==false and player:spellcooldown("Widow Venom")<player:gcd() then
+			if _A.MissileExists("Widow Venom")==false and player:spellcooldown("Widow Venom")<cdcd then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
 				if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuffany("Widow Venom") and not lowestmelee:debuffany("Monstrous Bite") then
 					if player:SpellUsable("Widow Venom") and _A.lowpriocheck("Widow Venom") then
@@ -2017,7 +2018,7 @@ survival.rot = {
 		end
 	end,
 	glaivetoss = function()
-		if player:talent("Glaive Toss") and player:SpellCooldown("Glaive Toss")<player:gcd() then
+		if player:talent("Glaive Toss") and player:SpellCooldown("Glaive Toss")<cdcd then
 			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				if _A.glaivetosscheck() and player:SpellUsable("Glaive Toss") then
@@ -2028,7 +2029,7 @@ survival.rot = {
 		end
 	end,
 	killshot = function()
-		if player:Spellcooldown("Kill Shot")<player:gcd() then
+		if player:Spellcooldown("Kill Shot")<cdcd then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Kill Shot)")
 			if lowestmelee and lowestmelee:health()<=20 then
 				return lowestmelee:Cast("Kill Shot")
@@ -2057,8 +2058,9 @@ local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return true end
 	player = Object("player")
 	target = Object("target")
-	if target then print(target:range()) end
+	-- if target then print(target:range()) end
 	if not player then return true end
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*2 or .3
 	_A.pull_location = _A.pull_location or pull_location()
 	_Y.petengine()
 	_Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,8)

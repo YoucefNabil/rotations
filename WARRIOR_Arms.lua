@@ -329,7 +329,7 @@ local exeOnLoad = function()
 			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		if #tempTable>=1 then
-		return tempTable[num] and tempTable[num].guid
+			return tempTable[num] and tempTable[num].guid
 		end
 	end)
 	
@@ -348,7 +348,7 @@ local exeOnLoad = function()
 			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		if #tempTable>=1 then
-		return tempTable[num] and tempTable[num].guid
+			return tempTable[num] and tempTable[num].guid
 		end
 	end)
 	
@@ -367,7 +367,7 @@ local exeOnLoad = function()
 			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		if #tempTable>=1 then
-		return tempTable[num] and tempTable[num].guid
+			return tempTable[num] and tempTable[num].guid
 		end
 	end)
 	
@@ -583,7 +583,7 @@ arms.rot = {
 			end
 		end
 	end,
-
+	
 	Execute = function()
 		if player:rage()>=30 then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
@@ -602,13 +602,13 @@ arms.rot = {
 		if  player:SpellCooldown("Slam")<.3 and player:SpellUsable("Slam") then
 			local lowestmeleeEXECUTE = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
 			if not lowestmeleeEXECUTE or (lowestmeleeEXECUTE and  lowestmeleeEXECUTE:health()>20) then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:health()>20 then
-				if player:level()<30 or player:buff(1719) or (player:rage()>80 and player:buffstack(60503)<3) or (lowestmelee:debuff("Colossus Smash") and player:rage()>=40) then
-					return lowestmelee:Cast("Slam")
+				local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+				if lowestmelee and lowestmelee:health()>20 then
+					if player:level()<30 or player:buff(1719) or (player:rage()>80 and player:buffstack(60503)<3) or (lowestmelee:debuff("Colossus Smash") and player:rage()>=40) then
+						return lowestmelee:Cast("Slam")
+					end
 				end
 			end
-		end
 		end
 	end,
 	
@@ -846,24 +846,42 @@ local inCombat = function()
 	arms.rot.reflectspell()
 	arms.rot.Pummel()
 	--
-	if arms.rot.bladestorm() then return end
-	if arms.rot.shockwave() then return end
-	if arms.rot.diebythesword() then return end
-	if arms.rot.sweeping_strikes() then return end
-	if arms.rot.chargegapclose() then return end
-	if arms.rot.heroicleap() then return end
-	if arms.rot.colossussmash() then return end
-	if arms.rot.Execute() then return end
-	if arms.rot.thunderclap() then return end
-	if arms.rot.burstdisarm() then return end
-	if arms.rot.battleshout() then return end
-	if arms.rot.Disruptingshout() then return end
-	if arms.rot.hamstringpvp() then return end
-	if arms.rot.victoryrush() then return end
-	if arms.rot.Mortalstrike() then return end
-	if arms.rot.thunderclapPVE() then return end
-	if arms.rot.slam() then return end
-	if arms.rot.overpower() then return end
+	-- if arms.rot.bladestorm() then return end
+	-- if arms.rot.shockwave() then return end
+	-- if arms.rot.diebythesword() then return end
+	-- if arms.rot.sweeping_strikes() then return end
+	-- if arms.rot.chargegapclose() then return end
+	-- if arms.rot.heroicleap() then return end
+	-- if arms.rot.colossussmash() then return end
+	-- if arms.rot.Execute() then return end
+	-- if arms.rot.thunderclap() then return end
+	-- if arms.rot.burstdisarm() then return end
+	-- if arms.rot.battleshout() then return end
+	-- if arms.rot.Disruptingshout() then return end
+	-- if arms.rot.hamstringpvp() then return end
+	-- if arms.rot.victoryrush() then return end
+	-- if arms.rot.Mortalstrike() then return end
+	-- if arms.rot.thunderclapPVE() then return end
+	-- if arms.rot.slam() then return end
+	-- if arms.rot.overpower() then return end
+	arms.rot.bladestorm()
+	arms.rot.shockwave()
+	arms.rot.diebythesword()
+	arms.rot.sweeping_strikes()
+	arms.rot.chargegapclose()
+	arms.rot.heroicleap()
+	arms.rot.colossussmash()
+	arms.rot.Execute()
+	arms.rot.thunderclap()
+	arms.rot.burstdisarm()
+	arms.rot.battleshout()
+	arms.rot.Disruptingshout()
+	arms.rot.hamstringpvp()
+	arms.rot.victoryrush()
+	arms.rot.Mortalstrike()
+	arms.rot.thunderclapPVE()
+	arms.rot.slam()
+	arms.rot.overpower()
 end
 local spellIds_Loc = function()
 end

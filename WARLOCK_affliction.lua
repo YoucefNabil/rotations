@@ -6,6 +6,7 @@ local ui = function(key) return _A.DSL:Get("ui")(_, key) end
 local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
 local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
 local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
+local cdcd = .3
 local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 -- top of the CR
@@ -890,6 +891,7 @@ affliction.rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	affliction.rot.caching()
 	_Y.petengine_affli()
 	if player:Mounted() then return end
