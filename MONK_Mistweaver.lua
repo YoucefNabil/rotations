@@ -18,6 +18,7 @@ local ENEMY_OM = {}
 local cdcd = .3
 local FRIEND_OM = {}
 local tlp = _A.Tooltip
+local UnitBuff = UnitBuff
 local function blank()
 end
 local function runthese(...)
@@ -1358,7 +1359,14 @@ local mw_rot = {
 	end,
 	
 	cancel_badnoggen = function()
-		if _A.pull_location~="arena" and player:buffany("16591") then
+		if  player:buffany("16591") and player:buffany("16595")  then
+			for buff = 1, 40 do
+				local name,_,_,_,_,_,_,_,_,_,id = UnitBuff("player", buff)
+				if not name then break end
+				if id == 16591 then
+					CancelUnitBuff("player", buff)
+				end
+			end
 		end
 	end,
 	
@@ -1519,6 +1527,7 @@ local mw_rot = {
 				if obj.isplayer and obj:SpellRange("Paralysis") then
 					
 					if 
+						(healerspecid[obj:spec()]) or
 						(healerspecid[obj:spec()] and _A.pull_location~="arena") or
 						(_A.pull_location=="arena" and UnitExists("party1") and UnitTarget("party1")~=obj.guid) 
 						then
@@ -1645,14 +1654,14 @@ local mw_rot = {
 	end,
 	
 	pvp_disable_keybind = function()
-			if player:Stance() == 1 --and pull_location()=="arena" 
-				then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
-				if lowestmelee and not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence") then
-					---------------------------------- 
-					return lowestmelee:Cast("Disable")
-				end
+		if player:Stance() == 1 --and pull_location()=="arena" 
+			then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+			if lowestmelee and not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence") then
+				---------------------------------- 
+				return lowestmelee:Cast("Disable")
 			end
+		end
 	end,
 	
 	pvp_disable_root = function()
@@ -1802,10 +1811,10 @@ local mw_rot = {
 		-- Helper functions
 		local function isValidEnemy(enemy)
 			return enemy.isplayer
-            and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence")
-            and notimmune(enemy)
-            and not enemy:state("Disarm")
-            and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+			and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence")
+			and notimmune(enemy)
+			and not enemy:state("Disarm")
+			and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
 		end
 		
 		local function isValidFriend(friend)
@@ -2191,7 +2200,9 @@ local mw_rot = {
 		if player:SpellUsable("Healing Sphere") then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
-					if _A.pull_location=="pvp" or _A.pull_location=="arena"
+					if _A.pull_location=="pvp"
+						then target = Object("player")
+						elseif _A.pull_location=="arena"
 						then target = Object("lowestall")
 						else
 						target = Object("target")
@@ -2549,6 +2560,7 @@ local inCombat = function()
 	mw_rot.chibrew()
 	mw_rot.items_healthstone()
 	mw_rot.fortifyingbrew()
+	mw_rot.cancel_badnoggen()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	-- print(_Y.rushing_number())
@@ -2558,6 +2570,7 @@ local inCombat = function()
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	-- KEYBINDS
+	if mw_rot.dpsstance_healstance_keybind() then return true end -- holding shift or high prio check
 	if player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if player:keybind("R") then
 		if mw_rot.manatea() then return true end
@@ -2565,9 +2578,8 @@ local inCombat = function()
 		if mw_rot.blackout_keybind()  then return true end
 		if mw_rot.dpsstanceswap()  then return true end
 	end
-	if mw_rot.dpsstance_healstance_keybind() then return true end
 	if player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
-	if mw_rot.ctrl_mode() then return true end
+	if mw_rot.ctrl_mode() then return true end -- ctrl
 	-- GCD CDS
 	if mw_rot.lifecocoon()  then return true end
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
