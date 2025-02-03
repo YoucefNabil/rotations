@@ -63,10 +63,11 @@ end
 local function CalculateHP(t)
 	return 100 * ( CalculateHPRAW(t) ) / CalculateHPRAWMAX(t)
 end
-local blacklist = {
+local blacklistSS = {
 	-- ["Kimpackabowl"] = true,
 	-- ["Rauteeins"] = true,
 	-- ["Jimmyiwnl"] = true,
+	-- ["Tdot"] = true,
 	-- [] = true,
 	-- [] = true,
 	-- [] = true,
@@ -434,8 +435,7 @@ local exeOnLoad = function()
 				or string.lower(fr.name)=="ebon gargoyle" 
 				or string.lower(fr.name)=="vanndar stormpike"
 				or (location=="arena" and fr:ispet()) then
-				if not blacklist[fr.name] 
-					and fr:SpellRange("Renewing Mist") 
+				if  fr:SpellRange("Renewing Mist") 
 					and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable+1] = {
 						HP = fr:health(),
@@ -457,7 +457,7 @@ local exeOnLoad = function()
 		local location = pull_location()
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" or (location=="arena" and fr:ispet()) then
-				if not blacklist[fr.name] and not fr:Buff(132120) 
+				if not fr:Buff(132120) 
 					and fr:SpellRange("Renewing Mist") and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable+1] = {
 						HP = fr:health(),
@@ -838,7 +838,7 @@ local exeOnLoad = function()
 		local hpDelta = maxHPv2() 
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 		local deficit = manaBudget - hpDelta 
-		return (deficit > 1.5)
+		return (deficit > 2.0) -- 1.5 maybe too much?
 	end
 	
 	function _A.enoughmana(id)
@@ -1354,6 +1354,11 @@ local mw_rot = {
 				and player:ItemUsable(5512) then
 				return player:useitem("Healthstone")
 			end
+		end
+	end,
+	
+	cancel_badnoggen = function()
+		if _A.pull_location~="arena" and player:buffany("16591") then
 		end
 	end,
 	
@@ -2066,7 +2071,7 @@ local mw_rot = {
 	
 	dispellunCC = function()
 		if player:Stance() == 1 then
-			if player:SpellCooldown("Detox")<cdcd and player:SpellUsable("Detox") then
+			if player:SpellCooldown("Detox")<cdcd and player:SpellUsable("Detox") and not player:state("silence") then
 				for _, fr in pairs(_A.OM:Get('Friendly')) do
 					if fr.isplayer or string.lower(fr.name)=="ebon gargoyle" then
 						if fr:SpellRange("Detox")
@@ -2184,19 +2189,19 @@ local mw_rot = {
 	end,
 	
 	healingsphere_keybind = function()
-		if player:SpellCooldown("Healing Sphere")<cdcd  and  player:SpellUsable("Healing Sphere") then
+		local target
+		if player:SpellUsable("Healing Sphere") then
 			if player:Stance() == 1 then
-				if player:keybind("E") then
-					if player:SpellUsable(115460) then
-						local target = Object("target")
-						if target then
-							if target:Distance() < 40 then
-								if target:los() then
-									-- return target:CastGround("Healing Sphere")
-									return _A.clickcast(target,"Healing Sphere")
-									-- return _A.CallWowApi("CastSpellByID", 115464, "player")
-									-- return _A.CastPredictedPos(target.guid, "Healing Sphere", 88)
-								end
+				if player:SpellUsable(115460) then
+					if _A.pull_location=="pvp"
+						then target = Object("lowestall")
+						else
+						target = Object("target")
+					end
+					if target then
+						if target:Distance() < 40 then
+							if target:los() then
+								return _A.clickcast(target,"Healing Sphere")
 							end
 						end
 					end
@@ -2206,7 +2211,7 @@ local mw_rot = {
 	end,
 	
 	healingsphere = function()
-		if player:SpellCooldown("Healing Sphere")<cdcd  and  player:SpellUsable("Healing Sphere")  then
+		if player:SpellUsable("Healing Sphere")  then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
 					if _A.modifier_shift() or _A.manaengine() then
@@ -2224,7 +2229,7 @@ local mw_rot = {
 	end,
 	
 	healingsphere_superlow = function()
-		if player:SpellCooldown("Healing Sphere")<cdcd  and  player:SpellUsable("Healing Sphere")  then
+		if player:SpellUsable("Healing Sphere")  then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
 					local lowest = Object("lowestall")
@@ -2520,20 +2525,20 @@ local mw_rot = {
 	end,
 }
 local inCombat = function()
-	if not enteredworldat then return end
+	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return end
-	if not _A.pull_location then return end
+	if not _A.pull_location then return true end
 	player = player or Object("player")
-	if not player then return end
-	cdcd = _A.Parser.frequency and _A.Parser.frequency*2 or .3
+	if not player then return true end
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	-- print(player:SpellCount("Chi Brew"))
 	-- print(player.name)
 	-- print(player:state("snare || root"))
-	if not player:alive() then return end
+	if not player:alive() then return true end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
-	if player:mounted() then return end
-	if player:isChanneling("Crackling Jade Lightning") then return end -- ¨pausing when casting this
+	if player:mounted() then return true end
+	if player:isChanneling("Crackling Jade Lightning") then return true end -- ¨pausing when casting this
 	-- Out of GCD
 	mw_rot.autoattackmanager()
 	_Y.petengine_MONK()
@@ -2554,27 +2559,27 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
-	-- DPS
+	-- KEYBINDS
+	if player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if player:keybind("R") then
 		if mw_rot.manatea() then return true end
 		if mw_rot.tp_buff_keybind() then return true end
 		if mw_rot.blackout_keybind()  then return true end
 		if mw_rot.dpsstanceswap()  then return true end
 	end
-	-- GCD CDS
 	if mw_rot.dpsstance_healstance_keybind() then return true end
+	if mw_rot.pvp_disable_keybind() then return true end
+	if mw_rot.ctrl_mode() then return true end
+	-- GCD CDS
 	if mw_rot.lifecocoon()  then return true end
-	if mw_rot.healingsphere_keybind() then return true end
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
-	if player:mana()<=40 and mw_rot.manatea() then return true end
 	if mw_rot.renewingmist() then return true end
+	if player:mana()<40 and mw_rot.manatea() then return true end
 	-- OH SHIT ORBS
-	if _A.modifier_shift() or _A.manaengine_highprio() then
+	if _A.modifier_shift() or _A.manaengine_highprio() then -- HIGH PRIO
 		if mw_rot.healingsphere() then return true end
 	end
 	-- higher prio
-	if mw_rot.pvp_disable_keybind() then return true end
-	if mw_rot.ctrl_mode() then return true end
 	if mw_rot.Xuen() then return true end
 	--------------------- CC
 	if mw_rot.ringofpeacev2() then return true end
