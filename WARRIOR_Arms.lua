@@ -6,6 +6,7 @@ local media, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
+local cdcd = .3
 -- top of the CR
 local player
 _A.numtangos = 0
@@ -517,7 +518,7 @@ arms.rot = {
 	end,
 	
 	thunderclap = function()
-		if player:SpellCooldown("Thunder Clap")<.3 and player:SpellUsable("thunder clap") then
+		if player:SpellCooldown("Thunder Clap")<cdcd and player:SpellUsable("thunder clap") then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=7 and  not healerspecid[_A.UnitSpec(obj.guid)] and _A.notimmune(obj) and obj:debuffduration("Weakened Blows")<1 and obj:los() then
 					return player:cast("thunder clap")
@@ -527,7 +528,7 @@ arms.rot = {
 	end,
 	
 	hamstringpvp = function()
-		if player:SpellCooldown("Hamstring")<.3 and player:spellusable("Hamstring") then
+		if player:SpellCooldown("Hamstring")<cdcd and player:spellusable("Hamstring") then
 			local target = Object("target")
 			if target and target.isplayer and target:enemy() 
 				and target:debuffduration("Hamstring")<1
@@ -558,25 +559,25 @@ arms.rot = {
 	end,
 	
 	colossussmash = function()
-		if  player:SpellCooldown("Colossus Smash")<.3 then
+		if  player:SpellCooldown("Colossus Smash")<cdcd then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() and lowestmelee:debuffduration("Colossus Smash")<1 then
+			if lowestmelee and lowestmelee:debuffduration("Colossus Smash")<1 then
 				return lowestmelee:Cast("Colossus Smash")
 			end
 		end
 	end,
 	
 	Mortalstrike = function()
-		if  player:SpellCooldown("Mortal Strike")<.3 then
+		if  player:SpellCooldown("Mortal Strike")<cdcd then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee then
 				return lowestmelee:Cast("Mortal Strike")
 			end
 		end
 	end,
 	
 	thunderclapPVE = function()
-		if player:SpellCooldown("Thunder clap")<.3 and player:SpellUsable("Thunder clap") and _A.numtangos>=3 then
+		if player:SpellCooldown("Thunder clap")<cdcd and player:SpellUsable("Thunder clap") and _A.numtangos>=3 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee then
 				return player:Cast("Thunder clap")
@@ -594,12 +595,12 @@ arms.rot = {
 	end,
 	
 	battleshout = function ()
-		if player:SpellCooldown("battle shout")<.3 and player:rage()<=75 then return player:cast("battle shout")
+		if player:SpellCooldown("battle shout")<cdcd and player:rage()<=75 then return player:cast("battle shout")
 		end
 	end,
 	
 	slam = function()
-		if  player:SpellCooldown("Slam")<.3 and player:SpellUsable("Slam") then
+		if player:SpellUsable("Slam") then
 			local lowestmeleeEXECUTE = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
 			if not lowestmeleeEXECUTE or (lowestmeleeEXECUTE and  lowestmeleeEXECUTE:health()>20) then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
@@ -613,7 +614,7 @@ arms.rot = {
 	end,
 	
 	burstdisarm = function()
-		if player:SpellCooldown("Disarm")<.3 then
+		if player:SpellCooldown("Disarm")<cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer 
 					and obj:SpellRange("Disarm") 
@@ -655,7 +656,7 @@ arms.rot = {
 	
 	heroicleap = function()
 		local target = Object("target")
-		if target and player:SpellCooldown("Heroic Leap")<.3
+		if target and player:SpellCooldown("Heroic Leap")<cdcd
 			and target.isplayer
 			and not target:spellRange("Mortal Strike") 
 			and target:range()>=8
@@ -782,18 +783,17 @@ arms.rot = {
 	shockwave = function()
 		if player:Talent("Shockwave") and player:SpellCooldown("Shockwave")<player:gcd() then
 			local bestfacing, bestfacing_number = _Y.bestfacing(90, 10, 0.1)
-			local playerfacing = _A.ObjectFacing("player")
 			if bestfacing_number>=3 then
-				if not _Y.IsFacingEqual(bestfacing, playerfacing, 0.05) then _A.FaceDirection(bestfacing, true)
-					else
-					return player:Cast("Shockwave")
-				end
+				_A.FaceDirection(bestfacing, true)
+				return C_Timer.After(0, function()
+					player:Cast("Shockwave")
+				end)
 			end
 		end
 	end,
 	
 	bladestorm = function()
-		if player:combat() and player:buff("Call of Victory") and player:SpellCooldown("bladestorm")<.3 then
+		if player:combat() and player:buff("Call of Victory") and player:SpellCooldown("bladestorm")<cdcd then
 			return player:cast("Bladestorm")
 		end
 	end,
@@ -801,7 +801,7 @@ arms.rot = {
 	victoryrush = function()
 		if  player:SpellUsable("Victory Rush") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee then
 				return lowestmelee:Cast("Victory Rush")
 			end
 		end
@@ -811,7 +811,7 @@ arms.rot = {
 	overpower = function()
 		if  player:SpellUsable("Overpower") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee then
 				return lowestmelee:Cast("Overpower")
 			end
 		end
@@ -828,6 +828,7 @@ local inCombat = function()
 	_A.numenemiesinfront()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end
@@ -846,42 +847,44 @@ local inCombat = function()
 	arms.rot.reflectspell()
 	arms.rot.Pummel()
 	--
-	-- if arms.rot.bladestorm() then return end
-	-- if arms.rot.shockwave() then return end
-	-- if arms.rot.diebythesword() then return end
-	-- if arms.rot.sweeping_strikes() then return end
-	-- if arms.rot.chargegapclose() then return end
-	-- if arms.rot.heroicleap() then return end
-	-- if arms.rot.colossussmash() then return end
-	-- if arms.rot.Execute() then return end
-	-- if arms.rot.thunderclap() then return end
-	-- if arms.rot.burstdisarm() then return end
-	-- if arms.rot.battleshout() then return end
-	-- if arms.rot.Disruptingshout() then return end
-	-- if arms.rot.hamstringpvp() then return end
-	-- if arms.rot.victoryrush() then return end
-	-- if arms.rot.Mortalstrike() then return end
-	-- if arms.rot.thunderclapPVE() then return end
-	-- if arms.rot.slam() then return end
-	-- if arms.rot.overpower() then return end
-	arms.rot.bladestorm()
-	arms.rot.shockwave()
-	arms.rot.diebythesword()
-	arms.rot.sweeping_strikes()
-	arms.rot.chargegapclose()
-	arms.rot.heroicleap()
-	arms.rot.colossussmash()
-	arms.rot.Execute()
-	arms.rot.thunderclap()
-	arms.rot.burstdisarm()
-	arms.rot.battleshout()
-	arms.rot.Disruptingshout()
-	arms.rot.hamstringpvp()
-	arms.rot.victoryrush()
-	arms.rot.Mortalstrike()
-	arms.rot.thunderclapPVE()
-	arms.rot.slam()
-	arms.rot.overpower()
+	-- if player:level()>=90 then
+	if arms.rot.bladestorm() then return end
+	if arms.rot.shockwave() then return end
+	if arms.rot.diebythesword() then return end
+	if arms.rot.sweeping_strikes() then return end
+	if arms.rot.chargegapclose() then return end
+	if arms.rot.heroicleap() then return end
+	if arms.rot.colossussmash() then return end
+	if arms.rot.Execute() then return end
+	if arms.rot.thunderclap() then return end
+	if arms.rot.burstdisarm() then return end
+	if arms.rot.battleshout() then return end
+	if arms.rot.Disruptingshout() then return end
+	if arms.rot.hamstringpvp() then return end
+	if arms.rot.victoryrush() then return end
+	if arms.rot.Mortalstrike() then return end
+	if arms.rot.thunderclapPVE() then return end
+	if arms.rot.slam() then return end
+	if arms.rot.overpower() then return end
+	-- else
+	-- arms.rot.bladestorm()
+	-- arms.rot.shockwave()
+	-- arms.rot.diebythesword()
+	-- arms.rot.sweeping_strikes()
+	-- arms.rot.chargegapclose()
+	-- arms.rot.heroicleap()
+	-- arms.rot.colossussmash()
+	-- arms.rot.Execute()
+	-- arms.rot.thunderclap()
+	-- arms.rot.burstdisarm()
+	-- arms.rot.battleshout()
+	-- arms.rot.Disruptingshout()
+	-- arms.rot.hamstringpvp()
+	-- arms.rot.victoryrush()
+	-- arms.rot.Mortalstrike()
+	-- arms.rot.thunderclapPVE()
+	-- arms.rot.slam()
+	-- arms.rot.overpower()
 end
 local spellIds_Loc = function()
 end

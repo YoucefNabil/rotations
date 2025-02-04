@@ -593,6 +593,25 @@ local exeOnLoad = function()
 		return nil
 	end)
 	
+	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKCNOLOSfocus', function(num)
+		local tempTable = {}
+		local target = Object("target")
+		local pet = Object("pet")
+		if not pet then return end
+		if pet and not pet:alive() then return end
+		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
+		--
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
+			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") then
+			return target and target.guid -- this is good
+		end
+		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		if lowestmelee then
+			return lowestmelee.guid
+		end
+		return nil
+	end)
+	
 	_A.FakeUnits:Add('enemyplayercc', function(num)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
@@ -1101,63 +1120,66 @@ local exeOnLoad = function()
 			end
 		end
 	end	
-	local abs = math.abs
+	--]]
+	
+	local floor, abs, min = math.floor, math.abs, math.min
+	
 	function _Y.mostclumpedenemy(Range, Radius)
 		local radius = Radius and (Radius + 1.5) or 10
 		local range = Range or 40
 		local most, mostGuid = 0, nil
 		local radiusSq = radius * radius
 		
-		
-		-- Phase 1: Directly collect into arrays (no temp table)
-		local guids, x, y = {}, {}, {}
-		local count = {}
+		-- Phase 1: Pre-filter with fail-fast conditions
+		local enemies, x, y, count = {}, {}, {}, {}
+		local n = 0
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:range() < range and not _A.scattertargets[Obj.guid] 
-				and Obj:InConeOf(player, 170) and _A.notimmune(Obj) and Obj:los() then
-				local X, Y = _A.ObjectPosition(Obj.guid)
-				guids[#guids + 1] = Obj.guid
-				x[#x + 1] = X
-				y[#y + 1] = Y
-				count[Obj.guid] = 1
+			if not _A.scattertargets[Obj.guid]        -- Common failure case first
+				and Obj:range() < range 
+				and Obj:InConeOf(player, 170) 
+				and _A.notimmune(Obj) 
+				and Obj:los() then
+				n = n + 1
+				enemies[n] = Obj
+				x[n], y[n] = _A.ObjectPosition(Obj.guid)
+				count[n] = 1
 			end
 		end
-		local numEntries = #guids
 		
-		-- Phase 2: Spatial grid with cell size = radius
-		local grid = {}
-		for i = 1, numEntries do
-			local cx = math.floor(x[i] / radius)
-			local cy = math.floor(y[i] / radius)
-			grid[cx] = grid[cx] or {}
-			grid[cx][cy] = grid[cx][cy] or {}
-			table.insert(grid[cx][cy], i)
+		-- Phase 2: Spatial grid using precalculated cell keys
+		local grid, cell_size = {}, radius * 1.05  -- 5% larger to reduce edge cases
+		local r_reciprocal = 1 / cell_size
+		for i = 1, n do
+			local cx = floor(x[i] * r_reciprocal)
+			local cy = floor(y[i] * r_reciprocal)
+			local key = cx * 131 + cy  -- Fast hash for grid cells
+			grid[key] = grid[key] or {}
+			grid[key][#grid[key]+1] = i
 		end
 		
-		-- Phase 3: Optimized neighbor checking with early exits
-		for i = 1, numEntries do
+		-- Phase 3: Optimized neighbor checks with branch ordering
+		for i = 1, n do
 			local xi, yi = x[i], y[i]
-			local cx, cy = math.floor(xi / radius), math.floor(yi / radius)
-			local guid_i = guids[i]
+			local cx = floor(xi * r_reciprocal)
+			local cy = floor(yi * r_reciprocal)
 			
-			-- Check 3x3 grid cells around current position
+			-- Check 3x3 grid cells with spatial coherence
 			for dx = -1, 1 do
-				local cell_x = grid[cx + dx]
-				if cell_x then
-					for dy = -1, 1 do
-						local cell = cell_x[cy + dy]
-						if cell then
-							for _, j in ipairs(cell) do
-								-- Ensure j > i to avoid duplicate checks
-								if j > i then
-									local dx_val = x[j] - xi
-									if abs(dx_val) <= radius then
-										local dy_val = y[j] - yi
-										if abs(dy_val) <= radius then
-											if (dx_val*dx_val + dy_val*dy_val) <= radiusSq then
-												count[guid_i] = count[guid_i] + 1
-												count[guids[j]] = count[guids[j]] + 1
-											end
+				local cell_key = (cx + dx) * 131
+				for dy = -1, 1 do
+					local cell = grid[cell_key + (cy + dy)]
+					if cell then
+						for j = 1, #cell do
+							local other = cell[j]
+							if other > i then  -- Avoid duplicate pairs
+								local dx_val = x[other] - xi
+								if abs(dx_val) <= radius then
+									local dy_val = y[other] - yi
+									if abs(dy_val) <= radius then
+										local dist_sq = dx_val*dx_val + dy_val*dy_val
+										if dist_sq <= radiusSq then
+											count[i] = count[i] + 1
+											count[other] = count[other] + 1
 										end
 									end
 								end
@@ -1168,16 +1190,16 @@ local exeOnLoad = function()
 			end
 		end
 		
-		-- Phase 4: Find maximum cluster
-		for guid, num in pairs(count) do
-			if num > most then
-				most, mostGuid = num, guid
+		-- Phase 4: Cache-line optimized max search
+		local max_count, max_index = 0, 0
+		for i = 1, n do
+			if count[i] > max_count then
+				max_count, max_index = count[i], i
 			end
 		end
 		
-		return most, mostGuid
+		return max_count, enemies[max_index] and enemies[max_index].guid
 	end
-	--]]
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-------------------------------------------------------
@@ -1288,6 +1310,17 @@ local exeOnLoad = function()
 			return 3
 		end
 	end
+	local function attackfocus()
+		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOSfocus")
+		if target and _A.pull_location~="arena" then
+			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+					return _A.CallWowApi("PetAttack", target.guid), 3
+				end
+			end
+			return 3
+		end
+	end
 	local function petfollow() -- when pet target has a breakable cc
 		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
 			local target = Object(_A.UnitTarget(_A.PetGUID))
@@ -1304,11 +1337,12 @@ local exeOnLoad = function()
 		-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
-		if _A.PetGUID == nil then return end
+		if _A.PetGUID == nil then return true end
 		-- Pet Rotation
-		if attacktotem() then return end
-		if attacklowest() then return end
-		if petfollow() then return end
+		if attacktotem() then return true end
+		if attackfocus() then return true end
+		if attacklowest() then return true end
+		if petfollow() then return true end
 	end
 	-- C_Timer.NewTicker(.1, _Y.petengine_Surv, false, "petengineengineSurvival")
 end
@@ -1955,7 +1989,9 @@ survival.rot = {
 						return Obj:Cast("Tranquilizing Shot")
 						elseif _A.CobraCheck() then 
 						local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
-						return lowestmelee and player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+						if lowestmelee then
+							return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
+						end
 					end
 				end
 			end

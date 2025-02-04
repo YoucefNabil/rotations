@@ -830,8 +830,8 @@ local exeOnLoad = function()
 		if player:buff("Lucidity") or player:mana()>=95 then return true end
 		-- local hpDelta = averageHPv2()
 		local hpDelta = maxHPv2()
-		local manaBudget = _A.avgDeltaPercent
-		-- local manaBudget = (_A.avgDeltaPercent + effectivemanaregen())
+		-- local manaBudget = _A.avgDeltaPercent
+		local manaBudget = (_A.avgDeltaPercent + effectivemanaregen())
 		return manaBudget>=hpDelta
 	end
 	--------------------------------------------------------
@@ -839,7 +839,7 @@ local exeOnLoad = function()
 		local hpDelta = maxHPv2() 
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 		local deficit = manaBudget - hpDelta 
-		return (deficit > 2.0) -- 1.5 maybe too much?
+		return (deficit > 1.65) -- 1.5 maybe too much?
 	end
 	
 	function _A.enoughmana(id)
@@ -1270,6 +1270,7 @@ local dangerousdebuffs = {
 	"Freeze",
 	"Denounce",
 	"Frost Nova",
+	"Execution Sentence",
 	"Touch of Karma"
 }
 local mw_rot = {
@@ -1527,7 +1528,7 @@ local mw_rot = {
 				if obj.isplayer and obj:SpellRange("Paralysis") then
 					
 					if 
-						(healerspecid[obj:spec()]) or
+						-- (healerspecid[obj:spec()]) or
 						(healerspecid[obj:spec()] and _A.pull_location~="arena") or
 						(_A.pull_location=="arena" and UnitExists("party1") and UnitTarget("party1")~=obj.guid) 
 						then
@@ -2570,7 +2571,7 @@ local inCombat = function()
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	-- KEYBINDS
-	if mw_rot.dpsstance_healstance_keybind() then return true end -- holding shift or high prio check
+	if not player:keybind("R") and mw_rot.dpsstance_healstance_keybind() then return true end -- holding shift or high prio check
 	if player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if player:keybind("R") then
 		if mw_rot.manatea() then return true end
