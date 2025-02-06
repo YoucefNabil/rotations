@@ -620,9 +620,9 @@ local exeOnLoad = function()
 	local function someonebursting()
 		for _, obj in pairs(_A.OM:Get('Enemy')) do
 			if obj.isplayer 
-				and obj:range()<40
 				and not healerspecid[obj:spec()]
-				and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest") or obj:BuffAny("Call of Dominance"))
+				and obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance")
+				and obj:range()<40
 				and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm || stun")
 				and obj:los() then
 				return true
@@ -634,7 +634,8 @@ local exeOnLoad = function()
 	-- ====
 	local MW_HealthUsedData = {}
 	local MW_LastHealth = {}
-	local MW_HealthAnalyzedTimespan = 18
+	local MW_HealthAnalyzedTimespan_fixed = 18
+	local MW_HealthAnalyzedTimespan = MW_HealthAnalyzedTimespan_fixed
 	--====================================================== Testing
 	_A.Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if string_find(subevent,"_DAMAGE") or string_find(subevent,"_HEAL") then -- does this work with absorbs? I don't remember testing this
@@ -663,7 +664,7 @@ local exeOnLoad = function()
 	function PlayerHealthChanged(unit, Current, Max, Usage)
 		local uptime = GetTime()
 		-- Fixed
-		if someonebursting() then MW_HealthAnalyzedTimespan = 14 else MW_HealthAnalyzedTimespan = 18 end
+		if someonebursting() then MW_HealthAnalyzedTimespan = MW_HealthAnalyzedTimespan_fixed*0.7 else MW_HealthAnalyzedTimespan = MW_HealthAnalyzedTimespan_fixed end
 		--
 		if MW_HealthUsedData[unit] then
 			MW_HealthUsedData[unit].healthUsed = 0
@@ -1389,7 +1390,7 @@ local mw_rot = {
 		local arenatar = 0
 		if player:Stance() == 1   then
 			if pull_location()=="arena" then
-				if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 then
+				if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<cdcd then
 					for _, obj in pairs(_A.OM:Get('Enemy')) do
 						if 	obj.isplayer and obj:range()<4
 							and _A.notimmune(obj)
@@ -1456,7 +1457,7 @@ local mw_rot = {
 	
 	kick_legsweep = function()
 		if player:Stance() == 1 then
-			if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3   then
+			if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<cdcd   then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer and obj:isCastingAny()
 						and obj:range()<5
@@ -1472,7 +1473,7 @@ local mw_rot = {
 	
 	stun_legsweep = function()
 		local enemycount = 0
-		if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<0.3 then
+		if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep")<cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if 	obj.isplayer and obj:range()<5
 					and (obj:drstate("Leg Sweep")==-1 or obj:drstate("Leg Sweep")==1)
@@ -1489,7 +1490,7 @@ local mw_rot = {
 	end,
 	kick_chargingox = function()
 		if player:Stance() == 1 then
-			if player:Talent("Charging Ox Wave") and player:SpellCooldown("Charging Ox Wave")<0.3   then
+			if player:Talent("Charging Ox Wave") and player:SpellCooldown("Charging Ox Wave")<cdcd   then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj:isCastingAny()
 						and obj:range()<30
@@ -1679,7 +1680,7 @@ local mw_rot = {
 	end,
 	
 	ringofpeace = function()
-		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<0.3 then
+		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<cdcd then
 			local peacetarget = Object("mostTargetedRosterPVP")
 			if peacetarget then
 				if peacetarget:SpellRange("Ring of Peace") and peacetarget:health()<=85 and not peacetarget:BuffAny("Ring of Peace") then
@@ -1692,216 +1693,111 @@ local mw_rot = {
 			end
 		end
 	end,
-	--[[
-		ringofpeacev2 = function()
-		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace") < 0.3 then
-		local targets = {}
-		local targetsall = {}
-		local peacetarget = nil
-		local most, mostGuid = 0
-		local mostall, mostallGuid = 0
-		
-		-- Version 1: Only enemies targeting
-		for _, enemy in pairs(_A.OM:Get('Enemy')) do
-		if enemy.isplayer and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) and not enemy:state("Disarm") 
-		and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
-		and not healerspecid[enemy:spec()] then
-		local tguid = UnitTarget(enemy.guid)
-		if tguid then
-		local tobj = Object(tguid)
-		if tobj and _A.nothealimmune(tobj) and tobj:Distancefrom(enemy) < 7 and _A.nothealimmune(tobj) then
-		targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
-		end
-		end
-		end
-		end
-		
-		for guid, count in pairs(targets) do
-		if count > most then
-		most = count
-		mostGuid = guid
-		end
-		end
-		
-		if mostGuid then peacetarget = Object(mostGuid)
-		if peacetarget then
-		if peacetarget:SpellRange("Ring of Peace") and not peacetarget:BuffAny("Ring of Peace") then
-		if (most >= 2) or (most >= 1 and (peacetarget:health() < 45 or (_A.pull_location == "arena" and peacetarget:health() < 65))) then
-		if peacetarget:los() then
-		return peacetarget:Cast("Ring of Peace")
-		end
-		end
-		end
-		end
-		end
-		-- Version 2: All valid enemies in range
-		for _, friend in pairs(_A.OM:Get('Friendly')) do
-		if friend.isplayer and _A.nothealimmune(friend) then
-		for _, enemy in pairs(_A.OM:Get('Enemy')) do
-		if enemy.isplayer and friend:Distancefrom(enemy) < 7 and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) 
-		and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
-		and not enemy:state("Disarm")  then
-		targetsall[friend.guid] = targetsall[friend.guid] and targetsall[friend.guid] + 1 or 1
-		end
-		end
-		end
-		end
-		
-		for guid, count in pairs(targetsall) do
-		if count > mostall then
-		mostall = count
-		mostallGuid = guid
-		end
-		end
-		
-		if mostallGuid then peacetarget = Object(mostallGuid)
-		if peacetarget then
-		if peacetarget:SpellRange("Ring of Peace") and not peacetarget:BuffAny("Ring of Peace") then
-		if (mostall >= 3) then
-		if peacetarget:los() then
-		return peacetarget:Cast("Ring of Peace")
-		end
-		end
-		end
-		end
-		end
-		-- version 3: interrupt high prio casts
-		for _, friend in pairs(_A.OM:Get('Friendly')) do
-		if friend and friend.isplayer and _A.nothealimmune(friend) then
-		for _, enemy in pairs(_A.OM:Get('Enemy')) do
-		if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and kickcheck_highprio(enemy) 
-		and (player:SpellCooldown("Spear Hand Strike")>_A.interrupttreshhold or not enemy:caninterrupt() or not enemy:SpellRange("Blackout Kick"))
-		and _A.notimmune(enemy) and friend:los() then
-		return friend:Cast("Ring of Peace")
-		end
-		end
-		end
-		end
-		--
-		-- Version 4: Silence healers if someone is low
-		-- if _A.pull_location and _A.pull_location=="arena" then
-		if _A.someoneislow() then -- iterates through enemy players to find if a low hp enemy player exists
-		for _, friend in pairs(_A.OM:Get('Friendly')) do
-		if friend and friend.isplayer and _A.nothealimmune(friend) then
-		for _, enemy in pairs(_A.OM:Get('Enemy')) do
-		if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and healerspecid[enemy:spec()]  and _A.notimmune(enemy) and not enemy:state("silence") 
-		and (enemy:drState(137460)==1 or enemy:drState(137460)==-1)
-		and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
-		and friend:los() then
-		return friend:Cast("Ring of Peace")
-		end
-		end
-		end
-		end
-		end
-		-- end
-		end
-		end,
-	--]]
 	
+
 	ringofpeacev2 = function()
-		if not (player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace") < 0.3) then
-			return
-		end
-		
-		-- Localize frequently accessed functions and variables
-		local OM, notimmune, nothealimmune = _A.OM, _A.notimmune, _A.nothealimmune
-		local GetEnemy, GetFriendly = OM:Get('Enemy'), OM:Get('Friendly')
-		local UnitTarget, Object, pairs = UnitTarget, Object, pairs
-		
-		-- Helper functions
-		local function isValidEnemy(enemy)
-			return enemy.isplayer
-			and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence")
-			and notimmune(enemy)
-			and not enemy:state("Disarm")
-			and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
-		end
-		
-		local function isValidFriend(friend)
-			return friend.isplayer and nothealimmune(friend)
-		end
-		
-		-- Precompute valid units
-		local validEnemies, validFriends = {}, {}
-		for _, enemy in pairs(GetEnemy) do if isValidEnemy(enemy) then validEnemies[#validEnemies+1] = enemy end end
-		for _, friend in pairs(GetFriendly) do if isValidFriend(friend) then validFriends[#validFriends+1] = friend end end
-		
-		-- Version 1: Priority target analysis
-		local function checkVersion1()
-			local targets, mostGuid, mostCount = {}, nil, 0
-			for _, enemy in pairs(validEnemies) do
-				if not healerspecid[enemy:spec()] then
+		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<cdcd then
+			local targets = {}
+			local targetsall = {}
+			local peacetarget = nil
+			local most, mostGuid = 0
+			local mostall, mostallGuid = 0
+			
+			-- Version 1: Only enemies targeting
+			for _, enemy in pairs(_A.OM:Get('Enemy')) do
+				if enemy.isplayer and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) and not enemy:state("Disarm") 
+					and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+					and not healerspecid[enemy:spec()] then
 					local tguid = UnitTarget(enemy.guid)
 					if tguid then
-						local targetObj = Object(tguid)
-						if targetObj and nothealimmune(targetObj) and enemy:DistanceFrom(targetObj) < 7 then
-							targets[tguid] = (targets[tguid] or 0) + 1
+						local tobj = Object(tguid)
+						if tobj and _A.nothealimmune(tobj) and tobj:Distancefrom(enemy) < 7 and _A.nothealimmune(tobj) then
+							targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
 						end
 					end
 				end
 			end
-			for guid, count in pairs(targets) do if count > mostCount then mostGuid, mostCount = guid, count end end
-			if mostCount >= (mostCount >= 2 and 2 or (_A.pull_location == "arena" and 1.65 or 1)) then
-				local target = Object(mostGuid)
-				if target and target:SpellRange("Ring of Peace") and not target:BuffAny("Ring of Peace") and target:los() then
-					return target:Cast("Ring of Peace")
+			
+			for guid, count in pairs(targets) do
+				if count > most then
+					most = count
+					mostGuid = guid
 				end
 			end
-		end
-		
-		-- Version 2: Area denial potential
-		local function checkVersion2()
-			local bestFriend, maxCount = nil, 0
-			for _, friend in pairs(validFriends) do
-				local count = 0
-				for _, enemy in pairs(validEnemies) do
-					if friend:DistanceFrom(enemy) < 7 then count = count + 1 end
+			
+			if mostGuid then peacetarget = Object(mostGuid)
+				if peacetarget then
+					if peacetarget:SpellRange("Ring of Peace") and not peacetarget:BuffAny("Ring of Peace") then
+						if (most >= 2) or (most >= 1 and (peacetarget:health() < 45 or (_A.pull_location == "arena" and peacetarget:health() < 65))) then
+							if peacetarget:los() then
+								return peacetarget:Cast("Ring of Peace")
+							end
+						end
+					end
 				end
-				if count > maxCount then bestFriend, maxCount = friend, count end
 			end
-			if maxCount >= 3 and bestFriend and bestFriend:SpellRange("Ring of Peace") and bestFriend:los() then
-				return bestFriend:Cast("Ring of Peace")
+			-- Version 2: All valid enemies in range
+			for _, friend in pairs(_A.OM:Get('Friendly')) do
+				if friend.isplayer and _A.nothealimmune(friend) then
+					for _, enemy in pairs(_A.OM:Get('Enemy')) do
+						if enemy.isplayer and friend:Distancefrom(enemy) < 7 and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) 
+							and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
+							and not enemy:state("Disarm")  then
+							targetsall[friend.guid] = targetsall[friend.guid] and targetsall[friend.guid] + 1 or 1
+						end
+					end
+				end
 			end
-		end
-		
-		-- Version 3: High-priority interrupt
-		local function checkVersion3()
-			for _, friend in pairs(validFriends) do
-				for _, enemy in pairs(validEnemies) do
-					if kickcheck_highprio(enemy) and friend:DistanceFrom(enemy) < 7 then
-						if player:SpellCooldown("Spear Hand Strike") > _A.interrupttreshhold 
-							or not enemy:caninterrupt() 
-							or not enemy:SpellRange("Blackout Kick") then
-							if friend:los() then
+			
+			for guid, count in pairs(targetsall) do
+				if count > mostall then
+					mostall = count
+					mostallGuid = guid
+				end
+			end
+			
+			if mostallGuid then peacetarget = Object(mostallGuid)
+				if peacetarget then
+					if peacetarget:SpellRange("Ring of Peace") and not peacetarget:BuffAny("Ring of Peace") then
+						if (mostall >= 3) then
+							if peacetarget:los() then
+								return peacetarget:Cast("Ring of Peace")
+							end
+						end
+					end
+				end
+			end
+			-- version 3: interrupt high prio casts
+			for _, friend in pairs(_A.OM:Get('Friendly')) do
+				if friend and friend.isplayer and _A.nothealimmune(friend) then
+					for _, enemy in pairs(_A.OM:Get('Enemy')) do
+						if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and kickcheck_highprio(enemy) 
+							and (player:SpellCooldown("Spear Hand Strike")>_A.interrupttreshhold or not enemy:caninterrupt() or not enemy:SpellRange("Blackout Kick"))
+							and _A.notimmune(enemy) and friend:los() then
+							return friend:Cast("Ring of Peace")
+						end
+					end
+				end
+			end
+			--
+			-- Version 4: Silence healers if someone is low
+			-- if _A.pull_location and _A.pull_location=="arena" then
+			if _A.someoneislow() then -- iterates through enemy players to find if a low hp enemy player exists
+				for _, friend in pairs(_A.OM:Get('Friendly')) do
+					if friend and friend.isplayer and _A.nothealimmune(friend) then
+						for _, enemy in pairs(_A.OM:Get('Enemy')) do
+							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and healerspecid[enemy:spec()]  and _A.notimmune(enemy) and not enemy:state("silence") 
+								and (enemy:drState(137460)==1 or enemy:drState(137460)==-1)
+								and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")
+								and friend:los() then
 								return friend:Cast("Ring of Peace")
 							end
 						end
 					end
 				end
 			end
+			-- end
 		end
-		
-		-- Version 4: Healer silence
-		local function checkVersion4()
-			if _A.someoneislow() then
-				for _, friend in pairs(validFriends) do
-					for _, enemy in pairs(validEnemies) do
-						if healerspecid[enemy:spec()] 
-							and friend:DistanceFrom(enemy) < 7 
-							and not enemy:state("silence")
-							and (enemy:drState(137460) == 1 or enemy:drState(137460) == -1) then
-							if friend:los() then
-								return friend:Cast("Ring of Peace")
-							end
-						end
-					end
-				end
-			end
-		end
-		
-		-- Execute checks in priority order
-		return checkVersion1() or checkVersion2() or checkVersion3() or checkVersion4()
 	end,
 	
 	chi_wave = function()
@@ -2571,7 +2467,6 @@ local inCombat = function()
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	-- KEYBINDS
-	if not player:keybind("R") and mw_rot.dpsstance_healstance_keybind() then return true end -- holding shift or high prio check
 	if player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if player:keybind("R") then
 		if mw_rot.manatea() then return true end
@@ -2584,10 +2479,17 @@ local inCombat = function()
 	-- GCD CDS
 	if mw_rot.lifecocoon()  then return true end
 	if mw_rot.burstdisarm()  then print("DISARMING") return true end
-	if mw_rot.renewingmist() then return true end
+	-- OH SHIT ORBS
+	if _A.modifier_shift() then -- HIGH PRIO
+		if mw_rot.healingsphere() then return true end
+	end
+	if mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
+	if mw_rot.chi_wave()  then return true end -- KEEP THESE OFF CD
+	if mw_rot.tigerpalm_mm() then return true end
+	if mw_rot.uplift() then return true end -- really important
 	if player:mana()<40 and mw_rot.manatea() then return true end
 	-- OH SHIT ORBS
-	if _A.modifier_shift() or _A.manaengine_highprio() then -- HIGH PRIO
+	if _A.manaengine_highprio() then -- HIGH PRIO
 		if mw_rot.healingsphere() then return true end
 	end
 	-- higher prio
@@ -2605,12 +2507,8 @@ local inCombat = function()
 	-- if mw_rot.dispellunSLOW() then return end
 	if mw_rot.tigerslust()  then return true end
 	------------------ Rotation Proper
-	if mw_rot.tigerpalm_mm() then return true end
-	if mw_rot.uplift() then return true end
-	if mw_rot.renewingmist() then return true end -- OLD
 	if mw_rot.manatea() then return true end
 	if mw_rot.surgingmist() then return true end
-	if mw_rot.chi_wave()  then return true end
 	if mw_rot.healingsphere() then return true end
 	if mw_rot.spin_rjw() then return true end
 	if mw_rot.healstatue() then return true end
@@ -2618,6 +2516,7 @@ local inCombat = function()
 	-- if mw_rot.dispellplzany() then return end
 	-- if mw_rot.statbuff() then return end
 	------------------ STANCE SWAP FILL
+	if not player:keybind("R") and mw_rot.dpsstance_healstance_keybind() then return true end -- holding shift or high prio check
 	if mw_rot.dpsstance_spin_musclememory() then return true end
 	if mw_rot.dpsstance_jab() then return true end
 	if mw_rot.dpsstance_spin()  then return true end

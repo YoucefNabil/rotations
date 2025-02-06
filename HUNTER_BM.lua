@@ -603,6 +603,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKC', function(num)
 		local tempTable = {}
 		local target = Object("target")
+		local focus = Object("focus")
 		local pet = Object("pet")
 		if not pet then return end
 		if pet and not pet:alive() then return end
@@ -624,7 +625,11 @@ local exeOnLoad = function()
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
 		end
-		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and target:range()<=100 and target:rangefrom(pet)<=24 and _A.notimmune(target)
+		if _A.pull_location~="arena" and focus and not _A.scattertargets[focus.guid] and focus:enemy() and focus:exists() and focus:alive() and focus:spellrange("Hunter's Mark") and focus:rangefrom(pet)<=24 and _A.notimmune(focus)
+			and not focus:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(focus) then
+			return focus and focus.guid -- this is good
+		end
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and target:spellrange("Hunter's Mark") and target:rangefrom(pet)<=24 and _A.notimmune(target)
 			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(target) then
 			return target and target.guid -- this is good
 		end

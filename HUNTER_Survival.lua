@@ -1340,7 +1340,7 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return true end
 		-- Pet Rotation
 		if attacktotem() then return true end
-		if attackfocus() then return true end
+		-- if attackfocus() then return true end
 		if attacklowest() then return true end
 		if petfollow() then return true end
 	end
@@ -1968,7 +1968,7 @@ survival.rot = {
 		end
 	end,
 	auto_multishot = function() -- and player:buff("Thrill of the Hunt") 
-		if _A.pull_location~="arena" and player:spellcooldown("Multi-Shot")<cdcd and _Y.clumpnumber and _Y.clumpnumber>=3  then
+		if _A.pull_location~="arena" and player:spellcooldown("Multi-Shot")<cdcd then
 			local lowestmelee =  Object(_Y.clumpguid)
 			if lowestmelee then
 				if player:SpellUsable("Multi-Shot") and _A.lowpriocheck("Multi-Shot") then
@@ -2167,7 +2167,9 @@ local inCombat = function()
 	if survival.rot.glaivetoss() then return true end
 	-- heal pet
 	-- excess focus priority
-	if survival.rot.auto_multishot() then return true end
+	if _Y.clumpnumber and _Y.clumpnumber>=3 and player:buff("Thrill of the Hunt") and survival.rot.auto_multishot() then return true end
+	if player:buff("Thrill of the Hunt") and survival.rot.arcaneshot() then return true end
+	if _Y.clumpnumber and _Y.clumpnumber>=3 and survival.rot.auto_multishot() then return true end
 	if survival.rot.serpentsting_check() then return true end
 	if survival.rot.venom() then return true end
 	if survival.rot.arcaneshot() then return true end
