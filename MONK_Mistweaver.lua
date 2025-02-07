@@ -731,7 +731,6 @@ local exeOnLoad = function()
 	function _A.PlayerManaChanged(Current, Max, Usage)
 		local uptime = GetTime()
 		-- FIXED
-		MW_AnalyzedTimespan = 30
 		local manaUsed = 0
 		MW_ManaUsedData[uptime] = Usage
 		for Time, Mana in pairs(MW_ManaUsedData) do
@@ -2291,6 +2290,7 @@ local mw_rot = {
 	dpsstance_jab = function()
 		if player:Stance() ~= 1 and not player:buff("Rushing Jade Wind") then
 			if not player:Buff("Muscle Memory")
+			or (player:chi()<=1 and not player:talent("Rushing Jade Wind"))
 				then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
@@ -2404,7 +2404,7 @@ local mw_rot = {
 	end,
 	
 	dpsstance_healstance_keybind = function()
-		if player:Stance() ~= 1 and (_A.modifier_shift() or _A.manaengine_highprio()) and player:manaraw()>=17550 then
+		if player:Stance() ~= 1 and (_A.modifier_shift() or _A.manaengine_highprio() or player:buff("Rushing Jade Wind")) and (player:manaraw()>=17550 or player:buff("Rushing Jade Wind")) then
 			if	player:SpellCooldown("Stance of the Wise Serpent")<cdcd
 				then
 				return player:Cast("Stance of the Wise Serpent")
@@ -2477,16 +2477,21 @@ local inCombat = function()
 	if player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
 	if mw_rot.ctrl_mode() then return true end -- ctrl
 	-- GCD CDS
-	if mw_rot.lifecocoon()  then return true end
-	if mw_rot.burstdisarm()  then print("DISARMING") return true end
+	if mw_rot.lifecocoon() then return true end
+	if mw_rot.burstdisarm()then print("DISARMING") return true end
 	-- OH SHIT ORBS
-	if _A.modifier_shift() then -- HIGH PRIO
-		if mw_rot.healingsphere() then return true end
-	end
-	if mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
-	if mw_rot.chi_wave()  then return true end -- KEEP THESE OFF CD
+	if _A.modifier_shift() and mw_rot.healingsphere() then return true end
+	--------------------- dispells and root freedom
+	if mw_rot.dispellunCC() then return true end
+	if mw_rot.dispellDANGEROUS() then return true end
+	-- if mw_rot.dispellunSLOW() then return end
+	if mw_rot.tigerslust()  then return true end
+	---------------------
 	if mw_rot.tigerpalm_mm() then return true end
 	if mw_rot.uplift() then return true end -- really important
+	if mw_rot.surgingmist() then return true end
+	if mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
+	if mw_rot.chi_wave()  then return true end -- KEEP THESE OFF CD
 	if player:mana()<40 and mw_rot.manatea() then return true end
 	-- OH SHIT ORBS
 	if _A.manaengine_highprio() then -- HIGH PRIO
@@ -2501,20 +2506,12 @@ local inCombat = function()
 	if mw_rot.kick_paralysis() then return true end
 	if mw_rot.sapsnipe() then return true end
 	if mw_rot.sapsextendcc() then return true end
-	--------------------- dispells and root freedom
-	if mw_rot.dispellunCC() then return true end
-	if mw_rot.dispellDANGEROUS() then return true end
-	-- if mw_rot.dispellunSLOW() then return end
-	if mw_rot.tigerslust()  then return true end
 	------------------ Rotation Proper
 	if mw_rot.manatea() then return true end
-	if mw_rot.surgingmist() then return true end
 	if mw_rot.healingsphere() then return true end
 	if mw_rot.spin_rjw() then return true end
 	if mw_rot.healstatue() then return true end
 	if mw_rot.expelharm() then return true end
-	-- if mw_rot.dispellplzany() then return end
-	-- if mw_rot.statbuff() then return end
 	------------------ STANCE SWAP FILL
 	if not player:keybind("R") and mw_rot.dpsstance_healstance_keybind() then return true end -- holding shift or high prio check
 	if mw_rot.dpsstance_spin_musclememory() then return true end
