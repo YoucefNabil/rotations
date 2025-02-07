@@ -1437,6 +1437,16 @@ survival.rot = {
 			end
 		end
 	end,
+	feigninterrupt = function()
+		if player:SpellCooldown("Feign Death")==0 and not player:moving() and not IsCurrentSpell(5384) then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer 
+					and Obj:IscastingOnMe()
+					then return player:cast("Feign Death")
+				end
+			end
+		end
+	end,
 	-- PET ABILITIES
 	disengage_freemovement = function()
 		if player:talent("Posthaste") and player:SpellCooldown("Disengage")==0 and player:stateYOUCEF("root || snare")
@@ -2163,6 +2173,7 @@ local inCombat = function()
 	survival.rot.activetrinket()
 	survival.rot.bursthunt()
 	survival.rot.fervor()
+	survival.rot.feigninterrupt()
 	survival.rot.frenzy()
 	survival.rot.bestialwrath()
 	survival.rot.direbeast()

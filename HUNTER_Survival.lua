@@ -1443,6 +1443,17 @@ survival.rot = {
 			end
 		end
 	end,
+	feigninterrupt = function()
+		if player:SpellCooldown("Feign Death")==0 and not player:moving() and not IsCurrentSpell(5384) then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer 
+					and Obj:range()<=50
+					and Obj:IscastingOnMe()
+					then return player:cast("Feign Death")
+				end
+			end
+		end
+	end,
 	disengage_freemovement = function()
 		if player:talent("Posthaste") and player:SpellCooldown("Disengage")==0 and player:stateYOUCEF("root || snare") 
 			and not player:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then
@@ -2145,6 +2156,7 @@ local inCombat = function()
 	survival.rot.items_agiflask()
 	survival.rot.bursthunt()
 	survival.rot.fervor()
+	survival.rot.feigninterrupt()
 	survival.rot.stampede()
 	survival.rot.kick()
 	_Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,8.5)
