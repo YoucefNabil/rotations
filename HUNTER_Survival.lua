@@ -552,22 +552,25 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and not _A.scattertargets[target.guid] and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
-			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
-			return target and target.guid
-		end
+		local tGUID = target and target.guid or " "
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
+			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and _A.notimmune(Obj) 
 				and not Obj:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
+					target = (Obj.guid==tGUID) and 1 or 0,
 					health = Obj:health(),
 					isplayer = Obj.isplayer and 1 or 0
 				}
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			table.sort(tempTable, function(a,b)
+				if a.target ~= b.target then return a.target > b.target
+					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					else return a.health < b.health
+				end
+			end)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -601,15 +604,12 @@ local exeOnLoad = function()
 		if pet and not pet:alive() then return end
 		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
 		--
-		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
-			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") then
+		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() 
+			-- and _A.notimmune(target)
+			-- and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") 
+			then
 			return target and target.guid -- this is good
 		end
-		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-		if lowestmelee then
-			return lowestmelee.guid
-		end
-		return nil
 	end)
 	
 	_A.FakeUnits:Add('enemyplayercc', function(num)
@@ -636,7 +636,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('meleeunitstobindshot', function(num)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer and Obj:spellRange("Arcane Shot") and meleespecs[Obj:spec()] and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:los() then
+			if Obj.isplayer and Obj:spellRange("Arcane Shot") and (meleespecs[Obj:spec()] or Obj:BuffAny("Horde Flag") or Obj:BuffAny("Alliance Flag")) and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					range = Obj:range(),
 					guid = Obj.guid,
@@ -1203,6 +1203,14 @@ local exeOnLoad = function()
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-------------------------------------------------------
+	-- _A.Listener:Add("steadycasting", "UNIT_SPELLCAST_SUCCEEDED", function(event, ...)
+	    
+		-- local unit, spellID = ...
+		-- if unit == "player" and spellID == "Auto Shot" then -- Auto Shot spell ID
+			-- print(unit, spellID, GetTime())
+		-- end
+	-- end)
+	
 	-------------------------------------------------------
 	-------------------------------------------------------
 	------------------------------------------------------- PET
@@ -1252,7 +1260,9 @@ local exeOnLoad = function()
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			for _,totems in ipairs(badtotems) do
-				if Obj.name==totems then
+				if Obj.name==totems 
+					and (Obj:range()<=40 or _A.pull_location=="arena")
+					then
 					tempTable[#tempTable+1] = {
 						guid = Obj.guid,
 						range = Obj:range(),
@@ -1536,6 +1546,12 @@ survival.rot = {
 			if (target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") or _A.scattertargets[target.guid]) and player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") 
 				elseif not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and not _A.scattertargets[target.guid] and not player:autoattack() then  _A.CallWowApi("RunMacroText", "/startattack") 
 			end
+		end
+	end,
+	autoattackmanagerv2 = function()
+		local lowest = Object("lowestEnemyInSpellRange(Arcane Shot)")
+		if lowest then if lowest:delay("autoattack", 1) then _A.StartAttack(75,lowest.guid)  end
+			-- elseif player:autoattack() then _A.CallWowApi("RunMacroText", "/stopattack") 
 		end
 	end,
 	kick = function()
@@ -2150,6 +2166,7 @@ local inCombat = function()
 	-------------------------- MAIN ROTATION
 	if player:buff("Deterrence") then return true end
 	survival.rot.autoattackmanager()
+	-- survival.rot.autoattackmanagerv2()
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return true end
 	-- Burst
 	survival.rot.activetrinket()
@@ -2170,8 +2187,6 @@ local inCombat = function()
 	if (_A.modifier_ctrl() and _A.pull_location~="arena") and survival.rot.tranquillshot_highprio() then return true end -- ctrl enables tranq outisde arena
 	if _A.modifier_alt() then survival.rot.concussion() end -- alt slows
 	-- important spells
-	if (_A.pull_location=="pvp" or _A.pull_location=="arena") 
-	and player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return true end
 	if survival.rot.tranq_hop() then return true end
 	if survival.rot.amoc() then return true end
 	if survival.rot.blackarrow() then return true end
@@ -2179,9 +2194,9 @@ local inCombat = function()
 	if survival.rot.glaivetoss() then return true end
 	-- heal pet
 	-- excess focus priority
-	if _Y.clumpnumber and _Y.clumpnumber>=3 and player:buff("Thrill of the Hunt") and survival.rot.auto_multishot() then return true end
+	-- if _Y.clumpnumber and _Y.clumpnumber>=3 and player:buff("Thrill of the Hunt") and survival.rot.auto_multishot() then return true end
 	if player:buff("Thrill of the Hunt") and survival.rot.arcaneshot() then return true end
-	if _Y.clumpnumber and _Y.clumpnumber>=3 and survival.rot.auto_multishot() then return true end
+	-- if _Y.clumpnumber and _Y.clumpnumber>=3 and survival.rot.auto_multishot() then return true end
 	if survival.rot.serpentsting_check() then return true end
 	if survival.rot.venom() then return true end
 	if survival.rot.arcaneshot() then return true end

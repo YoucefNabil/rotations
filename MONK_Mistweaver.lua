@@ -434,7 +434,8 @@ local exeOnLoad = function()
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer
 				or string.lower(fr.name)=="ebon gargoyle" 
-				or string.lower(fr.name)=="vanndar stormpike"
+				or fr.name=="Vanndar Stormpike"
+				or fr.name=="Overlord Agmar"
 				or (location=="arena" and fr:ispet()) then
 				if  fr:SpellRange("Renewing Mist") 
 					and _A.nothealimmune(fr) and fr:los() then
@@ -784,13 +785,13 @@ local exeOnLoad = function()
 					if next(MW_HealthUsedData[k])~=nil then
 						if MW_HealthUsedData[k].avgHDeltaPercent~=nil then 	
 							if UnitIsDeadOrGhost(k)==nil then
-								-- if UnitHealth(k)<UnitHealthMax(k) then
-								local unitObject = Object(k)
-								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:distance()<=45 then
-									num = num + 1
-									sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
+								if UnitHealth(k)<UnitHealthMax(k) then
+									local unitObject = Object(k)
+									if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
+										num = num + 1
+										sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
+									end
 								end
-								-- end
 							end
 						end
 					end
@@ -811,7 +812,7 @@ local exeOnLoad = function()
 							if UnitIsDeadOrGhost(k)==nil then
 								-- if UnitHealth(k)<UnitHealthMax(k) then
 								local unitObject = Object(k)
-								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:distance()<=45 then
+								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
 									if MW_HealthUsedData[k].avgHDeltaPercent < maxx then
 										maxx = MW_HealthUsedData[k].avgHDeltaPercent
 									end
@@ -825,21 +826,29 @@ local exeOnLoad = function()
 		end
 		return maxx
 	end 
+	function hybridHPv2()
+		local maxmodifier = maxHPv2()*0.7
+		local avgmodifier = averageHPv2()*0.3
+		return maxmodifier+avgmodifier
+	end
 	function _A.manaengine() -- make it so it's tied with group hp
 		player = player or Object("player")
 		if player:buff("Lucidity") or player:mana()>=95 then return true end
-		-- local hpDelta = averageHPv2()
-		local hpDelta = maxHPv2()
-		-- local manaBudget = _A.avgDeltaPercent
-		local manaBudget = (_A.avgDeltaPercent + effectivemanaregen())
-		return manaBudget>=hpDelta
+		local hpDelta1 = averageHPv2()
+		local hpDelta2 = hybridHPv2()
+		local hpDelta3 = maxHPv2()
+		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
+			return manaBudget>=hpDelta3
 	end
 	--------------------------------------------------------
 	function _A.manaengine_highprio()
-		local hpDelta = maxHPv2() 
+	player = player or Object("player")
+	if player:buff("Lucidity") or player:mana()>=95 then return true end
+		local hpDelta1 = averageHPv2() 
+		local hpDelta2 = hybridHPv2() 
+		local hpDelta3 = maxHPv2()
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-		local deficit = manaBudget - hpDelta 
-		return (deficit > 1.65) -- 1.5 maybe too much?
+			return ( manaBudget - hpDelta3 > 1.5)
 	end
 	
 	function _A.enoughmana(id)
@@ -1227,6 +1236,19 @@ local exeOnLoad = function()
 		if attacklowest() then return end
 		-- if petfollow() then return end
 	end
+    function _Y.cancelbuff(spellid)
+        local player = Object("player")
+        local SPELLIDD = (tonumber(spellid) and spellid or _A.Core:GetSpellID(spellid))
+        if SPELLIDD and player:buffany(spellid) then
+            for buff = 1, 40 do
+                local name,_,_,_,_,_,_,_,_,_,id = _A.UnitBuff("player", buff)
+                if not name then break end
+                if id == SPELLIDD then
+                    _A.CancelUnitBuff("player", buff)
+				end
+			end
+		end
+	end
 end
 local exeOnUnload = function()
 	Listener:Remove("DeathCleaning")
@@ -1360,7 +1382,7 @@ local mw_rot = {
 	end,
 	
 	cancel_badnoggen = function()
-		if  player:buffany("16591") and player:buffany("16595")  then
+		if  player:buffany("16591") and player:buffany("16595")  then --16593
 			for buff = 1, 40 do
 				local name,_,_,_,_,_,_,_,_,_,id = UnitBuff("player", buff)
 				if not name then break end
@@ -1693,7 +1715,7 @@ local mw_rot = {
 		end
 	end,
 	
-
+	
 	ringofpeacev2 = function()
 		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace")<cdcd then
 			local targets = {}
@@ -1972,6 +1994,21 @@ local mw_rot = {
 		end
 	end,
 	
+	dispellself = function()
+		if player:Stance() == 1 and _A.pull_location ~="arena" then
+			-- if player:Stance() == 1 then
+			if player:SpellCooldown("Detox")<cdcd and player:SpellUsable("Detox") then
+				if player:SpellRange("Detox") and player:statepurge("Detox")
+					and _A.nothealimmune(player)
+					and not player:DebuffAny("Unstable Affliction")  then
+					-- and not player:DebuffAny("Unstable Affliction || Vampiric Touch")  then
+					return player:cast("Detox")
+					
+				end
+			end
+		end	
+	end,
+	
 	dispellunCC = function()
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Detox")<cdcd and player:SpellUsable("Detox") and not player:state("silence") then
@@ -2083,9 +2120,8 @@ local mw_rot = {
 	
 	healstatue = function()
 		if player:Stance() == 1   then
-			if	player:SpellCooldown("Summon Jade Serpent Statue")<cdcd and player:SpellUsable(115313) 
+			if	player:SpellCooldown("Summon Jade Serpent Statue")<cdcd and player:SpellUsable(115313) and not IsSwimming()
 				then
-				-- return player:CastGround("Summon Jade Serpent Statue")
 				return _A.clickcast(player,"Summon Jade Serpent Statue")
 			end
 		end
@@ -2119,7 +2155,7 @@ local mw_rot = {
 		if player:SpellUsable("Healing Sphere")  then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
-					if _A.modifier_shift() or _A.manaengine() then
+					if _A.modifier_shift() or _A.manaengine() or _A.manaengine_highprio() then
 						--- ORBS
 						local lowest = Object("lowestall")
 						if lowest then
@@ -2290,7 +2326,7 @@ local mw_rot = {
 	dpsstance_jab = function()
 		if player:Stance() ~= 1 and not player:buff("Rushing Jade Wind") then
 			if not player:Buff("Muscle Memory")
-			or (player:chi()<=1 and not player:talent("Rushing Jade Wind"))
+				or (player:chi()<=1 and not player:talent("Rushing Jade Wind"))
 				then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
@@ -2455,14 +2491,12 @@ local inCombat = function()
 	mw_rot.everyman()
 	mw_rot.nimble()
 	mw_rot.chibrew()
+	_Y.cancelbuff(16593)
 	mw_rot.items_healthstone()
 	mw_rot.fortifyingbrew()
 	mw_rot.cancel_badnoggen()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
-	-- print(_Y.rushing_number())
-	-- print(maxHPv2())
-	-- print(_A.manaengine_highprio()) 
 	if _A.buttondelayfunc()  then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
@@ -2486,18 +2520,17 @@ local inCombat = function()
 	if mw_rot.dispellDANGEROUS() then return true end
 	-- if mw_rot.dispellunSLOW() then return end
 	if mw_rot.tigerslust()  then return true end
-	---------------------
+	--------------------- high prio
 	if mw_rot.tigerpalm_mm() then return true end
-	if mw_rot.uplift() then return true end -- really important
 	if mw_rot.surgingmist() then return true end
 	if mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
-	if mw_rot.chi_wave()  then return true end -- KEEP THESE OFF CD
-	if player:mana()<40 and mw_rot.manatea() then return true end
+	if mw_rot.uplift() then return true end -- really important
 	-- OH SHIT ORBS
 	if _A.manaengine_highprio() then -- HIGH PRIO
+		-- print("HIGH PRIO")
 		if mw_rot.healingsphere() then return true end
 	end
-	-- higher prio
+	if mw_rot.chi_wave()  then return true end -- KEEP THESE OFF CD
 	if mw_rot.Xuen() then return true end
 	--------------------- CC
 	if mw_rot.ringofpeacev2() then return true end

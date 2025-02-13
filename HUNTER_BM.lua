@@ -648,9 +648,10 @@ local exeOnLoad = function()
 		if pet and not pet:alive() then return end
 		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
 		--
-		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
-			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") then
-			return target and target.guid -- this is good
+		if target and target:exists() and target:enemy()  and target:alive() and _A.notimmune(target) then
+			 if _A.pull_location~="arena" or (not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and not _A.scattertargets[target.guid])  then
+				return target and target.guid -- this is good
+			end
 		end
 		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 		if lowestmelee then
@@ -667,13 +668,11 @@ local exeOnLoad = function()
 		if pet and not pet:alive() then return end
 		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
 		--
-		if target and not _A.scattertargets[target.guid] and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
-			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") then
+		if target and target:exists() and not _A.scattertargets[target.guid] and target:enemy() and target:alive() 
+			-- and _A.notimmune(target)
+			-- and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") 
+			then
 			return target and target.guid -- this is good
-		end
-		local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
-		if lowestmelee then
-			return lowestmelee.guid
 		end
 		return nil
 	end)
@@ -703,7 +702,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('meleeunitstobindshot', function(num)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer and Obj:spellRange("Arcane Shot") and meleespecs[Obj:spec()] and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:los() then
+			if Obj.isplayer and Obj:spellRange("Arcane Shot") and (meleespecs[Obj:spec()] or Obj:BuffAny("Horde Flag") or Obj:BuffAny("Alliance Flag")) and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					range = Obj:range(),
 					guid = Obj.guid,
@@ -717,7 +716,6 @@ local exeOnLoad = function()
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
 		end
-		return nil
 	end)
 	
 	_A.FakeUnits:Add('simpletarget', function(num, spell)
@@ -1241,7 +1239,9 @@ local exeOnLoad = function()
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			for _,totems in ipairs(badtotems) do
-				if Obj.name==totems then
+				if Obj.name==totems 
+					and (Obj:range()<=40 or _A.pull_location=="arena")
+					then
 					tempTable[#tempTable+1] = {
 						guid = Obj.guid,
 						range = Obj:range(),
@@ -1302,10 +1302,9 @@ local exeOnLoad = function()
 	local function attackfocus()
 		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOSfocus")
 		if target and _A.pull_location~="arena" then
-			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-					return _A.CallWowApi("PetAttack", target.guid), 3
-				end
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+				print("ATTACKING FOCUS")
+				return _A.CallWowApi("PetAttack", target.guid), 3
 			end
 			return 3
 		end
@@ -2180,26 +2179,20 @@ local inCombat = function()
 	survival.rot.stampede()
 	survival.rot.kick()
 	if AOEcheck() and survival.rot.barrage() then return end -- make a complete aoe check function
-	if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
+	-- if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
 	survival.rot.killshot()
 	survival.rot.mendpet()
 	if not _A.modifier_ctrl() and _A.pull_location=="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
+	if (_A.modifier_ctrl() or _A.pull_location=="arena") and survival.rot.tranq_hop() then return end
 	if _A.modifier_ctrl() and _A.pull_location~="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
-	-- if not _A.modifier_ctrl() and  survival.rot.tranquillshot_midprio() then return end -- for quest
 	if _A.modifier_alt() then survival.rot.concussion() end
 	-- important spell
 	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
-	if survival.rot.tranq_hop() then return end
-	if survival.rot.auto_multishot() then return end
 	if survival.rot.serpentsting_check() then return end
 	if survival.rot.amoc() then return end
 	if survival.rot.glaivetoss() then return end
-	-- excess focus priority
-	-- if survival.rot.venom() then return end
-	-- heal Pet
 	-- fill
 	if survival.rot.arcaneshot() then return end
-	-- Fills
 end
 local spellIds_Loc = function()
 end

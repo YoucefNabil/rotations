@@ -314,30 +314,43 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy() and target:alive() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
-			return target and target.guid
-		end
+		local tGUID = target and target.guid or 0
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and _A.notimmune(Obj) 
+				and not Obj:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
+					target = Obj.guid==tGUID and 1 or 0,
 					health = Obj:health(),
 					isplayer = Obj.isplayer and 1 or 0
 				}
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			table.sort(tempTable, function(a,b)
+				if a.target ~= b.target then return a.target > b.target
+					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					else return a.health < b.health
+				end
+			end)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
 		end
+		return nil
 	end)
+	_Y.autoattackmanager = function()
+		local target = Object("target")
+		local lowest = Object("lowestEnemyInSpellRange(Mortal Strike)")
+		if lowest then
+			if not target or lowest.guid~=target.guid then _A.TargetUnit(lowest.guid) end
+		end
+	end,
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
+			if Obj.isplayer and Obj:spellRange(spell) and  Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -424,6 +437,32 @@ local exeOnLoad = function()
 		-- Check if the difference is within the tolerance
 		return difference <= tolerance
 	end
+	function _A.modifier_shift()
+		local modkeyb = IsShiftKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
+	
+	function _A.modifier_ctrl()
+		local modkeyb = IsControlKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
+	
+	function _A.modifier_alt()
+		local modkeyb = IsAltKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
 end
 local exeOnUnload = function()
 	Listener:Remove("warrior_stuff")
@@ -488,7 +527,9 @@ arms.rot = {
 		if player:SpellCooldown("Charge")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Charge") and obj:infront()
-					and obj:caninterrupt() and healerspecid[_A.UnitSpec(obj.guid)]
+					and obj:caninterrupt() 
+					-- and healerspecid[_A.UnitSpec(obj.guid)]
+					and obj:IscastingOnMe()
 					and obj:channame()~="mind sear"
 					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
 					)
@@ -567,6 +608,17 @@ arms.rot = {
 		end
 	end,
 	
+	sunderarmor = function()
+		if  player:SpellCooldown("Sunder Armor")<cdcd and player:spellusable("Sunder Armor") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			if lowestmelee then 
+				if lowestmelee:debuffduration("Weakened Armor")<3 or lowestmelee:DebuffStackAny("Weakened Armor")<=2 then
+					return lowestmelee:Cast("Sunder Armor")
+				end
+			end
+		end
+	end,
+	
 	Mortalstrike = function()
 		if  player:SpellCooldown("Mortal Strike")<cdcd then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
@@ -602,10 +654,10 @@ arms.rot = {
 	slam = function()
 		if player:SpellUsable("Slam") then
 			local lowestmeleeEXECUTE = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
-			if not lowestmeleeEXECUTE or (lowestmeleeEXECUTE and  lowestmeleeEXECUTE:health()>20) then
+			if not lowestmeleeEXECUTE or (lowestmeleeEXECUTE and lowestmeleeEXECUTE:health()>20) then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-				if lowestmelee and lowestmelee:health()>20 then
-					if player:level()<30 or player:buff(1719) or (player:rage()>80 and player:buffstack(60503)<3) or (lowestmelee:debuff("Colossus Smash") and player:rage()>=40) then
+				if lowestmelee then
+					if player:rage()>95 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
 						return lowestmelee:Cast("Slam")
 					end
 				end
@@ -714,22 +766,57 @@ arms.rot = {
 		end
 	end,
 	
-	safeguard_unroot = function()
+	safeguard_unroot_BG = function()
 		local tempTable = {}
-		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0 and player:SpellUsable("Safeguard") and player:State("root") then
-			for _, fr in pairs(_A.OM:Get('Friendly')) do
-				if fr.isplayer and fr:spellRange("Safeguard") then
-					if _A.nothealimmune(fr) and fr:los() then
-						tempTable[#tempTable+1] = {
-							obj = fr,
-							range = fr:range(),
-							guid = fr.guid
-						}
-					end
+		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0 
+			and player:State("root") 
+			then
+			for i = 1, 40 do
+				local raidobject = Object("raid"..i)
+				if raidobject and not raidobject:Is(player)
+				and raidobject:range()<25
+				-- and raidobject:los() 
+				then
+					tempTable[#tempTable+1] = {
+						range = raidobject:range(),
+						name = "raid"..i
+					}
 				end
 			end
-			table.sort( tempTable, function(a,b) return ( a.range < b.range ) end )
-			return tempTable[1] and tempTable[1].obj:cast("Safeguard")
+			if #tempTable>1 then
+				table.sort( tempTable, function(a,b) return ( a.range < b.range ) end )
+			end
+			if tempTable[1] then print("HEY IM WORKING") 
+				 _A.RunMacroText(string.format(("/cast [@%s] Safeguard"), tostring(tempTable[1].name)))
+				 return _A.CallWowApi("SpellStopTargeting")
+			end
+		end
+	end,
+	
+	safeguard_unroot_OLD = function()
+		local tempTable = {}
+		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0 
+			-- and player:State("root") 
+			then
+			for i = 1, 40 do
+				local raidobject = Object("raid"..i)
+				if raidobject and not raidobject:Is(player)
+				and raidobject:range()<25
+				-- and raidobject:los() 
+				then
+					tempTable[#tempTable+1] = {
+						range = raidobject:range(),
+						name = "raid"..i
+					}
+				end
+			end
+			if #tempTable>1 then
+				table.sort( tempTable, function(a,b) return ( a.range < b.range ) end )
+			end
+			if tempTable[1] then print("HEY IM WORKING") 
+				 _A.RunMacroText(string.format(("/cast [@%s] Safeguard"), tostring(tempTable[1].name)))
+				 return _A.CallWowApi("SpellStopTargeting")
+			end
 		end
 	end,
 	
@@ -774,7 +861,9 @@ arms.rot = {
 	end,
 	
 	sweeping_strikes = function()
-		if _A.numtangos>=3 and player:SpellUsable("Sweeping Strikes") and player:SpellCooldown("Sweeping Strikes")==0
+		-- if _A.numtangos>=3 
+		if _A.modifier_shift()
+			and player:SpellUsable("Sweeping Strikes") and player:SpellCooldown("Sweeping Strikes")==0
 			then
 			return player:cast("sweeping strikes")
 		end
@@ -793,7 +882,7 @@ arms.rot = {
 	end,
 	
 	bladestorm = function()
-		if player:combat() and player:buff("Call of Victory") and player:SpellCooldown("bladestorm")<cdcd then
+		if player:combat() and player:buff("Call of Victory") and player:talent("Bladestorm") and player:SpellCooldown("Bladestorm")<cdcd then
 			return player:cast("Bladestorm")
 		end
 	end,
@@ -835,6 +924,7 @@ local inCombat = function()
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player:lostcontrol()  then return end 
 	-- Interrupts
+	-- _Y.autoattackmanager()
 	arms.rot.items_strpot()
 	arms.rot.items_strflask()
 	arms.rot.activetrinket()
@@ -843,48 +933,44 @@ local inCombat = function()
 	arms.rot.reckbanner()
 	arms.rot.antifear()
 	arms.rot.shieldwall()
-	arms.rot.safeguard_unroot()
+	arms.rot.Charge()
+	arms.rot.safeguard_unroot_BG()
 	arms.rot.reflectspell()
 	arms.rot.Pummel()
 	--
-	-- if player:level()>=90 then
 	if arms.rot.bladestorm() then return end
-	if arms.rot.shockwave() then return end
-	if arms.rot.diebythesword() then return end
-	if arms.rot.sweeping_strikes() then return end
-	if arms.rot.chargegapclose() then return end
-	if arms.rot.heroicleap() then return end
-	if arms.rot.colossussmash() then return end
-	if arms.rot.Execute() then return end
-	if arms.rot.thunderclap() then return end
-	if arms.rot.burstdisarm() then return end
-	if arms.rot.battleshout() then return end
-	if arms.rot.Disruptingshout() then return end
-	if arms.rot.hamstringpvp() then return end
-	if arms.rot.victoryrush() then return end
-	if arms.rot.Mortalstrike() then return end
-	if arms.rot.thunderclapPVE() then return end
-	if arms.rot.slam() then return end
-	if arms.rot.overpower() then return end
-	-- else
-	-- arms.rot.bladestorm()
-	-- arms.rot.shockwave()
-	-- arms.rot.diebythesword()
-	-- arms.rot.sweeping_strikes()
-	-- arms.rot.chargegapclose()
-	-- arms.rot.heroicleap()
-	-- arms.rot.colossussmash()
-	-- arms.rot.Execute()
-	-- arms.rot.thunderclap()
-	-- arms.rot.burstdisarm()
-	-- arms.rot.battleshout()
-	-- arms.rot.Disruptingshout()
-	-- arms.rot.hamstringpvp()
-	-- arms.rot.victoryrush()
-	-- arms.rot.Mortalstrike()
-	-- arms.rot.thunderclapPVE()
-	-- arms.rot.slam()
-	-- arms.rot.overpower()
+	-- if arms.rot.shockwave() then -- print(1) 
+	-- return true end
+	if arms.rot.diebythesword() then -- print(2) 
+	return true end
+	if arms.rot.sweeping_strikes() then -- print(3) 
+	return true end
+	if _A.modifier_ctrl() and arms.rot.sunderarmor() then --print(5) 
+	return true end
+	if arms.rot.colossussmash() then --print(4) 
+	return true end
+	if arms.rot.Execute() then --print(6) 
+	return  true end
+	if arms.rot.thunderclap() then --print(7) 
+	return true end
+	if arms.rot.burstdisarm() then --print(8)
+	return true end
+	if arms.rot.battleshout() then --print(9) 
+	return true end
+	if arms.rot.Disruptingshout() then --print(10) 
+	return true end
+	if arms.rot.hamstringpvp() then --print(11) 
+	return true end
+	if arms.rot.victoryrush() then --print(12) 
+	return true end
+	if arms.rot.Mortalstrike() then --print(13) 
+	return true end
+	if arms.rot.thunderclapPVE() then --print(14) 
+	return true end
+	if arms.rot.slam() then -- print(15) 
+	return true end
+	if arms.rot.overpower() then --print(16) 
+	return true end
 end
 local spellIds_Loc = function()
 end
