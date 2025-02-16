@@ -26,6 +26,88 @@ local specstoslap = {
 	-- [] = true
 	-- [] = true
 }
+local InterruptSpells = {118,116,61305,28271,28272,61780,61721,2637,33786,5185,8936,50464,19750,82326,2061,9484,605,8129,331,8004,51505,403,77472,51514,5782,1120,48181,30108,
+	33786, -- Cyclone		(cast)
+	28272, -- Pig Poly		(cast)
+	118, -- Sheep Poly		(cast)
+	61305, -- Cat Poly		(cast)
+	82691,
+	31687,
+	10326,
+	113792,	-- Psyfiend Fear
+	61721, -- Rabbit Poly		(cast)
+	61780, -- Turkey Poly		(cast)
+	28271, -- Turtle Poly		(cast)
+	51514, -- Hex			(cast)
+	51505, -- Lava Burst		(cast)
+	339, -- Entangling Roots	(cast)
+	30451, -- Arcane Blast		(cast)
+	605, -- Dominate Mind		(cast)
+	20066, --Repentance		(cast)
+	116858, --Chaos Bolt		(cast)
+	113092, --Frost Bomb		(cast)
+	8092, --Mind Blast		(cast)
+	11366, --Pyroblast		(cast)
+	48181, --Haunt			(cast)
+	102051, --Frost Jaw		(cast)
+	1064, -- Chain Heal		(cast)
+	77472, -- Greater Healing Wave	(cast)
+	8004, -- Healing Surge		(cast)
+	73920, -- Healing Rain		(cast)
+	51505, -- Lava Burst		(cast)
+	8936, -- Regrowth		(cast)
+	2061, -- Flash Heal		(cast)
+	2060, -- Greater Heal		(cast)
+	--32375, -- Mass Dispel		(cast)
+	2006, -- Resurrection		(cast)
+	5185, -- Healing Touch		(cast)
+	596, -- Prayer of Healing	(cast)
+	19750, -- Flash of Light	(cast)
+	635, -- Holy Light		(cast)
+	7328, -- Redemption		(cast)
+	2008, -- Ancestral Spirit	(cast)
+	50769, -- Revive		(cast)
+	2812, -- Denounce		(cast)
+	82327, -- Holy Radiance		(cast)
+	10326, -- Turn Evil		(cast)
+	82326, -- Divine Light		(cast)
+	82012, -- Repentance		(cast)
+	116694, -- Surging Mist		(cast)
+	124682, -- Enveloping Mist	(cast)
+	115151, -- Renewing Mist	(cast)
+	115310, -- Revival		(cast)
+	126201, -- Frost Bolt		(cast)
+	44614, -- Frostfire Bolt	(cast)
+	133, -- Fireball		(cast)
+	1513, -- Scare Beast		(cast)
+	982, -- Revive Pet		(cast)
+	111771, -- Demonic Gateway			(cast)
+	118297, -- Immolate				(cast)
+	124465 -- Vampiric Touch			(cast)
+	--32375 -- Mass Dispel				(cast) 
+}
+local reflectSpellsIDs = {
+	5782,		-- Fear
+	118699,		-- Fear
+	118,		-- Polymorph
+	339, 		-- Entangling Roots	(cast)
+	10326,		--
+	61305,		-- Polymorph: Black Cat
+	28272,		-- Polymorph: Pig
+	61721,		-- Polymorph: Rabbit
+	61780,		-- Polymorph: Turkey
+	28271,		-- Polymorph: Turtle
+	33786, 		-- Cyclone
+	113506, 	-- Cyclone
+	20066,		-- Repentance
+	51514,		-- Hex
+	605,		-- Dominate Mind
+	14515,
+	-- damaze
+	11366, 		--Pyroblast		(cast)
+	48181, 		--Haunt			(cast)
+	116858	 	--Chaos Bolt		(cast)
+}
 -- top of the CR
 local player
 _A.numtangos = 0
@@ -226,6 +308,29 @@ local exeOnLoad = function()
 		end
 	end)
 	
+	function _Y.reflectcheck_personnal(unit)
+		if unit then
+			for _,v in ipairs(spelltable) do
+				if unit:IscastingOnMe() then
+					if unit:iscasting(k) or unit:channeling(k) then
+						return true
+					end
+				end
+			end
+		end
+		return false
+	end
+	function _Y.reflectcheck_all(unit)
+		if unit then
+			for _,v in ipairs(spelltable) do
+				if unit:iscasting(k) or unit:channeling(k) then
+					return true
+				end
+			end
+		end
+		return false
+	end
+	
 	function _A.unitfrozen(unit)
 		if unit then 
 			for _,debuffs in ipairs(frozen_debuffs) do
@@ -410,7 +515,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTARNOFACE', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and _A.notimmune(Obj)  and Obj:los() then
+			if Obj:spellRange(spell) and _A.notimmune(Obj) and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -566,7 +671,7 @@ arms.rot = {
 	end,
 	
 	Charge = function()
-		if player:SpellCooldown("Charge")==0 then
+		if player:SpellCooldown("Charge")==0 and not IsCurrentSpell(100) then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Charge") and obj:infront()
 					and obj:caninterrupt() 
@@ -585,7 +690,7 @@ arms.rot = {
 	end,
 	
 	Pummel = function()
-		if player:SpellCooldown("Pummel")==0 then
+		if player:SpellCooldown("Pummel")==0 and not IsCurrentSpell(23920) and not IsCurrentSpell(6552) and not IsCurrentSpell(102060) then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Mortal Strike") and obj:infront()
 					and obj:caninterrupt() 
@@ -595,6 +700,39 @@ arms.rot = {
 					and _A.notimmune(obj)
 					then
 					obj:Cast("Pummel")
+				end
+			end
+		end
+	end,
+	
+	Disruptingshout = function()
+		if player:talent("Disrupting Shout") and player:SpellCooldown("Disrupting Shout")==0 and not IsCurrentSpell(23920) and not IsCurrentSpell(6552) and not IsCurrentSpell(102060) then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and  obj:isCastingAny() and obj:range()<=10 then
+					if player:SpellCooldown("Pummel")>0 or player:buff("Bladestorm") or (not obj:SpellRange("Mortal Strike")) or (obj:SpellRange("Mortal Strike") and not obj:infront()) then
+						if obj:caninterrupt() and healerspecid[_A.UnitSpec(obj.guid)]
+							and obj:channame()~="mind sear"
+							and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=92
+							)
+							and _A.notimmune(obj)
+							then
+							obj:Cast("Disrupting Shout")
+						end
+					end
+				end
+			end
+		end
+	end,
+	
+	reflect_stuff_onme = function()
+		if player:SpellCooldown("Spell Reflection")==0 and not IsCurrentSpell(23920) and not IsCurrentSpell(6552) and not IsCurrentSpell(102060) then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Mortal Strike") and obj:infront()
+					and reflectcheck_personnal(obj)
+					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
+					)
+					then
+					player:Cast("Spell Reflection")
 				end
 			end
 		end
@@ -631,25 +769,6 @@ arms.rot = {
 					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 170) 
 					and Obj:los() then
 					return Obj:cast("Storm Bolt") 
-				end
-			end
-		end
-	end,
-	
-	Disruptingshout = function()
-		if player:talent("Disrupting Shout") and player:SpellCooldown("Disrupting Shout")==0 then
-			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and  obj:isCastingAny() and obj:range()<=10 then
-					if player:SpellCooldown("Pummel")>0 or player:buff("Bladestorm") or (not obj:SpellRange("Mortal Strike")) or (obj:SpellRange("Mortal Strike") and not obj:infront()) then
-						if obj:caninterrupt() and healerspecid[_A.UnitSpec(obj.guid)]
-							and obj:channame()~="mind sear"
-							and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=92
-							)
-							and _A.notimmune(obj)
-							then
-							obj:Cast("Disrupting Shout")
-						end
-					end
 				end
 			end
 		end
@@ -823,7 +942,7 @@ arms.rot = {
 	
 	safeguard_unroot_BG = function()
 		local tempTable = {}
-		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0 
+		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0  and not IsCurrentSpell(114029)
 			and player:State("root") and not IsCurrentSpell(114029) and not IsCurrentSpell(23920) and not player:buff("Spell Reflection")
 			then
 			for _, raidobject in pairs(_A.OM:Get('Roster')) do
@@ -918,6 +1037,7 @@ arms.rot = {
 	
 	bladestorm = function()
 		if player:combat() and player:buff("Call of Victory") and player:talent("Bladestorm") and player:SpellCooldown("Bladestorm")<cdcd then
+			if player:stance()~=2 then return not IsCurrentSpell(71) and player:cast("Defensive Stance") end
 			return player:cast("Bladestorm")
 		end
 	end,
@@ -965,14 +1085,16 @@ local inCombat = function()
 	arms.rot.reckbanner()
 	arms.rot.antifear()
 	arms.rot.shieldwall()
-	arms.rot.Charge()
-	arms.rot.safeguard_unroot_BG()
-	arms.rot.reflectspell()
-	arms.rot.Pummel()
+	-- Precise sequence of non gcd spells
+	if arms.rot.safeguard_unroot_BG() then return true end
+	if arms.rot.Pummel() then return true end
+	if arms.rot.reflectspell() then return true end
+	if arms.rot.reflect_stuff_onme() then return true end
+	if arms.rot.Charge() then return true end
+	if arms.rot.Disruptingshout() then return true end
 	--
 	if arms.rot.bladestorm() then return end
 	arms.rot.stance_dance()
-	-- if arms.rot.shockwave() then -- print(1) 
 	if arms.rot.shockwave_cheaper() then -- print(1) 
 	return true end
 	if arms.rot.stormbolt_on_heal_or_low() then print("STUNNING!!!")
@@ -980,8 +1102,6 @@ local inCombat = function()
 	if arms.rot.diebythesword() then -- print(2) 
 	return true end
 	if arms.rot.sweeping_strikes() then -- print(3) 
-	return true end
-	if _A.modifier_ctrl() and arms.rot.sunderarmor() then --print(5) 
 	return true end
 	if arms.rot.colossussmash() then --print(4) 
 	return true end
@@ -991,8 +1111,6 @@ local inCombat = function()
 	return true end
 	if arms.rot.battleshout() then --print(9) 
 	return true end
-	if arms.rot.Disruptingshout() then --print(10) 
-	return true end
 	if arms.rot.hamstringpvp() then --print(11) 
 	return true end
 	if arms.rot.victoryrush() then --print(12) 
@@ -1001,8 +1119,6 @@ local inCombat = function()
 	return true end
 	if arms.rot.thunderclapPVE() then --print(14) 
 	return true end
-	-- if arms.rot.slamonspec() then -- print(15) 
-	-- return true end
 	if arms.rot.slam() then -- print(15) 
 	return true end
 	if arms.rot.overpower() then --print(16) 
