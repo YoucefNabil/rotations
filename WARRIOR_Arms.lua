@@ -625,7 +625,7 @@ arms.rot = {
 	stormbolt_on_heal_or_low = function()
 		if player:talent("Storm Bolt") and player:SpellCooldown("Storm Bolt")<.3 then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer and Obj:spellRange("Scatter Shot") 
+				if Obj.isplayer and Obj:spellRange("Storm Bolt") 
 					and (healerspecid[Obj:spec()] or (Obj:health()<50 and _A.pull_location=="pvp"))
 					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 170) 
