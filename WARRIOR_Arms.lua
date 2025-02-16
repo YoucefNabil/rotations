@@ -709,17 +709,15 @@ arms.rot = {
 	
 	slam = function()
 		if player:SpellUsable("Slam") then
-			-- local lowestmeleeEXECUTE = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
-			-- if not lowestmeleeEXECUTE or (lowestmeleeEXECUTE and lowestmeleeEXECUTE:health()>20) then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee then
-				-- if player:rage()>95 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
 				if player:rage()>25 then
-					return lowestmelee:Cast("Slam")
+					if player:rage()>95 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
+						return lowestmelee:Cast("Slam")
+					end
 				end
 			end
 		end
-		-- end
 	end,
 	
 	burstdisarm = function()
@@ -811,7 +809,7 @@ arms.rot = {
 	end,
 	
 	reflectspell = function()
-		if player:SpellCooldown("Spell Reflection")==0 then
+		if player:SpellCooldown("Spell Reflection")==0 and not IsCurrentSpell(23920) and not IsCurrentSpell(114029)  then
 			--
 			if _A.unitfrozen(player) then player:cast("Spell Reflection") end
 			--
@@ -826,7 +824,7 @@ arms.rot = {
 	safeguard_unroot_BG = function()
 		local tempTable = {}
 		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0 
-			and player:State("root") and not IsCurrentSpell(114029)
+			and player:State("root") and not IsCurrentSpell(114029) and not IsCurrentSpell(23920) and not player:buff("Spell Reflection")
 			then
 			for _, raidobject in pairs(_A.OM:Get('Roster')) do
 				if raidobject and not raidobject:Is(player)
@@ -932,8 +930,6 @@ arms.rot = {
 			end
 		end
 	end,
-	
-	
 	overpower = function()
 		if  player:SpellUsable("Overpower") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
