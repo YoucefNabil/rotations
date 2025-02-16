@@ -572,32 +572,33 @@ local exeOnLoad = function()
 		"Lightwell",
 		"Tremor Totem",
 	}
-	
-	
+
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and not _A.scattertargets[target.guid] and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and  _A.notimmune(target)
-			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
-			return target and target.guid
-		end
+		local tGUID = target and target.guid or " "
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and  Obj:combat()  and _A.notimmune(Obj) 
+			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and Obj:InConeOf(player, 170) and _A.notimmune(Obj) 
 				and not Obj:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
+					target = (Obj.guid==tGUID) and 1 or 0,
 					health = Obj:health(),
 					isplayer = Obj.isplayer and 1 or 0
 				}
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			table.sort(tempTable, function(a,b)
+				if a.target ~= b.target then return a.target > b.target
+					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					else return a.health < b.health
+				end
+			end)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
 		end
-		return nil
 	end)
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKC', function(num)
@@ -659,6 +660,8 @@ local exeOnLoad = function()
 		end
 		return nil
 	end)
+	
+	
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKCNOLOSfocus', function(num)
 		local tempTable = {}
@@ -730,7 +733,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
+			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and _A.notimmune(Obj)  
 				and not Obj:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -756,7 +759,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('highestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and Obj:combat() and _A.notimmune(Obj)  
+			if Obj:spellRange(spell) and not _A.scattertargets[Obj.guid] and  Obj:InConeOf(player, 170) and _A.notimmune(Obj)  
 				and not Obj:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -2111,7 +2114,7 @@ local inCombat = function()
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*2 or .3
 	_A.pull_location = _A.pull_location or pull_location()
 	_Y.petengine()
-	_Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,8)
+	-- _Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,8)
 	local focus = Object("focus")
 	--debug
 	-- print(player:immuneduration("snare || all"))

@@ -2440,7 +2440,8 @@ local mw_rot = {
 	end,
 	
 	dpsstance_healstance_keybind = function()
-		if player:Stance() ~= 1 and (_A.modifier_shift() or _A.manaengine_highprio() or player:buff("Rushing Jade Wind")) and (player:manaraw()>=17550 or player:buff("Rushing Jade Wind")) then
+		-- if player:Stance() ~= 1 and (_A.modifier_shift() or _A.manaengine_highprio() or player:buff("Rushing Jade Wind")) and (player:manaraw()>=17550 or player:buff("Rushing Jade Wind")) then
+		if player:Stance() ~= 1 and (_A.modifier_shift() or player:buff("Rushing Jade Wind")) and (player:manaraw()>=17550 or player:buff("Rushing Jade Wind")) then
 			if	player:SpellCooldown("Stance of the Wise Serpent")<cdcd
 				then
 				return player:Cast("Stance of the Wise Serpent")
