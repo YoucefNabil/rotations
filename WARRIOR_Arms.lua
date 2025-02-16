@@ -942,8 +942,10 @@ arms.rot = {
 	
 	safeguard_unroot_BG = function()
 		local tempTable = {}
-		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0  and not IsCurrentSpell(114029)
-			and player:State("root") and not IsCurrentSpell(114029) and not IsCurrentSpell(23920) and not player:buff("Spell Reflection")
+		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0
+			and player:State("root") 
+			and not player:buff("Spell Reflection")
+			and not IsCurrentSpell(114029) and not IsCurrentSpell(23920) 
 			then
 			for _, raidobject in pairs(_A.OM:Get('Roster')) do
 				if raidobject and not raidobject:Is(player)
@@ -1092,37 +1094,23 @@ local inCombat = function()
 	if arms.rot.reflect_stuff_onme() then return true end
 	if arms.rot.Charge() then return true end
 	if arms.rot.Disruptingshout() then return true end
-	--
+	-- Rotation
 	if arms.rot.bladestorm() then return end
 	arms.rot.stance_dance()
-	if arms.rot.shockwave_cheaper() then -- print(1) 
-	return true end
-	if arms.rot.stormbolt_on_heal_or_low() then print("STUNNING!!!")
-	return true end
-	if arms.rot.diebythesword() then -- print(2) 
-	return true end
-	if arms.rot.sweeping_strikes() then -- print(3) 
-	return true end
-	if arms.rot.colossussmash() then --print(4) 
-	return true end
-	if arms.rot.thunderclap() then --print(7) 
-	return true end
-	if arms.rot.burstdisarm() then --print(8)
-	return true end
-	if arms.rot.battleshout() then --print(9) 
-	return true end
-	if arms.rot.hamstringpvp() then --print(11) 
-	return true end
-	if arms.rot.victoryrush() then --print(12) 
-	return true end
-	if arms.rot.Mortalstrike() then --print(13) 
-	return true end
-	if arms.rot.thunderclapPVE() then --print(14) 
-	return true end
-	if arms.rot.slam() then -- print(15) 
-	return true end
-	if arms.rot.overpower() then --print(16) 
-	return true end
+	if arms.rot.shockwave_cheaper() then return true end
+	if arms.rot.stormbolt_on_heal_or_low() then print("STUNNING!!!") return true end
+	if arms.rot.diebythesword() then return true end
+	if arms.rot.sweeping_strikes() then return true end
+	if arms.rot.colossussmash() then return true end
+	if arms.rot.thunderclap() then return true end
+	if arms.rot.burstdisarm() then return true end
+	if arms.rot.battleshout() then return true end
+	if arms.rot.hamstringpvp() then return true end
+	if arms.rot.victoryrush() then return true end
+	if arms.rot.Mortalstrike() then return true end
+	if arms.rot.thunderclapPVE() then return true end
+	if arms.rot.slam() then return true end
+	if arms.rot.overpower() then return true end
 end
 local spellIds_Loc = function()
 end
