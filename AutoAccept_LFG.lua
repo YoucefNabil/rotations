@@ -32,8 +32,8 @@ Listener:Add("BG", {'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS'}, function(
 end)
 Listener:Add("BG2", {'LFG_ROLE_CHECK_SHOW', 'LFG_READY_CHECK_SHOW'}, function(evt)
 	if player then
-		-- SetLFGRoles(false, false, true) -- q as dps (tank, healer, dps)
-		-- _A.CallWowApi("RunMacroText", "/click LFDRoleCheckPopupAcceptButton")
+		SetLFGRoles(false, false, true) -- q as dps (tank, healer, dps)
+		_A.CallWowApi("RunMacroText", "/click LFDRoleCheckPopupAcceptButton")
 	end
 end)
 local ClickthisPleasepvp = function()

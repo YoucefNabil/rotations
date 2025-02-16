@@ -1293,6 +1293,7 @@ local dangerousdebuffs = {
 	"Denounce",
 	"Frost Nova",
 	"Execution Sentence",
+	"Corruption",
 	"Touch of Karma"
 }
 local mw_rot = {

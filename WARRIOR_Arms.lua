@@ -463,7 +463,7 @@ local exeOnLoad = function()
 		local tGUID = target and target.guid or 0
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and _A.notimmune(Obj) 
-				and not Obj:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
+				and not Obj:stateYOUCEF("incapacitate || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					target = Obj.guid==tGUID and 1 or 0,
@@ -769,6 +769,20 @@ arms.rot = {
 					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 170) 
 					and Obj:los() then
 					return Obj:cast("Storm Bolt") 
+				end
+			end
+		end
+	end,
+	
+	fearhealer = function()
+		if player:SpellCooldown("Intimidating Shout")<.3 then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:range()<=8
+					and healerspecid[Obj:spec()]
+					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
+					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("fear") 
+					and Obj:los() then
+					return Obj:cast("Intimidating Shout") 
 				end
 			end
 		end
@@ -1108,6 +1122,7 @@ local inCombat = function()
 	if arms.rot.Charge() then return true end
 	if arms.rot.Disruptingshout() then return true end
 	-- Rotation
+	if arms.rot.fearhealer() then return end
 	if arms.rot.bladestorm() then return end
 	arms.rot.stance_dance()
 	if arms.rot.shockwave_cheaper() then return true end
