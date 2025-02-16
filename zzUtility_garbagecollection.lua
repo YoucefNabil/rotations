@@ -23,12 +23,8 @@ Listener:Add("BG", {'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS'}, function(
 				local status, _, _ = _A.GetBattlefieldStatus(i)
 				if status == "confirm" then
 					if not _A.IsForeground() then _A.FlashWow() end
-					-- if player:isparty() or player:israid() then 
-					-- C_Timer.After(10, function()
-						_A.AcceptBattlefieldPort(i,1)
-						_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
-					-- end)
-					-- end
+					_A.AcceptBattlefieldPort(i,1)
+					_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
 				end
 			end
 		end
@@ -36,8 +32,8 @@ Listener:Add("BG", {'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS'}, function(
 end)
 Listener:Add("BG2", {'LFG_ROLE_CHECK_SHOW', 'LFG_READY_CHECK_SHOW'}, function(evt)
 	if player then
-		SetLFGRoles(false, false, true) -- q as dps (tank, healer, dps)
-		_A.CallWowApi("RunMacroText", "/click LFDRoleCheckPopupAcceptButton")
+		-- SetLFGRoles(false, false, true) -- q as dps (tank, healer, dps)
+		-- _A.CallWowApi("RunMacroText", "/click LFDRoleCheckPopupAcceptButton")
 	end
 end)
 local ClickthisPleasepvp = function()
@@ -57,11 +53,6 @@ local ClickthisPleasepvp = function()
 	end
 	if tempTable[1] and tempTable[1].distance <= 30 then _A.ObjectInteract(tempTable[1].guid) end
 end
-_A.C_Timer.NewTicker(1, function()
-      if _A.UnitExists("mouseover") and _A.UnitCanAttack("player", "mouseover") then
-         _A.StartAttack(75, "mouseover")
-      end
-end)
 --
 local function MyTickerCallback(ticker)
 	if not _A.Cache.Utils.PlayerInGame then return end
