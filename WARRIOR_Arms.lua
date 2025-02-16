@@ -7,6 +7,25 @@ local DSL = function(api) return _A.DSL:Get(api) end
 local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 local cdcd = .3
+local specstoslap = {
+	-- PRIESTS
+	[256] = true,
+	[257] = true,
+	[258] = true,
+	-- DRUIDS
+	[102] = true,
+	[103] = true,
+	[104] = true,
+	[105] = true,
+	-- MONKS
+	-- [268] = true,
+	-- [269] = true,
+	[270] = true, -- MW
+	--
+	-- [] = true
+	-- [] = true
+	-- [] = true
+}
 -- top of the CR
 local player
 _A.numtangos = 0
@@ -162,7 +181,19 @@ local exeOnLoad = function()
 	hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
-		-- print(slot)
+		--------------
+		if slot then
+			Type, id, subType = _A.GetActionInfo(slot)
+			if id == 6544 then
+				player = player or Object("player")
+				if player:SpellCooldown(6544)<.3 then
+					local px, py, pz = _A.ObjectPosition("cursor")
+					_A.ClickPosition(px, py, pz)
+					return _A.CallWowApi("SpellStopTargeting")
+				end
+			end
+		end
+		-------------
 		local player = Object("player")
 		if slot==STARTSLOT then 
 			_A.pressedbuttonat = 0
@@ -248,6 +279,16 @@ local exeOnLoad = function()
 				_A.numtangos = _A.numtangos + 1
 			end
 		end
+	end
+	
+	_A.numenemiesinfront_tighter = function()
+		local number = 0
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange("Mortal Strike") and _A.notimmune(Obj) and Obj:InConeOf("player", 90) and Obj:los() then
+				number = number + 1
+			end
+		end
+		return number
 	end
 	
 	function _A.clickcast(unit, spell)
@@ -469,6 +510,7 @@ local exeOnUnload = function()
 end
 
 arms.rot = {
+	--
 	stance_dance = function()
 		local lowestmelee = Object("lowestEnemyInSpellRangeNOTARNOFACE(Mortal Strike)")
 		if player:SpellCooldown("Battle Stance")==0 then
@@ -574,8 +616,22 @@ arms.rot = {
 			if target and target.isplayer and target:enemy() 
 				and target:debuffduration("Hamstring")<1
 				and _A.notimmune(target)
-				and not target:buff("Hand of Freedom") then
+				and not target:immune("snare") then
 				return target:cast("Hamstring")
+			end
+		end
+	end,
+	
+	stormbolt_on_heal_or_low = function()
+		if player:talent("Storm Bolt") and player:SpellCooldown("Storm Bolt")<.3 then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Scatter Shot") 
+					and (healerspecid[Obj:spec()] or (Obj:health()<50 and _A.pull_location=="pvp"))
+					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
+					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 170) 
+					and Obj:los() then
+					return Obj:cast("Storm Bolt") 
+				end
 			end
 		end
 	end,
@@ -653,16 +709,17 @@ arms.rot = {
 	
 	slam = function()
 		if player:SpellUsable("Slam") then
-			local lowestmeleeEXECUTE = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
-			if not lowestmeleeEXECUTE or (lowestmeleeEXECUTE and lowestmeleeEXECUTE:health()>20) then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-				if lowestmelee then
-					if player:rage()>95 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
-						return lowestmelee:Cast("Slam")
-					end
+			-- local lowestmeleeEXECUTE = Object("lowestEnemyInSpellRangeNOTAR(Mortal Strike)")
+			-- if not lowestmeleeEXECUTE or (lowestmeleeEXECUTE and lowestmeleeEXECUTE:health()>20) then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			if lowestmelee then
+				-- if player:rage()>95 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
+				if player:rage()>25 then
+					return lowestmelee:Cast("Slam")
 				end
 			end
 		end
+		-- end
 	end,
 	
 	burstdisarm = function()
@@ -754,32 +811,31 @@ arms.rot = {
 	end,
 	
 	reflectspell = function()
-		reflectcheck = false
 		if player:SpellCooldown("Spell Reflection")==0 then
+			--
 			if _A.unitfrozen(player) then player:cast("Spell Reflection") end
+			--
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:range()<=25 and Obj:BuffAny("Nature's Swiftness") then
-					reflectcheck = true
+					return player:cast("Spell Reflection")
 				end
 			end
-			if reflectcheck == true then player:cast("Spell Reflection") end
 		end
 	end,
 	
 	safeguard_unroot_BG = function()
 		local tempTable = {}
 		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0 
-			and player:State("root") 
+			and player:State("root") and not IsCurrentSpell(114029)
 			then
-			for i = 1, 40 do
-				local raidobject = Object("raid"..i)
+			for _, raidobject in pairs(_A.OM:Get('Roster')) do
 				if raidobject and not raidobject:Is(player)
-				and raidobject:range()<25
-				-- and raidobject:los() 
-				then
+					and raidobject:range()<25
+					and raidobject:los()
+					then
 					tempTable[#tempTable+1] = {
+						obj = raidobject,
 						range = raidobject:range(),
-						name = "raid"..i
 					}
 				end
 			end
@@ -787,35 +843,7 @@ arms.rot = {
 				table.sort( tempTable, function(a,b) return ( a.range < b.range ) end )
 			end
 			if tempTable[1] then print("HEY IM WORKING") 
-				 _A.RunMacroText(string.format(("/cast [@%s] Safeguard"), tostring(tempTable[1].name)))
-				 return _A.CallWowApi("SpellStopTargeting")
-			end
-		end
-	end,
-	
-	safeguard_unroot_OLD = function()
-		local tempTable = {}
-		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0 
-			-- and player:State("root") 
-			then
-			for i = 1, 40 do
-				local raidobject = Object("raid"..i)
-				if raidobject and not raidobject:Is(player)
-				and raidobject:range()<25
-				-- and raidobject:los() 
-				then
-					tempTable[#tempTable+1] = {
-						range = raidobject:range(),
-						name = "raid"..i
-					}
-				end
-			end
-			if #tempTable>1 then
-				table.sort( tempTable, function(a,b) return ( a.range < b.range ) end )
-			end
-			if tempTable[1] then print("HEY IM WORKING") 
-				 _A.RunMacroText(string.format(("/cast [@%s] Safeguard"), tostring(tempTable[1].name)))
-				 return _A.CallWowApi("SpellStopTargeting")
+				return tempTable[1].obj:cast("Safeguard")
 			end
 		end
 	end,
@@ -881,6 +909,15 @@ arms.rot = {
 		end
 	end,
 	
+	shockwave_cheaper = function()
+		if player:Talent("Shockwave") and player:SpellCooldown("Shockwave")<player:gcd() then
+			local num = _A.numenemiesinfront_tighter()
+			if num>=3 then
+				player:Cast("Shockwave")
+			end
+		end
+	end,
+	
 	bladestorm = function()
 		if player:combat() and player:buff("Call of Victory") and player:talent("Bladestorm") and player:SpellCooldown("Bladestorm")<cdcd then
 			return player:cast("Bladestorm")
@@ -928,7 +965,6 @@ local inCombat = function()
 	arms.rot.items_strpot()
 	arms.rot.items_strflask()
 	arms.rot.activetrinket()
-	arms.rot.stance_dance()
 	arms.rot.bloodbath()
 	arms.rot.reckbanner()
 	arms.rot.antifear()
@@ -939,8 +975,12 @@ local inCombat = function()
 	arms.rot.Pummel()
 	--
 	if arms.rot.bladestorm() then return end
+	arms.rot.stance_dance()
 	-- if arms.rot.shockwave() then -- print(1) 
-	-- return true end
+	if arms.rot.shockwave_cheaper() then -- print(1) 
+	return true end
+	if arms.rot.stormbolt_on_heal_or_low() then print("STUNNING!!!")
+	return true end
 	if arms.rot.diebythesword() then -- print(2) 
 	return true end
 	if arms.rot.sweeping_strikes() then -- print(3) 
@@ -949,8 +989,6 @@ local inCombat = function()
 	return true end
 	if arms.rot.colossussmash() then --print(4) 
 	return true end
-	if arms.rot.Execute() then --print(6) 
-	return  true end
 	if arms.rot.thunderclap() then --print(7) 
 	return true end
 	if arms.rot.burstdisarm() then --print(8)
@@ -967,6 +1005,8 @@ local inCombat = function()
 	return true end
 	if arms.rot.thunderclapPVE() then --print(14) 
 	return true end
+	-- if arms.rot.slamonspec() then -- print(15) 
+	-- return true end
 	if arms.rot.slam() then -- print(15) 
 	return true end
 	if arms.rot.overpower() then --print(16) 
