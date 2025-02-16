@@ -310,7 +310,7 @@ local exeOnLoad = function()
 	
 	function _Y.reflectcheck_personnal(unit)
 		if unit then
-			for _,v in ipairs(spelltable) do
+			for _,v in ipairs(InterruptSpells) do
 				if unit:IscastingOnMe() then
 					if unit:iscasting(k) or unit:channeling(k) then
 						return true
@@ -322,7 +322,7 @@ local exeOnLoad = function()
 	end
 	function _Y.reflectcheck_all(unit)
 		if unit then
-			for _,v in ipairs(spelltable) do
+			for _,v in ipairs(InterruptSpells) do
 				if unit:iscasting(k) or unit:channeling(k) then
 					return true
 				end
@@ -728,7 +728,7 @@ arms.rot = {
 		if player:SpellCooldown("Spell Reflection")==0 and not IsCurrentSpell(23920) and not IsCurrentSpell(6552) and not IsCurrentSpell(102060) then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Mortal Strike") and obj:infront()
-					and reflectcheck_personnal(obj)
+					and _Y.reflectcheck_personnal(obj)
 					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
 					)
 					then
@@ -831,8 +831,21 @@ arms.rot = {
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee then
 				if player:rage()>25 then
-					if player:rage()>95 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
+					-- if player:rage()>95 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
 						return lowestmelee:Cast("Slam")
+					-- end
+				end
+			end
+		end
+	end,
+	
+	heroicstrike = function()
+		if player:SpellUsable("Heroic Strike") and player:SpellCooldown("Heroic Strike")==0 and not IsCurrentSpell(78) then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			if lowestmelee then
+				if player:rage()>30 then
+					if player:rage()>=100 then
+						return lowestmelee:Cast("Heroic Strike")
 					end
 				end
 			end
@@ -1109,8 +1122,9 @@ local inCombat = function()
 	if arms.rot.victoryrush() then return true end
 	if arms.rot.Mortalstrike() then return true end
 	if arms.rot.thunderclapPVE() then return true end
-	if arms.rot.slam() then return true end
+	if arms.rot.heroicstrike() then return true end
 	if arms.rot.overpower() then return true end
+	if arms.rot.slam() then return true end
 end
 local spellIds_Loc = function()
 end
