@@ -498,7 +498,9 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 170) and _A.notimmune(target) and not target:state("incapacitate || fear || disorient || charm || misc || sleep") and target:los() then
+		if target and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and _A.notimmune(target) 
+			and not target:state("incapacitate || fear || disorient || charm || misc || sleep") 
+			and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
@@ -838,17 +840,17 @@ local exeOnLoad = function()
 		local hpDelta2 = hybridHPv2()
 		local hpDelta3 = maxHPv2()
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-			return manaBudget>=hpDelta3
+		return manaBudget>=hpDelta3
 	end
 	--------------------------------------------------------
 	function _A.manaengine_highprio()
-	player = player or Object("player")
-	if player:buff("Lucidity") or player:mana()>=95 then return true end
+		player = player or Object("player")
+		if player:buff("Lucidity") or player:mana()>=95 then return true end
 		local hpDelta1 = averageHPv2() 
 		local hpDelta2 = hybridHPv2() 
 		local hpDelta3 = maxHPv2()
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-			return ( manaBudget - hpDelta3 > 1.5)
+		return ( manaBudget - hpDelta3 > 1.5)
 	end
 	
 	function _A.enoughmana(id)
