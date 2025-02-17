@@ -243,8 +243,23 @@ local function cditemRemains(itemid)
 end
 --
 --
-
-
+local function ChaseBack()
+    local target = Object("target")
+	if target and target:Enemy() and target:alive() then 
+		local tx, ty, tz = _A.ObjectPosition(target.guid)
+		local facing = _A.ObjectFacing(target.guid)
+		local destX = tx - math.cos(facing) * 1.5
+		local destY = ty - math.sin(facing) * 1.5
+		local px, py, pz = _A.ObjectPosition("player")
+		_A.ClickToMove(destX, destY, tz)
+		if not target:infront() and not player:BuffAny("Bladestorm") then
+			_A.FaceDirection(target.guid, false)
+		end
+		if target:SpellRange("Charge") and not player:BuffAny("Bladestorm") and target:infront() and target:los() and not IsCurrentSpell(100) then
+			target:cast("Charge")
+		end
+	end
+end
 local GUI = {
 }
 local exeOnLoad = function()
@@ -845,9 +860,9 @@ arms.rot = {
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee then
 				if player:rage()>25 then
-					-- if player:rage()>95 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
-						return lowestmelee:Cast("Slam")
-					-- end
+					if player:rage()>50 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
+					return lowestmelee:Cast("Slam")
+					end
 				end
 			end
 		end
@@ -1107,6 +1122,7 @@ local inCombat = function()
 	-- if player:lostcontrol()  then return end 
 	-- Interrupts
 	-- _Y.autoattackmanager()
+	if player:keybind("E") then ChaseBack() end
 	arms.rot.items_strpot()
 	arms.rot.items_strflask()
 	arms.rot.activetrinket()
@@ -1137,9 +1153,8 @@ local inCombat = function()
 	if arms.rot.victoryrush() then return true end
 	if arms.rot.Mortalstrike() then return true end
 	if arms.rot.thunderclapPVE() then return true end
-	if arms.rot.heroicstrike() then return true end
-	if arms.rot.overpower() then return true end
 	if arms.rot.slam() then return true end
+	if arms.rot.overpower() then return true end
 end
 local spellIds_Loc = function()
 end

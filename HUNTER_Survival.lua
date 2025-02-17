@@ -330,11 +330,35 @@ local exeOnLoad = function()
 		_A.pull_location = pull_location()
 	end)
 	_A.pull_location = _A.pull_location or pull_location()
-	
+	local oldfacing
 	_A.casttimers = {}
 	_A.scattertargets = {}
+	_Y.needtocorrectfacing = false
+	-- _A.Listener:Add("nofacev2", "UNIT_SPELLCAST_SENT", function(event, unit, spell, _, tname)
+		-- if unit == "player" then
+			-- if event == "UNIT_SPELLCAST_SENT" then
+				-- local target = Object("target")
+				-- player = player or Object("player")
+				-- if not target:InConeOf("player", 170) and player:SpellCooldown(spell)<.15 then 
+					-- if _Y.needtocorrectfacing == false then 
+						-- oldfacing = _A.ObjectFacing("player")  
+						-- _Y.needtocorrectfacing = true
+					-- end
+					-- _A.FaceDirection(target.guid, false) 
+					-- _A.ClickToMove(_A.ObjectPosition("player"))
+				-- end
+			-- end
+		-- end
+	-- end)
 	_A.Listener:Add("delaycasts_HUNT_SURV", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
 		if guidsrc == UnitGUID("player") then
+			-- if spell_name(idd) == spell_name(53301) then
+				-- if subevent == "SPELL_CAST_SUCCESS" then
+					-- _A.FaceDirection(oldfacing, false) 
+					-- _A.ClickToMove(_A.ObjectPosition("player"))
+					-- _Y.needtocorrectfacing = false
+				-- end
+			-- end
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
 				_A.casttimers[spell_name(idd)] = _A.GetTime()
 				if idd == 19503 or idd==19386 then -- add wyvern sting
@@ -1204,11 +1228,11 @@ local exeOnLoad = function()
 	-------------------------------------------------------
 	-------------------------------------------------------
 	-- _A.Listener:Add("steadycasting", "UNIT_SPELLCAST_SUCCEEDED", function(event, ...)
-	    
-		-- local unit, spellID = ...
-		-- if unit == "player" and spellID == "Auto Shot" then -- Auto Shot spell ID
-			-- print(unit, spellID, GetTime())
-		-- end
+	
+	-- local unit, spellID = ...
+	-- if unit == "player" and spellID == "Auto Shot" then -- Auto Shot spell ID
+	-- print(unit, spellID, GetTime())
+	-- end
 	-- end)
 	
 	-------------------------------------------------------
@@ -2132,7 +2156,7 @@ local inCombat = function()
 	-- if player:lostcontrol() then return true end
 	if player:buff("Camouflage") then return true end
 	-- Defs
-	survival.rot.deterrence()
+	if not player:buffany("Horde Flag || Alliance Flag") then survival.rot.deterrence() end
 	if survival.rot.disengage_freemovement() then return true end
 	if survival.rot.masterscall() then return true end
 	survival.rot.masterscall_party1()
@@ -2173,7 +2197,7 @@ local inCombat = function()
 	survival.rot.items_agiflask()
 	survival.rot.bursthunt()
 	survival.rot.fervor()
-	survival.rot.feigninterrupt()
+	if not player:buffany("Horde Flag || Alliance Flag") then survival.rot.feigninterrupt() end
 	survival.rot.stampede()
 	survival.rot.kick()
 	_Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,8.5)
