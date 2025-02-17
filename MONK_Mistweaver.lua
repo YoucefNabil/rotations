@@ -2476,6 +2476,7 @@ local inCombat = function()
 	if not _A.pull_location then return true end
 	player = player or Object("player")
 	if not player then return true end
+	local mylevel = player:level()
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	-- print(player:SpellCount("Chi Brew"))
 	-- print(player.name)
@@ -2513,26 +2514,28 @@ local inCombat = function()
 		if mw_rot.dpsstanceswap()  then return true end
 	end
 	if player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
-	if mw_rot.ctrl_mode() then return true end -- ctrl
+	if mylevel>=34 and mw_rot.ctrl_mode() then return true end -- ctrl
 	-- GCD CDS
-	if mw_rot.lifecocoon() then return true end
-	if mw_rot.burstdisarm()then print("DISARMING") return true end
+	if mylevel>=50 and mw_rot.lifecocoon() then return true end
+	if mylevel>=68 and mw_rot.burstdisarm()then print("DISARMING") return true end
 	-- OH SHIT ORBS
-	if _A.modifier_shift() and mw_rot.healingsphere() then return true end
+	if mylevel>=64 and _A.modifier_shift() and mw_rot.healingsphere() then return true end
 	--------------------- dispells and root freedom
-	if mw_rot.dispellunCC() then return true end
-	if mw_rot.dispellDANGEROUS() then return true end
-	-- if mw_rot.dispellunSLOW() then return end
+	if mylevel>=20 then
+		if mw_rot.dispellunCC() then return true end
+		if mw_rot.dispellDANGEROUS() then return true end
+		-- if mw_rot.dispellunSLOW() then return end
+	end
 	if mw_rot.tigerslust()  then return true end
 	--------------------- high prio
-	if mw_rot.tigerpalm_mm() then return true end
-	if mw_rot.surgingmist() then return true end
-	if mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
-	if mw_rot.uplift() then return true end -- really important
+	if mylevel>=3 and mw_rot.tigerpalm_mm() then return true end
+	if mylevel>=34 and mw_rot.surgingmist() then return true end
+	if mylevel>=42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
+	if mylevel>=62 and mw_rot.uplift() then return true end -- really important
 	-- OH SHIT ORBS
 	if _A.manaengine_highprio() then -- HIGH PRIO
 		-- print("HIGH PRIO")
-		if mw_rot.healingsphere() then return true end
+		if mylevel>=64 and mw_rot.healingsphere() then return true end
 	end
 	if mw_rot.chi_wave()  then return true end -- KEEP THESE OFF CD
 	if mw_rot.Xuen() then return true end
@@ -2540,15 +2543,17 @@ local inCombat = function()
 	if mw_rot.ringofpeacev2() then return true end
 	if mw_rot.kick_legsweep() then return true end
 	if mw_rot.stun_legsweep() then return true end
-	if mw_rot.kick_paralysis() then return true end
-	if mw_rot.sapsnipe() then return true end
-	if mw_rot.sapsextendcc() then return true end
+	if mylevel>=44 then
+		if Paralysismw_rot.kick_paralysis() then return true end
+		if mw_rot.sapsnipe() then return true end
+		if mw_rot.sapsextendcc() then return true end
+	end
 	------------------ Rotation Proper
-	if mw_rot.manatea() then return true end
-	if mw_rot.healingsphere() then return true end
+	if mylevel>=56 and mw_rot.manatea() then return true end
+	if mylevel>=64 and mw_rot.healingsphere() then return true end
 	if mw_rot.spin_rjw() then return true end
-	if mw_rot.healstatue() then return true end
-	if mw_rot.expelharm() then return true end
+	if mylevel>=70 and mw_rot.healstatue() then return true end
+	if mylevel>=26 and mw_rot.expelharm() then return true end
 	------------------ STANCE SWAP FILL
 	if not player:keybind("R") and mw_rot.dpsstance_healstance_keybind() then return true end -- holding shift or high prio check
 	if mw_rot.dpsstance_spin_musclememory() then return true end
