@@ -2544,7 +2544,7 @@ local inCombat = function()
 	if mw_rot.kick_legsweep() then return true end
 	if mw_rot.stun_legsweep() then return true end
 	if mylevel>=44 then
-		if Paralysismw_rot.kick_paralysis() then return true end
+		if mw_rot.kick_paralysis() then return true end
 		if mw_rot.sapsnipe() then return true end
 		if mw_rot.sapsextendcc() then return true end
 	end
