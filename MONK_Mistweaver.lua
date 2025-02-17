@@ -2506,14 +2506,14 @@ local inCombat = function()
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	-- KEYBINDS
-	if player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
+	if mylevel>=64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if player:keybind("R") then
-		if mw_rot.manatea() then return true end
-		if mw_rot.tp_buff_keybind() then return true end
-		if mw_rot.blackout_keybind()  then return true end
+		if mylevel>=56 and mw_rot.manatea() then return true end
+		if mylevel>=3 and mw_rot.tp_buff_keybind() then return true end
+		if mylevel>=7 and mw_rot.blackout_keybind()  then return true end
 		if mw_rot.dpsstanceswap()  then return true end
 	end
-	if player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
+	if mylevel>=28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
 	if mylevel>=34 and mw_rot.ctrl_mode() then return true end -- ctrl
 	-- GCD CDS
 	if mylevel>=50 and mw_rot.lifecocoon() then return true end
