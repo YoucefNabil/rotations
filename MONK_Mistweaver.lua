@@ -229,7 +229,61 @@ local function kickcheck_highprio(unit)
 	end
 	return false
 end
+
+local function FlexIcon(SpellID, width, height, bool)
+	local var = " \124T" ..
+		(select(3, GetSpellInfo(SpellID)) or select(3, GetSpellInfo(24720))) ..
+		":" .. (height or 25) .. ":" .. (width or 25) .. "\124t ";
+	if bool then
+		ico = var .. GetSpellInfo(SpellID)
+	else
+		ico = var
+	end
+	return ico
+end
+
+local header_tsize = 18
+local checkbox_tsize = 15
+local input_tsize = 15
+local info_tsize = 15
+local button_tsize = 15
+local spacer_size = 3
+local hpdeltas = {
+	{ key = "1", text = "Low" },
+	{ key = "2", text = "Normal" },
+	{ key = "0", text = "Intensive" },
+}
 local GUI = {
+	{ type = "spacer", size = spacer_size },
+	{ type = "header", size = header_tsize, text = "|cFFffd000Info|r",                                             align = "center" },
+	{ type = "spacer", size = spacer_size },
+	{ type = 'text',   size = info_tsize,   text = 'Spotted lua errors?' },
+	{ type = 'text',   size = info_tsize,   text = 'Send screenshots to me at discord! \nDiscord: @ .youcef' },
+	{ type = 'spacer', size = spacer_size },
+	{ type = 'text',   size = info_tsize,   text = 'Hardcoded keybinds:' },
+	{ type = 'text',   size = info_tsize,   text = '|cFFffd000Hold CTRL|r: |cFFffd000Burst Healing|r' },
+	{ type = 'text',   size = info_tsize,   text = '|cFFffd000Hold Shift|r: |cFFffd000Manaengine Bypass|r' },
+	{ type = 'text',   size = info_tsize,   text = '|cFFffd000Hold R|r: |cFFffd000DPS Rotation Mode|r' },
+	{ type = "spacer", size = spacer_size },
+
+	{ type = "spacer", size = spacer_size },
+	{ type = "header", size = header_tsize, text = _A.Core:GetSpellIcon(115399, 16, 16) .. " |cFFffd000Utility|r", align = "center" },
+	{ type = "spacer", size = spacer_size },
+	{
+		key = "hpdeltas",
+		type = "dropdown",
+		cw = 15,
+		ch = 15,
+		size = input_tsize,
+		text = _A.Core:GetSpellIcon(123761, 15, 15) .. "Mana Usage: ",
+		default = "0",
+		list = hpdeltas
+	},
+	{ type = "spacer",   size = spacer_size },
+	{ type = "checkbox", size = checkbox_tsize, text = "Use DPS leveling Rotation " .. _A.Core:GetSpellIcon(100787, 15, 15) .. " (R)", key = "leveling", default = true },
+	{ type = "spacer",   size = spacer_size },
+	{ type = "spacer",   size = spacer_size },
+	{ type = 'text',     size = info_tsize,     text = '© .youcef & _2related (UI)' },
 }
 
 local exeOnLoad = function()
@@ -829,28 +883,40 @@ local exeOnLoad = function()
 		return maxx
 	end 
 	function hybridHPv2()
-		local maxmodifier = maxHPv2()*0.7
-		local avgmodifier = averageHPv2()*0.3
-		return maxmodifier+avgmodifier
+		local maxmodifier = maxHPv2() * 0.7
+		local avgmodifier = averageHPv2() * 0.3
+		return maxmodifier + avgmodifier
 	end
-	function _A.manaengine() -- make it so it's tied with group hp
+
+	function _A.manaengine() -- make it so it's tied with group hpF
 		player = player or Object("player")
-		if player:buff("Lucidity") or player:mana()>=95 then return true end
-		local hpDelta1 = averageHPv2()
-		local hpDelta2 = hybridHPv2()
-		local hpDelta3 = maxHPv2()
+		if player:buff("Lucidity") or player:mana() >= 95 then return true end
+		local hpdeltas = player:ui("hpdeltas")
+		if hpdeltas == "1" then
+			HpDelta = averageHPv2()
+		elseif hpdeltas == "2" then
+			HpDelta = hybridHPv2()
+		elseif hpdeltas == "0" then
+			HpDelta = maxHPv2()
+		end
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-		return manaBudget>=hpDelta3
+		return manaBudget >= hpDelta
 	end
+
 	--------------------------------------------------------
 	function _A.manaengine_highprio()
 		player = player or Object("player")
-		if player:buff("Lucidity") or player:mana()>=95 then return true end
-		local hpDelta1 = averageHPv2() 
-		local hpDelta2 = hybridHPv2() 
-		local hpDelta3 = maxHPv2()
+		if player:buff("Lucidity") or player:mana() >= 95 then return true end
+		local hpdeltas = player:ui("hpdeltas")
+		if hpdeltas == "1" then
+			HpDelta = averageHPv2()
+		elseif hpdeltas == "2" then
+			HpDelta = hybridHPv2()
+		elseif hpdeltas == "0" then
+			HpDelta = maxHPv2()
+		end
 		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-		return ( manaBudget - hpDelta3 > 1.5)
+		return (manaBudget - hpDelta > 1.5)
 	end
 	
 	function _A.enoughmana(id)
@@ -2122,10 +2188,21 @@ local mw_rot = {
 	end,
 	
 	healstatue = function()
-		if player:Stance() == 1   then
-			if	player:SpellCooldown("Summon Jade Serpent Statue")<cdcd and player:SpellUsable(115313) and not IsSwimming()
-				then
-				return _A.clickcast(player,"Summon Jade Serpent Statue")
+		if not player:combat() then
+			return
+		end
+		if player:Stance() == 1 then
+			local statueInRange = function()
+				for _, obj in pairs(_A.OM:Get('Friendly')) do
+					if obj.id == 60849 and _A.ObjectCreator(obj.guid) == player.guid then
+						return obj:Distance() <= 20
+					end
+				end
+				return false
+			end
+			if player:SpellCooldown("Summon Jade Serpent Statue") < cdcd and player:SpellUsable(115313) and not IsSwimming() and not statueInRange()
+			then
+				return _A.clickcast(player, "Summon Jade Serpent Statue")
 			end
 		end
 	end,
@@ -2365,7 +2442,7 @@ local mw_rot = {
 	end,
 	
 	lightning_keybind = function()
-		if player:Stance() == 1 and player:Keybind("R") and player:mana()>=9 and not player:moving() then
+		if player:Stance() == 1 and (player:Keybind("R") or player:ui("leveling")) and player:mana()>=9 and not player:moving() then
 			if not player:isChanneling("Crackling Jade Lightning") then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if not lowestmelee then
@@ -2409,7 +2486,7 @@ local mw_rot = {
 		end
 	end,
 	dpsstance_spin = function()
-		if player:Stance() ~= 1 and (player:keybind("R") or _A.pull_location~="pvp") then
+		if player:Stance() ~= 1 and (player:keybind("R") or _A.pull_location~="pvp" or player:ui("leveling")) then
 			if	player:Talent("Rushing Jade Wind") 
 				and player:SpellCooldown("Rushing Jade Wind")<cdcd
 				then
@@ -2459,7 +2536,7 @@ local mw_rot = {
 				and not player:Buff("Rushing Jade Wind") 
 				and not player:Buff("lucidity") 
 				then
-				if player:Talent("Rushing Jade Wind") and (player:keybind("R") or _A.pull_location~="pvp" or _Y.rushing_number()>=3) then
+				if player:Talent("Rushing Jade Wind") and (player:keybind("R") or _A.pull_location~="pvp" or _Y.rushing_number()>=3 or player:ui("leveling")) then
 					return player:Cast("Stance of the Fierce Tiger")
 				end
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
@@ -2507,7 +2584,7 @@ local inCombat = function()
 	------------------ High Prio
 	-- KEYBINDS
 	-- if mylevel>=64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
-	if player:keybind("R") then
+	if player:keybind("R") or player:ui("leveling") then
 		if mylevel>=56 and mw_rot.manatea() then return true end
 		if mylevel>=3 and mw_rot.tp_buff_keybind() then return true end
 		if mylevel>=7 and mw_rot.blackout_keybind()  then return true end
@@ -2555,7 +2632,7 @@ local inCombat = function()
 	if mylevel>=70 and mw_rot.healstatue() then return true end
 	if mylevel>=26 and mw_rot.expelharm() then return true end
 	------------------ STANCE SWAP FILL
-	if not player:keybind("R") and mw_rot.dpsstance_healstance_keybind() then return true end -- holding shift or high prio check
+	if not (player:keybind("R") or player:ui("leveling")) and mw_rot.dpsstance_healstance_keybind() then return true end -- holding shift or high prio check
 	if mw_rot.dpsstance_spin_musclememory() then return true end
 	if mw_rot.dpsstance_jab() then return true end
 	if mw_rot.dpsstance_spin()  then return true end
