@@ -51,7 +51,7 @@ local ClickthisPleasepvp = function()
 	if #tempTable > 1 then
 		table.sort(tempTable, function(a, b) return a.distance < b.distance end)
 	end
-	if tempTable[1] and tempTable[1].distance <= 30 then _A.ObjectInteract(tempTable[1].guid) end
+	if tempTable[1] then _A.ObjectInteract(tempTable[1].guid) end
 end
 --
 local function MyTickerCallback(ticker)

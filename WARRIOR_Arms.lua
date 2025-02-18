@@ -814,10 +814,10 @@ arms.rot = {
 	
 	sunderarmor = function()
 		if player:SpellCooldown("Sunder Armor")<cdcd and player:spellusable("Sunder Armor") then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee then 
-				if lowestmelee:debuffduration("Weakened Armor")<3 or lowestmelee:DebuffStackAny("Weakened Armor")<=2 then
-					return lowestmelee:Cast("Sunder Armor")
+			local target = Object("target")
+			if target and target:alive() and target:enemy() and target:SpellRange("Mortal Strike") and target:infront() and target:los() then 
+				if target:debuffduration("Weakened Armor")<3 or target:DebuffStackAny("Weakened Armor")<=2 then
+					return target:Cast("Sunder Armor")
 				end
 			end
 		end
@@ -870,9 +870,17 @@ arms.rot = {
 		if player:SpellUsable("Slam") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee then
-				if player:rage()>25 then
-					if player:rage()>50 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
-					return lowestmelee:Cast("Slam")
+				if lowestmelee:health()>20 or player:buff("Sweeping Strikes")  then
+					if player:rage()>25 then
+						if player:rage()>50 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
+							return lowestmelee:Cast("Slam")
+						end
+					end
+					else
+					if player:rage()>30 then
+						if player:rage()>50 or lowestmelee:debuff("Colossus Smash") then
+							return lowestmelee:Cast("Execute")
+						end
 					end
 				end
 			end
@@ -1165,6 +1173,7 @@ local inCombat = function()
 	if arms.rot.Mortalstrike() then return true end
 	if arms.rot.thunderclapPVE() then return true end
 	if arms.rot.slam() then return true end
+	if arms.rot.sunderarmor() then return true end
 	if arms.rot.overpower() then return true end
 end
 local spellIds_Loc = function()

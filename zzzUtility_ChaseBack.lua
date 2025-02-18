@@ -5,36 +5,40 @@ local flagclick = 0.1
 local player
 local randomDuration = 1
 local heFLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true, ["Orb of Power"] = true,}
-local function pull_location()
-	return string.lower(select(2, GetInstanceInfo()))
-end
-Listener:Add("Master", "PLAYER_ENTERING_WORLD", function(event)
-	local stuffsff = pull_location()
-	_Y.pull_location = stuffsff
-end)
+-- Simplified ChaseBack with state management
+--
+local lastDestX, lastDestY, lastFaceTime
+local faceCooldown = 0.3  -- Reduce facing adjustment frequency
+local moveThreshold = 0.5 -- Only update movement if destination changes by 0.5+ yards
+local lastTx, lastTy, lastFacing
 local function ChaseBack()
-	local player = player or Object("player")
+	player = player or Object("player") 
     local target = Object("target")
-	if player and player:keybind("E") then
-		if target and target:Enemy() and target:alive() then 
-			-- if (target:range()>4 or not target:behind()) then -- disable this check to constantly run behind the target
-				local tx, ty, tz = _A.ObjectPosition(target.guid)
-				local facing = _A.ObjectFacing(target.guid)
-				local destX = tx - math.cos(facing) * 1.0
-				local destY = ty - math.sin(facing) * 1.0
-				local px, py, pz = _A.ObjectPosition("player")
-				_A.ClickToMove(destX, destY, tz)
-				if not target:infront() and not player:BuffAny("Bladestorm") 
-					and not player:moving() -- makes it look smoother, but might miss attacks
-					then
-					_A.FaceDirection(target.guid, false)
-				end
-				-- Warrior specific
-				if player:spec()==71 and target:SpellRange("Charge") and not player:BuffAny("Bladestorm") and target:infront() and target:los() and not IsCurrentSpell(100) then
-					target:cast("Charge")
-				-- end
-			end
+    if player and target and target:Exists() and target:Enemy() and target:alive() and _A.IsKeyDown("E") then
+        local tx, ty, tz = _A.ObjectPosition(target.guid)
+        local facing = _A.ObjectFacing(target.guid)
+        local destX = tx - math.cos(facing) * 1.5
+        local destY = ty - math.sin(facing) * 1.5
+		local now = _A.GetTime() or GetTime()
+		_A.ClickToMove(destX, destY, tz) 
+		-- Warrior specific
+		if player:spec()==71 and target:SpellRange("Charge") and not player:BuffAny("Bladestorm") and target:infront() and target:los() and not IsCurrentSpell(100) then
+			target:cast("Charge")
+			-- end
 		end
 	end
 end
-C_Timer.NewTicker(.1, ChaseBack, false, "chase")
+local function faceface()
+	player = player or Object("player") 
+    local target = Object("target")
+    if player and target and target:Exists() and target:Enemy() and _A.IsKeyDown("E") then
+		-- Smooth facing logic
+		if not player:BuffAny("Bladestorm") and not target:infront() and player:spellcooldown("Slam")<.3 and target:SpellRange("mortal strike") then
+			-- Calculate angle difference
+			_A.FaceDirection(target.guid, true)
+		end
+	end
+end
+-- Use slightly slower tick interval for better performance
+C_Timer.NewTicker(0.1, ChaseBack, false, "moving")
+C_Timer.NewTicker(0.1, faceface, false, "facing")
