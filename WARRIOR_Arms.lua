@@ -248,11 +248,11 @@ local function ChaseBack()
 	if target and target:Enemy() and target:alive() then 
 		local tx, ty, tz = _A.ObjectPosition(target.guid)
 		local facing = _A.ObjectFacing(target.guid)
-		local destX = tx - math.cos(facing) * 1.5
-		local destY = ty - math.sin(facing) * 1.5
+		local destX = tx - math.cos(facing) * 1.0
+		local destY = ty - math.sin(facing) * 1.0
 		local px, py, pz = _A.ObjectPosition("player")
 		_A.ClickToMove(destX, destY, tz)
-		if not target:infront() and not player:BuffAny("Bladestorm") then
+		if not target:infront() and not player:BuffAny("Bladestorm") and not player:moving() then
 			_A.FaceDirection(target.guid, false)
 		end
 		if target:SpellRange("Charge") and not player:BuffAny("Bladestorm") and target:infront() and target:los() and not IsCurrentSpell(100) then
@@ -813,11 +813,22 @@ arms.rot = {
 	end,
 	
 	sunderarmor = function()
-		if  player:SpellCooldown("Sunder Armor")<cdcd and player:spellusable("Sunder Armor") then
+		if player:SpellCooldown("Sunder Armor")<cdcd and player:spellusable("Sunder Armor") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee then 
 				if lowestmelee:debuffduration("Weakened Armor")<3 or lowestmelee:DebuffStackAny("Weakened Armor")<=2 then
 					return lowestmelee:Cast("Sunder Armor")
+				end
+			end
+		end
+	end,
+	
+	sunderarmor_target = function()
+		if player:SpellCooldown("Sunder Armor")<cdcd and player:spellusable("Sunder Armor") then
+			local target = Object("target")
+			if target and target:enemy() and target:alive() and target:SpellRange("Mortal Strike") and target:infront() and target:los() then 
+				if target:debuffduration("Weakened Armor")<3 or target:DebuffStack("Weakened Armor")<=2 then
+					return target:Cast("Sunder Armor")
 				end
 			end
 		end
@@ -1122,7 +1133,7 @@ local inCombat = function()
 	-- if player:lostcontrol()  then return end 
 	-- Interrupts
 	-- _Y.autoattackmanager()
-	if player:keybind("E") then ChaseBack() end
+	-- if player:keybind("E") then ChaseBack() end
 	arms.rot.items_strpot()
 	arms.rot.items_strflask()
 	arms.rot.activetrinket()

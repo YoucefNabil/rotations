@@ -2506,7 +2506,7 @@ local inCombat = function()
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	-- KEYBINDS
-	if mylevel>=64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
+	-- if mylevel>=64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if player:keybind("R") then
 		if mylevel>=56 and mw_rot.manatea() then return true end
 		if mylevel>=3 and mw_rot.tp_buff_keybind() then return true end
