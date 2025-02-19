@@ -572,7 +572,7 @@ local exeOnLoad = function()
 		"Lightwell",
 		"Tremor Totem",
 	}
-
+	
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
@@ -650,7 +650,7 @@ local exeOnLoad = function()
 		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
 		--
 		if target and target:exists() and target:enemy()  and target:alive() and _A.notimmune(target) then
-			 if _A.pull_location~="arena" or (not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and not _A.scattertargets[target.guid])  then
+			if _A.pull_location~="arena" or (not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and not _A.scattertargets[target.guid])  then
 				return target and target.guid -- this is good
 			end
 		end
@@ -1328,6 +1328,31 @@ local exeOnLoad = function()
 			end
 		end
 	end
+	function _Y.GetPetStance()
+		local STANCE_ICONS = {
+			"PET_MODE_PASSIVE",
+			"PET_MODE_ASSIST",
+			"PET_MODE_DEFENSIVE"
+		}
+		-- Check each pet action slot (1-10)
+		for i = 1, 10 do
+			local icon, _, _, _, isActive = GetPetActionInfo(i)
+			if icon and isActive then
+				-- Determine which stance is active based on the icon
+				for _, stanceName in pairs(STANCE_ICONS) do
+					if icon == stanceName then
+						return stanceName
+					end
+				end
+			end
+		end
+		return " " -- No active stance found
+	end
+	local function petpassive() -- when pet target has a breakable cc
+		if _Y.GetPetStance() ~= "PET_MODE_PASSIVE" then
+			return _A.CallWowApi("RunMacroText", "/petpassive"), 4
+		end
+	end
 	function _Y.petengine() -- REQUIRES RELOAD WHEN SWITCHING SPECS
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
@@ -1338,6 +1363,7 @@ local exeOnLoad = function()
 		_A.PetGUID = _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return true end
 		-------- PET ROTATION
+		if petpassive() then return true end
 		if attacktotem() then return true end
 		if attackfocus() then return true end
 		if attacklowest() then return true end
