@@ -13,7 +13,7 @@ local ObjectPosition = _A.ObjectPosition
 local CalculatePath = _A.CalculatePath
 local FaceDirection = _A.FaceDirection
 local UnitCanCooperate, UnitHealthMax, GetTime, UnitIsPlayer, string_find = UnitCanCooperate, UnitHealthMax, GetTime,
-	UnitIsPlayer, string.find
+UnitIsPlayer, string.find
 local manamodifier = 1
 local ENEMY_OM = {}
 local cdcd = .3
@@ -41,7 +41,7 @@ local function unitDD(unit)
 	local UnitGUID = UnitGUID
 	if UnitExists(unit) then
 		return tonumber((UnitGUID(unit)):sub(-13, -9), 16)
-	else
+		else
 		return -1
 	end
 end
@@ -49,7 +49,7 @@ local function isActive(spellID)
 	local conda, condb = IsUsableSpell(spellID);
 	if conda ~= nil then
 		return true
-	else
+		else
 		return false
 	end
 end
@@ -58,8 +58,8 @@ local SPELL_SHIELD_MEDIUM = GetSpellInfo(142864)
 local SPELL_SHIELD_FULL   = GetSpellInfo(142865)
 local function CalculateHPRAW(t)
 	local shield = select(15, _A.UnitDebuff(t, SPELL_SHIELD_LOW)) or select(15, _A.UnitDebuff(t, SPELL_SHIELD_MEDIUM)) or
-		select(15, _A.UnitDebuff(t, SPELL_SHIELD_FULL)) or
-		0 -- or ((select(15, UnitDebuff(t, SPELL_SHIELD_FULL)))~=nil and UnitHealthMax(t))
+	select(15, _A.UnitDebuff(t, SPELL_SHIELD_FULL)) or
+	0 -- or ((select(15, UnitDebuff(t, SPELL_SHIELD_FULL)))~=nil and UnitHealthMax(t))
 	if shield ~= 0 then return shield else return _A.UnitHealth(t) end
 end
 local function CalculateHPRAWMAX(t)
@@ -236,11 +236,11 @@ end
 
 local function FlexIcon(SpellID, width, height, bool)
 	local var = " \124T" ..
-		(select(3, GetSpellInfo(SpellID)) or select(3, GetSpellInfo(24720))) ..
-		":" .. (height or 25) .. ":" .. (width or 25) .. "\124t ";
+	(select(3, GetSpellInfo(SpellID)) or select(3, GetSpellInfo(24720))) ..
+	":" .. (height or 25) .. ":" .. (width or 25) .. "\124t ";
 	if bool then
 		ico = var .. GetSpellInfo(SpellID)
-	else
+		else
 		ico = var
 	end
 	return ico
@@ -269,7 +269,7 @@ local GUI = {
 	{ type = 'text',   size = info_tsize,   text = '|cFFffd000Hold Shift|r: |cFFffd000Manaengine Bypass (turbo mode/spam spheres)|r' },
 	{ type = 'text',   size = info_tsize,   text = '|cFFffd000Hold R|r: |cFFffd000DPS Rotation Mode|r' },
 	{ type = "spacer", size = spacer_size },
-
+	
 	{ type = "spacer", size = spacer_size },
 	{ type = "header", size = header_tsize, text = _A.Core:GetSpellIcon(115399, 16, 16) .. " |cFFffd000Utility|r", align = "center" },
 	{ type = "spacer", size = spacer_size },
@@ -318,7 +318,7 @@ local exeOnLoad = function()
 			end
 		end
 	end
-
+	
 	function _A.tbltostr(tbl)
 		local result = {}
 		for _, value in ipairs(tbl) do
@@ -326,14 +326,14 @@ local exeOnLoad = function()
 		end
 		return table.concat(result, " || ")
 	end
-
+	
 	function _A.dontbreakcc(unit)
 		if unit then
 			if unit:state("charm || sleep || disorient || fear || incapacitate || misc") then return false end
 		end
 		return true
 	end
-
+	
 	function _A.groundpositiondetail(x, y, z)
 		local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
 		local los, cx, cy, cz = _A.TraceLine(x, y, z + 5, x, y, z - 200, flags)
@@ -341,7 +341,7 @@ local exeOnLoad = function()
 			return cx, cy, cz
 		end
 	end
-
+	
 	_A.hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
@@ -372,7 +372,7 @@ local exeOnLoad = function()
 		if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
 			Type, id, subType = _A.GetActionInfo(slot)
 			if Type == "spell" or Type == "macro" -- remove macro?
-			then
+				then
 				_A.pressedbuttonat = _A.GetTime()
 			end
 		end
@@ -386,11 +386,11 @@ local exeOnLoad = function()
 		local x2, y2, z2 = unit2 and _A.ObjectPosition(unit2)
 		if x1 and x2 and y1 and y2 and z1 and z2 then
 			return _A.GetDistanceBetweenPositions(x1, y1, z1, x2, y2, z2)
-		else
+			else
 			return 9999
 		end
 	end
-
+	
 	function _A.someoneislow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj.isplayer then
@@ -401,11 +401,11 @@ local exeOnLoad = function()
 		end
 		return false
 	end
-
+	
 	-----------------------------------	-----------------------------------
 	-----------------------------------
 	-----------------------------------
-
+	
 	immunebuffs = {
 		"Deterrence",
 		"Hand of Protection",
@@ -419,13 +419,13 @@ local exeOnLoad = function()
 		"Cyclone"
 		-- "Smoke Bomb"
 	}
-
+	
 	healimmunebuffs = {
 	}
 	healimmunedebuffs = {
 		"Cyclone"
 	}
-
+	
 	-- function _A.notimmune(unit) -- needs to be object
 	-- if unit then
 	-- if unit:immune("all") then return false end
@@ -438,7 +438,7 @@ local exeOnLoad = function()
 	-- end
 	-- return true
 	-- end
-
+	
 	function _A.notimmune(unit) -- needs to be object
 		if unit then
 			if unit:immune("all") then return false end
@@ -447,7 +447,7 @@ local exeOnLoad = function()
 		end
 		return true
 	end
-
+	
 	function _A.nothealimmune(unit)
 		player = Object("player")
 		if unit then
@@ -456,7 +456,7 @@ local exeOnLoad = function()
 		end
 		return true
 	end
-
+	
 	-----------------------------------
 	-----------------------------------
 	local function fall()
@@ -467,7 +467,7 @@ local exeOnLoad = function()
 			local los, cx, cy, cz = _A.TraceLine(px, py, pz + 5, px, py, pz - 200, flags)
 			if not los then
 				print("Distance to ground ", pz - cz)
-			else
+				else
 				print("interception not found within the specified distance.")
 			end
 		end
@@ -488,7 +488,7 @@ local exeOnLoad = function()
 		end
 		return math.max(numnum, numnum2)
 	end
-
+	
 	-----------------------------------
 	_A.buttondelayfunc = function()
 		if player:stance() ~= 1 then return false end
@@ -518,7 +518,7 @@ local exeOnLoad = function()
 		end
 		if #tempTable >= 1 then
 			return tempTable[1] and tempTable[1].guid
-		else
+			else
 			return
 		end
 	end)
@@ -541,7 +541,7 @@ local exeOnLoad = function()
 		end
 		if #tempTable >= 1 then
 			return tempTable[1] and tempTable[1].guid
-		else
+			else
 			return
 		end
 	end)
@@ -558,11 +558,11 @@ local exeOnLoad = function()
 		end
 		if #tempTable > 1 then
 			table.sort(tempTable,
-				function(a, b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end)
+			function(a, b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end)
 		end
 		if #tempTable >= 1 then
 			return tempTable[num] and tempTable[num].guid
-		else
+			else
 			return
 		end
 	end)
@@ -585,11 +585,11 @@ local exeOnLoad = function()
 		end
 		if #tempTable > 1 then
 			table.sort(tempTable,
-				function(a, b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end)
+			function(a, b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end)
 		end
 		if #tempTable >= 1 then
 			return tempTable[num] and tempTable[num].guid
-		else
+			else
 			return
 		end
 	end)
@@ -649,7 +649,7 @@ local exeOnLoad = function()
 			-- print(subevent.." "..amount) -- too much voodoo
 			-- end
 			if guidsrc == UnitGUID("player")
-			then
+				then
 				-- DEBUG
 				-- if subevent == "SPELL_CAST_SUCCESS" then
 				-- if idd==115460 then
@@ -687,695 +687,695 @@ local exeOnLoad = function()
 				----------------------
 			end
 		end)
-	function _A.castdelay(idd, delay)
-		if delay == nil then return true end
-		if _A.casttimers[idd] == nil then return true end
-		return (_A.GetTime() - _A.casttimers[idd]) >= delay
-	end
-
-	local function someonebursting()
-		for _, obj in pairs(_A.OM:Get('Enemy')) do
-			if obj.isplayer
-				and not healerspecid[obj:spec()]
-				and obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance")
-				and obj:range() < 40
-				and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm || stun")
-				and obj:los() then
-				return true
-			end
+		function _A.castdelay(idd, delay)
+			if delay == nil then return true end
+			if _A.casttimers[idd] == nil then return true end
+			return (_A.GetTime() - _A.casttimers[idd]) >= delay
 		end
-		return false
-	end
-
-	-- ====
-	local MW_HealthUsedData = {}
-	local MW_LastHealth = {}
-	local MW_HealthAnalyzedTimespan_fixed = 18
-	local MW_HealthAnalyzedTimespan = MW_HealthAnalyzedTimespan_fixed
-	--====================================================== Testing
-	_A.Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED",
-		function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-			if string_find(subevent, "_DAMAGE") or string_find(subevent, "_HEAL") then -- does this work with absorbs? I don't remember testing this
-				if UnitIsPlayer(guiddest) then                                -- only players
-					-- all subevent susceptible of causing health changes
-					-- print("picked up")
-					if MW_HealthUsedData[guiddest] == nil then
-						MW_HealthUsedData[guiddest] = {}
-						MW_HealthUsedData[guiddest].t = {}
-						MW_LastHealth[guiddest] = CalculateHPRAW(guiddest)
-					end
-					UnitHealthHandler(guiddest)
-					-- print(subevent)
+		
+		local function someonebursting()
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer
+					and not healerspecid[obj:spec()]
+					and obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance")
+					and obj:range() < 40
+					and not obj:state("incapacitate || fear || disorient || charm || misc || sleep || disarm || stun")
+					and obj:los() then
+					return true
 				end
 			end
+			return false
 		end
-	)
-	--
-	function UnitHealthHandler(unitID)
-		local currentHealth = CalculateHPRAW(unitID)
-		if MW_LastHealth[unitID] and MW_LastHealth[unitID] ~= currentHealth then -- needed otherwise will just feed the next function zeroes
-			PlayerHealthChanged(unitID, currentHealth, UnitHealthMax(unitID), currentHealth - MW_LastHealth[unitID])
-		end
-		MW_LastHealth[unitID] = currentHealth --
-	end
-
-	function PlayerHealthChanged(unit, Current, Max, Usage)
-		local uptime = GetTime()
-		-- Fixed
-		if someonebursting() then
-			MW_HealthAnalyzedTimespan = MW_HealthAnalyzedTimespan_fixed * 0.7
-		else
-			MW_HealthAnalyzedTimespan =
-				MW_HealthAnalyzedTimespan_fixed
-		end
+		
+		-- ====
+		local MW_HealthUsedData = {}
+		local MW_LastHealth = {}
+		local MW_HealthAnalyzedTimespan_fixed = 18
+		local MW_HealthAnalyzedTimespan = MW_HealthAnalyzedTimespan_fixed
+		--====================================================== Testing
+		_A.Listener:Add("Health_change_track", "COMBAT_LOG_EVENT_UNFILTERED",
+			function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+				if string_find(subevent, "_DAMAGE") or string_find(subevent, "_HEAL") then -- does this work with absorbs? I don't remember testing this
+					if UnitIsPlayer(guiddest) then                                -- only players
+						-- all subevent susceptible of causing health changes
+						-- print("picked up")
+						if MW_HealthUsedData[guiddest] == nil then
+							MW_HealthUsedData[guiddest] = {}
+							MW_HealthUsedData[guiddest].t = {}
+							MW_LastHealth[guiddest] = CalculateHPRAW(guiddest)
+						end
+						UnitHealthHandler(guiddest)
+						-- print(subevent)
+					end
+				end
+			end
+		)
 		--
-		if MW_HealthUsedData[unit] then
-			MW_HealthUsedData[unit].healthUsed = 0
-			MW_HealthUsedData[unit].healthnegative = 0
-			MW_HealthUsedData[unit].healthpositive = 0
-			MW_HealthUsedData[unit].t[uptime] = Usage
-			for Time, Health in pairs(MW_HealthUsedData[unit].t) do
-				if uptime - Time > MW_HealthAnalyzedTimespan then
-					MW_HealthUsedData[unit].t[Time] = nil
+		function UnitHealthHandler(unitID)
+			local currentHealth = CalculateHPRAW(unitID)
+			if MW_LastHealth[unitID] and MW_LastHealth[unitID] ~= currentHealth then -- needed otherwise will just feed the next function zeroes
+				PlayerHealthChanged(unitID, currentHealth, UnitHealthMax(unitID), currentHealth - MW_LastHealth[unitID])
+			end
+			MW_LastHealth[unitID] = currentHealth --
+		end
+		
+		function PlayerHealthChanged(unit, Current, Max, Usage)
+			local uptime = GetTime()
+			-- Fixed
+			if someonebursting() then
+				MW_HealthAnalyzedTimespan = MW_HealthAnalyzedTimespan_fixed * 0.7
 				else
-					MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health
-					if Health < 0 then
-						MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
+				MW_HealthAnalyzedTimespan =
+				MW_HealthAnalyzedTimespan_fixed
+			end
+			--
+			if MW_HealthUsedData[unit] then
+				MW_HealthUsedData[unit].healthUsed = 0
+				MW_HealthUsedData[unit].healthnegative = 0
+				MW_HealthUsedData[unit].healthpositive = 0
+				MW_HealthUsedData[unit].t[uptime] = Usage
+				for Time, Health in pairs(MW_HealthUsedData[unit].t) do
+					if uptime - Time > MW_HealthAnalyzedTimespan then
+						MW_HealthUsedData[unit].t[Time] = nil
+						else
+						MW_HealthUsedData[unit].healthUsed = MW_HealthUsedData[unit].healthUsed + Health
+						if Health < 0 then
+							MW_HealthUsedData[unit].healthnegative = MW_HealthUsedData[unit].healthnegative + Health
+							else
+							MW_HealthUsedData[unit].healthpositive = MW_HealthUsedData[unit].healthpositive + Health
+						end
+					end
+				end
+				MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
+				MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100) / Max
+				--
+				MW_HealthUsedData[unit].healthnegativepercent = (MW_HealthUsedData[unit].healthnegative * 100) / Max
+				--
+				MW_HealthUsedData[unit].healthpositivepercent = (MW_HealthUsedData[unit].healthpositive * 100) / Max
+			end
+		end
+		
+		--====================================================== MANA
+		--====================================================== MANA
+		--====================================================== MANA
+		--====================================================== MANA
+		--====================================================== MANA
+		local function effectivemanaregen()
+			local basemanaregen = GetManaRegen()
+			return (basemanaregen * 100) / UnitPowerMax("player", 0)
+		end
+		--====================================================== MANA
+		--====================================================== MANA
+		--====================================================== MANA
+		--====================================================== MANA
+		--====================================================== MANA
+		--====================================================== MANA
+		--====================================================== MANA
+		--====================================================== MANA
+		local MW_ManaUsedData = {}
+		local MW_LastMana = UnitPower("player", 0)
+		local MW_AnalyzedTimespan = 30
+		local avgDelta = 0
+		_A.avgDeltaPercent = 0
+		local secondsTillOOM = 99999
+		_A.Listener:Add("holy_mana", { "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "UNIT_POWER" },
+			function(event, firstArg, secondArg)
+				if event == "UNIT_POWER" and firstArg == "player" and secondArg == "MANA" then
+					if MW_LastMana == nil then MW_LastMana = UnitPower("player", 0) end
+					_A.UnitManaHandler(firstArg)
+				end
+			end)
+			function _A.UnitManaHandler(unitID)
+				if unitID == "player" then
+					local currentMana = UnitPower(unitID, 0)
+					if MW_LastMana and currentMana ~= MW_LastMana then
+						_A.PlayerManaChanged(currentMana, UnitPowerMax(unitID, 0), MW_LastMana - currentMana)
+					end
+					MW_LastMana = currentMana
+				end
+			end
+			
+			function _A.PlayerManaChanged(Current, Max, Usage)
+				local uptime = GetTime()
+				-- FIXED
+				local manaUsed = 0
+				MW_ManaUsedData[uptime] = Usage
+				for Time, Mana in pairs(MW_ManaUsedData) do
+					if uptime - Time > MW_AnalyzedTimespan then
+						MW_ManaUsedData[Time] = nil
+						else
+						manaUsed = manaUsed + Mana
+					end
+				end
+				avgDelta = -(manaUsed / MW_AnalyzedTimespan)
+				_A.avgDeltaPercent = (avgDelta * 100 / Max)
+				if avgDelta < 0 then
+					secondsTillOOM = Current / (-avgDelta)
 					else
-						MW_HealthUsedData[unit].healthpositive = MW_HealthUsedData[unit].healthpositive + Health
+					secondsTillOOM = 99999
+				end
+			end
+			
+			--====================================================================== -- Cleaning on Deaths
+			_A.Listener:Add("DeathCleaning", "COMBAT_LOG_EVENT_UNFILTERED",
+				function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+					if subevent == "UNIT_DIED" then
+						if MW_HealthUsedData[guiddest] ~= nil then
+							MW_HealthUsedData[guiddest] = nil
+							MW_LastHealth[guiddest] = nil
+						end
+						if guiddest == UnitGUID("player") then
+							MW_ManaUsedData = {}
+							MW_LastMana = nil
+						end
 					end
 				end
-			end
-			MW_HealthUsedData[unit].avgHDelta = (MW_HealthUsedData[unit].healthUsed / MW_HealthAnalyzedTimespan)
-			MW_HealthUsedData[unit].avgHDeltaPercent = (MW_HealthUsedData[unit].avgHDelta * 100) / Max
-			--
-			MW_HealthUsedData[unit].healthnegativepercent = (MW_HealthUsedData[unit].healthnegative * 100) / Max
-			--
-			MW_HealthUsedData[unit].healthpositivepercent = (MW_HealthUsedData[unit].healthpositive * 100) / Max
-		end
-	end
-
-	--====================================================== MANA
-	--====================================================== MANA
-	--====================================================== MANA
-	--====================================================== MANA
-	--====================================================== MANA
-	local function effectivemanaregen()
-		local basemanaregen = GetManaRegen()
-		return (basemanaregen * 100) / UnitPowerMax("player", 0)
-	end
-	--====================================================== MANA
-	--====================================================== MANA
-	--====================================================== MANA
-	--====================================================== MANA
-	--====================================================== MANA
-	--====================================================== MANA
-	--====================================================== MANA
-	--====================================================== MANA
-	local MW_ManaUsedData = {}
-	local MW_LastMana = UnitPower("player", 0)
-	local MW_AnalyzedTimespan = 30
-	local avgDelta = 0
-	_A.avgDeltaPercent = 0
-	local secondsTillOOM = 99999
-	_A.Listener:Add("holy_mana", { "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "UNIT_POWER" },
-		function(event, firstArg, secondArg)
-			if event == "UNIT_POWER" and firstArg == "player" and secondArg == "MANA" then
-				if MW_LastMana == nil then MW_LastMana = UnitPower("player", 0) end
-				_A.UnitManaHandler(firstArg)
-			end
-		end)
-	function _A.UnitManaHandler(unitID)
-		if unitID == "player" then
-			local currentMana = UnitPower(unitID, 0)
-			if MW_LastMana and currentMana ~= MW_LastMana then
-				_A.PlayerManaChanged(currentMana, UnitPowerMax(unitID, 0), MW_LastMana - currentMana)
-			end
-			MW_LastMana = currentMana
-		end
-	end
-
-	function _A.PlayerManaChanged(Current, Max, Usage)
-		local uptime = GetTime()
-		-- FIXED
-		local manaUsed = 0
-		MW_ManaUsedData[uptime] = Usage
-		for Time, Mana in pairs(MW_ManaUsedData) do
-			if uptime - Time > MW_AnalyzedTimespan then
-				MW_ManaUsedData[Time] = nil
-			else
-				manaUsed = manaUsed + Mana
-			end
-		end
-		avgDelta = -(manaUsed / MW_AnalyzedTimespan)
-		_A.avgDeltaPercent = (avgDelta * 100 / Max)
-		if avgDelta < 0 then
-			secondsTillOOM = Current / (-avgDelta)
-		else
-			secondsTillOOM = 99999
-		end
-	end
-
-	--====================================================================== -- Cleaning on Deaths
-	_A.Listener:Add("DeathCleaning", "COMBAT_LOG_EVENT_UNFILTERED",
-		function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-			if subevent == "UNIT_DIED" then
-				if MW_HealthUsedData[guiddest] ~= nil then
-					MW_HealthUsedData[guiddest] = nil
-					MW_LastHealth[guiddest] = nil
-				end
-				if guiddest == UnitGUID("player") then
-					MW_ManaUsedData = {}
-					MW_LastMana = nil
-				end
-			end
-		end
-	)
-	--======================================================================
-	--======================================================================
-	--======================================================================
-	--======================================================================
-	--======================================================================
-	--======================================================================
-	--======================================================================
-	--======================================================================
-	--======================================================================
-	--======================================================================
-	-- HEALTH
-	function averageHPv2()
-		local sum = 0
-		local num = 0
-		if next(MW_HealthUsedData) == nil then
-			return 0
-		else
-			for k in pairs(MW_HealthUsedData) do
-				if MW_HealthUsedData[k] ~= nil then
-					if next(MW_HealthUsedData[k]) ~= nil then
-						if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
-							if UnitIsDeadOrGhost(k) == nil then
-								if UnitHealth(k) < UnitHealthMax(k) then
-									local unitObject = Object(k)
-									if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
-										num = num + 1
-										sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
+			)
+			--======================================================================
+			--======================================================================
+			--======================================================================
+			--======================================================================
+			--======================================================================
+			--======================================================================
+			--======================================================================
+			--======================================================================
+			--======================================================================
+			--======================================================================
+			-- HEALTH
+			function averageHPv2()
+				local sum = 0
+				local num = 0
+				if next(MW_HealthUsedData) == nil then
+					return 0
+					else
+					for k in pairs(MW_HealthUsedData) do
+						if MW_HealthUsedData[k] ~= nil then
+							if next(MW_HealthUsedData[k]) ~= nil then
+								if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
+									if UnitIsDeadOrGhost(k) == nil then
+										if UnitHealth(k) < UnitHealthMax(k) then
+											local unitObject = Object(k)
+											if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
+												num = num + 1
+												sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
+											end
+										end
 									end
 								end
 							end
 						end
 					end
 				end
+				return num > 0 and sum / num or 0
 			end
-		end
-		return num > 0 and sum / num or 0
-	end
-
-	function maxHPv2()
-		local maxx = 999
-		if next(MW_HealthUsedData) == nil then
-			return 0
-		else
-			for k in pairs(MW_HealthUsedData) do
-				if MW_HealthUsedData[k] ~= nil then
-					if next(MW_HealthUsedData[k]) ~= nil then
-						if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
-							if UnitIsDeadOrGhost(k) == nil then
-								-- if UnitHealth(k)<UnitHealthMax(k) then
-								local unitObject = Object(k)
-								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
-									if MW_HealthUsedData[k].avgHDeltaPercent < maxx then
-										maxx = MW_HealthUsedData[k].avgHDeltaPercent
+			
+			function maxHPv2()
+				local maxx = 999
+				if next(MW_HealthUsedData) == nil then
+					return 0
+					else
+					for k in pairs(MW_HealthUsedData) do
+						if MW_HealthUsedData[k] ~= nil then
+							if next(MW_HealthUsedData[k]) ~= nil then
+								if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
+									if UnitIsDeadOrGhost(k) == nil then
+										-- if UnitHealth(k)<UnitHealthMax(k) then
+										local unitObject = Object(k)
+										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
+											if MW_HealthUsedData[k].avgHDeltaPercent < maxx then
+												maxx = MW_HealthUsedData[k].avgHDeltaPercent
+											end
+											-- end
+										end
 									end
-									-- end
 								end
 							end
 						end
 					end
 				end
+				return maxx
 			end
-		end
-		return maxx
-	end
-
-	function hybridHPv2()
-		local maxmodifier = maxHPv2() * 0.7
-		local avgmodifier = averageHPv2() * 0.3
-		return maxmodifier + avgmodifier
-	end
-
-	function _A.manaengine() -- make it so it's tied with group hpF
-		player = player or Object("player")
-		if player:buff("Lucidity") or player:mana() >= 95 then return true end
-		local hpdeltas = player:ui("hpdeltas")
-		if hpdeltas == "1" then
-			hpDelta = averageHPv2()
-		elseif hpdeltas == "2" then
-			hpDelta = hybridHPv2()
-		elseif hpdeltas == "0" then
-			hpDelta = maxHPv2()
-		end
-		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-		return manaBudget >= hpDelta
-	end
-
-	--------------------------------------------------------
-	function _A.manaengine_highprio()
-		player = player or Object("player")
-		if player:buff("Lucidity") or player:mana() >= 95 then return true end
-		local hpdeltas = player:ui("hpdeltas")
-		if hpdeltas == "1" then
-			hpDelta = averageHPv2()
-		elseif hpdeltas == "2" then
-			hpDelta = hybridHPv2()
-		elseif hpdeltas == "0" then
-			hpDelta = maxHPv2()
-		end
-		local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-		return (manaBudget - hpDelta > 1.5)
-	end
-
-	function _A.enoughmana(id)
-		local cost, _, powertype = select(4, _A.GetSpellInfo(id))
-		if powertype then
-			local currentmana = _A.UnitPower("player", powertype)
-			if currentmana >= cost then
+			
+			function hybridHPv2()
+				local maxmodifier = maxHPv2() * 0.7
+				local avgmodifier = averageHPv2() * 0.3
+				return maxmodifier + avgmodifier
+			end
+			
+			function _A.manaengine() -- make it so it's tied with group hpF
+				player = player or Object("player")
+				if player:buff("Lucidity") or player:mana() >= 95 then return true end
+				local hpdeltas = player:ui("hpdeltas")
+				if hpdeltas == "1" then
+					hpDelta = averageHPv2()
+					elseif hpdeltas == "2" then
+					hpDelta = hybridHPv2()
+					elseif hpdeltas == "0" then
+					hpDelta = maxHPv2()
+				end
+				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
+				return manaBudget >= hpDelta
+			end
+			
+			--------------------------------------------------------
+			function _A.manaengine_highprio()
+				player = player or Object("player")
+				if player:buff("Lucidity") or player:mana() >= 95 then return true end
+				local hpdeltas = player:ui("hpdeltas")
+				if hpdeltas == "1" then
+					hpDelta = averageHPv2()
+					elseif hpdeltas == "2" then
+					hpDelta = hybridHPv2()
+					elseif hpdeltas == "0" then
+					hpDelta = maxHPv2()
+				end
+				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
+				return (manaBudget - hpDelta > 1.5)
+			end
+			
+			function _A.enoughmana(id)
+				local cost, _, powertype = select(4, _A.GetSpellInfo(id))
+				if powertype then
+					local currentmana = _A.UnitPower("player", powertype)
+					if currentmana >= cost then
+						return true
+						else
+						return false
+					end
+				end
 				return true
-			else
-				return false
 			end
-		end
-		return true
-	end
-
-	function _A.enoughmana(id)
-		local cost, _, powertype = select(4, _A.GetSpellInfo(id))
-		if powertype then
-			local currentmana = _A.UnitPower("player", powertype)
-			if currentmana >= cost then
+			
+			function _A.enoughmana(id)
+				local cost, _, powertype = select(4, _A.GetSpellInfo(id))
+				if powertype then
+					local currentmana = _A.UnitPower("player", powertype)
+					if currentmana >= cost then
+						return true
+						else
+						return false
+					end
+				end
 				return true
-			else
-				return false
 			end
-		end
-		return true
-	end
-
-	function _A.modifier_shift()
-		local modkeyb = IsShiftKeyDown()
-		if modkeyb then
-			return true
-		else
-			return false
-		end
-	end
-
-	function _A.modifier_ctrl()
-		local modkeyb = IsControlKeyDown()
-		if modkeyb then
-			return true
-		else
-			return false
-		end
-	end
-
-	function _A.modifier_alt()
-		local modkeyb = IsAltKeyDown()
-		if modkeyb then
-			return true
-		else
-			return false
-		end
-	end
-
-	-- _A.DSL:Register("debuff.count.type", function(target, args)
-	-- local count = 0
-	-- local fno_filter = target .. '-no_filter'
-	-- if next(_A.unit_debuffs)==nil or _A.unit_debuffs[fno_filter]==nil then
-	-- _ = DSL("debuff")(target, "dummy")
-	-- end
-	-- local tbl = {_A.StrExplode(args, "||")}
-	-- for _,typeDB in ipairs(tbl) do
-	-- if type(unit_debuffs[fno_filter])=="table" then
-	-- typeDB = typeDB:lower()
-	-- for name in pairs(unit_debuffs[fno_filter]) do
-	-- local bt = unit_debuffs[fno_filter][name][5]
-	-- if bt and bt:lower()==typeDB then
-	-- count = count + unit_debuffs[fno_filter][name][2]
-	-- end
-	-- end
-	-- end
-	-- end
-	-- return count
-	-- end)
-
-	_A.DSL:Register('canafford', function()
-		return _A.manaengine()
-	end)
-	_A.DSL:Register('chifix', function()
-		return _A.UnitPower("player", 12)
-	end)
-	_A.DSL:Register('chifixmax', function()
-		return _A.UnitPowerMax("player", 12)
-	end)
-
-	_A.faceunit = function(unit)
-		if unit then
-			if not unit:InConeOf(player, 170) then
-				_A.FaceDirection(unit.guid, true)
-			end
-		end
-	end
-	-------------------------------------------------------
-	-------------------------------------------------------
-	local function IsPStr() -- player only, but more accurate
-		local _, strafeleftkey = _A.GetBinding(7)
-		local _, straferightkey = _A.GetBinding(8)
-		local moveLeft = _A.IsKeyDown(strafeleftkey)
-		local moveRight = _A.IsKeyDown(straferightkey)
-		if moveLeft then
-			return "left"
-		elseif moveRight then
-			return "right"
-		else
-			return "none"
-		end
-	end
-	local function pSpeed(unit, maxDistance)
-		local munit = Object(unit)
-		--local unitGUID = unit.guid
-		local x, y, z = _A.ObjectPosition(unit)
-		-- Check if the unit is standing still or moving backward
-		if not munit:Moving() or _A.UnitIsMovingBackward(unit) then
-			return x, y, z
-		end
-		-- Determine the dynamic distance, with a minimum of 2 units for moving units
-		local facing = _A.ObjectFacing(unit)
-		local speed_raw = _A.GetUnitSpeed(unit)
-		-- local latencyy = ((select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10) or 0
-		local latencyy = (select(3, GetNetStats())) and ((select(3, GetNetStats())) / 1000) or 0
-		local speed = speed_raw * latencyy
-		-- local speed = speed_raw
-		-- local mindistances = speed * .2
-
-		-- local distance = math.max(mindistances, math.min(maxDistance, speed + latencyy)) -- old is speed - 4.5
-		local distance = -speed
-		-- local distance = 0
-		-- UNIT IS PLAYER
-		player = player or Object("player")
-		if munit:is(player) then
-			local strafeDirection = IsPStr()
-			if strafeDirection == "left" then
-				facing = facing + math.pi / 2
-			elseif strafeDirection == "right" then
-				facing = facing - math.pi / 2
-			end
-			local newX = x + distance * math.cos(facing)
-			local newY = y + distance * math.sin(facing)
-			return newX, newY, z
-		end
-		-- UNIT IS NOT PLAYER
-		-- Adjust facing based on strafing or moving forward
-		if _A.UnitIsStrafeLeft(unit) then
-			facing = facing + math.pi / 2 -- 90 degrees to the right for strafe left
-		elseif _A.UnitIsStrafeRight(unit) then
-			facing = facing - math.pi / 2 -- 90 degrees to the left for strafe right
-		end
-		-- Calculate and return the new position
-		local newX = x + distance * math.cos(facing)
-		local newY = y + distance * math.sin(facing)
-		return newX, newY, z
-	end
-	function _A.CastPredictedPos(unit, spell, distance)
-		player = player or Object("player")
-		local px, py, pz = _A.groundpositiondetail(pSpeed(unit, distance))
-		if px then
-			_A.CallWowApi("CastSpellByName", spell)
-			if player:SpellIsTargeting() then
-				_A.ClickPosition(px, py, pz)
-				_A.CallWowApi("SpellStopTargeting")
-			end
-		end
-	end
-
-	-------------------------------------------------------
-	-------------------------------------------------------
-	function _A.clickcast(unit, spell)
-		local px, py, pz = _A.groundposition(unit)
-		if px then
-			_A.CallWowApi("CastSpellByName", spell)
-			if player:SpellIsTargeting() then
-				_A.ClickPosition(px, py, pz)
-				_A.CallWowApi("SpellStopTargeting")
-			end
-		end
-	end
-
-	-------------------------------------------------------
-	-------------------------------------------------------
-	local function castsecond(unit)
-		local givetime = GetTime()
-		local tempvar = select(6, UnitCastingInfo(unit))
-		local timetimetime15687
-		if unit == nil
-		then
-			unit = "target"
-		end
-		if UnitCastingInfo(unit) ~= nil
-		then
-			timetimetime15687 = abs(givetime - (tempvar / 1000))
-		end
-		return timetimetime15687 or 999
-	end
-
-	_A.DSL:Register('castsecond', function(unit)
-		return castsecond(unit)
-	end)
-
-	-- 116680
-	local function chanpercent(unit)
-		local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
-		local givetime = GetTime()
-		if unit == nil
-		then
-			unit = "target"
-		end
-		if UnitChannelInfo(unit) ~= nil
-		then
-			local maxcasttime = abs(tempvar1 - tempvar2) / 1000
-			local remainingcasttimeinsec = abs(givetime - (tempvar2 / 1000))
-			local percentageofthis = (remainingcasttimeinsec * 100) / maxcasttime
-			return percentageofthis
-		end
-		return 999
-	end
-
-	_A.DSL:Register('chanpercent', function(unit)
-		return chanpercent(unit)
-	end)
-
-
-	local function interruptable(unit)
-		if unit == nil
-		then
-			unit = "target"
-		end
-		local intel5 = (select(9, UnitCastingInfo(unit)))
-		local intel6 = (select(8, UnitChannelInfo(unit)))
-		if intel5 == false
-			or intel6 == false
-		then
-			return true
-		else
-			return false
-		end
-		return false
-	end
-	_A.DSL:Register('caninterrupt', function(unit)
-		return interruptable(unit)
-	end)
-	-------------------------------------------------------
-	-------------------------------------------------------
-	-------------------------------------------------------
-	-------------------------------------------------------
-	-------------------------------------------------------
-	------------------------------------------------------- PET
-	------------------------------------------------------- ENGINE
-	-------------------------------------------------------
-	-------------------------------------------------------
-	-------------------------------------------------------
-	-------------------------------------------------------
-	-------------------------------------------------------
-	local badtotems = {
-		"Mana Tide",
-		"Wild Mushroom",
-		"Mana Tide Totem",
-		"Healing Stream Totem",
-		"Healing Tide",
-		"Spirit Link Totem",
-		"Healing Tide Totem",
-		"Lightning Surge Totem",
-		"Earthgrab Totem",
-		"Earthbind Totem",
-		"Grounding Totem",
-		"Stormlash Totem",
-		"Psyfiend",
-		"Lightwell",
-		"Tremor Totem",
-	}
-	_A.FakeUnits:Add('HealingStreamTotem', function(num)
-		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			for _, totems in ipairs(badtotems) do
-				if Obj.name == totems then
-					tempTable[#tempTable + 1] = {
-						guid = Obj.guid,
-						range = Obj:range(),
-					}
+			
+			function _A.modifier_shift()
+				local modkeyb = IsShiftKeyDown()
+				if modkeyb then
+					return true
+					else
+					return false
 				end
 			end
-		end
-		if #tempTable > 1 then
-			table.sort(tempTable, function(a, b) return a.range < b.range end)
-		end
-		if #tempTable >= 1 then
-			return tempTable[num] and tempTable[num].guid
-		end
-	end)
-	_A.FakeUnits:Add('HealingStreamTotemNOLOS', function(num)
-		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			for _, totems in ipairs(badtotems) do
-				if Obj.name == totems then
-					tempTable[#tempTable + 1] = {
-						guid = Obj.guid,
-						range = Obj:range(),
-					}
+			
+			function _A.modifier_ctrl()
+				local modkeyb = IsControlKeyDown()
+				if modkeyb then
+					return true
+					else
+					return false
 				end
 			end
-		end
-		if #tempTable > 1 then
-			table.sort(tempTable, function(a, b) return a.range < b.range end)
-		end
-		if #tempTable >= 1 then
-			return tempTable[num] and tempTable[num].guid
-		end
-	end)
-	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKCNOLOS', function(num)
-		local tempTable = {}
-		local target = Object("target")
-		local pet = Object("pet")
-		if not pet then return end
-		if pet and not pet:alive() then return end
-		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
-		--
-		if target and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
-			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") then
-			return target and target.guid -- this is good
-		end
-		local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
-		if lowestmelee then
-			return lowestmelee.guid
-		end
-		return nil
-	end)
-	_A.PetGUID = nil
-	local function attacktotem()
-		local htotem = Object("HealingStreamTotemNOLOS")
-		if htotem and (_A.pull_location == "arena" or htotem:range() <= 60) then
-			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID) ~= htotem.guid) then
-				return _A.CallWowApi("PetAttack", htotem.guid), 1
-			end
-			return 1
-		end
-	end
-	local function attacklowest()
-		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
-		if target then
-			if (_A.pull_location ~= "party" and _A.pull_location ~= "raid") or target:combat() then -- avoid pulling shit by accident
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID) ~= target.guid) then
-					return _A.CallWowApi("PetAttack", target.guid), 3
+			
+			function _A.modifier_alt()
+				local modkeyb = IsAltKeyDown()
+				if modkeyb then
+					return true
+					else
+					return false
 				end
 			end
-			return 3
-		end
-	end
-	local function petfollow() -- when pet target has a breakable cc
-		if _A.PetGUID and _A.UnitTarget(_A.PetGUID) ~= nil then
-			local target = Object(_A.UnitTarget(_A.PetGUID))
-			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
-				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
-			end
-		end
-	end
-	function _Y.GetPetStance()
-		local STANCE_ICONS = {
-			"PET_MODE_PASSIVE",
-			"PET_MODE_ASSIST",
-			"PET_MODE_DEFENSIVE"
-		}
-		-- Check each pet action slot (1-10)
-		for i = 1, 10 do
-			local icon, _, _, _, isActive = GetPetActionInfo(i)
-			if icon and isActive then
-				-- Determine which stance is active based on the icon
-				for _, stanceName in pairs(STANCE_ICONS) do
-					if icon == stanceName then
-						return stanceName
+			
+			-- _A.DSL:Register("debuff.count.type", function(target, args)
+			-- local count = 0
+			-- local fno_filter = target .. '-no_filter'
+			-- if next(_A.unit_debuffs)==nil or _A.unit_debuffs[fno_filter]==nil then
+			-- _ = DSL("debuff")(target, "dummy")
+			-- end
+			-- local tbl = {_A.StrExplode(args, "||")}
+			-- for _,typeDB in ipairs(tbl) do
+			-- if type(unit_debuffs[fno_filter])=="table" then
+			-- typeDB = typeDB:lower()
+			-- for name in pairs(unit_debuffs[fno_filter]) do
+			-- local bt = unit_debuffs[fno_filter][name][5]
+			-- if bt and bt:lower()==typeDB then
+			-- count = count + unit_debuffs[fno_filter][name][2]
+			-- end
+			-- end
+			-- end
+			-- end
+			-- return count
+			-- end)
+			
+			_A.DSL:Register('canafford', function()
+				return _A.manaengine()
+			end)
+			_A.DSL:Register('chifix', function()
+				return _A.UnitPower("player", 12)
+			end)
+			_A.DSL:Register('chifixmax', function()
+				return _A.UnitPowerMax("player", 12)
+			end)
+			
+			_A.faceunit = function(unit)
+				if unit then
+					if not unit:InConeOf(player, 170) then
+						_A.FaceDirection(unit.guid, true)
 					end
 				end
 			end
-		end
-		return " " -- No active stance found
-	end
-
-	local function petpassive() -- when pet target has a breakable cc
-		if _Y.GetPetStance() ~= "PET_MODE_PASSIVE" then
-			return _A.CallWowApi("RunMacroText", "/petpassive"), 4
-		end
-	end
-
-	function _Y.petengine_MONK() -- REQUIRES RELOAD WHEN SWITCHING SPECS
-		if not _A.Cache.Utils.PlayerInGame then return end
-		if not player then return true end
-		if _A.DSL:Get("toggle")(_, "MasterToggle") ~= true then return true end
-		if player:mounted() then return end
-		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid) == 1 then return end
-		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") then
-			if _A.PetGUID then _A.PetGUID = nil end
-			return true
-		end
-		_A.PetGUID = _A.UnitGUID("pet")
-		if _A.PetGUID == nil then return end
-		-- print(_A.PetGUID)
-		-- print(_Y.GetPetStance())
-		-------- PET ROTATION
-		-- if petpassive() then return end
-		-- if attacktotem() then return end
-		if attacklowest() then return end
-		-- if petfollow() then return end
-	end
-
-	function _Y.cancelbuff(spellid)
-		local player = Object("player")
-		local SPELLIDD = (tonumber(spellid) and spellid or _A.Core:GetSpellID(spellid))
-		if SPELLIDD and player:buffany(spellid) then
-			for buff = 1, 40 do
-				local name, _, _, _, _, _, _, _, _, _, id = _A.UnitBuff("player", buff)
-				if not name then break end
-				if id == SPELLIDD then
-					_A.CancelUnitBuff("player", buff)
+			-------------------------------------------------------
+			-------------------------------------------------------
+			local function IsPStr() -- player only, but more accurate
+				local _, strafeleftkey = _A.GetBinding(7)
+				local _, straferightkey = _A.GetBinding(8)
+				local moveLeft = _A.IsKeyDown(strafeleftkey)
+				local moveRight = _A.IsKeyDown(straferightkey)
+				if moveLeft then
+					return "left"
+					elseif moveRight then
+					return "right"
+					else
+					return "none"
 				end
 			end
-		end
-	end
-
-	local function statueInRange()
-		for _, obj in pairs(_A.OM:Get('Friendly')) do
-			if obj.id == 60849 then
-				return obj:Distance() <= 20
+			local function pSpeed(unit, maxDistance)
+				local munit = Object(unit)
+				--local unitGUID = unit.guid
+				local x, y, z = _A.ObjectPosition(unit)
+				-- Check if the unit is standing still or moving backward
+				if not munit:Moving() or _A.UnitIsMovingBackward(unit) then
+					return x, y, z
+				end
+				-- Determine the dynamic distance, with a minimum of 2 units for moving units
+				local facing = _A.ObjectFacing(unit)
+				local speed_raw = _A.GetUnitSpeed(unit)
+				-- local latencyy = ((select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10) or 0
+				local latencyy = (select(3, GetNetStats())) and ((select(3, GetNetStats())) / 1000) or 0
+				local speed = speed_raw * latencyy
+				-- local speed = speed_raw
+				-- local mindistances = speed * .2
+				
+				-- local distance = math.max(mindistances, math.min(maxDistance, speed + latencyy)) -- old is speed - 4.5
+				local distance = -speed
+				-- local distance = 0
+				-- UNIT IS PLAYER
+				player = player or Object("player")
+				if munit:is(player) then
+					local strafeDirection = IsPStr()
+					if strafeDirection == "left" then
+						facing = facing + math.pi / 2
+						elseif strafeDirection == "right" then
+						facing = facing - math.pi / 2
+					end
+					local newX = x + distance * math.cos(facing)
+					local newY = y + distance * math.sin(facing)
+					return newX, newY, z
+				end
+				-- UNIT IS NOT PLAYER
+				-- Adjust facing based on strafing or moving forward
+				if _A.UnitIsStrafeLeft(unit) then
+					facing = facing + math.pi / 2 -- 90 degrees to the right for strafe left
+					elseif _A.UnitIsStrafeRight(unit) then
+					facing = facing - math.pi / 2 -- 90 degrees to the left for strafe right
+				end
+				-- Calculate and return the new position
+				local newX = x + distance * math.cos(facing)
+				local newY = y + distance * math.sin(facing)
+				return newX, newY, z
 			end
-		end
-		return false
-	end
+			function _A.CastPredictedPos(unit, spell, distance)
+				player = player or Object("player")
+				local px, py, pz = _A.groundpositiondetail(pSpeed(unit, distance))
+				if px then
+					_A.CallWowApi("CastSpellByName", spell)
+					if player:SpellIsTargeting() then
+						_A.ClickPosition(px, py, pz)
+						_A.CallWowApi("SpellStopTargeting")
+					end
+				end
+			end
+			
+			-------------------------------------------------------
+			-------------------------------------------------------
+			function _A.clickcast(unit, spell)
+				local px, py, pz = _A.groundposition(unit)
+				if px then
+					_A.CallWowApi("CastSpellByName", spell)
+					if player:SpellIsTargeting() then
+						_A.ClickPosition(px, py, pz)
+						_A.CallWowApi("SpellStopTargeting")
+					end
+				end
+			end
+			
+			-------------------------------------------------------
+			-------------------------------------------------------
+			local function castsecond(unit)
+				local givetime = GetTime()
+				local tempvar = select(6, UnitCastingInfo(unit))
+				local timetimetime15687
+				if unit == nil
+					then
+					unit = "target"
+				end
+				if UnitCastingInfo(unit) ~= nil
+					then
+					timetimetime15687 = abs(givetime - (tempvar / 1000))
+				end
+				return timetimetime15687 or 999
+			end
+			
+			_A.DSL:Register('castsecond', function(unit)
+				return castsecond(unit)
+			end)
+			
+			-- 116680
+			local function chanpercent(unit)
+				local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
+				local givetime = GetTime()
+				if unit == nil
+					then
+					unit = "target"
+				end
+				if UnitChannelInfo(unit) ~= nil
+					then
+					local maxcasttime = abs(tempvar1 - tempvar2) / 1000
+					local remainingcasttimeinsec = abs(givetime - (tempvar2 / 1000))
+					local percentageofthis = (remainingcasttimeinsec * 100) / maxcasttime
+					return percentageofthis
+				end
+				return 999
+			end
+			
+			_A.DSL:Register('chanpercent', function(unit)
+				return chanpercent(unit)
+			end)
+			
+			
+			local function interruptable(unit)
+				if unit == nil
+					then
+					unit = "target"
+				end
+				local intel5 = (select(9, UnitCastingInfo(unit)))
+				local intel6 = (select(8, UnitChannelInfo(unit)))
+				if intel5 == false
+					or intel6 == false
+					then
+					return true
+					else
+					return false
+				end
+				return false
+			end
+			_A.DSL:Register('caninterrupt', function(unit)
+				return interruptable(unit)
+			end)
+			-------------------------------------------------------
+			-------------------------------------------------------
+			-------------------------------------------------------
+			-------------------------------------------------------
+			-------------------------------------------------------
+			------------------------------------------------------- PET
+			------------------------------------------------------- ENGINE
+			-------------------------------------------------------
+			-------------------------------------------------------
+			-------------------------------------------------------
+			-------------------------------------------------------
+			-------------------------------------------------------
+			local badtotems = {
+				"Mana Tide",
+				"Wild Mushroom",
+				"Mana Tide Totem",
+				"Healing Stream Totem",
+				"Healing Tide",
+				"Spirit Link Totem",
+				"Healing Tide Totem",
+				"Lightning Surge Totem",
+				"Earthgrab Totem",
+				"Earthbind Totem",
+				"Grounding Totem",
+				"Stormlash Totem",
+				"Psyfiend",
+				"Lightwell",
+				"Tremor Totem",
+			}
+			_A.FakeUnits:Add('HealingStreamTotem', function(num)
+				local tempTable = {}
+				for _, Obj in pairs(_A.OM:Get('Enemy')) do
+					for _, totems in ipairs(badtotems) do
+						if Obj.name == totems then
+							tempTable[#tempTable + 1] = {
+								guid = Obj.guid,
+								range = Obj:range(),
+							}
+						end
+					end
+				end
+				if #tempTable > 1 then
+					table.sort(tempTable, function(a, b) return a.range < b.range end)
+				end
+				if #tempTable >= 1 then
+					return tempTable[num] and tempTable[num].guid
+				end
+			end)
+			_A.FakeUnits:Add('HealingStreamTotemNOLOS', function(num)
+				local tempTable = {}
+				for _, Obj in pairs(_A.OM:Get('Enemy')) do
+					for _, totems in ipairs(badtotems) do
+						if Obj.name == totems then
+							tempTable[#tempTable + 1] = {
+								guid = Obj.guid,
+								range = Obj:range(),
+							}
+						end
+					end
+				end
+				if #tempTable > 1 then
+					table.sort(tempTable, function(a, b) return a.range < b.range end)
+				end
+				if #tempTable >= 1 then
+					return tempTable[num] and tempTable[num].guid
+				end
+			end)
+			_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKCNOLOS', function(num)
+				local tempTable = {}
+				local target = Object("target")
+				local pet = Object("pet")
+				if not pet then return end
+				if pet and not pet:alive() then return end
+				if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
+				--
+				if target and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
+					and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") then
+					return target and target.guid -- this is good
+				end
+				local lowestmelee = Object("lowestEnemyInSpellRange(Crackling Jade Lightning)")
+				if lowestmelee then
+					return lowestmelee.guid
+				end
+				return nil
+			end)
+			_A.PetGUID = nil
+			local function attacktotem()
+				local htotem = Object("HealingStreamTotemNOLOS")
+				if htotem and (_A.pull_location == "arena" or htotem:range() <= 60) then
+					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID) ~= htotem.guid) then
+						return _A.CallWowApi("PetAttack", htotem.guid), 1
+					end
+					return 1
+				end
+			end
+			local function attacklowest()
+				local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
+				if target then
+					if (_A.pull_location ~= "party" and _A.pull_location ~= "raid") or target:combat() then -- avoid pulling shit by accident
+						if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID) ~= target.guid) then
+							return _A.CallWowApi("PetAttack", target.guid), 3
+						end
+					end
+					return 3
+				end
+			end
+			local function petfollow() -- when pet target has a breakable cc
+				if _A.PetGUID and _A.UnitTarget(_A.PetGUID) ~= nil then
+					local target = Object(_A.UnitTarget(_A.PetGUID))
+					if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
+						return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+					end
+				end
+			end
+			function _Y.GetPetStance()
+				local STANCE_ICONS = {
+					"PET_MODE_PASSIVE",
+					"PET_MODE_ASSIST",
+					"PET_MODE_DEFENSIVE"
+				}
+				-- Check each pet action slot (1-10)
+				for i = 1, 10 do
+					local icon, _, _, _, isActive = GetPetActionInfo(i)
+					if icon and isActive then
+						-- Determine which stance is active based on the icon
+						for _, stanceName in pairs(STANCE_ICONS) do
+							if icon == stanceName then
+								return stanceName
+							end
+						end
+					end
+				end
+				return " " -- No active stance found
+			end
+			
+			local function petpassive() -- when pet target has a breakable cc
+				if _Y.GetPetStance() ~= "PET_MODE_PASSIVE" then
+					return _A.CallWowApi("RunMacroText", "/petpassive"), 4
+				end
+			end
+			
+			function _Y.petengine_MONK() -- REQUIRES RELOAD WHEN SWITCHING SPECS
+				if not _A.Cache.Utils.PlayerInGame then return end
+				if not player then return true end
+				if _A.DSL:Get("toggle")(_, "MasterToggle") ~= true then return true end
+				if player:mounted() then return end
+				if UnitInVehicle(player.guid) and UnitInVehicle(player.guid) == 1 then return end
+				if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") then
+					if _A.PetGUID then _A.PetGUID = nil end
+					return true
+				end
+				_A.PetGUID = _A.UnitGUID("pet")
+				if _A.PetGUID == nil then return end
+				-- print(_A.PetGUID)
+				-- print(_Y.GetPetStance())
+				-------- PET ROTATION
+				-- if petpassive() then return end
+				-- if attacktotem() then return end
+				if attacklowest() then return end
+				-- if petfollow() then return end
+			end
+			
+			function _Y.cancelbuff(spellid)
+				local player = Object("player")
+				local SPELLIDD = (tonumber(spellid) and spellid or _A.Core:GetSpellID(spellid))
+				if SPELLIDD and player:buffany(spellid) then
+					for buff = 1, 40 do
+						local name, _, _, _, _, _, _, _, _, _, id = _A.UnitBuff("player", buff)
+						if not name then break end
+						if id == SPELLIDD then
+							_A.CancelUnitBuff("player", buff)
+						end
+					end
+				end
+			end
+			
+			local function statueInRange()
+				for _, obj in pairs(_A.OM:Get('Friendly')) do
+					if obj.id == 60849 then
+						return obj:Distance() <= 20
+					end
+				end
+				return false
+			end
 end
 local exeOnUnload = function()
 	Listener:Remove("DeathCleaning")
@@ -1391,15 +1391,15 @@ local usableitems = { -- item slots
 local function cditemRemains(itemid)
 	local itempointerpoint;
 	if itemid ~= nil
-	then
-		if tonumber(itemid) ~= nil
 		then
-			if itemid <= 23
+		if tonumber(itemid) ~= nil
 			then
+			if itemid <= 23
+				then
 				itempointerpoint = (select(1, GetInventoryItemID("player", itemid)))
 			end
 			if itemid > 23
-			then
+				then
 				itempointerpoint = itemid
 			end
 		end
@@ -1409,7 +1409,7 @@ local function cditemRemains(itemid)
 	local gettm1 = GetTime()
 	if startcast1 + (endcast1 - gettm1) > 0 then
 		return startcast1 + (endcast1 - gettm1)
-	else
+		else
 		return 0
 	end
 end
@@ -1458,7 +1458,7 @@ local mw_rot = {
 		if target and target.isplayer and target:enemy() and target:alive() and target:InConeOf(player, 180) and target:los() then
 			if (target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep")) and player:autoattack() then
 				_A.CallWowApi("RunMacroText", "/stopattack")
-			elseif not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then
+				elseif not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then
 				_A.CallWowApi("RunMacroText", "/startattack")
 			end
 		end
@@ -1495,13 +1495,13 @@ local mw_rot = {
 			and player:ItemUsable(76085)
 			and not IsCurrentItem(76085)
 			and not player:Buff(105691)
-		then
+			then
 			if pull_location() == "pvp" and player:combat() then
 				return player:useitem("Flask of the Warm Sun")
 			end
 		end
 	end,
-
+	
 	items_healthstone = function()
 		if player:health() <= 35 then
 			if player:ItemCooldown(5512) == 0
@@ -1512,7 +1512,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	cancel_badnoggen = function()
 		if player:buffany("16591") and player:buffany("16595") then --16593
 			for buff = 1, 40 do
@@ -1524,7 +1524,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	items_noggenfogger = function()
 		if player:ItemCooldown(8529) == 0
 			and player:ItemCount(8529) > 0
@@ -1532,13 +1532,13 @@ local mw_rot = {
 			and not IsCurrentItem(8529)
 			-- and (not player:BuffAny(16591) or not player:BuffAny(16595))
 			and (not player:BuffAny(16595))
-		then
+			then
 			if pull_location() == "pvp" then
 				return player:useitem("Noggenfogger Elixir")
 			end
 		end
 	end,
-
+	
 	arena_legsweep = function()
 		local arenatar = 0
 		if player:Stance() == 1 then
@@ -1558,7 +1558,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	statbuff = function()
 		if player:Stance() == 1 then
 			if not player:BuffAny("Legacy of the Emperor") then
@@ -1572,10 +1572,10 @@ local mw_rot = {
 					and roster:alive()
 					and roster:exists()
 					and roster.isplayer
-				then
+					then
 					if not roster:BuffAny("Legacy of the Emperor")
 						and roster:SpellRange("Legacy of the Emperor")
-					then
+						then
 						if roster:los() then
 							return player:Cast("Legacy of the Emperor")
 						end
@@ -1584,7 +1584,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	statbuff_noarena = function()
 		if player:Stance() == 1 and pull_location() ~= "arena" then
 			local roster = Object("roster")
@@ -1595,10 +1595,10 @@ local mw_rot = {
 					and roster:alive()
 					and roster:exists()
 					and roster.isplayer
-				then
+					then
 					if not roster:BuffAny("Legacy of the Emperor")
 						and roster:SpellRange("Legacy of the Emperor")
-					then
+						then
 						if roster:los() then
 							return roster:Cast("Legacy of the Emperor")
 						end
@@ -1607,7 +1607,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	kick_legsweep = function()
 		if player:Stance() == 1 then
 			if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep") < cdcd then
@@ -1623,7 +1623,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	stun_legsweep = function()
 		local enemycount = 0
 		if player:Talent("Leg Sweep") and player:SpellCooldown("Leg Sweep") < cdcd then
@@ -1675,16 +1675,16 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	sapsnipe = function()
 		if player:Stance() == 1 and player:SpellCooldown("Paralysis") < cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:SpellRange("Paralysis") then
 					if
-					-- (healerspecid[obj:spec()]) or
+						-- (healerspecid[obj:spec()]) or
 						(healerspecid[obj:spec()] and _A.pull_location ~= "arena") or
 						(_A.pull_location == "arena" and UnitExists("party1") and UnitTarget("party1") ~= obj.guid)
-					then
+						then
 						if obj:stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
 							and obj:InConeOf(player, 170)
 							and obj:infront()
@@ -1698,7 +1698,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	sapsextendcc = function()
 		if player:Stance() == 1 and player:SpellCooldown("Paralysis") < cdcd then
 			local check = UnitExists("focus")
@@ -1717,7 +1717,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	ctrl_mode = function()
 		-- if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
 		if _A.modifier_ctrl() then
@@ -1731,20 +1731,20 @@ local mw_rot = {
 						if player:Chi() >= 3 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
 						if player:SpellUsable(116694) and player:Chi() < 3 and SMobj:los() then
 							return SMobj:cast(
-								"Surging Mist", true)
+							"Surging Mist", true)
 						end
 					end
 				end
 				if not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
 					return lowest
-						:cast("Soothing Mist")
+					:cast("Soothing Mist")
 				end
 			end
-		else
+			else
 			if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
 		end
 	end,
-
+	
 	burstdisarm = function() -- should be arena only
 		if player:SpellCooldown("Grapple Weapon") < cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -1764,7 +1764,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	kick_spear = function()
 		if player:SpellCooldown("Spear Hand Strik") == 0 and not IsCurrentSpell(116705) then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -1778,13 +1778,13 @@ local mw_rot = {
 					and ((obj:castsecond() < _A.interrupttreshhold) or obj:chanpercent() <= 95)
 					and (kickcheck(obj) or (_A.pull_location == "raid" or _A.pull_location == "party"))
 					and _A.notimmune(obj)
-				then
+					then
 					obj:Cast("Spear Hand Strike")
 				end
 			end
 		end
 	end,
-
+	
 	everyman = function()
 		if _A.pull_location ~= "arena" and not player:State("incapacitate || fear || disorient || charm || misc || sleep || stun") and not player:debuffany("Solar Beam") then
 			if player:SpellCooldown("Every Man for Himself") == 0 and player:Stateduration("silence") >= 3 and not IsCurrentSpell(59752) then
@@ -1792,7 +1792,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	nimble = function()
 		if _A.pull_location ~= "arena" and not player:State("incapacitate || fear || disorient || charm || misc || sleep") then
 			if player:SpellCooldown("Nimble Brew") == 0 and not IsCurrentSpell(137562) and player:health() <= 70 and not player:buff("Dematerialize") and player:Stateduration("stun") >= 3.5 then
@@ -1800,10 +1800,10 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	pvp_disable = function()
 		if player:Stance() == 1 --and pull_location()=="arena"
-		then
+			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee and not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence")
 				and not lowestmelee:Debuff("Disable") then
@@ -1812,10 +1812,10 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	pvp_disable_keybind = function()
 		if player:Stance() == 1 --and pull_location()=="arena"
-		then
+			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee and not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence") then
 				----------------------------------
@@ -1823,10 +1823,10 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	pvp_disable_root = function()
 		if player:Stance() == 1 --and pull_location()=="arena"
-		then
+			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee and not lowestmelee:immune("all || snare") and not lowestmelee:state("stun || root")
 				and not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence") then
@@ -1836,7 +1836,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	ringofpeace = function()
 		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace") < cdcd then
 			local peacetarget = Object("mostTargetedRosterPVP")
@@ -1851,8 +1851,8 @@ local mw_rot = {
 			end
 		end
 	end,
-
-
+	
+	
 	ringofpeacev2 = function()
 		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace") < cdcd then
 			local targets = {}
@@ -1860,7 +1860,7 @@ local mw_rot = {
 			local peacetarget = nil
 			local most, mostGuid = 0
 			local mostall, mostallGuid = 0
-
+			
 			-- Version 1: Only enemies targeting
 			for _, enemy in pairs(_A.OM:Get('Enemy')) do
 				if enemy.isplayer and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy) and not enemy:state("Disarm")
@@ -1875,14 +1875,14 @@ local mw_rot = {
 					end
 				end
 			end
-
+			
 			for guid, count in pairs(targets) do
 				if count > most then
 					most = count
 					mostGuid = guid
 				end
 			end
-
+			
 			if mostGuid then
 				peacetarget = Object(mostGuid)
 				if peacetarget then
@@ -1907,14 +1907,14 @@ local mw_rot = {
 					end
 				end
 			end
-
+			
 			for guid, count in pairs(targetsall) do
 				if count > mostall then
 					mostall = count
 					mostallGuid = guid
 				end
 			end
-
+			
 			if mostallGuid then
 				peacetarget = Object(mostallGuid)
 				if peacetarget then
@@ -1959,7 +1959,7 @@ local mw_rot = {
 			-- end
 		end
 	end,
-
+	
 	chi_wave = function()
 		if player:Talent("Chi Wave")
 			and player:SpellCooldown("Chi Wave") < cdcd then
@@ -1967,27 +1967,27 @@ local mw_rot = {
 				local lowest = Object("lowestall")
 				if lowest then
 					if lowest:SpellRange("Chi Wave")
-					then
+						then
 						return lowest:Cast("Chi Wave")
 					end
 				end
 			end
 		end
 	end,
-
+	
 	manatea = function()
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Mana Tea") < cdcd
 				and player:Glyph("Glyph of Mana Tea")
 				and player:mana() <= 92
 				and player:BuffStack("Mana Tea") >= 2
-			then
+				then
 				return player:Cast("Mana Tea")
 				-- _A.CastSpellByName("Mana Tea")
 			end
 		end
 	end,
-
+	
 	manatea_HealthRegen = function()
 		if player:Stance() == 1 and player:talent("Healing Elixirs") and player:buff("Healing Elixirs") then
 			if player:SpellCooldown("Mana Tea") < cdcd
@@ -1995,7 +1995,7 @@ local mw_rot = {
 				and player:mana() <= 92
 				and player:health() <= 85
 				and player:BuffStack("Mana Tea") >= 2
-			then
+				then
 				local lowest = Object("lowestall")
 				if lowest and lowest.guid == player.guid then
 					return player:Cast("Mana Tea")
@@ -2004,41 +2004,41 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	chibrew = function()
 		if player:Stance() == 1 and not IsCurrentSpell(115399) then
 			if player:Talent("Chi Brew")
 				and player:SpellCooldown("Chi Brew") == 0
 				and player:Chi() <= 2
-			then
+				then
 				player:Cast("Chi Brew")
 			end
 		end
 	end,
-
+	
 	fortifyingbrew = function()
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Fortifying Brew") == 0
 				and not IsCurrentSpell(115203)
 				and player:health() < 40
-			then
+				then
 				player:Cast("Fortifying Brew")
 			end
 		end
 	end,
-
+	
 	thunderfocustea = function()
 		if player:Stance() == 1 and player:Chi() >= 1 then
 			if player:SpellCooldown("Thunder Focus Tea") == 0 and player:SpellUsable("Thunder Focus Tea") and not IsCurrentSpell(116680)
 				and not player:state("incapacitate || fear || disorient || charm || misc || sleep || stun || silence") then
 				if _A.thunderbrewremovedat == nil or (_A.thunderbrewremovedat and (GetTime() - _A.thunderbrewremovedat) >= 45)
-				then
+					then
 					return player:Cast("Thunder Focus Tea")
 				end
 			end
 		end
 	end,
-
+	
 	tigerslust = function()
 		if player:Talent("Tiger's Lust") and player:SpellCooldown("Tiger's Lust") < cdcd then
 			if player:Stance() == 1 then
@@ -2047,12 +2047,12 @@ local mw_rot = {
 						if fr.isplayer then
 							if _A.nothealimmune(fr) then
 								if not fr:state("incapacitate || fear || disorient || charm || misc || sleep") and fr:State("root || snare") and fr:los()
-								then
+									then
 									if fr.guid ~= player.guid then
 										return fr:Cast("Tiger's Lust")
 										-- elseif
 										-- _A.pull_location~=arena then
-									else
+										else
 										return fr:Cast("Tiger's Lust")
 									end
 								end
@@ -2063,7 +2063,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	dispellplzarena = function()
 		local temptabletbl2 = {}
 		if player:Stance() == 1 then
@@ -2076,7 +2076,7 @@ local mw_rot = {
 							if fr:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence") or _A.pull_location == "party" or _A.pull_location == "raid"
 								-- annoying
 								or fr:DebuffAny("Entangling Roots ||  Freezing Trap || Denounce || Flame Shock || Moonfire || Sunfire")
-							then
+								then
 								if _A.nothealimmune(fr) and fr:los() then
 									temptabletbl2[#temptabletbl2 + 1] = {
 										HP = fr:health(),
@@ -2094,18 +2094,18 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	diffusemagic = function()
 		if player:talent("Diffuse Magic") and player:SpellCooldown("Diffuse Magic") == 0 and not IsCurrentSpell(122783) then
 			-- add the stuff that hurts
 			if
 				player:health() < 30 or player:DebuffAny("Moonfire || Sunfire || Unstable Affliction || Touch of Karma") or player:State("fear || sleep || charm || disorient || incapacitate || misc || stun || root || silence")
-			then
+				then
 				return player:cast("Diffuse Magic")
 			end
 		end
 	end,
-
+	
 	dispellplzany = function()
 		local temptabletbl1 = {}
 		-- if player:Stance() == 1 and _A.pull_location ~="pvp"   then
@@ -2133,7 +2133,7 @@ local mw_rot = {
 			return temptabletbl1[1] and temptabletbl1[1].count >= 1 and temptabletbl1[1].obj:Cast("Detox")
 		end
 	end,
-
+	
 	dispellself = function()
 		if player:Stance() == 1 and _A.pull_location ~= "arena" then
 			-- if player:Stance() == 1 then
@@ -2147,7 +2147,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	dispellunCC = function()
 		if player:Stance() == 1 then
 			if player:SpellCooldown("Detox") < cdcd and player:SpellUsable("Detox") and not player:state("silence") then
@@ -2159,7 +2159,7 @@ local mw_rot = {
 							and not fr:DebuffAny("Unstable Affliction")
 							and _A.nothealimmune(fr)
 							and fr:los()
-						then
+							then
 							print("UNCCING")
 							return fr:cast("Detox")
 						end
@@ -2168,7 +2168,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	dispellunSLOW = function()
 		if not player:lostcontrol() and player:Stance() == 1 then
 			if player:SpellCooldown("Detox") < cdcd and player:SpellUsable("Detox") then
@@ -2187,7 +2187,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	dispellDANGEROUS = function()
 		local temptabletbl1 = {}
 		if not player:lostcontrol() and player:Stance() == 1 then
@@ -2196,7 +2196,7 @@ local mw_rot = {
 					if fr.isplayer or string.lower(fr.name) == "ebon gargoyle" then
 						if fr:SpellRange("Detox") and fr:statepurge("Detox")
 							and (not fr:debuffany("Unstable Affliction") or _A.pull_location == "arena")
-						then
+							then
 							for _, v in ipairs(dangerousdebuffs) do
 								if fr:DebuffAny(v) and _A.nothealimmune(fr) and fr:los() then
 									print("REMOVING DANGEROUS")
@@ -2209,7 +2209,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	lifecocoon = function()
 		if player:SpellCooldown("Life Cocoon") < cdcd and player:SpellUsable(116849) then
 			if player:Stance() == 1 then
@@ -2217,16 +2217,16 @@ local mw_rot = {
 				if lowest and lowest:SpellRange("Life Cocoon") and lowest:combat() then
 					--]]
 					if
-					-- (lowest:health()<40 or (pull_location()=="pvp" and lowest:health()<40))
+						-- (lowest:health()<40 or (pull_location()=="pvp" and lowest:health()<40))
 						lowest:health() < 30
-					then
+						then
 						return lowest:Cast("Life Cocoon")
 					end
 				end
 			end
 		end
 	end,
-
+	
 	surgingmist = function()
 		if player:BuffStack("Vital Mists") >= 5
 			and player:Chi() < player:ChiMax() then
@@ -2234,18 +2234,18 @@ local mw_rot = {
 				local lowest = Object("lowestall")
 				if lowest and lowest:SpellRange("Surging Mist") then
 					--]]
-
+					
 					if
 						lowest:health() <= 85
-
-					then
+						
+						then
 						return lowest:Cast("Surging Mist")
 					end
 				end
 			end
 		end
 	end,
-
+	
 	renewingmist = function()
 		if player:SpellCooldown("Renewing Mist") < cdcd and player:SpellUsable(115151) then
 			if player:Stance() == 1 then
@@ -2256,7 +2256,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	healstatue = function()
 		if not player:combat() then
 			return
@@ -2271,24 +2271,24 @@ local mw_rot = {
 				return false
 			end
 			if player:SpellCooldown("Summon Jade Serpent Statue") < cdcd and player:SpellUsable(115313) and not IsSwimming() and not statueInRange()
-			then
+				then
 				return _A.clickcast(player, "Summon Jade Serpent Statue")
 			end
 		end
 	end,
-
+	
 	healingsphere_keybind = function()
 		local target
 		if player:SpellUsable("Healing Sphere") then
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
 					if _A.pull_location == "pvp"
-					then
+						then
 						target = Object("player")
-					elseif _A.pull_location == "arena"
-					then
+						elseif _A.pull_location == "arena"
+						then
 						target = Object("lowestall")
-					else
+						else
 						target = Object("target")
 					end
 					if target then
@@ -2302,7 +2302,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	healingsphere = function()
 		if player:SpellUsable("Healing Sphere") then
 			if player:Stance() == 1 then
@@ -2320,7 +2320,23 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
+	healingsphere_nocombat = function()
+		if player:SpellUsable("Healing Sphere") then
+			if player:Stance() == 1 then
+				if player:SpellUsable(115460) then
+					--- ORBS
+					local lowest = Object("lowestall")
+					if lowest then
+						if (lowest:health() < 92) then
+							return _A.clickcast(lowest, "Healing Sphere")
+						end
+					end
+				end
+			end
+		end
+	end,
+	
 	healingsphere_superlow = function()
 		if player:SpellUsable("Healing Sphere") then
 			if player:Stance() == 1 then
@@ -2334,7 +2350,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	blackout_mm = function()
 		if player:Stance() == 1 then
 			if player:Chi() >= 2 then
@@ -2350,7 +2366,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	tigerpalm_mm = function()
 		if player:Stance() == 1 then
 			if player:Chi() >= 1 then
@@ -2366,13 +2382,13 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	bk_buff = function()
 		if player:Stance() == 1 then
 			if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory")
 				if player:Chi() >= 2
 					and not player:Buff("Serpent's Zeal") -- and player:Buff("Muscle Memory")
-				then
+					then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Blackout Kick")
@@ -2381,13 +2397,13 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	tp_buff = function()
 		if player:Stance() == 1 then
 			if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory")
 				if player:Chi() >= 1
 					and not player:Buff("Tiger Power")
-				then
+					then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Tiger Palm")
@@ -2396,13 +2412,13 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	tp_buff_keybind = function()
 		if player:Stance() == 1 then
 			if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory")
 				if player:Chi() >= 1
 					and not player:Buff("Tiger Power")
-				then
+					then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Tiger Palm", true)
@@ -2411,28 +2427,28 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	uplift = function()
 		if player:Stance() == 1 then
 			if player:SpellUsable("Uplift")
 				and player:Chi() >= 2
-			then
+				then
 				return player:Cast("Uplift")
 			end
 		end
 	end,
-
+	
 	expelharm = function()
 		if player:Stance() == 1 then
 			if player:Chi() < player:ChiMax()
 				and player:SpellCooldown("Expel Harm") < cdcd
 				and player:SpellUsable(115072)
-			then
+				then
 				return player:Cast("Expel Harm")
 			end
 		end
 	end,
-
+	
 	tigerpalm_filler = function()
 		if player:Stance() == 1 then
 			if player:Chi() == 1 then
@@ -2445,7 +2461,7 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	blackout_keybind = function()
 		if player:Stance() == 1 then
 			if player:Chi() >= 2 then
@@ -2460,7 +2476,7 @@ local mw_rot = {
 			--------------------------------- damage based
 		end
 	end,
-
+	
 	jab_filler = function()
 		if player:Stance() == 1 then
 			if _A.manaengine() then
@@ -2474,12 +2490,12 @@ local mw_rot = {
 			-- {"Summon Jade Serpent Statue", "spell.cooldown<1 && stance == 1", "player.ground"},
 		end -- stance 1
 	end,
-
+	
 	dpsstance_jab = function()
 		if player:Stance() ~= 1 and not player:buff("Rushing Jade Wind") then
 			if not player:Buff("Muscle Memory")
 				or (player:chi() <= 1 and not player:talent("Rushing Jade Wind"))
-			then
+				then
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
 					return lowestmelee:Cast("Jab")
@@ -2487,32 +2503,32 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	spin_rjw = function()
 		if (player:Stance() == 1)
 			and player:buffany("Lucidity") then
 			if player:Talent("Rushing Jade Wind")
 				and player:SpellCooldown("Rushing Jade Wind") < cdcd
-			then
+				then
 				return player:Cast("Rushing Jade Wind")
 			end
 		end
 		-- add friendly finder on top
 	end,
-
-
+	
+	
 	jab_keybind_buff = function()
 		if player:Stance() == 1 and player:mana() >= 9
 			-- and (not player:buff("Muscle Memory"))  -- former logic
 			and player:chi() == 1
-		then
+			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee then
 				return lowestmelee:Cast("Jab", true)
 			end
 		end
 	end,
-
+	
 	lightning_keybind = function()
 		if player:Stance() == 1 and (player:Keybind("R") or player:ui("leveling")) and player:mana() >= 9 and not player:moving() then
 			if not player:isChanneling("Crackling Jade Lightning") then
@@ -2524,11 +2540,11 @@ local mw_rot = {
 					end
 				end
 			end
-		else
+			else
 			if player:isChanneling("Crackling Jade Lightning") then _A.CallWowApi("SpellStopCasting") end
 		end
 	end,
-
+	
 	autotarget = function()
 		if _A.UnitExists("pet") then
 			local _target = Object("target")
@@ -2539,14 +2555,14 @@ local mw_rot = {
 			end
 		end
 	end,
-
+	
 	detargetcc = function()
 		local _target = Object("target")
 		if _A.pull_location == "arena" and _target and _target:enemy() and (_target:range() < 10 or _A.UnitExists("pet")) and _A.dontbreakcc(_target) == false then
 			_A.CallWowApi("ClearTarget")
 		end
 	end,
-
+	
 	autofocus = function()
 		if _A.UnitExists("pet") then
 			local _focus = Object("focus")
@@ -2555,10 +2571,10 @@ local mw_rot = {
 				if not _focus then _A.CallWowApi("FocusUnit", lowestmelee.guid) end
 				if _focus and _focus.guid ~= lowestmelee.guid then _A.CallWowApi("FocusUnit", lowestmelee.guid) end
 				if _focus then _A.CallWowApi("RunMacroText", "/petattack focus") end
-			else
+				else
 				_A.CallWowApi("RunMacroText", "/petfollow")
 			end
-		elseif _focus then
+			elseif _focus then
 			_A.CallWowApi("ClearFocus")
 		end
 	end,
@@ -2566,7 +2582,7 @@ local mw_rot = {
 		if player:Stance() ~= 1 and (player:keybind("R") or _A.pull_location ~= "pvp" or player:ui("leveling")) then
 			if player:Talent("Rushing Jade Wind")
 				and player:SpellCooldown("Rushing Jade Wind") < cdcd
-			then
+				then
 				return player:Cast("Rushing Jade Wind")
 			end
 		end
@@ -2581,38 +2597,38 @@ local mw_rot = {
 	dpsstance_healstance = function()
 		if player:Stance() ~= 1 then
 			if player:SpellCooldown("Stance of the Wise Serpent") < cdcd
-			then
+				then
 				return player:Cast("Stance of the Wise Serpent")
 			end
 		end
 	end,
-
+	
 	dpsstance_healstance_special = function()
 		if player:Stance() ~= 1 then
 			if player:SpellCooldown("Stance of the Wise Serpent") < cdcd
-			then
+				then
 				return player:Cast("Stance of the Wise Serpent")
 			end
 		end
 	end,
-
+	
 	dpsstance_healstance_keybind = function()
 		-- if player:Stance() ~= 1 and (_A.modifier_shift() or _A.manaengine_highprio() or player:buff("Rushing Jade Wind")) and (player:manaraw()>=17550 or player:buff("Rushing Jade Wind")) then
 		if player:Stance() ~= 1 and (_A.modifier_shift() or player:buff("Rushing Jade Wind")) and (player:manaraw() >= 17550 or player:buff("Rushing Jade Wind")) then
 			if player:SpellCooldown("Stance of the Wise Serpent") < cdcd
-			then
+				then
 				return player:Cast("Stance of the Wise Serpent")
 			end
 		end
 	end,
-
-
+	
+	
 	dpsstanceswap = function()
 		if player:Stance() ~= 2 then
 			if player:SpellCooldown("Stance of the Fierce Tiger") < cdcd
 				and not player:Buff("Rushing Jade Wind")
 				and not player:Buff("lucidity")
-			then
+				then
 				if player:Talent("Rushing Jade Wind") and (player:keybind("R") or _A.pull_location ~= "pvp" or _Y.rushing_number() >= 3 or player:ui("leveling")) then
 					return player:Cast("Stance of the Fierce Tiger")
 				end
@@ -2642,13 +2658,13 @@ local inCombat = function()
 	-- Out of GCD
 	mw_rot.autoattackmanager()
 	_Y.petengine_MONK()
-	mw_rot.thunderfocustea()
+	if player:combat() then mw_rot.thunderfocustea() end
 	mw_rot.kick_spear()
 	mw_rot.activetrinket()
 	mw_rot.diffusemagic()
 	mw_rot.everyman()
 	mw_rot.nimble()
-	mw_rot.chibrew()
+	if player:combat() then mw_rot.chibrew() end
 	_Y.cancelbuff(16593)
 	mw_rot.items_healthstone()
 	mw_rot.fortifyingbrew()
@@ -2669,7 +2685,8 @@ local inCombat = function()
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
 	if mylevel >= 34 and mw_rot.ctrl_mode() then return true end -- ctrl
 	-- healing spheres don't get you in combat lol (increased mana regen)
-	if not player:combat() and mw_rot.healingsphere() then return true end
+	if not player:combat() and mw_rot.dpsstance_healstance() then return true end
+	if not player:combat() and mw_rot.healingsphere_nocombat() then return true end
 	if not player:combat() then return true end
 	--
 	-- GCD CDS
