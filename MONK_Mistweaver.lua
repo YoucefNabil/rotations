@@ -2326,10 +2326,12 @@ local mw_rot = {
 			if player:Stance() == 1 then
 				if player:SpellUsable(115460) then
 					--- ORBS
-					local lowest = Object("lowestall")
-					if lowest then
-						if (lowest:health() < 92) then
-							return _A.clickcast(lowest, "Healing Sphere")
+					if _A.modifier_shift() or _A.manaengine() or _A.manaengine_highprio() then
+						local lowest = Object("lowestall")
+						if lowest then
+							if (lowest:health() < 92) then
+								return _A.clickcast(lowest, "Healing Sphere")
+							end
 						end
 					end
 				end
