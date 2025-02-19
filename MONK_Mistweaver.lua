@@ -2688,7 +2688,7 @@ local inCombat = function()
 	if mylevel >= 34 and mw_rot.ctrl_mode() then return true end -- ctrl
 	-- healing spheres don't get you in combat lol (increased mana regen)
 	if not player:combat() and mw_rot.dpsstance_healstance() then return true end
-	if not player:combat() and mw_rot.healingsphere_nocombat() then return true end
+	if not player:combat() and mylevel >= 64 and mw_rot.healingsphere_nocombat() then return true end
 	if not player:combat() then return true end
 	--
 	-- GCD CDS
