@@ -2632,9 +2632,8 @@ local inCombat = function()
 	if not player then return true end
 	local mylevel = player:level()
 	cdcd = _A.Parser.frequency and _A.Parser.frequency * 3 or .3
-	-- print(player:SpellCount("Chi Brew"))
-	-- print(player.name)
-	-- print(player:state("snare || root"))
+	-- print(player:combat())
+	-- print(GetManaRegen())
 	if not player:alive() then return true end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats())) / 100)) / 10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
@@ -2669,6 +2668,10 @@ local inCombat = function()
 	end
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
 	if mylevel >= 34 and mw_rot.ctrl_mode() then return true end -- ctrl
+	-- healing spheres don't get you in combat lol (increased mana regen)
+	if not player:combat() and mw_rot.healingsphere() then return true end
+	if not player:combat() then return true end
+	--
 	-- GCD CDS
 	if mylevel >= 50 and mw_rot.lifecocoon() then return true end
 	if mylevel >= 68 and mw_rot.burstdisarm() then

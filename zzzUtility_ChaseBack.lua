@@ -28,14 +28,23 @@ local function ChaseBack()
 		end
 	end
 end
+local spells = {
+	"Mortal Strike",
+	"Slam",
+	"Tiger Palm",
+}
 local function faceface()
 	player = player or Object("player") 
     local target = Object("target")
     if player and target and target:Exists() and target:Enemy() and _A.IsKeyDown("E") then
 		-- Smooth facing logic
-		if not player:BuffAny("Bladestorm") and not target:infront() and player:spellcooldown("Slam")<.3 and target:SpellRange("mortal strike") then
-			-- Calculate angle difference
-			_A.FaceDirection(target.guid, true)
+		if not player:BuffAny("Bladestorm") and not target:infront() then
+			for _,v in ipairs(spells) do
+				if player:spellcooldown(v)<.3 and target:SpellRange(v) then
+					-- Calculate angle difference
+					_A.FaceDirection(target.guid, true)
+				end
+			end
 		end
 	end
 end
