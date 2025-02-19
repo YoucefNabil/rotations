@@ -826,7 +826,7 @@ arms.rot = {
 	sunderarmor_target = function()
 		if player:SpellCooldown("Sunder Armor")<cdcd and player:spellusable("Sunder Armor") then
 			local target = Object("target")
-			if target and target:enemy() and target:alive() and target:SpellRange("Mortal Strike") and target:infront() and target:los() then 
+			if target and target:enemy() and target:alive() and target:SpellRange("Mortal Strike") and target:infront() and healerspecid[target:spec()] and target:los() then 
 				if target:debuffduration("Weakened Armor")<3 or target:DebuffStack("Weakened Armor")<=2 then
 					return target:Cast("Sunder Armor")
 				end
