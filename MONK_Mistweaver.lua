@@ -1813,6 +1813,23 @@ local mw_rot = {
 		end
 	end,
 	
+	pvp_disable_target = function()
+		if player:Stance() == 1 --and pull_location()=="arena"
+			then
+			local lowestmelee = Object("target")
+			if lowestmelee and lowestmelee.isplayer and lowestmelee:enemy() and lowestmelee:alive() and lowestmelee:infront() and lowestmelee:SpellRange("Disable") 
+			and not lowestmelee:state("incapacitate || fear || disorient || charm || misc || sleep") 
+			and _A.notimmune(lowestmelee) 
+			then
+			if not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence")
+				and not lowestmelee:Debuff("Disable") and not lowestmelee:state("snare") and lowestmelee:los()  then
+				----------------------------------
+				return lowestmelee:Cast("Disable")
+			end
+		end
+		end
+	end,
+	
 	pvp_disable_keybind = function()
 		if player:Stance() == 1 --and pull_location()=="arena"
 			then
@@ -2680,6 +2697,7 @@ local inCombat = function()
 	--if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if player:keybind("R") or player:ui("leveling") then
 		if mylevel >= 56 and mw_rot.manatea() then return true end
+		if mylevel >= 28 and mw_rot.pvp_disable_target() then return true end
 		if mylevel >= 3 and mw_rot.tp_buff_keybind() then return true end
 		if mylevel >= 7 and mw_rot.blackout_keybind() then return true end
 		if mw_rot.dpsstanceswap() then return true end
