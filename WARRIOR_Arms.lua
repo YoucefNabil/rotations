@@ -813,7 +813,7 @@ arms.rot = {
 	end,
 	
 	sunderarmor = function()
-		if player:SpellCooldown("Sunder Armor")<cdcd and player:spellusable("Sunder Armor") then
+		if player:SpellCooldown("Sunder Armor")<cdcd and player:spellusable("Sunder Armor") and player:rage()>=15 then
 			local target = Object("target")
 			if target and target:alive() and target:enemy() and target:SpellRange("Mortal Strike") and target:infront() and target:los() then 
 				if target:debuffduration("Weakened Armor")<3 or target:DebuffStackAny("Weakened Armor")<=2 then
