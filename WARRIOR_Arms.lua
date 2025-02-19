@@ -326,6 +326,18 @@ local exeOnLoad = function()
 		end
 	end)
 	
+
+function _A.someoneislow()
+	for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		if Obj.isplayer then
+			if Obj:Health() <= 65 then
+				return true
+			end
+		end
+	end
+	return false
+end
+	
 	function _Y.reflectcheck_personnal(unit)
 		if unit then
 			for _,v in ipairs(spell_name(InterruptSpells)) do
@@ -870,7 +882,7 @@ arms.rot = {
 	
 	fearhealer = function()
 		if _A.pull_location ~= "arena" then
-			if player:SpellCooldown("Intimidating Shout")<.3 then
+			if player:SpellCooldown("Intimidating Shout")<.3 and _A.someoneislow() then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj.isplayer and Obj:range()<=8
 						and healerspecid[Obj:spec()]
