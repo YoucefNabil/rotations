@@ -1818,15 +1818,15 @@ local mw_rot = {
 			then
 			local lowestmelee = Object("target")
 			if lowestmelee and lowestmelee.isplayer and lowestmelee:enemy() and lowestmelee:alive() and lowestmelee:infront() and lowestmelee:SpellRange("Disable") 
-			and not lowestmelee:state("incapacitate || fear || disorient || charm || misc || sleep") 
-			and _A.notimmune(lowestmelee) 
-			then
-			if not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence")
-				and not lowestmelee:Debuff("Disable") and not lowestmelee:state("snare") and lowestmelee:los()  then
-				----------------------------------
-				return lowestmelee:Cast("Disable")
+				and not lowestmelee:state("incapacitate || fear || disorient || charm || misc || sleep") 
+				and _A.notimmune(lowestmelee) 
+				then
+				if not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence")
+					and not lowestmelee:Debuff("Disable") and not lowestmelee:state("snare") and lowestmelee:los()  then
+					----------------------------------
+					return lowestmelee:Cast("Disable")
+				end
 			end
-		end
 		end
 	end,
 	
@@ -2705,9 +2705,11 @@ local inCombat = function()
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
 	if mylevel >= 34 and mw_rot.ctrl_mode() then return true end -- ctrl
 	-- healing spheres don't get you in combat lol (increased mana regen)
-	if not player:combat() and mw_rot.dpsstance_healstance() then return true end
-	if not player:combat() and mylevel >= 64 and mw_rot.healingsphere_nocombat() then return true end
-	if not player:combat() then return true end
+	if not player:combat() and (_A.pull_location =="pvp" or _A.pull_location =="arena") then
+		if mw_rot.dpsstance_healstance() then return true end
+		if mylevel >= 64 and mw_rot.healingsphere_nocombat() then return true end
+		return true
+	end
 	--
 	-- GCD CDS
 	if mylevel >= 50 and mw_rot.lifecocoon() then return true end
