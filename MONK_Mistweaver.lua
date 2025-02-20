@@ -285,6 +285,7 @@ local GUI = {
 	},
 	{ type = "spacer",   size = spacer_size },
 	{ type = "checkbox", size = checkbox_tsize, text = "Use DPS leveling Rotation " .. _A.Core:GetSpellIcon(100787, 15, 15) .. " (R)", key = "leveling", default = false },
+	{ type = "checkbox", size = checkbox_tsize, text = "Alert on Statue out of range " .. _A.Core:GetSpellIcon(115313, 15, 15),        key = "draw_statue_range", default = false },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "spacer",   size = spacer_size },
 	{ type = 'text',     size = info_tsize,     text = '© .youcef & _2related (UI)' },
@@ -2765,6 +2766,36 @@ local spellIds_Loc = function()
 end
 local blacklist = function()
 end
+
+-- alert when out of statue range
+local statueAlertShown = false -- Track alert state
+
+local function alertStatueRange()
+	player = player or Object("player")
+	if not player then return true end
+	if player:spec()~=270 then return true end
+	if not player:ui("draw_statue_range") then return true end
+	for _, statue in pairs(_A.OM:Get('Friendly')) do
+		if statue.id == 60849 and _A.ObjectCreator(statue.guid) == player.guid then
+			if statue:distance() > 20 then
+				if not statueAlertShown then -- Only show if we haven't shown it yet
+					_A.ui:alert({
+						text = " Statue out of range",
+						icon = 115313,
+						size = 25
+					})
+					statueAlertShown = true -- Mark as shown
+				end
+			else
+				statueAlertShown = false -- Reset when back in range
+			end
+			break
+		end
+	end
+end
+
+C_Timer.NewTicker(.1, alertStatueRange, false, "alertStatueRange")
+
 _A.CR:Add(270, {
 	name = "Monk Heal EFFICIENT",
 	ic = inCombat,
