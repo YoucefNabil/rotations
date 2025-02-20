@@ -8,6 +8,7 @@ local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
 local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
+local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
 local cdcd = .3
 local specstoslap = {
 	-- PRIESTS
@@ -277,6 +278,15 @@ local exeOnLoad = function()
 		_A.pull_location = pull_location()
 	end)
 	_A.pull_location = _A.pull_location or pull_location()
+	_A.Interface:AddToggle({
+		key = "Stambuff", 
+		name = "Enable Pet Attacking Totem", 
+		text = "ON = stam buff | OFF = AP buff",
+		icon = select(3,GetSpellInfo("Commanding Shout")),
+	})
+	_A.Interface:ShowToggle("cooldowns", false)
+	_A.Interface:ShowToggle("interrupts", false)
+	_A.Interface:ShowToggle("aoe", false)
 	--
 	hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
@@ -290,6 +300,16 @@ local exeOnLoad = function()
 					local px, py, pz = _A.ObjectPosition("cursor")
 					_A.ClickPosition(px, py, pz)
 					return _A.CallWowApi("SpellStopTargeting")
+				end
+			end
+			if id == 97462 then
+				player = player or Object("player")
+				if player:SpellCooldown(97462)<.3 then
+					local px, py, pz = _A.ObjectPosition("player")
+					player:cast(114203)
+					_A.ClickPosition(px, py, pz)
+					_A.CallWowApi("SpellStopTargeting")
+					player:cast(97462)
 				end
 			end
 		end
@@ -523,7 +543,17 @@ local exeOnLoad = function()
 		if lowest then
 			if not target or lowest.guid~=target.guid then _A.TargetUnit(lowest.guid) end
 		end
-	end,
+	end
+	_Y.arenachecks = function()
+		if _A.pull_location == "arena" then
+			local healer = Object("party1")
+			if healer and healerspecid[healer:spec()] and healer:state("incapacitate || disorient || charm || misc || sleep || fear || stun || silence") then 
+				return true
+			end
+			return false
+		end
+		return false
+	end
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
@@ -670,9 +700,10 @@ arms.rot = {
 	stance_dance = function()
 		local lowestmelee = Object("lowestEnemyInSpellRangeNOTARNOFACESTANCE")
 		if player:SpellCooldown("Battle Stance")==0 then
-			if player:stance()~=2 and player:health()<35 then if not IsCurrentSpell(71) then player:cast("Defensive Stance") end return true 
-				elseif player:stance()~=2 and not lowestmelee then if not IsCurrentSpell(71) then  player:cast("Defensive Stance") end return true
-				elseif player:stance()~=1 and lowestmelee and player:health()>40 then if not IsCurrentSpell(2457) then player:cast("Battle Stance") end return true
+			if player:stance()~=2 and player:health()<=42 then if not IsCurrentSpell(71) then player:cast("Defensive Stance") end return true 
+				elseif player:stance()~=2 and not lowestmelee then if not IsCurrentSpell(71) then player:cast("Defensive Stance") end return true
+				elseif player:stance()~=2 and _Y.arenachecks() then if not IsCurrentSpell(71) then player:cast("Defensive Stance") end return true
+				elseif player:stance()~=1 and lowestmelee and player:health()>42 and not _Y.arenachecks() then if not IsCurrentSpell(2457) then player:cast("Battle Stance") end return true
 			end
 		end
 	end,
@@ -816,13 +847,24 @@ arms.rot = {
 	end,
 	
 	hamstringpvp = function()
-		if player:SpellCooldown("Hamstring")<cdcd and player:spellusable("Hamstring") then
+		if not player:talent("Piercing Howl") and player:SpellCooldown("Hamstring")<cdcd and player:spellusable("Hamstring") then
 			local target = Object("target")
 			if target and target.isplayer and target:enemy() 
 				and target:debuffduration("Hamstring")<1
 				and _A.notimmune(target)
 				and not target:immune("snare") then
 				return target:cast("Hamstring")
+			end
+		end
+	end,
+	
+	piercing_howl = function()
+		if player:talent("Piercing Howl") and player:SpellCooldown("Piercing Howl")<cdcd and player:spellusable("Piercing Howl") then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:range()<=14 and _A.notimmune(Obj) and not Obj:immune("snare") and not Obj:state("snare")
+					and not Obj:state("incapacitate || disorient || charm || misc || sleep") and Obj:los() then
+					return player:cast("Piercing Howl")
+				end
 			end
 		end
 	end,
@@ -996,11 +1038,36 @@ arms.rot = {
 	end,
 	
 	battleshout = function ()
-		if player:SpellCooldown("battle shout")<cdcd and player:rage()<=75 then return player:cast("battle shout")
+		if not toggle("Stambuff") then
+			if player:SpellCooldown("battle shout")<cdcd and player:rage()<=75 then return player:cast("battle shout") end
+		end
+		if toggle("Stambuff") then
+			if player:SpellCooldown("Commanding Shout")<cdcd and player:rage()<=75 then return player:cast("Commanding Shout") end
 		end
 	end,
 	
 	slam = function()
+		if player:SpellUsable("Slam") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			if lowestmelee then
+				if lowestmelee:health()>20 or player:buff("Sweeping Strikes")  then
+					if player:rage()>25 then
+						if player:rage()>65 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
+							return lowestmelee:Cast("Slam")
+						end
+					end
+					else
+					if player:rage()>30 then
+						if player:rage()>65 or lowestmelee:debuff("Colossus Smash") then
+							return lowestmelee:Cast("Execute")
+						end
+					end
+				end
+			end
+		end
+	end,
+	
+	slam_ragecap = function()
 		if player:SpellUsable("Slam") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee then
@@ -1257,7 +1324,7 @@ arms.rot = {
 	----------------------------
 	sweeping_strikes = function()
 		if _A.numtangos>=3 
-		-- if _A.modifier_shift()
+			-- if _A.modifier_shift()
 			and player:SpellUsable("Sweeping Strikes") and player:SpellCooldown("Sweeping Strikes")==0
 			then
 			return player:cast("sweeping strikes")
@@ -1333,6 +1400,7 @@ local inCombat = function()
 	if arms.rot.burstdisarm() then return true end
 	if arms.rot.battleshout() then return true end
 	if arms.rot.hamstringpvp() then return true end
+	if arms.rot.piercing_howl() then return true end
 	if arms.rot.victoryrush() then return true end
 	if arms.rot.Mortalstrike() then return true end
 	if arms.rot.thunderclapPVE() then return true end
