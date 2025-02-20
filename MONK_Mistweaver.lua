@@ -2771,10 +2771,16 @@ end
 local statueAlertShown = false -- Track alert state
 
 local function alertStatueRange()
+<<<<<<< HEAD
 	player = player or Object("player")
 	if not player then return true end
 	if player:spec()~=270 then return true end
 	if not player:ui("draw_statue_range") then return true end
+=======
+	local player = Object("player")
+	if not player then return end
+	if not player:ui("draw_statue_range") then return end
+>>>>>>> 407e7e1f499177768964082214b2c71fef5f24c0
 	for _, statue in pairs(_A.OM:Get('Friendly')) do
 		if statue.id == 60849 and _A.ObjectCreator(statue.guid) == player.guid then
 			if statue:distance() > 20 then
