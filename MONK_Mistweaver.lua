@@ -2775,7 +2775,6 @@ local function alertStatueRange()
 	if not player then return true end
 	if player:spec()~=270 then return true end
 	if not player:ui("draw_statue_range") then return true end
-	local player = Object("player")
 	for _, statue in pairs(_A.OM:Get('Friendly')) do
 		if statue.id == 60849 and _A.ObjectCreator(statue.guid) == player.guid then
 			if statue:distance() > 20 then
