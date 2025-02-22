@@ -2695,6 +2695,7 @@ local inCombat = function()
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	-- KEYBINDS
+	-- OH SHIT ORBS
 	--if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if player:keybind("R") or player:ui("leveling") then
 		if mylevel >= 56 and mw_rot.manatea() then return true end
@@ -2718,7 +2719,6 @@ local inCombat = function()
 		print("DISARMING")
 		return true
 	end
-	-- OH SHIT ORBS
 	if mylevel >= 64 and _A.modifier_shift() and mw_rot.healingsphere() then return true end
 	--------------------- dispells and root freedom
 	if mylevel >= 20 then

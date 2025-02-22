@@ -280,9 +280,15 @@ local exeOnLoad = function()
 	_A.pull_location = _A.pull_location or pull_location()
 	_A.Interface:AddToggle({
 		key = "Stambuff", 
-		name = "Enable Pet Attacking Totem", 
-		text = "ON = stam buff | OFF = AP buff",
+		name = "change buffs", 
+		text = "ON = stam buff | OFF = attack power buff",
 		icon = select(3,GetSpellInfo("Commanding Shout")),
+	})
+	_A.Interface:AddToggle({
+		key = "StunDEF", 
+		name = "stun targets", 
+		text = "ON = stun bursting enemies targeting the player | OFF = stun non targets (healer if targeting dps or visversa)",
+		icon = select(3,GetSpellInfo("Defensive Stance")),
 	})
 	_A.Interface:ShowToggle("cooldowns", false)
 	_A.Interface:ShowToggle("interrupts", false)
@@ -904,18 +910,53 @@ arms.rot = {
 		end
 	end,
 	
+	stormbolt_arena_def = function()
+		local target = Object("target")
+		if player:talent("Storm Bolt") and player:SpellCooldown("Storm Bolt")<.3 then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Storm Bolt") 
+					and _A.UnitTarget(Obj.guid)==player.guid
+					and  (Obj:BuffAny("Call of Victory") or Obj:BuffAny("Call of Conquest") or Obj:BuffAny("Call of Dominance"))
+					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear || disarm")<1.5
+					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 170) 
+					and (Obj:drState("Storm Bolt") == 1 or Obj:drState("Storm Bolt")==-1)
+					and Obj:los() then
+					return Obj:cast("Storm Bolt") 
+				end
+			end
+		end
+	end,
+	
 	shockwave_arena = function()
 		local target = Object("target")
 		if _A.pull_location == "arena" and target and target.isplayer and target:alive() and target:enemy() then
 			if player:talent("Shockwave") and player:SpellCooldown("Shockwave")<.3 then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj.isplayer and Obj:range() <= 8
+						and (Obj.guid~=target.guid or (Obj:health()<30 and _A.pull_location=="pvp"))
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 90) 
 						and (Obj:drState("Shockwave") == 1 or Obj:drState("Shockwave")==-1)
 						and Obj:los() then
 						return player:cast("Shockwave") 
 					end
+				end
+			end
+		end
+	end,
+	
+	shockwave_arena_def = function()
+		local target = Object("target")
+		if player:talent("Shockwave") and player:SpellCooldown("Shockwave")<.3 then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:range() <= 8
+					and _A.UnitTarget(Obj.guid)==player.guid
+					and  (Obj:BuffAny("Call of Victory") or Obj:BuffAny("Call of Conquest") or Obj:BuffAny("Call of Dominance"))
+					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear || disarm")<1.5
+					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 90) 
+					and (Obj:drState("Shockwave") == 1 or Obj:drState("Shockwave")==-1)
+					and Obj:los() then
+					return player:cast("Shockwave") 
 				end
 			end
 		end
@@ -1052,13 +1093,13 @@ arms.rot = {
 			if lowestmelee then
 				if lowestmelee:health()>20 or player:buff("Sweeping Strikes")  then
 					if player:rage()>25 then
-						if player:rage()>65 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
+						if (player:rage()>80 and player:buffstack("Taste of Blood")<=3) or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
 							return lowestmelee:Cast("Slam")
 						end
 					end
 					else
 					if player:rage()>30 then
-						if player:rage()>65 or lowestmelee:debuff("Colossus Smash") then
+						if (player:rage()>80 and player:buffstack("Taste of Blood")<=3) or lowestmelee:debuff("Colossus Smash") then
 							return lowestmelee:Cast("Execute")
 						end
 					end
@@ -1068,21 +1109,13 @@ arms.rot = {
 	end,
 	
 	slam_ragecap = function()
-		if player:SpellUsable("Slam") then
+		if player:SpellUsable("Slam") and player:rage()>=95 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee then
 				if lowestmelee:health()>20 or player:buff("Sweeping Strikes")  then
-					if player:rage()>25 then
-						if player:rage()>65 or lowestmelee:debuff("Colossus Smash") or player:buff("Sweeping Strikes") then
-							return lowestmelee:Cast("Slam")
-						end
-					end
+					return lowestmelee:Cast("Slam")
 					else
-					if player:rage()>30 then
-						if player:rage()>65 or lowestmelee:debuff("Colossus Smash") then
-							return lowestmelee:Cast("Execute")
-						end
-					end
+					return lowestmelee:Cast("Execute")
 				end
 			end
 		end
@@ -1253,6 +1286,40 @@ arms.rot = {
 		end
 	end,
 	
+	safeguard_Scatter_BG = function()
+		local tempTable = {}
+		if player:Talent("Safeguard") and player:SpellCooldown("Safeguard")==0
+			and not IsCurrentSpell(114029) and not IsCurrentSpell(23920) 
+			then
+			for _, raidobject in pairs(_A.OM:Get('Roster')) do
+				if raidobject and not raidobject:Is(player)
+					and raidobject:range()<25
+					and raidobject:debuffany("Scatter Shot")
+					and raidobject:los()
+					then
+					return raidobject:cast("Safeguard")
+				end
+			end
+		end
+	end,
+	
+	heroicleap_Scatter = function()
+		local tempTable = {}
+		if player:SpellCooldown("Heroic Leap")<.3
+			and not IsCurrentSpell(114029) and not IsCurrentSpell(23920) 
+			then
+			for _, raidobject in pairs(_A.OM:Get('Roster')) do
+				if raidobject and not raidobject:Is(player)
+					and raidobject:range()<39 and raidobject:range()>8
+					and raidobject:debuffany("Scatter Shot")
+					and raidobject:los()
+					then
+					return _A.clickcast(raidobject, "Heroic Leap")
+				end
+			end
+		end
+	end,
+	
 	-- BURST
 	
 	activetrinket = function()
@@ -1347,6 +1414,14 @@ arms.rot = {
 			end
 		end
 	end,
+	overpower_high = function()
+		if  player:SpellUsable("Overpower") and player:buffstack("Taste of Blood")>3 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
+			if lowestmelee and not lowestmelee:debuff("Colossus Smash") then
+				return lowestmelee:Cast("Overpower")
+			end
+		end
+	end,
 }
 ---========================
 ---========================
@@ -1377,6 +1452,7 @@ local inCombat = function()
 	arms.rot.shieldwall()
 	-- Precise sequence of non gcd spells
 	if arms.rot.safeguard_unroot_BG() then return true end
+	if arms.rot.safeguard_Scatter_BG() then return true end
 	if arms.rot.Pummel() then return true end
 	if arms.rot.reflectspell() then return true end
 	if arms.rot.reflect_stuff_onme() then return true end
@@ -1389,12 +1465,15 @@ local inCombat = function()
 	if arms.rot.bladestorm() then return true end
 	arms.rot.stance_dance()
 	if arms.rot.shockwave_cheaper() then return true end
-	if arms.rot.shockwave_arena() then return true end -- arena spec
+	if not toggle("StunDEF") and arms.rot.shockwave_arena() then return true end -- arena spec
+	if toggle("StunDEF") and arms.rot.shockwave_arena_def() then return true end -- arena spec
 	if arms.rot.stormbolt_on_heal_or_low() then print("STUNNING!!!") return true end
-	if arms.rot.stormbolt_arena() then print("STUNNING!!!") return true end -- arena spec
+	if not toggle("StunDEF") and arms.rot.stormbolt_arena() then print("STUNNING!!!") return true end -- arena spec
+	if toggle("StunDEF") and arms.rot.stormbolt_arena_def() then print("STUNNING!!!") return true end -- arena spec
 	if arms.rot.diebythesword() then return true end
 	if arms.rot.burst_diebythesword() then return true end -- arena spec
 	if arms.rot.sweeping_strikes() then return true end
+	if arms.rot.slam_ragecap() then return true end
 	if arms.rot.colossussmash() then return true end
 	if arms.rot.thunderclap() then return true end
 	if arms.rot.burstdisarm() then return true end
@@ -1405,6 +1484,7 @@ local inCombat = function()
 	if arms.rot.Mortalstrike() then return true end
 	if arms.rot.thunderclapPVE() then return true end
 	if arms.rot.sunderarmor_target() then return true end
+	if arms.rot.overpower_high() then return true end
 	if arms.rot.slam() then return true end
 	if arms.rot.overpower() then return true end
 end

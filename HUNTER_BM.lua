@@ -1306,7 +1306,7 @@ local exeOnLoad = function()
 		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOSfocus")
 		if target and _A.pull_location~="arena" then
 			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-				print("ATTACKING FOCUS")
+				-- print("ATTACKING FOCUS")
 				return _A.CallWowApi("PetAttack", target.guid), 3
 			end
 			return 3
@@ -1365,7 +1365,7 @@ local exeOnLoad = function()
 		-------- PET ROTATION
 		if petpassive() then return true end
 		if attacktotem() then return true end
-		if attackfocus() then return true end
+		-- if attackfocus() then return true end
 		if attacklowest() then return true end
 		if petfollow() then return true end
 	end
