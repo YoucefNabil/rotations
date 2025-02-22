@@ -867,7 +867,7 @@ arms.rot = {
 	piercing_howl = function()
 		if player:talent("Piercing Howl") and player:SpellCooldown("Piercing Howl")<cdcd and player:spellusable("Piercing Howl") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer and Obj:range()<=14 and _A.notimmune(Obj) and not Obj:immune("snare") and not Obj:state("snare")
+				if Obj.isplayer and Obj:range()<=14 and _A.notimmune(Obj) and not Obj:immune("snare") and Obj:stateduration("snare")<1.5
 					and not Obj:state("incapacitate || disorient || charm || misc || sleep") and Obj:los() then
 					return player:cast("Piercing Howl")
 				end
