@@ -514,13 +514,15 @@ local exeOnLoad = function()
 		return channeling and string.lower((select(1, channeling))) or " "
 	end
 	
-	
+	local lastname
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
 		local tGUID = target and target.guid or 0
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and _A.notimmune(Obj) 
+			if Obj:spellRange(spell)
+				and  Obj:InConeOf(player, 170) 
+				and _A.notimmune(Obj) 
 				and not Obj:state("incapacitate || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
 					obj = Obj, -- debug
@@ -540,7 +542,8 @@ local exeOnLoad = function()
 			end)
 		end
 		if #tempTable>=1 then
-			print(tempTable[num].obj.name)
+			if lastname == nil then lastname = tempTable[num].obj.name end -- debug
+			if lastname~=tempTable[num].obj.name then lastname = tempTable[num].obj.name print(tempTable[num].obj.name) end
 			return tempTable[num] and tempTable[num].guid
 		end
 		return nil
