@@ -523,6 +523,7 @@ local exeOnLoad = function()
 			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and _A.notimmune(Obj) 
 				and not Obj:state("incapacitate || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
+					obj = Obj, -- debug
 					guid = Obj.guid,
 					target = Obj.guid==tGUID and 1 or 0,
 					health = Obj:health(),
@@ -539,6 +540,7 @@ local exeOnLoad = function()
 			end)
 		end
 		if #tempTable>=1 then
+			print(tempTable[num].obj.name)
 			return tempTable[num] and tempTable[num].guid
 		end
 		return nil
@@ -1099,10 +1101,10 @@ arms.rot = {
 	
 	battleshout = function ()
 		if not toggle("Stambuff") then
-			if player:SpellCooldown("battle shout")<cdcd and player:rage()<=75 then return player:cast("battle shout") end
+			if player:SpellCooldown("battle shout")<cdcd and player:rage()<=75 and player:level()>=42 then return player:cast("battle shout") end
 		end
 		if toggle("Stambuff") then
-			if player:SpellCooldown("Commanding Shout")<cdcd and player:rage()<=75 then return player:cast("Commanding Shout") end
+			if player:SpellCooldown("Commanding Shout")<cdcd and player:rage()<=75 and player:level()>=68 then return player:cast("Commanding Shout") end
 		end
 	end,
 	
@@ -1388,7 +1390,7 @@ arms.rot = {
 	bladestorm = function()
 		if player:combat() and player:buff("Surge of Victory") and player:talent("Bladestorm") and player:SpellCooldown("Bladestorm")<player:gcd() then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
-			if lowestmelee and lowestmelee.isplayer and lowestmelee:health()>=30 then
+			if lowestmelee and lowestmelee.isplayer then
 				if player:stance()~=2 and not IsCurrentSpell(71) then player:cast("Defensive Stance") end
 				-- 3 min cds
 				if player:SpellCooldown("Recklessness")==0 then
@@ -1460,6 +1462,7 @@ local inCombat = function()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
+	local mylevel = player:level()
 	if _A.buttondelayfunc()  then return true end
 	if  player:isCastingAny() then return true end
 	if player:mounted() then return true end
@@ -1479,17 +1482,19 @@ local inCombat = function()
 	-- Precise sequence of non gcd spells
 	if arms.rot.safeguard_unroot_BG() then return true end
 	if arms.rot.safeguard_Scatter_BG() then return true end
-	if arms.rot.Pummel() then return true end
-	if arms.rot.reflectspell() then return true end
-	if arms.rot.reflect_stuff_onme() then return true end
+	if mylevel>=24 and arms.rot.Pummel() then return true end
+	if mylevel>=66 then
+		if arms.rot.reflectspell() then return true end
+		if arms.rot.reflect_stuff_onme() then return true end
+	end
 	if arms.rot.reflect_stuff_on_peer() then return true end
 	if arms.rot.Charge() then return true end
 	if arms.rot.Disruptingshout() then return true end
 	-- Rotation
-	if arms.rot.fearhealer() then return true end
 	------------------ CCS
 	------------------------- Fear
-	if arms.rot.fear_arena() then return true end -- arena spec
+	if mylevel>=52 and arms.rot.fearhealer() then return true end
+	if mylevel>=52 and arms.rot.fear_arena() then return true end -- arena spec
 	-------------------------
 	arms.rot.stance_dance()
 	------------------------- Shockwave
@@ -1502,23 +1507,23 @@ local inCombat = function()
 	if arms.rot.stormbolt_on_heal_or_low() then print("STUNNING!!!") return true end
 	if not toggle("StunDEF") and arms.rot.stormbolt_arena() then print("STUNNING!!!") return true end -- arena spec
 	if toggle("StunDEF") and arms.rot.stormbolt_arena_def() then print("STUNNING!!!") return true end -- arena spec
-	if arms.rot.diebythesword() then return true end
-	if arms.rot.burst_diebythesword() then return true end -- arena spec
-	if arms.rot.sweeping_strikes() then return true end
-	if arms.rot.slam_ragecap() then return true end
-	if arms.rot.colossussmash() then return true end
-	if arms.rot.thunderclap() then return true end
-	if arms.rot.burstdisarm() then return true end
+	if mylevel>=56 and arms.rot.diebythesword() then return true end
+	if mylevel>=56 and arms.rot.burst_diebythesword() then return true end -- arena spec
+	if mylevel>=60 and arms.rot.sweeping_strikes() then return true end
+	if mylevel>=18 and arms.rot.slam_ragecap() then return true end
+	if mylevel>=81 and arms.rot.colossussmash() then return true end
+	if mylevel>=20 and arms.rot.thunderclap() then return true end
+	if mylevel>=28 and arms.rot.burstdisarm() then return true end
 	if arms.rot.battleshout() then return true end
-	if arms.rot.hamstringpvp() then return true end
+	if mylevel>=36 and arms.rot.hamstringpvp() then return true end
 	if arms.rot.piercing_howl() then return true end
 	if arms.rot.victoryrush() then return true end
 	if arms.rot.Mortalstrike() then return true end
-	if arms.rot.thunderclapPVE() then return true end
-	if arms.rot.sunderarmor_target() then return true end
-	if arms.rot.overpower_high() then return true end
-	if arms.rot.slam() then return true end
-	if arms.rot.overpower() then return true end
+	if mylevel>=20 and arms.rot.thunderclapPVE() then return true end
+	if mylevel>=16 and arms.rot.sunderarmor_target() then return true end
+	if mylevel>=30 and arms.rot.overpower_high() then return true end
+	if mylevel>=18 and arms.rot.slam() then return true end
+	if mylevel>=30 and arms.rot.overpower() then return true end
 end
 local spellIds_Loc = function()
 end
