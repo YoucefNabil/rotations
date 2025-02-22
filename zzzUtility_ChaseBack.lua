@@ -4,6 +4,7 @@ local garbagedelay = 10
 local flagclick = 0.1
 local player
 local randomDuration = 1
+_A.FaceAlways = true
 local heFLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true, ["Orb of Power"] = true,}
 -- Simplified ChaseBack with state management
 --

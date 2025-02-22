@@ -1271,9 +1271,9 @@ arms.rot = {
 			if _A.unitfrozen(player) then player:cast("Spell Reflection") end
 			--
 			-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				-- if Obj.isplayer and Obj:range()<=25 and Obj:BuffAny("Nature's Swiftness") then
-					-- return player:cast("Spell Reflection")
-				-- end
+			-- if Obj.isplayer and Obj:range()<=25 and Obj:BuffAny("Nature's Swiftness") then
+			-- return player:cast("Spell Reflection")
+			-- end
 			-- end
 		end
 	end,
@@ -1390,8 +1390,13 @@ arms.rot = {
 			local lowestmelee = Object("lowestEnemyInSpellRange(Mortal Strike)")
 			if lowestmelee and lowestmelee.isplayer and lowestmelee:health()>=30 then
 				if player:stance()~=2 and not IsCurrentSpell(71) then player:cast("Defensive Stance") end
-				player:cast("Skull Banner")
-				player:cast("Recklessness")
+				-- 3 min cds
+				if player:SpellCooldown("Recklessness")==0 then
+					player:useitem("Potion of Mogu Power")
+					player:cast("Skull Banner")
+					player:cast("Recklessness")
+				end
+				-- 1 min cds
 				player:cast("Bloodbath")
 				for i=1, #usableitems do
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
@@ -1402,7 +1407,7 @@ arms.rot = {
 						end
 					end
 				end
-				player:useitem("Potion of Mogu Power")
+				-- bladestorm
 				-- return player:buff("Bloodbath") and player:buff("Call of Victory") and player:cast("Bladestorm")
 				return player:cast("Bladestorm")
 			end
@@ -1411,7 +1416,7 @@ arms.rot = {
 	----------------------------
 	sweeping_strikes = function()
 		-- if _A.numtangos>=3 
-			if _A.modifier_shift()
+		if _A.modifier_shift()
 			and player:SpellUsable("Sweeping Strikes") and player:SpellCooldown("Sweeping Strikes")==0
 			then
 			return player:cast("sweeping strikes")
@@ -1470,6 +1475,7 @@ local inCombat = function()
 	arms.rot.reckbanner()
 	arms.rot.antifear()
 	arms.rot.shieldwall()
+	if arms.rot.bladestorm() then return true end
 	-- Precise sequence of non gcd spells
 	if arms.rot.safeguard_unroot_BG() then return true end
 	if arms.rot.safeguard_Scatter_BG() then return true end
@@ -1481,19 +1487,18 @@ local inCombat = function()
 	if arms.rot.Disruptingshout() then return true end
 	-- Rotation
 	if arms.rot.fearhealer() then return true end
-	-- Storm
-	-- if not toggle("StunDEF") and arms.rot.fear_arena() then return true end -- arena spec
+	------------------ CCS
+	------------------------- Fear
 	if arms.rot.fear_arena() then return true end -- arena spec
-	-- if toggle("StunDEF") and arms.rot.fear_arena_def() then return true end -- arena spec
-	--
-	if arms.rot.bladestorm() then return true end
+	-------------------------
 	arms.rot.stance_dance()
-	-- Shockwave
+	------------------------- Shockwave
 	if arms.rot.shockwave_cheaper() then return true end
 	if not toggle("StunDEF") and arms.rot.shockwave_arena() then return true end -- arena spec
+	-------------------------
+	------------------------- Stormbolt
 	-- if arms.rot.shockwave_arena() then return true end -- arena spec
 	if toggle("StunDEF") and arms.rot.shockwave_arena_def() then return true end -- arena spec
-	--
 	if arms.rot.stormbolt_on_heal_or_low() then print("STUNNING!!!") return true end
 	if not toggle("StunDEF") and arms.rot.stormbolt_arena() then print("STUNNING!!!") return true end -- arena spec
 	if toggle("StunDEF") and arms.rot.stormbolt_arena_def() then print("STUNNING!!!") return true end -- arena spec
