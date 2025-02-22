@@ -27,14 +27,14 @@ local function ChaseBack()
         local destY = ty - math.sin(facing) * 1.5
 		local now = _A.GetTime() or GetTime()
 		_A.ClickToMove(destX, destY, tz) 
-		if not player:BuffAny("Bladestorm") and not target:infront() then
-			for _,v in ipairs(spells) do
-				if player:spellcooldown(v)<.3 and target:SpellRange(v) then
+		-- if not player:BuffAny("Bladestorm") and not target:infront() then
+			-- for _,v in ipairs(spells) do
+				-- if player:spellcooldown(v)<.3 and target:SpellRange(v) then
 					-- Calculate angle difference
-					_A.FaceDirection(target.guid, true)
-				end
-			end
-		end
+					-- _A.FaceDirection(target.guid, true)
+				-- end
+			-- end
+		-- end
 		-- Warrior specific
 		if player:spec()==71 and target:SpellRange("Charge") and not player:BuffAny("Bladestorm") and target:infront() and target:los() and not IsCurrentSpell(100) then
 			target:cast("Charge")

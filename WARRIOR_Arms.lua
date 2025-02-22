@@ -5,6 +5,7 @@ local media, _A, _Y = ...
 -- if class ~= "WARRIOR" then return end;
 local DSL = function(api) return _A.DSL:Get(api) end
 local hooksecurefunc =_A.hooksecurefunc
+_A.FaceAlways = true
 local Listener = _A.Listener
 local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
 local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
@@ -247,23 +248,6 @@ local function cditemRemains(itemid)
 end
 --
 --
-local function ChaseBack()
-    local target = Object("target")
-	if target and target:Enemy() and target:alive() then 
-		local tx, ty, tz = _A.ObjectPosition(target.guid)
-		local facing = _A.ObjectFacing(target.guid)
-		local destX = tx - math.cos(facing) * 1.0
-		local destY = ty - math.sin(facing) * 1.0
-		local px, py, pz = _A.ObjectPosition("player")
-		_A.ClickToMove(destX, destY, tz)
-		if not target:infront() and not player:BuffAny("Bladestorm") and not player:moving() then
-			_A.FaceDirection(target.guid, false)
-		end
-		if target:SpellRange("Charge") and not player:BuffAny("Bladestorm") and target:infront() and target:los() and not IsCurrentSpell(100) then
-			target:cast("Charge")
-		end
-	end
-end
 local GUI = {
 }
 local exeOnLoad = function()
@@ -521,7 +505,7 @@ local exeOnLoad = function()
 		local tGUID = target and target.guid or 0
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell)
-				and  Obj:InConeOf(player, 170) 
+				-- and  Obj:InConeOf(player, 170) 
 				and _A.notimmune(Obj) 
 				and not Obj:state("incapacitate || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -569,7 +553,9 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer and Obj:spellRange(spell) and  Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
+			if Obj.isplayer and Obj:spellRange(spell) 
+			-- and  Obj:Infront() 
+			and _A.notimmune(Obj)  and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -768,7 +754,8 @@ arms.rot = {
 	Charge = function()
 		if player:SpellCooldown("Charge")==0 and not IsCurrentSpell(100) then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Charge") and obj:infront()
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Charge") 
+				-- and obj:infront()
 					and obj:caninterrupt() 
 					-- and healerspecid[_A.UnitSpec(obj.guid)]
 					and obj:IscastingOnMe()
@@ -787,7 +774,8 @@ arms.rot = {
 	Pummel = function()
 		if player:SpellCooldown("Pummel")==0 and not IsCurrentSpell(23920) and not IsCurrentSpell(6552) and not IsCurrentSpell(102060) then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Mortal Strike") and obj:infront()
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Mortal Strike") 
+				-- and obj:infront()
 					and obj:caninterrupt() 
 					and obj:channame()~="mind sear"
 					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
@@ -804,7 +792,9 @@ arms.rot = {
 		if player:talent("Disrupting Shout") and player:SpellCooldown("Disrupting Shout")==0 and not IsCurrentSpell(23920) and not IsCurrentSpell(6552) and not IsCurrentSpell(102060) then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and  obj:isCastingAny() and obj:range()<=10 then
-					if player:SpellCooldown("Pummel")>0 or player:buff("Bladestorm") or (not obj:SpellRange("Mortal Strike")) or (obj:SpellRange("Mortal Strike") and not obj:infront()) then
+					if player:SpellCooldown("Pummel")>0 or player:buff("Bladestorm") or (not obj:SpellRange("Mortal Strike")) 
+					-- or (obj:SpellRange("Mortal Strike") and not obj:infront()) 
+					then
 						if obj:caninterrupt() and healerspecid[_A.UnitSpec(obj.guid)]
 							and obj:channame()~="mind sear"
 							and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=92
@@ -887,7 +877,8 @@ arms.rot = {
 					if Obj.isplayer and Obj:spellRange("Storm Bolt") 
 						and (healerspecid[Obj:spec()] or (Obj:health()<50 and _A.pull_location=="pvp"))
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
-						and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 170) 
+						and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") 
+						-- and Obj:InConeOf("player", 170) 
 						and (Obj:drState("Storm Bolt") == 1 or Obj:drState("Storm Bolt")==-1)
 						and Obj:los() then
 						return Obj:cast("Storm Bolt") 
@@ -905,7 +896,8 @@ arms.rot = {
 					if Obj.isplayer and Obj:spellRange("Storm Bolt") 
 						and (Obj.guid~=target.guid or (Obj:health()<30 and _A.pull_location=="pvp"))
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
-						and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 170) 
+						and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") 
+						-- and Obj:InConeOf("player", 170) 
 						and (Obj:drState("Storm Bolt") == 1 or Obj:drState("Storm Bolt")==-1)
 						and Obj:los() then
 						return Obj:cast("Storm Bolt") 
@@ -923,7 +915,8 @@ arms.rot = {
 					and not healerspecid[Obj:spec()]
 					and  (Obj:BuffAny("Call of Victory") or Obj:BuffAny("Call of Conquest") or Obj:BuffAny("Call of Dominance"))
 					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear || disarm")<1.5
-					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 170) 
+					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") 
+					-- and Obj:InConeOf("player", 170) 
 					-- and (Obj:drState("Storm Bolt") == 1 or Obj:drState("Storm Bolt")==-1)
 					and Obj:los() then
 					return Obj:cast("Storm Bolt") 
@@ -940,7 +933,8 @@ arms.rot = {
 					if Obj.isplayer and Obj:range() <= 8
 						and (Obj.guid~=target.guid or (Obj:health()<30 and _A.pull_location=="pvp"))
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
-						and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 90) 
+						and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") 
+						and Obj:InConeOf("player", 90) 
 						and (Obj:drState("Shockwave") == 1 or Obj:drState("Shockwave")==-1)
 						and Obj:los() then
 						return player:cast("Shockwave") 
@@ -959,7 +953,8 @@ arms.rot = {
 					and not healerspecid[Obj:spec()]
 					and  (Obj:BuffAny("Call of Victory") or Obj:BuffAny("Call of Conquest") or Obj:BuffAny("Call of Dominance"))
 					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear || disarm")<1.5
-					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 90) 
+					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") 
+					and Obj:InConeOf("player", 90) 
 					-- and (Obj:drState("Shockwave") == 1 or Obj:drState("Shockwave")==-1)
 					and Obj:los() then
 					return player:cast("Shockwave") 
@@ -1056,7 +1051,9 @@ arms.rot = {
 	sunderarmor = function()
 		if player:SpellCooldown("Sunder Armor")<cdcd and player:spellusable("Sunder Armor") and player:rage()>=15 then
 			local target = Object("target")
-			if target and target:alive() and target:enemy() and target:SpellRange("Mortal Strike") and target:infront() and target:los() then 
+			if target and target:alive() and target:enemy() and target:SpellRange("Mortal Strike") 
+			-- and target:infront() 
+			and target:los() then 
 				if target:debuffduration("Weakened Armor")<3 or target:DebuffStackAny("Weakened Armor")<=2 then
 					return target:Cast("Sunder Armor")
 				end
@@ -1067,7 +1064,9 @@ arms.rot = {
 	sunderarmor_target = function()
 		if player:SpellCooldown("Sunder Armor")<cdcd and player:spellusable("Sunder Armor") then
 			local target = Object("target")
-			if target and target:enemy() and target:alive() and target:SpellRange("Mortal Strike") and target:infront() and healerspecid[target:spec()] and target:los() then 
+			if target and target:enemy() and target:alive() and target:SpellRange("Mortal Strike") 
+			-- and target:infront() 
+			and healerspecid[target:spec()] and target:los() then 
 				if target:debuffduration("Weakened Armor")<3 or target:DebuffStack("Weakened Armor")<=2 then
 					return target:Cast("Sunder Armor")
 				end
@@ -1163,7 +1162,7 @@ arms.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer 
 					and obj:SpellRange("Disarm") 
-					and obj:Infront()
+					-- and obj:Infront()
 					and not healerspecid[_A.UnitSpec(obj.guid)] 
 					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest") or obj:BuffAny("Call of Dominance"))
 					and not obj:BuffAny("Bladestorm")
@@ -1184,7 +1183,7 @@ arms.rot = {
 			and target.isplayer
 			and not target:spellRange("Mortal Strike") 
 			and target:spellRange("Charge") 
-			and target:infront()
+			-- and target:infront() -- don't remove this
 			-- and _A.isthishuman("target")
 			and target:exists()
 			and target:enemy() 
@@ -1205,7 +1204,7 @@ arms.rot = {
 			and not target:spellRange("Mortal Strike") 
 			and target:range()>=8
 			and target:range()<=40
-			and target:infront()
+			-- and target:infront()
 			-- and _A.isthishuman("target")
 			and target:exists()
 			and target:enemy() 

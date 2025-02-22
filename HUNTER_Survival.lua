@@ -4,6 +4,7 @@ local mediaPath, _A, _Y = ...
 -- local _, class = UnitClass("player");
 -- if class ~= "WARRIOR" then return end;
 local DSL = function(api) return _A.DSL:Get(api) end
+_A.FaceAlways = true
 local ui = function(key) return _A.DSL:Get("ui")(_, key) end
 local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
 local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
@@ -418,6 +419,17 @@ local exeOnLoad = function()
 	hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
+		if slot then
+			Type, id, subType = _A.GetActionInfo(slot)
+			if id == 77767 then
+				print("HEY")
+				player = player or Object("player")
+				local target = Object("target")
+				if player:SpellCooldown(77767)<.3 then
+					return target:cast(77767)
+				end
+			end
+		end
 		-- print(slot)
 		local player = Object("player")
 		if slot==STARTSLOT then 

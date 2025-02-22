@@ -3,6 +3,7 @@ if class ~= "MONK" then return end
 local _, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
+_A.FaceAlways = true
 local enteredworldat
 local bossestoavoid = { 69427, 68065, 69017, 69465, 71454 }
 local MyAddon = "niceAddon"
@@ -570,13 +571,17 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy() and target:alive() and target:spellRange(spell) and target:InConeOf(player, 170) and _A.notimmune(target)
+		if target and target:enemy() and target:alive() and target:spellRange(spell) 
+		-- and target:InConeOf(player, 170) 
+		and _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep")
 			and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and _A.notimmune(Obj) and Obj:InConeOf(player, 170) and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
+			if Obj:spellRange(spell) and _A.notimmune(Obj) 
+			-- and Obj:InConeOf(player, 170) 
+			and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable + 1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -1456,7 +1461,9 @@ local mw_rot = {
 	end,
 	autoattackmanager = function()
 		local target = Object("target")
-		if target and target.isplayer and target:enemy() and target:alive() and target:InConeOf(player, 180) and target:los() then
+		if target and target.isplayer and target:enemy() and target:alive() 
+		-- and target:InConeOf(player, 180) 
+		and target:los() then
 			if (target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep")) and player:autoattack() then
 				_A.CallWowApi("RunMacroText", "/stopattack")
 				elseif not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then
@@ -1751,7 +1758,7 @@ local mw_rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer
 					and obj:SpellRange("Grapple Weapon")
-					and obj:InConeOf(player, 170)
+					-- and obj:InConeOf(player, 170)
 					and not healerspecid[obj:spec()]
 					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest") or obj:BuffAny("Call of Dominance"))
 					and not obj:BuffAny("Bladestorm")
@@ -1771,7 +1778,7 @@ local mw_rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj:isCastingAny()
 					and obj:SpellRange("Blackout Kick")
-					and obj:InConeOf(player, 170)
+					-- and obj:InConeOf(player, 170)
 					and not obj:State("silence")
 					and not obj:iscasting("Frostbolt")
 					and obj:caninterrupt()
@@ -1818,7 +1825,9 @@ local mw_rot = {
 		if player:Stance() == 1 --and pull_location()=="arena"
 			then
 			local lowestmelee = Object("target")
-			if lowestmelee and lowestmelee.isplayer and lowestmelee:enemy() and lowestmelee:alive() and lowestmelee:infront() and lowestmelee:SpellRange("Disable") 
+			if lowestmelee and lowestmelee.isplayer and lowestmelee:enemy() and lowestmelee:alive() 
+			-- and lowestmelee:infront() 
+			and lowestmelee:SpellRange("Disable") 
 				and not lowestmelee:state("incapacitate || fear || disorient || charm || misc || sleep") 
 				and _A.notimmune(lowestmelee) 
 				then
@@ -2707,11 +2716,11 @@ local inCombat = function()
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
 	if mylevel >= 34 and mw_rot.ctrl_mode() then return true end -- ctrl
 	-- healing spheres don't get you in combat lol (increased mana regen)
-	if not player:combat() and (_A.pull_location =="pvp" or _A.pull_location =="arena") then
-		if mw_rot.dpsstance_healstance() then return true end
-		if mylevel >= 64 and mw_rot.healingsphere_nocombat() then return true end
-		return true
-	end
+	-- if not player:combat() and (_A.pull_location =="pvp" or _A.pull_location =="arena") then
+		-- if mw_rot.dpsstance_healstance() then return true end
+		-- if mylevel >= 64 and mw_rot.healingsphere_nocombat() then return true end
+		-- return true
+	-- end
 	--
 	-- GCD CDS
 	if mylevel >= 50 and mw_rot.lifecocoon() then return true end
