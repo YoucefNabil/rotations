@@ -542,7 +542,7 @@ local exeOnLoad = function()
 			end)
 		end
 		if #tempTable>=1 then
-			if lastname == nil then lastname = tempTable[num].obj.name end -- debug
+			if lastname == nil then lastname = tempTable[num].obj.name print(tempTable[num].obj.name) end -- debug
 			if lastname~=tempTable[num].obj.name then lastname = tempTable[num].obj.name print(tempTable[num].obj.name) end
 			return tempTable[num] and tempTable[num].guid
 		end
