@@ -915,11 +915,11 @@ arms.rot = {
 		if player:talent("Storm Bolt") and player:SpellCooldown("Storm Bolt")<.3 then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Storm Bolt") 
-					and _A.UnitTarget(Obj.guid)==player.guid
+					and not healerspecid[Obj:spec()]
 					and  (Obj:BuffAny("Call of Victory") or Obj:BuffAny("Call of Conquest") or Obj:BuffAny("Call of Dominance"))
 					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear || disarm")<1.5
 					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 170) 
-					and (Obj:drState("Storm Bolt") == 1 or Obj:drState("Storm Bolt")==-1)
+					-- and (Obj:drState("Storm Bolt") == 1 or Obj:drState("Storm Bolt")==-1)
 					and Obj:los() then
 					return Obj:cast("Storm Bolt") 
 				end
@@ -950,11 +950,12 @@ arms.rot = {
 		if player:talent("Shockwave") and player:SpellCooldown("Shockwave")<.3 then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:range() <= 8
-					and _A.UnitTarget(Obj.guid)==player.guid
+					-- and _A.UnitTarget(Obj.guid)==player.guid
+					and not healerspecid[Obj:spec()]
 					and  (Obj:BuffAny("Call of Victory") or Obj:BuffAny("Call of Conquest") or Obj:BuffAny("Call of Dominance"))
 					and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear || disarm")<1.5
 					and _A.notimmune(Obj) and not Obj:immuneYOUCEF("stun") and Obj:InConeOf("player", 90) 
-					and (Obj:drState("Shockwave") == 1 or Obj:drState("Shockwave")==-1)
+					-- and (Obj:drState("Shockwave") == 1 or Obj:drState("Shockwave")==-1)
 					and Obj:los() then
 					return player:cast("Shockwave") 
 				end
@@ -1010,6 +1011,24 @@ arms.rot = {
 					if Obj.isplayer and Obj:range()<=8
 						and Obj.guid ~= target.guid
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
+						and _A.notimmune(Obj) and not Obj:immuneYOUCEF("fear") 
+						and (Obj:drState("Intimidating Shout") == 1 or Obj:drState("Intimidating Shout")==-1)
+						and Obj:los() then
+						return Obj:cast("Intimidating Shout") 
+					end
+				end
+			end
+		end
+	end,
+	
+	fear_arena_def = function()
+		local target = Object("target")
+		if _A.pull_location == "arena"then
+			if player:SpellCooldown("Intimidating Shout")<.3 then
+				for _, Obj in pairs(_A.OM:Get('Enemy')) do
+					if Obj.isplayer and Obj:range()<=8
+						and (Obj:BuffAny("Call of Victory") or Obj:BuffAny("Call of Conquest") or Obj:BuffAny("Call of Dominance"))
+						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear || disarm")<1.5
 						and _A.notimmune(Obj) and not Obj:immuneYOUCEF("fear") 
 						and (Obj:drState("Intimidating Shout") == 1 or Obj:drState("Intimidating Shout")==-1)
 						and Obj:los() then
@@ -1099,7 +1118,7 @@ arms.rot = {
 					end
 					else
 					if player:rage()>30 then
-						if (player:rage()>80 and player:buffstack("Taste of Blood")<=3) or lowestmelee:debuff("Colossus Smash") then
+						if player:rage()>80 or lowestmelee:debuff("Colossus Smash") then
 							return lowestmelee:Cast("Execute")
 						end
 					end
@@ -1251,11 +1270,11 @@ arms.rot = {
 			--
 			if _A.unitfrozen(player) then player:cast("Spell Reflection") end
 			--
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer and Obj:range()<=25 and Obj:BuffAny("Nature's Swiftness") then
-					return player:cast("Spell Reflection")
-				end
-			end
+			-- for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				-- if Obj.isplayer and Obj:range()<=25 and Obj:BuffAny("Nature's Swiftness") then
+					-- return player:cast("Spell Reflection")
+				-- end
+			-- end
 		end
 	end,
 	
@@ -1383,6 +1402,7 @@ arms.rot = {
 						end
 					end
 				end
+				player:useitem("Potion of Mogu Power")
 				-- return player:buff("Bloodbath") and player:buff("Call of Victory") and player:cast("Bladestorm")
 				return player:cast("Bladestorm")
 			end
@@ -1390,8 +1410,8 @@ arms.rot = {
 	end,
 	----------------------------
 	sweeping_strikes = function()
-		if _A.numtangos>=3 
-			-- if _A.modifier_shift()
+		-- if _A.numtangos>=3 
+			if _A.modifier_shift()
 			and player:SpellUsable("Sweeping Strikes") and player:SpellCooldown("Sweeping Strikes")==0
 			then
 			return player:cast("sweeping strikes")
@@ -1461,12 +1481,19 @@ local inCombat = function()
 	if arms.rot.Disruptingshout() then return true end
 	-- Rotation
 	if arms.rot.fearhealer() then return true end
+	-- Storm
+	-- if not toggle("StunDEF") and arms.rot.fear_arena() then return true end -- arena spec
 	if arms.rot.fear_arena() then return true end -- arena spec
+	-- if toggle("StunDEF") and arms.rot.fear_arena_def() then return true end -- arena spec
+	--
 	if arms.rot.bladestorm() then return true end
 	arms.rot.stance_dance()
+	-- Shockwave
 	if arms.rot.shockwave_cheaper() then return true end
 	if not toggle("StunDEF") and arms.rot.shockwave_arena() then return true end -- arena spec
+	-- if arms.rot.shockwave_arena() then return true end -- arena spec
 	if toggle("StunDEF") and arms.rot.shockwave_arena_def() then return true end -- arena spec
+	--
 	if arms.rot.stormbolt_on_heal_or_low() then print("STUNNING!!!") return true end
 	if not toggle("StunDEF") and arms.rot.stormbolt_arena() then print("STUNNING!!!") return true end -- arena spec
 	if toggle("StunDEF") and arms.rot.stormbolt_arena_def() then print("STUNNING!!!") return true end -- arena spec
