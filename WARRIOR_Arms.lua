@@ -288,6 +288,7 @@ local exeOnLoad = function()
 				player = player or Object("player")
 				if player:SpellCooldown(6544)<.3 then
 					local px, py, pz = _A.ObjectPosition("cursor")
+					_A.RunMacroText("/cancelaura Bladestorm")
 					_A.ClickPosition(px, py, pz)
 					return _A.CallWowApi("SpellStopTargeting")
 				end
@@ -369,6 +370,17 @@ local exeOnLoad = function()
 					end
 				end
 			end
+		end
+		return false
+	end
+	
+	function _Y.reflectcheck_everything(unit)
+		if unit then
+			for _,v in ipairs(spell_name(InterruptSpells)) do
+					if unit:iscasting(v) or unit:channeling(v) then
+						return true
+					end
+				end
 		end
 		return false
 	end
@@ -752,16 +764,16 @@ arms.rot = {
 	end,
 	
 	Charge = function()
-		if player:SpellCooldown("Charge")==0 and not IsCurrentSpell(100) then
+		if player:SpellCooldown("Charge")==0 and not player:buff("Spell Reflection") 
+		and not player:buffany("Mass Spell Reflection") 
+		and not IsCurrentSpell(100) and not IsCurrentSpell(23920) and not IsCurrentSpell(114029)  then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Charge") 
 				-- and obj:infront()
-					and obj:caninterrupt() 
 					-- and healerspecid[_A.UnitSpec(obj.guid)]
-					and obj:IscastingOnMe()
+					and ((obj:IscastingOnMe() and _A.pull_location~="arena") or (_A.pull_location=="arena" and _Y.reflectcheck_everything()))
 					and obj:channame()~="mind sear"
-					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92
-					)
+					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92)
 					and _A.notimmune(obj)
 					and obj:los()
 					then
@@ -814,7 +826,7 @@ arms.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:isCastingAny()
 					and _Y.reflectcheck_personnal(obj)
-					and (obj:castsecond() <=(_A.interrupttreshhold+.1) or obj:chanpercent()<=92
+					and (obj:castsecond() <=(_A.interrupttreshhold) or obj:chanpercent()<=92
 					)
 					then
 					player:Cast("Spell Reflection")
