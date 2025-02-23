@@ -572,16 +572,16 @@ local exeOnLoad = function()
 		local tempTable = {}
 		local target = Object("target")
 		if target and target:enemy() and target:alive() and target:spellRange(spell) 
-		-- and target:InConeOf(player, 170) 
-		and _A.notimmune(target)
+			-- and target:InConeOf(player, 170) 
+			and _A.notimmune(target)
 			and not target:state("incapacitate || fear || disorient || charm || misc || sleep")
 			and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and _A.notimmune(Obj) 
-			-- and Obj:InConeOf(player, 170) 
-			and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
+				-- and Obj:InConeOf(player, 170) 
+				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") and Obj:los() then
 				tempTable[#tempTable + 1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -868,6 +868,30 @@ local exeOnLoad = function()
 			--======================================================================
 			--======================================================================
 			-- HEALTH
+			function averageHPv1()
+				local sum = 0
+				local num = 0
+				if next(MW_HealthUsedData) == nil then
+					return 0
+					else
+					for k in pairs(MW_HealthUsedData) do
+						if MW_HealthUsedData[k] ~= nil then
+							if next(MW_HealthUsedData[k]) ~= nil then
+								if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
+									if UnitIsDeadOrGhost(k) == nil then
+										local unitObject = Object(k)
+										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
+											num = num + 1
+											sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+				return num > 0 and sum / num or 0
+			end
 			function averageHPv2()
 				local sum = 0
 				local num = 0
@@ -923,8 +947,8 @@ local exeOnLoad = function()
 			end
 			
 			function hybridHPv2()
-				local maxmodifier = maxHPv2() * 0.7
-				local avgmodifier = averageHPv2() * 0.3
+				local maxmodifier = maxHPv2() * 0.6
+				local avgmodifier = averageHPv1() * 0.4
 				return maxmodifier + avgmodifier
 			end
 			
@@ -932,6 +956,7 @@ local exeOnLoad = function()
 				player = player or Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local hpdeltas = player:ui("hpdeltas")
+				local hpDelta
 				if hpdeltas == "1" then
 					hpDelta = averageHPv2()
 					elseif hpdeltas == "2" then
@@ -948,6 +973,7 @@ local exeOnLoad = function()
 				player = player or Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local hpdeltas = player:ui("hpdeltas")
+				local hpDelta
 				if hpdeltas == "1" then
 					hpDelta = averageHPv2()
 					elseif hpdeltas == "2" then
@@ -957,6 +983,25 @@ local exeOnLoad = function()
 				end
 				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 				return (manaBudget - hpDelta > 1.5)
+			end
+			
+			function _A.manaengine_highprio_pot()
+				player = player or Object("player")
+				local hpdeltas = player:ui("hpdeltas")
+				local lowest = Object("lowestall")
+				local hpDelta
+				if hpdeltas == "1" then
+					hpDelta = averageHPv2()
+					elseif hpdeltas == "2" then
+					hpDelta = hybridHPv2()
+					elseif hpdeltas == "0" then
+					hpDelta = maxHPv2()
+				end
+				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
+				if lowest and lowest:health()<=60 then
+					return (manaBudget - hybridHPv2() > 2.25)
+				end
+				return false
 			end
 			
 			function _A.enoughmana(id)
@@ -1462,8 +1507,8 @@ local mw_rot = {
 	autoattackmanager = function()
 		local target = Object("target")
 		if target and target.isplayer and target:enemy() and target:alive() 
-		-- and target:InConeOf(player, 180) 
-		and target:los() then
+			-- and target:InConeOf(player, 180) 
+			and target:los() then
 			if (target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep")) and player:autoattack() then
 				_A.CallWowApi("RunMacroText", "/stopattack")
 				elseif not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and not player:autoattack() then
@@ -1472,11 +1517,14 @@ local mw_rot = {
 		end
 	end,
 	activetrinket = function()
-		if player:combat() and player:buff("Surge of Dominance") then
+		if player:combat()  
+			-- and player:buff("Surge of Dominance") 
+			then
 			for i = 1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) ~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) ~= "PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i])) == 0 then
+							player:useitem("Potion of the Jade Serpent")
 							return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 						end
 					end
@@ -1674,7 +1722,7 @@ local mw_rot = {
 					and not obj:iscasting("Frostbolt")
 					and (player:SpellCooldown("Spear Hand Strike") > _A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Blackout Kick"))
 					and obj:InConeOf(player, 170)
-					and obj:infront()
+					-- and obj:infront()
 					and _A.notimmune(obj)
 					and (kickcheck_highprio(obj) or (_A.pull_location == "raid" or _A.pull_location == "party"))
 					and obj:los() then
@@ -1695,7 +1743,7 @@ local mw_rot = {
 						then
 						if obj:stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
 							and obj:InConeOf(player, 170)
-							and obj:infront()
+							-- and obj:infront()
 							and (obj:drState("Paralysis") == -1 or obj:drState("Paralysis") == 1)
 							and _A.notimmune(obj)
 							and obj:los() then
@@ -1715,7 +1763,7 @@ local mw_rot = {
 					and (_A.pull_location == "arena" and UnitExists("party1") and UnitTarget("party1") ~= obj.guid)
 					-- and (healerspecid[obj:spec()])
 					and obj:InConeOf(player, 170)
-					and obj:infront()
+					-- and obj:infront()
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") > 0
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 2.5
 					and _A.notimmune(obj)
@@ -1826,8 +1874,8 @@ local mw_rot = {
 			then
 			local lowestmelee = Object("target")
 			if lowestmelee and lowestmelee.isplayer and lowestmelee:enemy() and lowestmelee:alive() 
-			-- and lowestmelee:infront() 
-			and lowestmelee:SpellRange("Disable") 
+				-- and lowestmelee:infront() 
+				and lowestmelee:SpellRange("Disable") 
 				and not lowestmelee:state("incapacitate || fear || disorient || charm || misc || sleep") 
 				and _A.notimmune(lowestmelee) 
 				then
@@ -2689,7 +2737,6 @@ local inCombat = function()
 	_Y.petengine_MONK()
 	if player:combat() then mw_rot.thunderfocustea() end
 	mw_rot.kick_spear()
-	mw_rot.activetrinket()
 	mw_rot.diffusemagic()
 	mw_rot.everyman()
 	mw_rot.nimble()
@@ -2717,9 +2764,9 @@ local inCombat = function()
 	if mylevel >= 34 and mw_rot.ctrl_mode() then return true end -- ctrl
 	-- healing spheres don't get you in combat lol (increased mana regen)
 	-- if not player:combat() and (_A.pull_location =="pvp" or _A.pull_location =="arena") then
-		-- if mw_rot.dpsstance_healstance() then return true end
-		-- if mylevel >= 64 and mw_rot.healingsphere_nocombat() then return true end
-		-- return true
+	-- if mw_rot.dpsstance_healstance() then return true end
+	-- if mylevel >= 64 and mw_rot.healingsphere_nocombat() then return true end
+	-- return true
 	-- end
 	--
 	-- GCD CDS
@@ -2742,6 +2789,7 @@ local inCombat = function()
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	-- OH SHIT ORBS
+	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
 	if _A.manaengine_highprio() then                             -- HIGH PRIO
 		-- print("HIGH PRIO")
 		if mylevel >= 64 and mw_rot.healingsphere() then return true end
@@ -2795,7 +2843,7 @@ local function alertStatueRange()
 					})
 					statueAlertShown = true -- Mark as shown
 				end
-			else
+				else
 				statueAlertShown = false -- Reset when back in range
 			end
 			break

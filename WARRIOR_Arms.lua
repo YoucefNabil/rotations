@@ -10,7 +10,7 @@ local Listener = _A.Listener
 local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
 local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
 local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
-local ragecap = 80
+local ragecap = 90
 local cdcd = .3
 local dkspecs = {
 	[250] = true,
@@ -787,7 +787,7 @@ arms.rot = {
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Charge") 
 					-- and obj:infront()
 					-- and healerspecid[_A.UnitSpec(obj.guid)]
-					and (obj:IscastingOnMe() or (_A.pull_location=="arena"))
+					and (obj:IscastingOnMe() or _A.pull_location=="arena")
 					and obj:channame()~="mind sear"
 					and (obj:castsecond() <_A.interrupttreshhold or obj:chanpercent()<=92)
 					and _A.notimmune(obj)
