@@ -22,11 +22,14 @@ local function ChaseBack()
     local target = Object("target")
     if player and target and target:Exists() and target:Enemy() and target:alive() and player:keybind("E") then
         local tx, ty, tz = _A.ObjectPosition(target.guid)
+        local px, py, pz = _A.ObjectPosition(player.guid)
         local facing = _A.ObjectFacing(target.guid)
         local destX = tx - math.cos(facing) * 1.5
         local destY = ty - math.sin(facing) * 1.5
 		local now = _A.GetTime() or GetTime()
+		if _A.GetDistanceBetweenPositions(px, py, pz, destX, destY, tz)>=0.01 then
 		_A.ClickToMove(destX, destY, tz) 
+		end
 		-- if not player:BuffAny("Bladestorm") and not target:infront() then
 			-- for _,v in ipairs(spells) do
 				-- if player:spellcooldown(v)<.3 and target:SpellRange(v) then
