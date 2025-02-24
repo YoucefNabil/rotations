@@ -785,8 +785,8 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if _A.notimmune(Obj) 
 				and Obj:range()<=40
-				 -- and  Obj:Infront()  
-				 then
+				-- and  Obj:Infront()  
+				then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -1249,7 +1249,7 @@ unholy.rot = {
 		if player:SpellCooldown("Mind Freeze")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike") 
-				-- and obj:infront()
+					-- and obj:infront()
 					and obj:caninterrupt() 
 					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
 					)
@@ -1269,7 +1269,7 @@ unholy.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if (_A.pull_location ~= "arena") or (_A.pull_location == "arena" and not hunterspecs[_A.UnitSpec(obj.guid)]) then
 					if obj.isplayer and obj:isCastingAny() and obj:SpellRange("Death Grip") 
-					-- and obj:infront() 
+						-- and obj:infront() 
 						and (player:SpellCooldown("Mind Freeze")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
 						and not obj:State("root")
 						and _A.castdelay(45524 ,1.5)
@@ -1313,7 +1313,7 @@ unholy.rot = {
 			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _A.someoneisuperlow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
-					-- and obj:infront() 
+						-- and obj:infront() 
 						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and not obj:DebuffAny("Strangulate")
 						and not obj:State("silence")
@@ -1356,7 +1356,7 @@ unholy.rot = {
 		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  
-				-- and obj:infront() 	
+					-- and obj:infront() 	
 					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 					and not obj:DebuffAny("Asphyxiate")
 					and not obj:State("silence")
@@ -1397,8 +1397,8 @@ unholy.rot = {
 					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)] or darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)] 
 						then
 						if obj:SpellRange("Dark Simulacrum") 
-						-- and obj:infront()
-						and not obj:State("silence") 
+							-- and obj:infront()
+							and not obj:State("silence") 
 							and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 							and _A.notimmune(obj)
 							and obj:los() 
@@ -1625,10 +1625,8 @@ unholy.rot = {
 			then 
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
-				if lowestmelee:exists() then
-					if (not lowestmelee:Debuff("Frost Fever") or not lowestmelee:Debuff("Blood Plague")) then
-						return lowestmelee:Cast("Plague Strike")
-					end
+				if (not lowestmelee:Debuff("Frost Fever") or not lowestmelee:Debuff("Blood Plague")) then
+					return lowestmelee:Cast("Plague Strike")
 				end
 			end
 		end
@@ -1639,10 +1637,8 @@ unholy.rot = {
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
-				if lowestmelee:exists() then
-					if _A.numplayerenemies(8) >= 2 then
-						return player:Cast("Remorseless Winter")
-					end
+				if _A.numplayerenemies(8) >= 2 then
+					return player:Cast("Remorseless Winter")
 				end
 			end
 		end
@@ -1858,73 +1854,75 @@ local inCombat = function()
 	if not _A.pull_location then return true end
 	if _A.buttondelayfunc()  then return true end
 	if  player:isCastingAny() then return true end
+	if unholy.rot.pathoffrost() then return true end
 	if player:mounted() then return true end
 	if UnitInVehicle("player") then return true end
 	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
+	unholy.rot.caching()
 	---------------------- NON GCD SPELLS
+	-- Grabs
 	unholy.rot.GrabGrab()
 	unholy.rot.GrabGrabHunter()
-	-- utility
-	unholy.rot.caching()
+	-- pet
 	unholy.rot.pet_cower()
-	-- Burst and utility
+	-- Bursts
 	unholy.rot.items_strpot()
 	unholy.rot.items_strflask()
 	unholy.rot.hasteburst()
-	-- unholy.rot.stance_dance()
+	-- utility
 	unholy.rot.icbf()
 	unholy.rot.items_healthstone()
 	unholy.rot.activetrinket()
 	unholy.rot.Frenzy()
 	unholy.rot.Empowerruneweapon()
 	unholy.rot.MindFreeze()
-	unholy.rot.gargoyle()
-	unholy.rot.remorselesswinter()
-	unholy.rot.massgrip()
-	unholy.rot.pathoffrost()
-	-- PVP INTERRUPTS AND CC
-	unholy.rot.strangulatesnipe()
-	unholy.rot.Asphyxiatesnipe()
-	unholy.rot.AsphyxiateBurst()
-	-- unholy.rot.darksimulacrum()
-	unholy.rot.root_buff()
-	if player:keybind("X") then
-		unholy.rot.root()
-	end
-	-- DEFS
+	-- Defs
 	unholy.rot.antimagicshell()
-	unholy.rot.petres()
 	unholy.rot.deathpact()
 	unholy.rot.Lichborne()
+	---------------------- GCD SPELLS
+	if unholy.rot.gargoyle() then return true end
+	if unholy.rot.remorselesswinter() then return true end
+	if unholy.rot.massgrip() then return true end
+	-- PVP INTERRUPTS AND CC
+	if unholy.rot.strangulatesnipe() then return true end
+	if unholy.rot.Asphyxiatesnipe() then return true end
+	if unholy.rot.AsphyxiateBurst() then return true end
+	-- unholy.rot.darksimulacrum()
+	if unholy.rot.root_buff() then return true end
+	if player:keybind("X") then
+		if unholy.rot.root() then return true end
+	end
+	-- DEFS
+	if unholy.rot.petres() then return true end
 	-- rotation
-	unholy.rot.DeathcoilDump()
-	unholy.rot.dkuhaoe()
-	unholy.rot.outbreak()
-	unholy.rot.dotapplication()
-	unholy.rot.pettransform()
-	unholy.rot.BonusDeathStrike()
-	unholy.rot.DeathcoilHEAL()
-	unholy.rot.SoulReaper()
+	if unholy.rot.DeathcoilDump() then return true end
+	if unholy.rot.dkuhaoe() then return true end
+	if unholy.rot.outbreak() then return true end
+	if unholy.rot.dotapplication() then return true end
+	if unholy.rot.pettransform() then return true end
+	if unholy.rot.BonusDeathStrike() then return true end
+	if unholy.rot.DeathcoilHEAL() then return true end
+	if unholy.rot.SoulReaper() then return true end
 	----pve part
 	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		unholy.rot.dotsnapshotOutBreak()
-		unholy.rot.dotsnapshotPS()
-		unholy.rot.festeringstrike()
+		if unholy.rot.dotsnapshotOutBreak() then return true end
+		if unholy.rot.dotsnapshotPS() then return true end
+		if unholy.rot.festeringstrike() then return true end
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		-- unholy.rot.icytouchdispell()
-		unholy.rot.bloodboilorphanblood()
-		unholy.rot.NecroStrike()
-		unholy.rot.icytouch()
+		if unholy.rot.bloodboilorphanblood() then return true end
+		if unholy.rot.NecroStrike() then return true end
+		if unholy.rot.icytouch() then return true end
 	end
 	----filler
-	unholy.rot.Deathcoil()
-	unholy.rot.festeringstrike()
-	unholy.rot.scourgestrike()
-	unholy.rot.Buffbuff()
-	unholy.rot.blank()
+	if unholy.rot.Deathcoil() then return true end
+	if unholy.rot.festeringstrike() then return true end
+	if unholy.rot.scourgestrike() then return true end
+	if unholy.rot.Buffbuff() then return true end
+	if unholy.rot.blank() then return true end
 end
 local outCombat = function()
 	return inCombat()
