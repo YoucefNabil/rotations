@@ -773,6 +773,32 @@ local exeOnLoad = function()
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
+	
+	_A.FakeUnits:Add('lowestEnemyInSpellRangePETPOVPOV', function(num)
+		local tempTable = {}
+		local target = Object("target")
+		if target and target:enemy()
+			-- and target:Infront() 
+			and  _A.notimmune(target) then
+			return target and target.guid
+		end
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if _A.notimmune(Obj) 
+				and Obj:range()<=40
+				 -- and  Obj:Infront()  
+				 then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
 	--
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
@@ -933,7 +959,7 @@ local exeOnLoad = function()
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			for _,totems in ipairs(badtotems) do
-				if Obj.name==totems and Obj:los() then
+				if Obj.name==totems then
 					tempTable[#tempTable+1] = {
 						guid = Obj.guid,
 						range = Obj:range(),
@@ -973,7 +999,7 @@ local exeOnLoad = function()
 		end
 	end
 	local function attacklowest()
-		local target = Object("lowestEnemyInSpellRange(Icy Touch)")
+		local target = Object("lowestEnemyInSpellRangePETPOVPOV(Icy Touch)")
 		if target and target:alive() and target:enemy() and target:exists() then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
@@ -1724,7 +1750,7 @@ unholy.rot = {
 		if _A.blood>=1
 			then
 			local lowestmelee = Object("lowestEnemyInRangeNOTARNOFACE(9)")
-			if lowestmelee and lowestmelee:exists() then
+			if lowestmelee then
 				return player:Cast("Blood Boil")
 			end
 		end
@@ -1836,6 +1862,7 @@ local inCombat = function()
 	if UnitInVehicle("player") then return true end
 	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
+	---------------------- NON GCD SPELLS
 	unholy.rot.GrabGrab()
 	unholy.rot.GrabGrabHunter()
 	-- utility
@@ -1850,13 +1877,13 @@ local inCombat = function()
 	unholy.rot.items_healthstone()
 	unholy.rot.activetrinket()
 	unholy.rot.Frenzy()
-	unholy.rot.gargoyle()
 	unholy.rot.Empowerruneweapon()
+	unholy.rot.MindFreeze()
+	unholy.rot.gargoyle()
 	unholy.rot.remorselesswinter()
 	unholy.rot.massgrip()
 	unholy.rot.pathoffrost()
 	-- PVP INTERRUPTS AND CC
-	unholy.rot.MindFreeze()
 	unholy.rot.strangulatesnipe()
 	unholy.rot.Asphyxiatesnipe()
 	unholy.rot.AsphyxiateBurst()
