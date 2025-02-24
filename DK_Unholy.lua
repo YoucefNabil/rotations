@@ -784,7 +784,7 @@ local exeOnLoad = function()
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if _A.notimmune(Obj) 
-				and Obj:range()<=40
+				-- and Obj:range()<=40
 				-- and  Obj:Infront()  
 				then
 				tempTable[#tempTable+1] = {
@@ -1854,12 +1854,12 @@ local inCombat = function()
 	if not _A.pull_location then return true end
 	if _A.buttondelayfunc()  then return true end
 	if  player:isCastingAny() then return true end
-	if unholy.rot.pathoffrost() then return true end
+	-- if unholy.rot.pathoffrost() then return true end
 	if player:mounted() then return true end
 	if UnitInVehicle("player") then return true end
+	unholy.rot.caching()
 	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
-	unholy.rot.caching()
 	---------------------- NON GCD SPELLS
 	-- Grabs
 	unholy.rot.GrabGrab()
@@ -1882,47 +1882,47 @@ local inCombat = function()
 	unholy.rot.deathpact()
 	unholy.rot.Lichborne()
 	---------------------- GCD SPELLS
-	if unholy.rot.gargoyle() then return true end
-	if unholy.rot.remorselesswinter() then return true end
-	if unholy.rot.massgrip() then return true end
+	 unholy.rot.gargoyle() 
+	 unholy.rot.remorselesswinter()
+	 unholy.rot.massgrip()
 	-- PVP INTERRUPTS AND CC
-	if unholy.rot.strangulatesnipe() then return true end
-	if unholy.rot.Asphyxiatesnipe() then return true end
-	if unholy.rot.AsphyxiateBurst() then return true end
+	 unholy.rot.strangulatesnipe()
+	 unholy.rot.Asphyxiatesnipe()
+	 unholy.rot.AsphyxiateBurst()
 	-- unholy.rot.darksimulacrum()
-	if unholy.rot.root_buff() then return true end
+	 unholy.rot.root_buff()
 	if player:keybind("X") then
-		if unholy.rot.root() then return true end
+		 unholy.rot.root()
 	end
 	-- DEFS
-	if unholy.rot.petres() then return true end
+	 unholy.rot.petres() 
 	-- rotation
-	if unholy.rot.DeathcoilDump() then return true end
-	if unholy.rot.dkuhaoe() then return true end
-	if unholy.rot.outbreak() then return true end
-	if unholy.rot.dotapplication() then return true end
-	if unholy.rot.pettransform() then return true end
-	if unholy.rot.BonusDeathStrike() then return true end
-	if unholy.rot.DeathcoilHEAL() then return true end
-	if unholy.rot.SoulReaper() then return true end
+	 unholy.rot.DeathcoilDump() 
+	 unholy.rot.dkuhaoe() 
+	 unholy.rot.outbreak() 
+	 unholy.rot.dotapplication() 
+	 unholy.rot.pettransform() 
+	 unholy.rot.BonusDeathStrike() 
+	 unholy.rot.DeathcoilHEAL() 
+	 unholy.rot.SoulReaper() 
 	----pve part
 	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		if unholy.rot.dotsnapshotOutBreak() then return true end
-		if unholy.rot.dotsnapshotPS() then return true end
-		if unholy.rot.festeringstrike() then return true end
+		 unholy.rot.dotsnapshotOutBreak()
+		 unholy.rot.dotsnapshotPS() 
+		 unholy.rot.festeringstrike() 
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		if unholy.rot.bloodboilorphanblood() then return true end
-		if unholy.rot.NecroStrike() then return true end
-		if unholy.rot.icytouch() then return true end
+		 unholy.rot.bloodboilorphanblood() 
+		 unholy.rot.NecroStrike() 
+		 unholy.rot.icytouch() 
 	end
 	----filler
-	if unholy.rot.Deathcoil() then return true end
-	if unholy.rot.festeringstrike() then return true end
-	if unholy.rot.scourgestrike() then return true end
-	if unholy.rot.Buffbuff() then return true end
-	if unholy.rot.blank() then return true end
+	 unholy.rot.Deathcoil() 
+	 unholy.rot.festeringstrike() 
+	 unholy.rot.scourgestrike() 
+	 unholy.rot.Buffbuff() 
+	 unholy.rot.blank() 
 end
 local outCombat = function()
 	return inCombat()
