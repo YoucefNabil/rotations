@@ -1,8 +1,9 @@
-local HarmonyMedia, _A, Harmony = ...
+local HarmonyMedia, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
 local C_Timer = _A.C_Timer
 local looping = C_Timer.NewTicker
+_A.FaceAlways = true
 -- top of the CR
 local player
 local enteredworldat
@@ -398,598 +399,653 @@ end
 enteredworldat = enteredworldat or _A.GetTime()
 _A.pull_location = _A.pull_location or pull_location()
 local exeOnLoad = function()
-	_A.Core:WhenInGame(function()
-		_A.pressedbuttonat = 0
-		_A.buttondelay = 0.5
-		_A.STARTSLOT = 1
-		_A.STOPSLOT = 8
-		_A.GRABKEY = "R"
-		function _A.enoughmana(id)
-			local cost,_,powertype = select(4, _A.GetSpellInfo(id))
-			if powertype then
-				local currentmana = _A.UnitPower("player", powertype)
-				if currentmana>=cost then
-					return true
-					else return false
-				end
-			end
-			return true
-		end
-		function _A.isthishuman(unit)
-			if _A.UnitIsPlayer(unit)==1
-				then return true
-			end
-			return false
-		end
-		--
-		_A.hooksecurefunc("UseAction", function(...)
-			local slot, target, clickType = ...
-			local Type, id, subType, spellID
-			--print(slot)
-			local player = Object("player")
-			if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
-				then
-				Type, id, subType = _A.GetActionInfo(slot)
-				if Type == "spell" or Type == "macro" -- remove macro?
-					then
-					if player then
-						if (id == 48263 and player:Stance() == 1) or (id == 48266 and player:Stance() == 2) or (id == 48265 and player:Stance() == 3) -- stances
-							then return 
-							else
-							_A.pressedbuttonat = _A.GetTime() 
-						end
-					end
-				end
-				if id == _A.Core:GetSpellID("Death Grip") then
-					if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip")
-						then
-						local target = Object("target")
-						if target
-							and target:exists()
-							and target:enemy()
-							and target:spellRange("Death Grip")
-							and target:alive()
-							and not target:State("root")
-							and _A.castdelay(45524,1.5)
-							-- and _A.isthishuman(target.guid)
-							and _A.notimmune(target)
-							and target:infront()
-							and target:los() then
-							return target:Cast("Death Grip")
-						end
-					end
-				end
-			end
-			if slot==_A.STARTSLOT then 
-				_A.pressedbuttonat = 0
-				if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
-					_A.Interface:toggleToggle("mastertoggle", true)
-					-- _A.print("ON")
-					return true
-				end
-			end
-			if slot==_A.STOPSLOT then 
-				-- print(player:stance())
-				if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
-					_A.Interface:toggleToggle("mastertoggle", false)
-					-- _A.print("OFF")
-					return true
-				end
-			end
-		end)
-		_A.buttondelayfunc = function()
-			if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end
-			return false
-		end
-		
-		function _A.depletedrune()
-			local batch1 = 0
-			local batch2 = 0
-			local batch3 = 0
-			if (select(3,GetRuneCooldown(1)))==false and (select(3,GetRuneCooldown(2)))==false
-				then batch1=1
-				else batch1=0
-			end
-			if (select(3,GetRuneCooldown(3)))==false and (select(3,GetRuneCooldown(4)))==false
-				then batch2=1
-				else batch2=0
-			end
-			if (select(3,GetRuneCooldown(5)))==false and (select(3,GetRuneCooldown(6)))==false
-				then batch3=1
-				else batch3=0
-			end
-			return (batch1 + batch2 + batch3)
-		end	
-		
-		function _A.runes()
-			local bloodrunenb = 0
-			local frostrunenb = 0
-			local unholyrunenb = 0
-			local deathrunenb = 0
-			for i = 1, 6 do
-				if (select(3,GetRuneCooldown(i)))==true
-					then
-					if GetRuneType(i)==1
-						then bloodrunenb = bloodrunenb + 1
-						elseif GetRuneType(i)==3
-						then frostrunenb = frostrunenb + 1
-						elseif GetRuneType(i)==4
-						then deathrunenb = deathrunenb + 1
-						elseif GetRuneType(i)==2
-						then unholyrunenb = unholyrunenb + 1
-					end
-				end
-			end
-			return bloodrunenb, frostrunenb, unholyrunenb, deathrunenb, bloodrunenb + frostrunenb + deathrunenb + unholyrunenb
-		end
-		
-		
-		function _A.myscore()
-			local base, posBuff, negBuff = UnitAttackPower("player");
-			local ap = base + posBuff + negBuff
-			local mastery = GetCombatRating(26)
-			local crit = GetCombatRating(9)
-			local haste = GetCombatRating(18)
-			return (ap + mastery + crit + haste)
-			--return (mastery + crit + haste)
-		end
-		_A.casttimers = {}
-		_A.Listener:Add("delaycasts_DK", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
-			-- Testing
-			-- if subevent == "SWING_DAMAGE" or subevent == "RANGE_DAMAGE" or subevent == "SPELL_PERIODIC_DAMAGE" or subevent == "SPELL_BUILDING_DAMAGE" or subevent == "ENVIRONMENTAL_DAMAGE"  then
-			-- print(subevent.." "..amount) -- too much voodoo
-			-- end
-			if guidsrc == UnitGUID("player") then
-				-- print(subevent)
-				-- Delay Cast Function
-				if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-					_A.casttimers[idd] = _A.GetTime()
-				end
-			end
-		end)
-		function _A.castdelay(idd, delay)
-			if delay == nil then return true end
-			if _A.casttimers[idd]==nil then return true end
-			return (_A.GetTime() - _A.casttimers[idd])>=delay
-		end
-		-- dot snapshorring
-		_A.enemyguidtab = {}
-		local ijustdidthatthing = false
-		local ijustdidthatthingtime = 0
-		Listener:Add("DK_STUFF", {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED"} ,function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-			if event == "PLAYER_ENTERING_WORLD"
-				or event == "PLAYER_REGEN_ENABLED"
-				then
-				if next(_A.enemyguidtab)~=nil then
-					for k in pairs(_A.enemyguidtab) do
-						_A.enemyguidtab[k]=nil
-					end
-				end
-			end
-			if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT"
-				then
-				if guidsrc == UnitGUID("player") then -- only filter by me
-					if subevent =="SPELL_CAST_SUCCESS" then
-						if idd==85948 then --festering strike, refreshes dot duration but not stats
-							ijustdidthatthing = true -- when true, means I just used FS
-							ijustdidthatthingtime = GetTime()
-							-- print(ijustdidthatthingtime)
-						end
-					end
-					if (idd==45462) or (idd==77575) -- or (idd==50842) -- outbreak -- Plague Strike -- pestilence(doesnt work because it only works on the target, and not on everyone else)
-						or 
-						(idd==55078) or (idd==55095)  -- debuffs, I think
-						then 
-						if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS" and not idd==85948) or (subevent=="SPELL_PERIODIC_DAMAGE" and _A.enemyguidtab[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
-							-- every spell aura refresh of dk refreshes both stats and duration, EXCEPT festering strike (only duration), that's what that check is for
-							then
-							_A.enemyguidtab[guiddest]=_A.myscore()
-							-- print(_A.enemyguidtab[guiddest])
-						end
-						if subevent=="SPELL_AURA_REMOVED" 
-							then
-							_A.enemyguidtab[guiddest]=nil
-						end
-					end	
-				end
-			end
-		end)
-		
-		function _A.usablelite(spellid)
-			if spellcost(spellid)~=nil then
-				if power("player")>=spellcost(spellid)
-					then return true
-					else return false
-				end
+	_A.pressedbuttonat = 0
+	_A.buttondelay = 0.5
+	_A.STARTSLOT = 1
+	_A.STOPSLOT = 8
+	_A.GRABKEY = "R"
+	function _A.enoughmana(id)
+		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
+		if powertype then
+			local currentmana = _A.UnitPower("player", powertype)
+			if currentmana>=cost then
+				return true
 				else return false
 			end
 		end
-		
-		
-		
-		function _A.isthisahealer(unit)
-			if unit then
-				if healerspecid[_A.UnitSpec(unit.guid)] then
+		return true
+	end
+	function _A.isthishuman(unit)
+		if _A.UnitIsPlayer(unit)==1
+			then return true
+		end
+		return false
+	end
+	--
+	_A.hooksecurefunc("UseAction", function(...)
+		local slot, target, clickType = ...
+		local Type, id, subType, spellID
+		--print(slot)
+		local player = Object("player")
+		if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
+			then
+			Type, id, subType = _A.GetActionInfo(slot)
+			
+			if id == 49576 then
+				player = player or Object("player")
+				
+				if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip")
+					then
+					local target = Object("target")
+					if target
+						and target:exists()
+						and target:enemy()
+						and target:spellRange("Death Grip")
+						and target:alive()
+						and not IsCurrentSpell(49576)
+						and not target:State("root")
+						and _A.castdelay(45524,0.5)
+						and _A.isthishuman(target.guid)
+						and _A.notimmune(target)
+						-- and target:infront()
+						and target:los() then
+						return target:Cast("Death Grip")
+					end
+				end
+			end
+			if Type == "spell" or Type == "macro" -- remove macro?
+				then
+				if player then
+					if (id == 48263 and player:Stance() == 1) or (id == 48266 and player:Stance() == 2) or (id == 48265 and player:Stance() == 3) -- stances
+						then return 
+						else
+						_A.pressedbuttonat = _A.GetTime() 
+					end
+				end
+			end
+			if id == _A.Core:GetSpellID("Death Grip") then
+				if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip")
+					then
+					local target = Object("target")
+					if target
+						and target:exists()
+						and target:enemy()
+						and target:spellRange("Death Grip")
+						and target:alive()
+						and not target:State("root")
+						and _A.castdelay(45524,1.5)
+						-- and _A.isthishuman(target.guid)
+						and _A.notimmune(target)
+						-- and target:infront()
+						and target:los() then
+						return target:Cast("Death Grip")
+					end
+				end
+			end
+		end
+		if slot==_A.STARTSLOT then 
+			_A.pressedbuttonat = 0
+			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
+				_A.Interface:toggleToggle("mastertoggle", true)
+				-- _A.print("ON")
+				return true
+			end
+		end
+		if slot==_A.STOPSLOT then 
+			-- print(player:stance())
+			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
+				_A.Interface:toggleToggle("mastertoggle", false)
+				-- _A.print("OFF")
+				return true
+			end
+		end
+	end)
+	_A.buttondelayfunc = function()
+		if _A.GetTime() - _A.pressedbuttonat < _A.buttondelay then return true end
+		return false
+	end
+	
+	function _A.depletedrune()
+		local batch1 = 0
+		local batch2 = 0
+		local batch3 = 0
+		if (select(3,GetRuneCooldown(1)))==false and (select(3,GetRuneCooldown(2)))==false
+			then batch1=1
+			else batch1=0
+		end
+		if (select(3,GetRuneCooldown(3)))==false and (select(3,GetRuneCooldown(4)))==false
+			then batch2=1
+			else batch2=0
+		end
+		if (select(3,GetRuneCooldown(5)))==false and (select(3,GetRuneCooldown(6)))==false
+			then batch3=1
+			else batch3=0
+		end
+		return (batch1 + batch2 + batch3)
+	end	
+	
+	function _A.runes()
+		local bloodrunenb = 0
+		local frostrunenb = 0
+		local unholyrunenb = 0
+		local deathrunenb = 0
+		for i = 1, 6 do
+			if (select(3,GetRuneCooldown(i)))==true
+				then
+				if GetRuneType(i)==1
+					then bloodrunenb = bloodrunenb + 1
+					elseif GetRuneType(i)==3
+					then frostrunenb = frostrunenb + 1
+					elseif GetRuneType(i)==4
+					then deathrunenb = deathrunenb + 1
+					elseif GetRuneType(i)==2
+					then unholyrunenb = unholyrunenb + 1
+				end
+			end
+		end
+		return bloodrunenb, frostrunenb, unholyrunenb, deathrunenb, bloodrunenb + frostrunenb + deathrunenb + unholyrunenb
+	end
+	
+	
+	function _A.myscore()
+		local base, posBuff, negBuff = UnitAttackPower("player");
+		local ap = base + posBuff + negBuff
+		local mastery = GetCombatRating(26)
+		local crit = GetCombatRating(9)
+		local haste = GetCombatRating(18)
+		return (ap + mastery + crit + haste)
+		--return (mastery + crit + haste)
+	end
+	_A.casttimers = {}
+	_A.Listener:Add("delaycasts_DK", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+		-- Testing
+		-- if subevent == "SWING_DAMAGE" or subevent == "RANGE_DAMAGE" or subevent == "SPELL_PERIODIC_DAMAGE" or subevent == "SPELL_BUILDING_DAMAGE" or subevent == "ENVIRONMENTAL_DAMAGE"  then
+		-- print(subevent.." "..amount) -- too much voodoo
+		-- end
+		if guidsrc == UnitGUID("player") then
+			-- print(subevent)
+			-- Delay Cast Function
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[idd] = _A.GetTime()
+			end
+		end
+	end)
+	function _A.castdelay(idd, delay)
+		if delay == nil then return true end
+		if _A.casttimers[idd]==nil then return true end
+		return (_A.GetTime() - _A.casttimers[idd])>=delay
+	end
+	-- dot snapshorring
+	_A.enemyguidtab = {}
+	local ijustdidthatthing = false
+	local ijustdidthatthingtime = 0
+	Listener:Add("DK_STUFF", {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED"} ,function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+		if event == "PLAYER_ENTERING_WORLD"
+			or event == "PLAYER_REGEN_ENABLED"
+			then
+			if next(_A.enemyguidtab)~=nil then
+				for k in pairs(_A.enemyguidtab) do
+					_A.enemyguidtab[k]=nil
+				end
+			end
+		end
+		if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT"
+			then
+			if guidsrc == UnitGUID("player") then -- only filter by me
+				if subevent =="SPELL_CAST_SUCCESS" then
+					if idd==85948 then --festering strike, refreshes dot duration but not stats
+						ijustdidthatthing = true -- when true, means I just used FS
+						ijustdidthatthingtime = GetTime()
+						-- print(ijustdidthatthingtime)
+					end
+				end
+				if (idd==45462) or (idd==77575) -- or (idd==50842) -- outbreak -- Plague Strike -- pestilence(doesnt work because it only works on the target, and not on everyone else)
+					or 
+					(idd==55078) or (idd==55095)  -- debuffs, I think
+					then 
+					if subevent=="SPELL_AURA_APPLIED" or (subevent =="SPELL_CAST_SUCCESS" and not idd==85948) or (subevent=="SPELL_PERIODIC_DAMAGE" and _A.enemyguidtab[guiddest]==nil) or (subevent=="SPELL_AURA_REFRESH" and ijustdidthatthing==false)
+						-- every spell aura refresh of dk refreshes both stats and duration, EXCEPT festering strike (only duration), that's what that check is for
+						then
+						_A.enemyguidtab[guiddest]=_A.myscore()
+						-- print(_A.enemyguidtab[guiddest])
+					end
+					if subevent=="SPELL_AURA_REMOVED" 
+						then
+						_A.enemyguidtab[guiddest]=nil
+					end
+				end	
+			end
+		end
+	end)
+	
+	function _A.usablelite(spellid)
+		if spellcost(spellid)~=nil then
+			if power("player")>=spellcost(spellid)
+				then return true
+				else return false
+			end
+			else return false
+		end
+	end
+	
+	
+	
+	function _A.isthisahealer(unit)
+		if unit then
+			if healerspecid[_A.UnitSpec(unit.guid)] then
+				return true
+			end
+		end
+		return false
+	end
+	
+	function _A.istereahealer()
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:range()<=40 then
+				if healerspecid[_A.UnitSpec(Obj.guid)] then
 					return true
 				end
 			end
-			return false
 		end
-		
-		function _A.istereahealer()
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:range()<=40 then
-					if healerspecid[_A.UnitSpec(Obj.guid)] then
+		return false
+	end
+	
+	_A.FakeUnits:Add('EnemyHealer', function(num, spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj.isplayer  and Obj:spellRange(spell) 
+				-- and Obj:Infront()
+				and _A.isthisahealer(Obj) 
+				and _A.notimmune(Obj) and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health()
+				}
+			end
+		end
+		if #tempTable>=1 then
+			table.sort( tempTable, function(a,b) return a.health < b.health end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	
+	
+	--
+	_A.FakeUnits:Add('lowestEnemyInRange', function(num, range_target)
+		local tempTable = {}
+		local ttt = Object("target")
+		local range, target = _A.StrExplode(range_target)
+		range = tonumber(range) or 40
+		target = target or "player"
+		if ttt and  ttt:enemy() and ttt:rangefrom(target)<=range 
+			-- and ttt:Infront() 
+			and _A.notimmune(ttt) 
+			and ttt:los() then
+			return ttt and ttt.guid
+		end
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:rangefrom(target)<=range 
+				-- and Obj:Infront() 
+				and _A.notimmune(Obj) 
+				and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	--
+	_A.FakeUnits:Add('lowestEnemyInRangeNOTAR', function(num, range_target)
+		local tempTable = {}
+		local range, target = _A.StrExplode(range_target)
+		range = tonumber(range) or 40
+		target = target or "player"
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:rangefrom(target)<=range  
+				-- and Obj:Infront() 
+				and _A.notimmune(Obj)  
+				and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	--
+	_A.FakeUnits:Add('lowestEnemyInRangeNOTARNOFACE', function(num, range_target)
+		local tempTable = {}
+		local range, target = _A.StrExplode(range_target)
+		range = tonumber(range) or 40
+		target = target or "player"
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:rangefrom(target)<=range  and  _A.notimmune(Obj) and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	--
+	--
+	--
+	--
+	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
+		local tempTable = {}
+		local target = Object("target")
+		if target and target:enemy() and target:spellRange(spell) 
+			-- and target:Infront() 
+			and  _A.notimmune(target)  
+			and target:los() then
+			return target and target.guid
+		end
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) 
+				-- and  Obj:Infront() 
+				and _A.notimmune(Obj) 
+				and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	--
+	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) 
+				-- and Obj:Infront() 
+				and _A.notimmune(Obj) 
+				and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
+	--========================
+	
+	
+	function _A.notimmune(unit) -- needs to be object
+		if unit then 
+			if unit:immune("all") then return false end
+		end
+		for _,v in ipairs(immunebuffs) do
+			if unit:BuffAny(v) then return false end
+		end
+		for _,v in ipairs(immunedebuffs) do
+			if unit:DebuffAny(v) then return false end
+		end
+		return true
+	end
+	
+	function _A.someoneislow()
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if _A.isthishuman(Obj.guid) then
+				if Obj:Health()<65 then
+					if Obj:range()<40 then
 						return true
 					end
 				end
 			end
-			return false
 		end
-		
-		_A.FakeUnits:Add('EnemyHealer', function(num, spell)
-			local tempTable = {}
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer  and Obj:spellRange(spell) and Obj:Infront() and _A.isthisahealer(Obj) and _A.notimmune(Obj) and Obj:los() then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						health = Obj:health()
-					}
+		return false
+	end
+	
+	function _A.numplayerenemies(range)
+		local numenemies = 0
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj.isplayer then
+				if Obj:range()<=range then
+					numenemies = numenemies + 1
 				end
 			end
-			if #tempTable>=1 then
-				table.sort( tempTable, function(a,b) return a.health < b.health end )
-			end
-			return tempTable[num] and tempTable[num].guid
-		end)
-		
-		
-		--
-		_A.FakeUnits:Add('lowestEnemyInRange', function(num, range_target)
-			local tempTable = {}
-			local ttt = Object("target")
-			local range, target = _A.StrExplode(range_target)
-			range = tonumber(range) or 40
-			target = target or "player"
-			if ttt and  ttt:enemy() and ttt:rangefrom(target)<=range and ttt:Infront() and _A.notimmune(ttt)  and ttt:los() then
-				return ttt and ttt.guid
-			end
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:rangefrom(target)<=range and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						health = Obj:health(),
-						isplayer = Obj.isplayer and 1 or 0
-					}
-				end
-			end
-			if #tempTable>1 then
-				table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-			end
-			return tempTable[num] and tempTable[num].guid
-		end)
-		--
-		_A.FakeUnits:Add('lowestEnemyInRangeNOTAR', function(num, range_target)
-			local tempTable = {}
-			local range, target = _A.StrExplode(range_target)
-			range = tonumber(range) or 40
-			target = target or "player"
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:rangefrom(target)<=range  and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						health = Obj:health(),
-						isplayer = Obj.isplayer and 1 or 0
-					}
-				end
-			end
-			if #tempTable>1 then
-				table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-			end
-			return tempTable[num] and tempTable[num].guid
-		end)
-		--
-		_A.FakeUnits:Add('lowestEnemyInRangeNOTARNOFACE', function(num, range_target)
-			local tempTable = {}
-			local range, target = _A.StrExplode(range_target)
-			range = tonumber(range) or 40
-			target = target or "player"
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:rangefrom(target)<=range  and  _A.notimmune(Obj) and Obj:los() then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						health = Obj:health(),
-						isplayer = Obj.isplayer and 1 or 0
-					}
-				end
-			end
-			if #tempTable>1 then
-				table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-			end
-			return tempTable[num] and tempTable[num].guid
-		end)
-		--
-		--
-		--
-		--
-		_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
-			local tempTable = {}
-			local target = Object("target")
-			if target and target:enemy() and target:spellRange(spell) and target:Infront() and  _A.notimmune(target)  and target:los() then
-				return target and target.guid
-			end
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(spell) and  Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						health = Obj:health(),
-						isplayer = Obj.isplayer and 1 or 0
-					}
-				end
-			end
-			if #tempTable>1 then
-				table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-			end
-			return tempTable[num] and tempTable[num].guid
-		end)
-		--
-		_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
-			local tempTable = {}
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(spell) and Obj:Infront() and _A.notimmune(Obj)  and Obj:los() then
-					tempTable[#tempTable+1] = {
-						guid = Obj.guid,
-						health = Obj:health(),
-						isplayer = Obj.isplayer and 1 or 0
-					}
-				end
-			end
-			if #tempTable>1 then
-				table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
-			end
-			return tempTable[num] and tempTable[num].guid
-		end)
-		--========================
-		
-		
-		function _A.notimmune(unit) -- needs to be object
-			if unit then 
-				if unit:immune("all") then return false end
-			end
-			for _,v in ipairs(immunebuffs) do
-				if unit:BuffAny(v) then return false end
-			end
-			for _,v in ipairs(immunedebuffs) do
-				if unit:DebuffAny(v) then return false end
-			end
-			return true
 		end
-		
-		function _A.someoneislow()
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if _A.isthishuman(Obj.guid) then
-					if Obj:Health()<65 then
-						if Obj:range()<40 then
-							return true
-						end
+		return numenemies
+	end
+	
+	function _A.someoneisuperlow()
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if _A.isthishuman(Obj.guid) then
+				if Obj:Health()<35 then
+					if Obj:range()<40 then
+						return true
 					end
 				end
 			end
-			return false
 		end
-		
-		function _A.numplayerenemies(range)
-			local numenemies = 0
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer then
-					if Obj:range()<=range then
-						numenemies = numenemies + 1
-					end
-				end
-			end
-			return numenemies
+		return false
+	end
+	
+	function _A.ceeceed(unit)
+		if unit and unit:State("fear || sleep || charm || disorient || incapacitate || misc || stun")
+			then return true
 		end
-		
-		function _A.someoneisuperlow()
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if _A.isthishuman(Obj.guid) then
-					if Obj:Health()<35 then
-						if Obj:range()<40 then
-							return true
-						end
-					end
-				end
-			end
-			return false
+		return false
+	end
+	
+	function _A.breakableceecee(unit)
+		if unit and unit:State("fear || sleep || charm || disorient || incapacitate")
+			then return true
 		end
-		
-		function _A.ceeceed(unit)
-			if unit and unit:State("fear || sleep || charm || disorient || incapacitate || misc || stun")
-				then return true
-			end
-			return false
+		return false
+	end
+	
+	
+	
+	_A.DSL:Register('UnitCastID', function(t)
+		if t=="player" then
+			t = U.playerGUID
 		end
-		
-		function _A.breakableceecee(unit)
-			if unit and unit:State("fear || sleep || charm || disorient || incapacitate")
-				then return true
-			end
-			return false
-		end
-		
-		
-		
-		_A.DSL:Register('UnitCastID', function(t)
-			if t=="player" then
-				t = U.playerGUID
-			end
-			return _A.UnitCastID(t) -- castid, channelid, guid, pointer
-		end)
-		_A.DSL:Register('castspecial', function(u, arg1, arg2)
-			if u:los() then
-				return u:cast(arg1, arg2)
-			end
-		end)
-		
-		
-		function _A.powerpercent()
-			local currmana = UnitPower("player", 0)
-			local maxmana = UnitPowerMax("player", 0)
-			return ((currmana * 100) / maxmana)
-		end
-		local next = next
-		
-		_A.DSL:Register('caninterrupt', function(unit)
-			return interruptable(unit)
-		end)
-		--
-		_A.DSL:Register('castsecond', function(unit)
-			return castsecond(unit)
-		end)
-		
-		_A.DSL:Register('chanpercent', function(unit)
-			return chanpercent(unit)
-		end)
-		
-		_A.DSL:Register('unitisimmobile', function()
-			return GetUnitSpeed(unit)==0 
-		end)
-		--=======================
-		--=======================
-		--=======================
-		--=======================
-		local function MyTickerCallback(ticker)
-			if GetTime()-ijustdidthatthingtime>=.2 then
-				ijustdidthatthing=false
-			end
-			--
-			local player = player or Object("player")
-			
-			if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip")
-				then
-				local target = Object("target")
-				if target
-					and _A.IsKeyDown("1")
-					and target:exists()
-					and target:enemy()
-					and target:spellRange("Death Grip")
-					and target:alive()
-					and not target:State("root")
-					and _A.castdelay(45524,0.5)
-					and _A.isthishuman(target.guid)
-					and _A.notimmune(target)
-					and target:infront()
-					and target:los() then
-					return target:Cast("Death Grip")
-				end
-			end
-			--
-			-- local newDuration = math.random(5,15)/10
-			-- local newDuration = .1
-			-- local updatedDuration = ticker:UpdateTicker(newDuration)
-			-- print(newDuration)
-		end
-		C_Timer.NewTicker(.1, MyTickerCallback, false, "dkstuff")
-		---------------------------------------------------------------------
-		---------------------------------------------------------------------
-		---------------------------------------------------------------------
-		---------------------------------------------------------------------
-		local badtotems = {
-			"Mana Tide",
-			"Lightwell",
-			"Mana Tide Totem",
-			"Healing Stream Totem",
-			"Healing Tide",
-			"Healing Tide Totem",
-			"Lightning Surge Totem",
-			"Earthgrab Totem",
-			"Earthbind Totem",
-			"Grounding Totem",
-		}
-		_A.FakeUnits:Add('HealingStreamTotem', function(num)
-			local tempTable = {}
-			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				for _,totems in ipairs(badtotems) do
-					if Obj.name==totems and Obj:los() then
-						tempTable[#tempTable+1] = {
-							guid = Obj.guid,
-							range = Obj:range(),
-						}
-					end
-				end
-			end
-			if #tempTable>1 then
-				table.sort( tempTable, function(a,b) return a.range < b.range end )
-			end
-			if #tempTable>=1 then
-				return tempTable[num] and tempTable[num].guid
-			end
-		end)
-		_A.PetGUID  = nil
-		local function attacktotem()
-			local htotem = Object("HealingStreamTotem")
-			if htotem then
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
-					return _A.CallWowApi("PetAttack", htotem.guid), 1
-				end
-				return 1
-			end
-		end
-		local function attackfocus()
-			local _focus = Object("focus")
-			local htotem = Object("HealingStreamTotem")
-			if not htotem and _focus then
-				if _focus:alive() and _focus:enemy() and _focus:exists() then
-					if (_A.pull_location~="party" and _A.pull_location~="raid") or _focus:combat() then -- avoid pulling shit by accident
-						if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
-							return _A.CallWowApi("PetAttack", _focus.guid), 2
-						end
-					end
-					return 2
-				end
-			end
-		end
-		local function attacklowest()
-			local target = Object("lowestEnemyInSpellRange(Icy Touch)")
-			if target and target:alive() and target:enemy() and target:exists() then
-				if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-						return _A.CallWowApi("PetAttack", target.guid), 3
-					end
-				end
-				return 3
-			end
-		end
-		local function attacktarget()
-			local target = Object("target")
-			if target and target:alive() and target:enemy() and target:exists() then
-				if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-						return _A.CallWowApi("PetAttack", target.guid), 3
-					end
-				end
-				return 3
-			end
-		end
-		function _Y.petengine()
-			if not _A.Cache.Utils.PlayerInGame then return end
-			if not player then return true end
-			if player:spec()~=252 then return true end
-			if not player:combat() then return true end
-			if not player:alive() then return true end
-			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
-			if player:mounted() then return end
-			if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
-			if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
-			_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
-			if _A.PetGUID == nil then return end
-			-- Rotation
-			if attacktotem() then return true end
-			-- if attackfocus() then return true end
-			if attacklowest() then return true end
-			-- if attacktarget() then return true end
+		return _A.UnitCastID(t) -- castid, channelid, guid, pointer
+	end)
+	_A.DSL:Register('castspecial', function(u, arg1, arg2)
+		if u:los() then
+			return u:cast(arg1, arg2)
 		end
 	end)
+	
+	
+	function _A.powerpercent()
+		local currmana = UnitPower("player", 0)
+		local maxmana = UnitPowerMax("player", 0)
+		return ((currmana * 100) / maxmana)
+	end
+	local next = next
+	
+	_A.DSL:Register('caninterrupt', function(unit)
+		return interruptable(unit)
+	end)
+	--
+	_A.DSL:Register('castsecond', function(unit)
+		return castsecond(unit)
+	end)
+	
+	_A.DSL:Register('chanpercent', function(unit)
+		return chanpercent(unit)
+	end)
+	
+	_A.DSL:Register('unitisimmobile', function()
+		return GetUnitSpeed(unit)==0 
+	end)
+	--=======================
+	--=======================
+	--=======================
+	--=======================
+	local function MyTickerCallback(ticker)
+		if GetTime()-ijustdidthatthingtime>=.2 then
+			ijustdidthatthing=false
+		end
+		--
+		-- local newDuration = math.random(5,15)/10
+		-- local newDuration = .1
+		-- local updatedDuration = ticker:UpdateTicker(newDuration)
+		-- print(newDuration)
+	end
+	C_Timer.NewTicker(.1, MyTickerCallback, false, "dkstuff")
+	---------------------------------------------------------------------
+	---------------------------------------------------------------------
+	---------------------------------------------------------------------
+	---------------------------------------------------------------------
+	local badtotems = {
+		"Mana Tide",
+		"Lightwell",
+		"Mana Tide Totem",
+		"Healing Stream Totem",
+		"Healing Tide",
+		"Healing Tide Totem",
+		"Lightning Surge Totem",
+		"Earthgrab Totem",
+		"Earthbind Totem",
+		"Grounding Totem",
+	}
+	_A.FakeUnits:Add('HealingStreamTotem', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			for _,totems in ipairs(badtotems) do
+				if Obj.name==totems and Obj:los() then
+					tempTable[#tempTable+1] = {
+						guid = Obj.guid,
+						range = Obj:range(),
+					}
+				end
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.range < b.range end )
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
+	_A.PetGUID  = nil
+	local function attacktotem()
+		local htotem = Object("HealingStreamTotem")
+		if htotem then
+			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
+				return _A.CallWowApi("PetAttack", htotem.guid), 1
+			end
+			return 1
+		end
+	end
+	local function attackfocus()
+		local _focus = Object("focus")
+		local htotem = Object("HealingStreamTotem")
+		if not htotem and _focus then
+			if _focus:alive() and _focus:enemy() and _focus:exists() then
+				if (_A.pull_location~="party" and _A.pull_location~="raid") or _focus:combat() then -- avoid pulling shit by accident
+					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
+						return _A.CallWowApi("PetAttack", _focus.guid), 2
+					end
+				end
+				return 2
+			end
+		end
+	end
+	local function attacklowest()
+		local target = Object("lowestEnemyInSpellRange(Icy Touch)")
+		if target and target:alive() and target:enemy() and target:exists() then
+			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+					return _A.CallWowApi("PetAttack", target.guid), 3
+				end
+			end
+			return 3
+		end
+	end
+	local function attacktarget()
+		local target = Object("target")
+		if target and target:alive() and target:enemy() and target:exists() then
+			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+					return _A.CallWowApi("PetAttack", target.guid), 3
+				end
+			end
+			return 3
+		end
+	end
+	function _Y.GetPetStance()
+		local STANCE_ICONS = {
+			"PET_MODE_PASSIVE",
+			"PET_MODE_ASSIST",
+			"PET_MODE_DEFENSIVE"
+		}
+		-- Check each pet action slot (1-10)
+		for i = 1, 10 do
+			local icon, _, _, _, isActive = GetPetActionInfo(i)
+			if icon and isActive then
+				-- Determine which stance is active based on the icon
+				for _, stanceName in pairs(STANCE_ICONS) do
+					if icon == stanceName then
+						return stanceName
+					end
+				end
+			end
+		end
+		return " " -- No active stance found
+	end
+	local function petpassive() -- when pet target has a breakable cc
+		if _Y.GetPetStance() ~= "PET_MODE_PASSIVE" then
+			return _A.CallWowApi("RunMacroText", "/petpassive"), 4
+		end
+	end
+	local function petfollow() -- when pet target has a breakable cc
+		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
+			local target = Object(_A.UnitTarget(_A.PetGUID))
+			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
+				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+			end
+		end
+	end
+	function _Y.petengine()
+		if not _A.Cache.Utils.PlayerInGame then return end
+		if not player then return true end
+		if not player:combat() then return true end
+		if not player:alive() then return true end
+		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
+		if player:mounted() then return end
+		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
+		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
+		if _A.PetGUID == nil then return end
+		if petpassive() then return true end
+		-- Rotation
+		if attacktotem() then return true end
+		-- if attackfocus() then return true end
+		if attacklowest() then return true end
+		if petfollow() then return true end
+		-- if attacktarget() then return true end
+	end
 end
 local exeOnUnload = function()
 	Listener:Remove("Entering_timerPLZ")
@@ -1121,6 +1177,20 @@ unholy.rot = {
 		end
 	end,
 	
+	bloodtap = function()
+		if player:combat() and player:buff("Call of Victory") then
+			-- if player:combat() and player:buff("Surge of Victory") then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if lowestmelee
+				and lowestmelee:health()>=65
+				then 
+				if player:SpellCooldown("Unholy Frenzy")==0 then 
+					player:Cast("Unholy Frenzy")
+				end
+			end
+		end
+	end,
+	
 	gargoyle = function()
 		if (player:Buff("Unholy Frenzy")) 
 			and player:SpellCooldown("Summon Gargoyle")<.3 then
@@ -1152,7 +1222,8 @@ unholy.rot = {
 	MindFreeze = function()
 		if player:SpellCooldown("Mind Freeze")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike") and obj:infront()
+				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike") 
+				-- and obj:infront()
 					and obj:caninterrupt() 
 					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
 					)
@@ -1171,7 +1242,8 @@ unholy.rot = {
 		if player:SpellCooldown("Death Grip")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if (_A.pull_location ~= "arena") or (_A.pull_location == "arena" and not hunterspecs[_A.UnitSpec(obj.guid)]) then
-					if obj.isplayer and obj:isCastingAny() and obj:SpellRange("Death Grip") and obj:infront() 
+					if obj.isplayer and obj:isCastingAny() and obj:SpellRange("Death Grip") 
+					-- and obj:infront() 
 						and (player:SpellCooldown("Mind Freeze")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
 						and not obj:State("root")
 						and _A.castdelay(45524 ,1.5)
@@ -1192,11 +1264,12 @@ unholy.rot = {
 	
 	GrabGrabHunter = function()
 		if _A.pull_location == "arena" then
-			local roster = Object("roster")
+			local roster = Object("party1")
 			if player:SpellCooldown("Death Grip")==0 then
 				if roster and roster:DebuffAny("Scatter Shot") then
 					for _, obj in pairs(_A.OM:Get('Enemy')) do
-						if 	obj.isplayer and hunterspecs[_A.UnitSpec(obj.guid)] and obj:SpellRange("Death Grip") and obj:infront() 
+						if 	obj.isplayer and hunterspecs[_A.UnitSpec(obj.guid)] and obj:SpellRange("Death Grip") 
+							-- and obj:infront() 
 							and not obj:State("root")
 							and _A.castdelay(45524 ,1.5)
 							and _A.notimmune(obj)
@@ -1213,7 +1286,8 @@ unholy.rot = {
 		if (_A.blood>=1 or _A.death>=1)  then
 			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _A.someoneisuperlow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
+					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
+					-- and obj:infront() 
 						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and not obj:DebuffAny("Strangulate")
 						and not obj:State("silence")
@@ -1236,7 +1310,8 @@ unholy.rot = {
 					if obj.isplayer and obj:range()<=40 and obj:health()<=35 then 
 						if lowhpcheck ~= true then lowhpcheck = true end 
 					end
-					if lowhpcheck == true and obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  and obj:infront() 
+					if lowhpcheck == true and obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
+						-- and obj:infront() 
 						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and not obj:DebuffAny("Strangulate")
 						and not obj:State("silence")
@@ -1254,7 +1329,8 @@ unholy.rot = {
 	Asphyxiatesnipe = function()
 		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  and obj:infront() 
+				if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  
+				-- and obj:infront() 	
 					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 					and not obj:DebuffAny("Asphyxiate")
 					and not obj:State("silence")
@@ -1271,7 +1347,8 @@ unholy.rot = {
 	AsphyxiateBurst = function()
 		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer  and not _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  and obj:infront()
+				if obj.isplayer  and not _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  
+					-- and obj:infront()
 					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
 					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 					and not obj:DebuffAny("Asphyxiate")
@@ -1293,7 +1370,9 @@ unholy.rot = {
 				if obj.isplayer then
 					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)] or darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)] 
 						then
-						if obj:SpellRange("Dark Simulacrum") and obj:infront() and not obj:State("silence") 
+						if obj:SpellRange("Dark Simulacrum") 
+						-- and obj:infront()
+						and not obj:State("silence") 
 							and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 							and _A.notimmune(obj)
 							and obj:los() 
@@ -1308,10 +1387,12 @@ unholy.rot = {
 	
 	root_buff = function()
 		if player:SpellCooldown("Chains of Ice")<.3 
-			-- and _A.castdelay(49576 ,1.5)
+			and _A.castdelay(49576 ,1.5)
+			and not IsCurrentSpell(49576) 
 			then 
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:SpellRange("Chains of Ice") and obj:infront() 
+				if obj.isplayer and obj:SpellRange("Chains of Ice") 
+					-- and obj:infront() 
 					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
 					and not obj:Debuffany("Chains of Ice")
 					and not obj:buffany("Hand of Freedom")
@@ -1331,13 +1412,13 @@ unholy.rot = {
 	end,
 	
 	root = function()
-		if player:SpellCooldown("Chains of Ice")<.3 and _A.castdelay(49576 ,1.5) then
+		if player:SpellCooldown("Chains of Ice")<.3 and _A.castdelay(49576 ,1.5) and not IsCurrentSpell(49576) then
 			local target = Object("target")
 			if target  
 				and target.isplayer
 				and not target:spellRange("Death Strike") 
 				and target:spellRange("Chains of Ice") 
-				and target:infront()
+				-- and target:infront()
 				-- and _A.isthishuman("target")
 				and target:exists()
 				and target:enemy() 
@@ -1367,7 +1448,7 @@ unholy.rot = {
 			if target and target:exists()
 				and target:enemy()
 				and target:SpellRange("Outbreak")
-				and target:infront()
+				-- and target:infront()
 				and _A.notimmune(target)
 				then
 				if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
@@ -1386,7 +1467,7 @@ unholy.rot = {
 			if target and target:exists()
 				and target:enemy()
 				and target:SpellRange("Plague Strike")
-				and target:infront()
+				-- and target:infront()
 				and _A.notimmune(target)
 				then
 				if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
@@ -1607,8 +1688,7 @@ unholy.rot = {
             local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
             if lowestmelee then
                 if lowestmelee:exists() then
-                    local Necrostack = _A.UnitGetTotalHealAbsorbs(lowestmelee.guid) 
-                    if lowestmelee.isplayer and Necrostack <=100000 and (player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") or (lowestmelee:Health() <= 75) and lowestmelee:Health() >= 8) then
+                    if lowestmelee.isplayer then
                         return lowestmelee:Cast("Necrotic Strike")
                         else return lowestmelee:Cast("Scourge Strike")
 					end
@@ -1618,7 +1698,7 @@ unholy.rot = {
 	end,
 	
 	icytouchdispell = function()
-		if player:SpellCooldown("Icy Touch")<.3 then
+		if player:SpellCooldown("Icy Touch")<.3 and _A.frost>=1 then
 			-- if _A.frost>=1 or not player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") then
 			-- if _A.frost>=1 or not player:buff("Unholy Frenzy") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
@@ -1631,13 +1711,10 @@ unholy.rot = {
 	
 	icytouch = function()
 		-- if (_A.frost>_A.blood and _A.frost>=1) then
-		if player:SpellCooldown("Icy Touch")<.3 then
-			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if _A.frost>=1 or not lowestmelee then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
-				if lowestmelee and lowestmelee:exists() then
-					return lowestmelee:Cast("Icy Touch")
-				end
+		if _A.frost>=1 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
+			if lowestmelee  then
+				return lowestmelee:Cast("Icy Touch")
 			end
 		end
 	end,
@@ -1727,6 +1804,15 @@ unholy.rot = {
 			return player:Cast("Horn of Winter")
 		end
 	end,
+	
+	pet_cower = function()
+		if player:SpellCooldown("Huddle")==0 then
+			local pet = Object("pet")
+			if pet and pet:exists() and pet:alive() and not pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:health()<30 then
+				return _A.CallWowApi("RunMacroText","/cast Huddle")
+			end
+		end
+	end,
 }
 ---========================
 ---========================
@@ -1734,31 +1820,32 @@ unholy.rot = {
 ---========================
 ---========================
 local inCombat = function()
-	if not _A.Cache.Utils.PlayerInGame then return end
-	if not enteredworldat then return end
-	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return end
-	player = Object("player")
-	if not player then return end
+	if not _A.Cache.Utils.PlayerInGame then return true end
+	if not enteredworldat then return true end
+	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
+	player = player or Object("player")
+	if not player then return true end
 	_Y.petengine()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .2 + _A.latency
-	if not _A.latency and not _A.interrupttreshhold then return end
-	if not _A.pull_location then return end
-	if _A.buttondelayfunc()  then return end
-	if  player:isCastingAny() then return end
-	if player:mounted() then return end
-	if UnitInVehicle("player") then return end
+	if not _A.latency and not _A.interrupttreshhold then return true end
+	if not _A.pull_location then return true end
+	if _A.buttondelayfunc()  then return true end
+	if  player:isCastingAny() then return true end
+	if player:mounted() then return true end
+	if UnitInVehicle("player") then return true end
 	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
 	unholy.rot.GrabGrab()
 	unholy.rot.GrabGrabHunter()
 	-- utility
 	unholy.rot.caching()
+	unholy.rot.pet_cower()
 	-- Burst and utility
 	unholy.rot.items_strpot()
 	unholy.rot.items_strflask()
 	unholy.rot.hasteburst()
-	unholy.rot.stance_dance()
+	-- unholy.rot.stance_dance()
 	unholy.rot.icbf()
 	unholy.rot.items_healthstone()
 	unholy.rot.activetrinket()
@@ -1775,7 +1862,7 @@ local inCombat = function()
 	unholy.rot.AsphyxiateBurst()
 	-- unholy.rot.darksimulacrum()
 	unholy.rot.root_buff()
-	if player:keybind("2") then
+	if player:keybind("X") then
 		unholy.rot.root()
 	end
 	-- DEFS
