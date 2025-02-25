@@ -1290,30 +1290,6 @@ unholy.rot = {
 		end
 	end,
 	
-	strangulatesnipe_new = function()
-		local lowhpcheck = false
-		if (_Y.blood>=1 or _Y.death>=1)  then
-			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 then
-				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj.isplayer and obj:range()<=40 and obj:health()<=35 then 
-						if lowhpcheck ~= true then lowhpcheck = true end 
-					end
-					if lowhpcheck == true and obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
-						-- and obj:infront() 
-						-- and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
-						and not obj:DebuffAny("Strangulate")
-						and not obj:State("silence")
-						and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
-						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
-						and _A.notimmune(obj)
-						and obj:los() then
-						obj:Cast("Strangulate")
-					end
-				end
-			end
-		end
-	end,
-	
 	manual_deathgrip = function()
 		if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip")
 			then
