@@ -829,11 +829,9 @@ local exeOnLoad = function()
 	
 	function _A.someoneisuperlow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if _A.isthishuman(Obj.guid) then
-				if Obj:Health()<35 then
-					if Obj:range()<40 then
-						return true
-					end
+			if _A.isthishuman(Obj.guid) and Obj:range()<40  then
+				if Obj:Health()<35 or (Obj:Health()<45 and _A.pull_location~="arena") then
+					return true
 				end
 			end
 		end
@@ -1280,6 +1278,7 @@ unholy.rot = {
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
 						-- and obj:infront() 
+						and not obj:buffany("Bear Form")
 						and obj:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and _A.notimmune(obj)
