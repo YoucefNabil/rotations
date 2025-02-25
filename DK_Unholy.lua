@@ -1032,10 +1032,10 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return true end
 		if petpassive() then return true end
 		-- Rotation
-		if attacktotem() then print("TOTEM") return true end
-		if attacklowest() then print("LOWEST") return true end
+		if attacktotem() then return true end
+		if attacklowest() then return true end
 		if petfollow() then return true end
-		if petfollow2() then print("FOLLOW") return true end
+		if petfollow2() then return true end
 	end
 	_Y.blood, _Y.frost, _Y.unholy, _Y.death, _Y.total = 0,0,0,0,0
 end
@@ -1679,7 +1679,7 @@ unholy.rot = {
 	end,
 	
 	SoulReaper = function()
-		if (_Y.death>=1 or _Y.unholy>=1)
+		if (_Y.death>=1 or _Y.unholy>=1) and player:SpellCooldown("Soul Reaper")<.3
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Soul Reaper)")
 			if lowestmelee then
@@ -1887,13 +1887,13 @@ local inCombat = function()
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 		-- this always keeps one rune of each type regenning all the time
-		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then return true end
-		if _Y.frost>=2 and unholy.rot.icytouch() then return true end
-		if _Y.unholy>=2 and unholy.rot.scourgestrike() then return true end
+		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then print(1) return true end
+		if _Y.frost>=2 and unholy.rot.icytouch() then print(2) return  true end
+		if _Y.unholy>=2 and unholy.rot.scourgestrike() then print(3) return true end
 		--
-		if unholy.rot.bloodboil_blood() then return true end
-		if unholy.rot.icytouch() then return true end
-		if unholy.rot.NecroStrike() then return true end
+		if unholy.rot.bloodboil_blood() then print(4) return true end
+		if unholy.rot.icytouch() then print(5) return true end
+		if unholy.rot.NecroStrike() then print(6) return true end
 	end
 	----filler
 	if unholy.rot.Deathcoil_totems() then return true end
