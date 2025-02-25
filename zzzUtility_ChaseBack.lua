@@ -27,9 +27,9 @@ local function ChaseBack()
         local destX = tx - math.cos(facing) * 1.5
         local destY = ty - math.sin(facing) * 1.5
 		local now = _A.GetTime() or GetTime()
-		if _A.GetDistanceBetweenPositions(px, py, pz, destX, destY, tz)>=0.01 then
+		-- if _A.GetDistanceBetweenPositions(px, py, pz, destX, destY, tz)>=0.01 then
 		_A.ClickToMove(destX, destY, tz) 
-		end
+		-- end
 		-- if not player:BuffAny("Bladestorm") and not target:infront() then
 			-- for _,v in ipairs(spells) do
 				-- if player:spellcooldown(v)<.3 and target:SpellRange(v) then
