@@ -773,7 +773,7 @@ local exeOnLoad = function()
 				end
 			end)
 		end
-		return tempTable[num] and tempTable[num].guid
+		return tempTable[num] and tempTable[num].guid or nil
 	end)
 	--
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
@@ -971,34 +971,9 @@ local exeOnLoad = function()
 			return 1
 		end
 	end
-	local function attackfocus()
-		local _focus = Object("focus")
-		local htotem = Object("HealingStreamTotem")
-		if not htotem and _focus then
-			if _focus:alive() and _focus:enemy() and _focus:exists() then
-				if (_A.pull_location~="party" and _A.pull_location~="raid") or _focus:combat() then -- avoid pulling shit by accident
-					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=_focus.guid) then
-						return _A.CallWowApi("PetAttack", _focus.guid), 2
-					end
-				end
-				return 2
-			end
-		end
-	end
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRangePETPOVPOV")
-		if target and target:alive() and target:enemy() and target:exists() then
-			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-					return _A.CallWowApi("PetAttack", target.guid), 3
-				end
-			end
-			return 3
-		end
-	end
-	local function attacktarget()
-		local target = Object("target")
-		if target and target:alive() and target:enemy() and target:exists() then
+		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
 					return _A.CallWowApi("PetAttack", target.guid), 3
@@ -1041,7 +1016,9 @@ local exeOnLoad = function()
 		end
 	end
 	local function petfollow2() -- when pet target has a breakable cc
-		return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
+			return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+		end
 	end
 	function _Y.petengine()
 		if not _A.Cache.Utils.PlayerInGame then return end
@@ -1056,12 +1033,10 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return true end
 		if petpassive() then return true end
 		-- Rotation
-		if attacktotem() then print("TOTEM!!!") return true end
-		-- if attackfocus() then return true end
-		if attacklowest() then return true end
+		if attacktotem() then print("TOTEM") return true end
+		if attacklowest() then print("LOWEST") return true end
 		if petfollow() then return true end
-		-- if petfollow2() then return true end
-		-- if attacktarget() then return true end
+		if petfollow2() then print("FOLLOW") return true end
 	end
 end
 local exeOnUnload = function()
@@ -1913,13 +1888,13 @@ local inCombat = function()
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 		-- this always keeps one rune of each type regenning all the time
-		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then print(1) return true end
-		if _Y.frost>=2 and unholy.rot.icytouch() then print(2) return true end
-		if _Y.unholy>=2 and unholy.rot.scourgestrike() then print(3) return true end
+		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then return true end
+		if _Y.frost>=2 and unholy.rot.icytouch() then return true end
+		if _Y.unholy>=2 and unholy.rot.scourgestrike() then return true end
 		--
-		if unholy.rot.bloodboil_blood() then print(4) return true end
-		if unholy.rot.icytouch() then print(5) return true end
-		if unholy.rot.NecroStrike() then print(6) return true end
+		if unholy.rot.bloodboil_blood() then return true end
+		if unholy.rot.icytouch() then return true end
+		if unholy.rot.NecroStrike() then return true end
 	end
 	----filler
 	if unholy.rot.Deathcoil_totems() then return true end
