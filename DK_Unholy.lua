@@ -1717,25 +1717,20 @@ unholy.rot = {
 	end,
 	
     NecroStrike = function()
-        -- if  player:SpellCooldown("Necro Strike")<.3
         if  _Y.death>=1
             then
             local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
             if lowestmelee then
-                if lowestmelee:exists() then
-                    if lowestmelee.isplayer then
-                        return lowestmelee:Cast("Necrotic Strike")
-                        else return lowestmelee:Cast("Scourge Strike")
-					end
+				if lowestmelee.isplayer then
+					return lowestmelee:Cast("Necrotic Strike")
+					else return lowestmelee:Cast("Scourge Strike")
 				end
 			end
 		end
 	end,
 	
-	icytouchdispell = function()
+	icytouchdispell = function() -- BAD IDEA
 		if player:SpellCooldown("Icy Touch")<.3 and _Y.frost>=1 then
-			-- if _Y.frost>=1 or not player:buff("Unholy Strength || Surge of Victory || Call of Victory || Unholy Frenzy") then
-			-- if _Y.frost>=1 or not player:buff("Unholy Frenzy") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
 			if lowestmelee and lowestmelee:exists() and lowestmelee:bufftype("Magic") then
 				return lowestmelee:Cast("Icy Touch")
@@ -1745,7 +1740,6 @@ unholy.rot = {
 	end,
 	
 	icytouch = function()
-		-- if (_Y.frost>_Y.blood and _Y.frost>=1) then
 		if _Y.frost>=1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
 			if lowestmelee  then
@@ -1754,8 +1748,7 @@ unholy.rot = {
 		end
 	end,
 	
-	bloodboilorphanblood = function()
-		-- if ((_Y.blood>_Y.frost and _Y.blood>=1))
+	bloodboil_blood = function()
 		if _Y.blood>=1
 			then
 			local lowestmelee = Object("lowestEnemyInRangeNOTARNOFACE(9)")
@@ -1818,11 +1811,9 @@ unholy.rot = {
         if _Y.unholy>=1 then
             local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
             if lowestmelee then
-                if lowestmelee:exists() then
-                    if (lowestmelee:health()>35 or player:SpellCooldown("Soul Reaper") > 1)
-                        then
-                        return lowestmelee:Cast("Scourge Strike")
-					end
+				if (lowestmelee:health()>35 or player:SpellCooldown("Soul Reaper") > 1)
+					then
+					return lowestmelee:Cast("Scourge Strike")
 				end
 			end
 		end
@@ -1920,7 +1911,9 @@ local inCombat = function()
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		if unholy.rot.bloodboilorphanblood() then return true end
+		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then return true end
+		if _Y.frost>=2 and unholy.rot.icytouch() then return true end
+		if unholy.rot.bloodboil_blood() then return true end
 		if unholy.rot.icytouch() then return true end
 		if unholy.rot.NecroStrike() then return true end
 	end
