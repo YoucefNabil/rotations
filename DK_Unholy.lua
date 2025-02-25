@@ -1037,13 +1037,13 @@ local exeOnLoad = function()
 		if petfollow() then return true end
 		if petfollow2() then print("FOLLOW") return true end
 	end
+	_Y.blood, _Y.frost, _Y.unholy, _Y.death, _Y.total = 0,0,0,0,0
 end
 local exeOnUnload = function()
 	Listener:Remove("Entering_timerPLZ")
 	Listener:Remove("delaycasts_DK")
 	Listener:Remove("DK_STUFF")
 end
-
 unholy.rot = {
 	blank = function()
 	end,
@@ -1570,7 +1570,7 @@ unholy.rot = {
 	
 	pathoffrost = function()
 		if _A.pull_location~="arena" and not player:combat() and not player:buffany("Path of Frost") then
-			if _Y.frost>=1 or _Y.death>=1 then
+			if player:SpellCooldown("Path of Frost")<.3 then
 				player:cast("path of frost")
 			end
 		end
@@ -1824,11 +1824,11 @@ local inCombat = function()
 	if _A.buttondelayfunc()  then return true end
 	if  player:isCastingAny() then return true end
 	if UnitInVehicle("player") then return true end
-	unholy.rot.caching()
 	if player:mounted() then
 		if unholy.rot.pathoffrost() then return true end
 		return true
 	end
+	unholy.rot.caching()
 	-- print(_Y.death)
 	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
