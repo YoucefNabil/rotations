@@ -1887,8 +1887,8 @@ local inCombat = function()
 	if unholy.rot.strangulatesnipe() then return true end
 	if unholy.rot.Asphyxiatesnipe() then return true end
 	if unholy.rot.AsphyxiateBurst() then return true end
-	if unholy.rot.darksimulacrum() then return true end
-	if unholy.rot.DeathcoilRefund() then return true end
+	-- if unholy.rot.darksimulacrum() then return true end
+	-- if unholy.rot.DeathcoilRefund() then return true end
 	unholy.rot.root_buff()
 	if player:keybind("X") and unholy.rot.root() then return true end
 	if player:keybind("R") and unholy.rot.manual_deathgrip() then return true end
@@ -1911,8 +1911,11 @@ local inCombat = function()
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
+		-- this always keeps one rune of each type regenning all the time
 		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then return true end
 		if _Y.frost>=2 and unholy.rot.icytouch() then return true end
+		if _Y.unholy>=2 and unholy.rot.scourgestrike() then return true end
+		--
 		if unholy.rot.bloodboil_blood() then return true end
 		if unholy.rot.icytouch() then return true end
 		if unholy.rot.NecroStrike() then return true end
