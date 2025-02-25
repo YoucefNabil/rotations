@@ -1868,7 +1868,7 @@ local inCombat = function()
 	if unholy.rot.darksimulacrum() then return true end
 	if unholy.rot.root_buff() then return true end
 	-- DEFS
-	unholy.rot.petres() 
+	if unholy.rot.petres() then return true end
 	-- rotation
 	if unholy.rot.DeathcoilDump() then return true end
 	if unholy.rot.dkuhaoe() then return true end
