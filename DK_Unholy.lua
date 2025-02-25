@@ -1887,13 +1887,13 @@ local inCombat = function()
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 		-- this always keeps one rune of each type regenning all the time
-		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then print(1) return true end
-		if _Y.frost>=2 and unholy.rot.icytouch() then print(2) return  true end
-		if _Y.unholy>=2 and unholy.rot.scourgestrike() then print(3) return true end
+		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then return true end
+		if _Y.frost>=2 and unholy.rot.icytouch() then return  true end
+		if _Y.unholy>=2 and unholy.rot.scourgestrike() then return true end
 		--
-		if unholy.rot.bloodboil_blood() then print(4) return true end
-		if unholy.rot.icytouch() then print(5) return true end
-		if unholy.rot.NecroStrike() then print(6) return true end
+		if unholy.rot.bloodboil_blood() then return true end
+		if unholy.rot.icytouch() then return true end
+		if unholy.rot.NecroStrike() then return true end
 	end
 	----filler
 	if unholy.rot.Deathcoil_totems() then return true end
