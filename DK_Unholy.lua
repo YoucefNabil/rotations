@@ -748,8 +748,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangePETPOVPOV', function(num)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy()
-			-- and target:Infront() 
+		if target and target:enemy() and target:alive()
 			-- and  _A.notimmune(target) 
 			then
 			return target and target.guid
