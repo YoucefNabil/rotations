@@ -1,9 +1,9 @@
 local _, _A = ...
 -- Initialize gathering tables if they don't exist
-_A.trojan = {}
-local trojan = _A.trojan
+_A.related = {}
+local related = _A.related
 
-trojan.trashMobs = {
+related.trashMobs = {
     [40817] = true,      -- shadow of obsidius
     [39425] = function(obj) -- temple guardian anhur
         return obj:buff(74938) -- shield of light
@@ -33,10 +33,10 @@ trojan.trashMobs = {
     end,
 }
 
-trojan.avoidMobs = function(obj)
+related.avoidMobs = function(obj)
     if not obj or not obj.id then return false end
     
-    local check = trojan.trashMobs[obj.id]
+    local check = relatedtrashMobs[obj.id]
     if check then
         -- For direct boolean checks
         if type(check) == "boolean" then
@@ -55,7 +55,7 @@ trojan.avoidMobs = function(obj)
 end
 
 -- Herb IDs table
-trojan.OreHerb = {
+related.OreHerb = {
     -- Ores
     181556, -- Adamantite Deposit
     185557, -- Ancient Gem Vein

@@ -53,7 +53,7 @@ local function drawFarmNodes()
     local lineDistance = RelatedHelper_GUI:F("line_distance", 20)
 
     for _, farm in pairs(_A.OM:Get('GameObject')) do
-        if interactIdList(farm, _A.trojan.OreHerb) then
+        if interactIdList(farm, _A.related.OreHerb) then
             local x, y, z = _A.ObjectPosition(farm.key)
             if x and y and z then
                 local distance = farm:distance()
@@ -135,7 +135,7 @@ local function autofarm()
                     if _A.GetNumLootItems() > 0 then
                         return
                     end
-                    if not interactIdList(farm, _A.trojan.OreHerb) then
+                    if not interactIdList(farm, _A.related.OreHerb) then
                         return
                     end
                     if player:moving() then
