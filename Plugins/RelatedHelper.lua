@@ -21,7 +21,7 @@ local RelatedHelper_GUI = _A.Interface:BuildGUI({
         { key = "enable_chaseback",  type = "checkbox",       cw = 15,   ch = 15,                             size = 15,     text = "Enable Chase Back",      default = false },
         { key = "chaseback_key",     type = "input",          size = 15, text = "Chase Back Key",             default = "E", },
         { type = 'spacer',           size = 10 },
-        { key = "update_freq",       type = "spinner",        size = 15, text = "Update Frequency (seconds)", default = 0.05,   step = 0.01,                      min = 0.05,        max = 5 },
+        { key = "update_freq",       type = "spinner",        size = 15, text = "Update Frequency (seconds)", default = 0.05,   step = 0.05,                      min = 0.05,        max = 5 },
         { key = "line_distance",     type = "spinner",        size = 15, text = "Line Draw Distance (yards)", default = 40,  step = 5,                        min = 10,       max = 100 },
     }
 })
@@ -166,40 +166,40 @@ C_Timer.After(5, function()
     _A.LibDraw:Enable(RelatedHelper_GUI:F("update_freq", 0.05))
 end)
 
-
-
--- Chase Back
+-- Chase Back variables
+_A.FaceAlways = true
+local spells = {
+    "Mortal Strike",
+    "Slam",
+    "Tiger Palm",
+}
 
 local function ChaseBack()
     if RelatedHelper_GUI:F("enable_chaseback") then
         local player = player or Object("player")
         local target = Object("target")
-        if player and target and target:Exists() and target:Enemy() and target:alive() and player:keybind(RelatedHelper_GUI:F("chaseback_key")) then
+        if player and target and target:Exists() and target:Enemy() and target:alive() and player:keybind(RelatedHelper_GUI:F("chaseback_key", "E")) then
             local tx, ty, tz = _A.ObjectPosition(target.guid)
             local px, py, pz = _A.ObjectPosition(player.guid)
             local facing = _A.ObjectFacing(target.guid)
             local destX = tx - math.cos(facing) * 1.5
             local destY = ty - math.sin(facing) * 1.5
             local now = _A.GetTime() or GetTime()
-            -- if _A.GetDistanceBetweenPositions(px, py, pz, destX, destY, tz)>=0.01 then
+
+            -- Move to position behind target
             _A.ClickToMove(destX, destY, tz)
-            -- end
-            -- if not player:BuffAny("Bladestorm") and not target:infront() then
-            -- for _,v in ipairs(spells) do
-            -- if player:spellcooldown(v)<.3 and target:SpellRange(v) then
-            -- Calculate angle difference
-            -- _A.FaceDirection(target.guid, true)
-            -- end
-            -- end
-            -- end
-            -- Warrior specific
-            if player:spec() == 71 and target:SpellRange("Charge") and not player:BuffAny("Bladestorm") and target:infront() and target:los() and not IsCurrentSpell(100) then
+
+            -- Warrior specific charge logic
+            if player:spec() == 71 and target:SpellRange("Charge") and 
+               not player:BuffAny("Bladestorm") and target:infront() and 
+               target:los() and not IsCurrentSpell(100) then
                 target:cast("Charge")
-                -- end
             end
         end
     end
 end
+
+-- Update ticker with original name
 C_Timer.NewTicker(0.1, ChaseBack, false, "moving")
 
 -- Add flag clicking functionality
@@ -239,7 +239,7 @@ local function ClickPVPFlags()
     if tempTable[1] then _A.ObjectInteract(tempTable[1].guid) end
 end
 
--- Update the AutoAcceptLFG function to include flag clicking
+-- Update the AutoAcceptLFG function
 local function AutoAcceptLFG()
     if not RelatedHelper_GUI:F("enable_autoaccept") then return end
 
@@ -248,6 +248,7 @@ local function AutoAcceptLFG()
 
     -- Handle LFG proposal
     local function OnLFGProposal(evt)
+        if not player then return end
         if evt == "LFG_PROPOSAL_SHOW" then
             if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
                 _A.FlashWow()
@@ -269,31 +270,43 @@ local function AutoAcceptLFG()
 
     -- Handle role check and ready check
     local function OnRoleCheck()
+        if not player then return end
+        -- Set role as DPS
+        --SetLFGRoles(false, false, true) -- q as dps (tank, healer, dps)
+        -- Try direct button click first
         _A.CallWowApi("RunMacroText", "/click LFDRoleCheckPopupAcceptButton")
     end
 
     -- Handle battlefield leave and flag clicking
     local function CheckBattlefieldLeave()
-        if not RelatedHelper_GUI:F("enable_autoleave") then return end
+        if not _A.Cache.Utils.PlayerInGame then return end
+        player = player or Object("player")
+        if not player then return end
 
-        local battlefieldstatus = GetBattlefieldWinner()
-        if battlefieldstatus ~= nil then
-            if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
-                _A.FlashWow()
+        if RelatedHelper_GUI:F("enable_autoleave") then
+            local battlefieldstatus = GetBattlefieldWinner()
+            if battlefieldstatus ~= nil then
+                if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
+                    _A.FlashWow()
+                end
+                LeaveBattlefield()
             end
-            LeaveBattlefield()
         end
         
         -- Add flag clicking functionality
         ClickPVPFlags()
+
+        -- Update ticker duration if needed
+        local newDuration = _A.Parser.frequency or 0.1
+        return newDuration
     end
 
-    -- Add listeners
-    Listener:Add("RelatedHelper_LFG", { 'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS' }, OnLFGProposal)
-    Listener:Add("RelatedHelper_RoleCheck", { 'LFG_ROLE_CHECK_SHOW', 'LFG_READY_CHECK_SHOW' }, OnRoleCheck)
+    -- Add listeners with original names to maintain compatibility
+    Listener:Add("BG", { 'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS' }, OnLFGProposal)
+    Listener:Add("BG2", { 'LFG_ROLE_CHECK_SHOW', 'LFG_READY_CHECK_SHOW' }, OnRoleCheck)
 
-    -- Add battlefield leave and flag checker
-    C_Timer.NewTicker(0.1, CheckBattlefieldLeave, false, "RelatedHelper_BattlefieldLeave")
+    -- Add battlefield leave and flag checker with original name
+    C_Timer.NewTicker(0.1, CheckBattlefieldLeave, false, "clickpvp")
 end
 
 -- Initialize Auto Accept LFG
