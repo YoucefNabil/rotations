@@ -1225,14 +1225,14 @@ unholy.rot = {
 		if (player:Buff("Unholy Frenzy")) 
 			and player:SpellCooldown("Lifeblood")==0
 			then 
-			player:Cast("Lifeblood", true)
+			player:Cast("Lifeblood")
 		end
 	end,
 	
 	Empowerruneweapon = function()
 		if player:SpellCooldown("Empower Rune Weapon")==0 and (player:Buff("Unholy Frenzy")) and _Y.depletedrune()>=3
 			then 
-			player:Cast("Empower Rune Weapon", true)
+			player:Cast("Empower Rune Weapon")
 		end
 	end,
 	
@@ -1248,7 +1248,7 @@ unholy.rot = {
 					and _A.notimmune(obj)
 					then
 					if kickcheck(obj) then
-						obj:Cast("Mind Freeze", true)
+						obj:Cast("Mind Freeze")
 					end
 				end
 			end
@@ -1271,7 +1271,7 @@ unholy.rot = {
 						then 
 						if (kickcheck_nomove_highprio(obj) or  ( not _A.castdelay(49576,3) and kickcheck_nomove(obj))) or (healerspecid[obj:spec()] and obj:health()<=40 and kickcheck_nomove(obj)) then
 							if obj:los() then
-								obj:Cast("Death Grip", true)
+								obj:Cast("Death Grip")
 							end
 						end
 					end
@@ -1292,7 +1292,7 @@ unholy.rot = {
 							and _A.castdelay(45524 ,1.5)
 							and _A.notimmune(obj)
 							and obj:los() then
-							obj:Cast("Death Grip", true)
+							obj:Cast("Death Grip")
 						end
 					end
 				end
@@ -1310,7 +1310,7 @@ unholy.rot = {
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and _A.notimmune(obj)
 						and obj:los() then
-						obj:Cast("Strangulate", true)
+						obj:Cast("Strangulate")
 					end
 				end
 			end
@@ -1334,7 +1334,7 @@ unholy.rot = {
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
 						and _A.notimmune(obj)
 						and obj:los() then
-						obj:Cast("Strangulate", true)
+						obj:Cast("Strangulate")
 					end
 				end
 			end
@@ -1413,7 +1413,7 @@ unholy.rot = {
 							and _A.notimmune(obj)
 							and obj:los() 
 							then
-							obj:Cast("Dark Simulacrum", true)
+							obj:Cast("Dark Simulacrum")
 						end
 					end
 				end
@@ -1422,7 +1422,7 @@ unholy.rot = {
 	end,
 	
 	root_buff = function()
-		if player:SpellCooldown("Chains of Ice")<.3 
+		if (_Y.frost>=1 or _Y.death>=1)
 			and _A.castdelay(49576 ,1.5)
 			and not IsCurrentSpell(49576) 
 			then 
@@ -1441,14 +1441,14 @@ unholy.rot = {
 					and hasspeedbuff(obj)
 					and obj:los() 
 					then
-					return obj:Cast("Chains of Ice", true)
+					return obj:Cast("Chains of Ice")
 				end
 			end
 		end
 	end,
 	
 	root = function()
-		if player:SpellCooldown("Chains of Ice")<.3 and _A.castdelay(49576 ,1.5) and not IsCurrentSpell(49576) then
+		if (_Y.frost>=1 or _Y.death>=1) and _A.castdelay(49576 ,1.5) and not IsCurrentSpell(49576) then
 			local target = Object("target")
 			if target  
 				and target.isplayer
@@ -1532,7 +1532,7 @@ unholy.rot = {
 			local lowestmelee = Object("lowestEnemyInRangeNOTARNOFACE(30)")
 			if lowestmelee and lowestmelee:exists()
 				then 
-				player:Cast("Anti-Magic Shell", true)
+				player:Cast("Anti-Magic Shell")
 			end
 		end
 	end,
@@ -1555,7 +1555,7 @@ unholy.rot = {
 		if player:Talent("Lichborne") then
 			if player:health()<=40 then
 				if player:SpellCooldown("Lichborne")==0 then
-					player:cast("Lichborne", true)
+					player:cast("Lichborne")
 				end
 			end
 		end
@@ -1721,10 +1721,7 @@ unholy.rot = {
             then
             local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
             if lowestmelee then
-				if lowestmelee.isplayer then
-					return lowestmelee:Cast("Necrotic Strike")
-					else return lowestmelee:Cast("Scourge Strike")
-				end
+				return lowestmelee:Cast("Necrotic Strike")
 			end
 		end
 	end,
@@ -1841,10 +1838,10 @@ unholy.rot = {
 ---========================
 local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return true end
+	player = Object("player")
+	if not player then return true end
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
-	player = player or Object("player")
-	if not player then return true end
 	_Y.petengine()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .2 + _A.latency
@@ -1852,10 +1849,13 @@ local inCombat = function()
 	if not _A.pull_location then return true end
 	if _A.buttondelayfunc()  then return true end
 	if  player:isCastingAny() then return true end
-	unholy.rot.caching()
-	if player:mounted() and unholy.rot.pathoffrost() then return true end
-	if player:mounted() then return true end
 	if UnitInVehicle("player") then return true end
+	unholy.rot.caching()
+	if player:mounted() then
+		if unholy.rot.pathoffrost() then return true end
+		return true
+	end
+	-- print(_Y.death)
 	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
 	---------------------- NON GCD SPELLS
@@ -1879,19 +1879,20 @@ local inCombat = function()
 	unholy.rot.antimagicshell()
 	unholy.rot.deathpact()
 	unholy.rot.Lichborne()
-	---------------------- GCD SPELLS
-	if unholy.rot.gargoyle() then return true end
-	if unholy.rot.remorselesswinter() then return true end
-	-- unholy.rot.massgrip()
-	-- PVP INTERRUPTS AND CC
 	if unholy.rot.strangulatesnipe() then return true end
-	if unholy.rot.Asphyxiatesnipe() then return true end
-	if unholy.rot.AsphyxiateBurst() then return true end
-	-- if unholy.rot.darksimulacrum() then return true end
-	-- if unholy.rot.DeathcoilRefund() then return true end
-	unholy.rot.root_buff()
+	---------------------- GCD SPELLS
+	-- BINDS
+	if player:keybind("T") and unholy.rot.massgrip() then return true end
 	if player:keybind("X") and unholy.rot.root() then return true end
 	if player:keybind("R") and unholy.rot.manual_deathgrip() then return true end
+	--
+	if unholy.rot.gargoyle() then return true end
+	if unholy.rot.remorselesswinter() then return true end
+	-- PVP INTERRUPTS AND CC
+	if unholy.rot.Asphyxiatesnipe() then return true end
+	if unholy.rot.AsphyxiateBurst() then return true end
+	if unholy.rot.darksimulacrum() then return true end
+	if unholy.rot.root_buff() then return true end
 	-- DEFS
 	unholy.rot.petres() 
 	-- rotation
@@ -1912,13 +1913,13 @@ local inCombat = function()
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 		-- this always keeps one rune of each type regenning all the time
-		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then return true end
-		if _Y.frost>=2 and unholy.rot.icytouch() then return true end
-		if _Y.unholy>=2 and unholy.rot.scourgestrike() then return true end
+		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then print(1) return true end
+		if _Y.frost>=2 and unholy.rot.icytouch() then print(2) return true end
+		if _Y.unholy>=2 and unholy.rot.scourgestrike() then print(3) return true end
 		--
-		if unholy.rot.bloodboil_blood() then return true end
-		if unholy.rot.icytouch() then return true end
-		if unholy.rot.NecroStrike() then return true end
+		if unholy.rot.bloodboil_blood() then print(4) return true end
+		if unholy.rot.icytouch() then print(5) return true end
+		if unholy.rot.NecroStrike() then print(6) return true end
 	end
 	----filler
 	if unholy.rot.Deathcoil_totems() then return true end
