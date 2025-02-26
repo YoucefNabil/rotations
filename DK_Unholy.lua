@@ -1559,7 +1559,7 @@ unholy.rot = {
 	end,
 	
 	dotapplication = function()
-		if player:SpellCooldown("Plague Strike")<.3
+		if (player:RuneCount("Unholy")>=1 or player:RuneCount("Death")>=1)
 			then 
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
@@ -1660,7 +1660,7 @@ unholy.rot = {
 	end,
 	
 	icytouchdispell = function() -- BAD IDEA
-		if player:SpellCooldown("Icy Touch")<.3 and player:RuneCount("Frost")>=1 then
+		if player:RuneCount("Frost")>=1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
 			if lowestmelee and lowestmelee:exists() and lowestmelee:bufftype("Magic") then
 				return lowestmelee:Cast("Icy Touch")
