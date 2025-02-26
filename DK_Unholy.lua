@@ -15,7 +15,7 @@ local healerspecid = {
 	[105]="Druid Resto",
 	[102]="Druid Balance",
 	[270]="monk mistweaver",
-	-- [65]="Paladin Holy",
+	[65]="Paladin Holy",
 	-- [66]="Paladin prot",
 	-- [70]="Paladin retri",
 	[257]="Priest Holy",
@@ -440,28 +440,6 @@ local exeOnLoad = function()
 		--print(slot)
 		local player = Object("player")
 		Type, id, subType = _A.GetActionInfo(slot)
-		-- Death Grip
-		if id == 49576 then
-			player = player or Object("player")
-			if player and player:SpellReady("Death Grip") and player:SpellUsable("Death Grip")
-				then
-				local target = Object("target")
-				if target
-					and target:exists()
-					and target:enemy()
-					and target:spellRange("Death Grip")
-					and target:alive()
-					and not IsCurrentSpell(49576)
-					and not target:State("root")
-					and _A.castdelay(45524,0.5)
-					and _A.isthishuman(target.guid)
-					and _A.notimmune(target)
-					-- and target:infront()
-					and target:los() then
-					return target:Cast("Death Grip")
-				end
-			end
-		end
 		if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
 			then
 			if Type == "spell" or Type == "macro" -- remove macro?
@@ -648,7 +626,7 @@ local exeOnLoad = function()
 			if Obj.isplayer  and Obj:spellRange(spell) 
 				-- and Obj:Infront()
 				and _A.isthisahealer(Obj) 
-				and _A.notimmune(Obj) and Obj:los() then
+				and _Y.notimmune(Obj) and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health()
@@ -666,7 +644,7 @@ local exeOnLoad = function()
 		local target = Object("target")
 		local tGUID = target and target.guid or " "
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and _A.notimmune(Obj) 
+			if Obj:spellRange(spell) and _Y.notimmune(Obj) 
 				-- and not Obj:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") 
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -695,7 +673,7 @@ local exeOnLoad = function()
 		range = tonumber(range) or 40
 		target = target or "player"
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:rangefrom(target)<=range  and  _A.notimmune(Obj) and Obj:los() then
+			if Obj:rangefrom(target)<=range  and  _Y.notimmune(Obj) and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -722,7 +700,7 @@ local exeOnLoad = function()
 		local target = Object("target")
 		local tGUID = target and target.guid or " "
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and _A.notimmune(Obj) 
+			if Obj:spellRange(spell) and _Y.notimmune(Obj) 
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -749,12 +727,12 @@ local exeOnLoad = function()
 		local tempTable = {}
 		local target = Object("target")
 		if target and target:enemy() and target:alive()
-			-- and  _A.notimmune(target) 
+			-- and  _Y.notimmune(target) 
 			then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if _A.notimmune(Obj) 
+			if _Y.notimmune(Obj) 
 				and Obj:range()<=40
 				-- and  Obj:Infront()  
 				then
@@ -780,7 +758,7 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) 
 				-- and Obj:Infront() 
-				and _A.notimmune(Obj) 
+				and _Y.notimmune(Obj) 
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
@@ -801,7 +779,7 @@ local exeOnLoad = function()
 	--========================
 	
 	
-	function _A.notimmune(unit) -- needs to be object
+	function _Y.notimmune(unit) -- needs to be object
 		if unit then 
 			if unit:immune("all") then return false end
 		end
@@ -827,12 +805,23 @@ local exeOnLoad = function()
 		return false
 	end
 	
-	function _A.someoneisuperlow()
+	function _Y.someoneisuperlow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if _A.isthishuman(Obj.guid) and Obj:range()<40  then
 				if Obj:Health()<35 or (Obj:Health()<45 and _A.pull_location~="arena") then
 					return true
 				end
+			end
+		end
+		return false
+	end
+	
+	function _Y.enemyhealerexists()
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if _A.isthishuman(Obj.guid) and healerspecid[Obj:spec()]
+				and Obj:range()<=40
+				then
+				return true
 			end
 		end
 		return false
@@ -963,21 +952,25 @@ local exeOnLoad = function()
 		local htotem = Object("HealingStreamTotem")
 		if htotem then
 			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
-				return _A.CallWowApi("PetAttack", htotem.guid), 1
+				_A.CallWowApi("PetAttack", htotem.guid)
+				return true
 			end
-			return 1
+			return true
 		end
+		return false
 	end
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRangePETPOVPOV")
 		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-					return _A.CallWowApi("PetAttack", target.guid), 3
+					_A.CallWowApi("PetAttack", target.guid)
+					return true
 				end
 			end
-			return 3
+			return true
 		end
+		return false
 	end
 	function _Y.GetPetStance()
 		local STANCE_ICONS = {
@@ -1001,22 +994,64 @@ local exeOnLoad = function()
 	end
 	local function petpassive() -- when pet target has a breakable cc
 		if _Y.GetPetStance() ~= "PET_MODE_PASSIVE" then
-			return _A.CallWowApi("RunMacroText", "/petpassive"), 4
+			_A.CallWowApi("RunMacroText", "/petpassive")
+			return true
 		end
 	end
 	local function petfollow() -- when pet target has a breakable cc
 		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
 			local target = Object(_A.UnitTarget(_A.PetGUID))
 			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
-				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+				_A.CallWowApi("RunMacroText", "/petfollow")
+				return true
 			end
 		end
+		return false
 	end
 	local function petfollow2() -- when pet target has a breakable cc
 		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
-			return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+			_A.CallWowApi("RunMacroText", "/petfollow")
+			return true
 		end
+		return false
 	end
+	local function petstunsnipe()
+		local temptable = {}
+		if player:SpellCooldown("Gnaw")==0 and _Y.someoneisuperlow() then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer  and _A.isthisahealer(obj)
+					and obj:range()<=40
+					and not obj:buffany("Bear Form")
+					and _Y.notimmune(obj)
+					and not obj:state("incapacitate || fear || disorient || charm || misc || sleep") then
+					temptable[#temptable+1] = {
+						OBJ = obj,
+						GUID = obj.guid,
+						range = obj:range()
+					}
+				end
+			end
+			if #temptable>1 then
+				table.sort(temptable, function(a,b) return a.range < b.range end )
+			end
+			if temptable[1] then 
+				local pet = Object("pet")
+				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=temptable[1].GUID) then
+					_A.CallWowApi("PetAttack", temptable[1].GUID)
+					return true
+				end
+				if pet and pet:rangefrom(temptable[1].OBJ)<=3
+					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
+					_A.RunMacroText("/cast [@pettarget] Gnaw")
+					return true
+				end -- this may not work
+				return true
+			end
+			return false
+		end
+		return false
+	end
+	local actions = {petstunsnipe, attacktotem, attacklowest, petfollow, petfollow2 }
 	function _Y.petengine()
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
@@ -1030,12 +1065,10 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return true end
 		if petpassive() then return true end
 		-- Rotation
-		if attacktotem() then return true end
-		if attacklowest() then return true end
-		if petfollow() then return true end
-		if petfollow2() then return true end
+		for _, func in ipairs(actions) do
+			if func() then return true end  -- Stop as soon as one action runs
+		end
 	end
-	_Y.blood, _Y.frost, _Y.unholy, _Y.death, _Y.total = 0,0,0,0,0
 end
 local exeOnUnload = function()
 	Listener:Remove("Entering_timerPLZ")
@@ -1053,12 +1086,6 @@ unholy.rot = {
 	end,
 	
 	petmagnet = function()
-	end,
-	
-	caching= function()
-		_A.dkenergy = _A.UnitPower("player") or 0
-		_Y.blood, _Y.frost, _Y.unholy, _Y.death, _Y.total = _Y.runes()
-		-- print(_Y.frost)
 	end,
 	
 	items_healthstone = function()
@@ -1217,7 +1244,7 @@ unholy.rot = {
 					and obj:caninterrupt() 
 					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
 					)
-					and _A.notimmune(obj)
+					and _Y.notimmune(obj)
 					then
 					if kickcheck(obj) then
 						obj:Cast("Mind Freeze")
@@ -1237,7 +1264,7 @@ unholy.rot = {
 						and (player:SpellCooldown("Mind Freeze")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
 						and not obj:State("root")
 						and _A.castdelay(45524 ,1.5)
-						and _A.notimmune(obj)
+						and _Y.notimmune(obj)
 						and ( not _A.castdelay(49576,3) or ((obj:castsecond() < _A.interrupttreshhold) or obj:chanpercent()<=95))
 						
 						then 
@@ -1262,7 +1289,7 @@ unholy.rot = {
 							-- and obj:infront() 
 							and not obj:State("root")
 							and _A.castdelay(45524 ,1.5)
-							and _A.notimmune(obj)
+							and _Y.notimmune(obj)
 							and obj:los() then
 							obj:Cast("Death Grip")
 						end
@@ -1273,15 +1300,15 @@ unholy.rot = {
 	end,
 	
 	strangulatesnipe = function()
-		if (_Y.blood>=1 or _Y.death>=1)  then
-			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _A.someoneisuperlow() then
+		if (player:RuneCount("Blood")>=1 or player:RuneCount("Death")>=1)  then
+			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _Y.someoneisuperlow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
 						-- and obj:infront() 
 						and not obj:buffany("Bear Form")
 						and obj:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
-						and _A.notimmune(obj)
+						and _Y.notimmune(obj)
 						and obj:los() then
 						obj:Cast("Strangulate")
 					end
@@ -1303,7 +1330,7 @@ unholy.rot = {
 				and not target:State("root")
 				and _A.castdelay(45524,0.5)
 				and _A.isthishuman(target.guid)
-				and _A.notimmune(target)
+				and _Y.notimmune(target)
 				-- and target:infront()
 				and target:los() then
 				return target:Cast("Death Grip")
@@ -1320,8 +1347,8 @@ unholy.rot = {
 					and not obj:DebuffAny("Asphyxiate")
 					and not obj:State("silence")
 					and (obj:drState("Asphyxiate") == 1 or obj:drState("Asphyxiate")==-1)
-					and _A.notimmune(obj)
-					and _A.someoneisuperlow()
+					and _Y.notimmune(obj)
+					and _Y.someoneisuperlow()
 					and obj:los() then
 					return obj:Cast("Asphyxiate")
 				end
@@ -1341,7 +1368,7 @@ unholy.rot = {
 					and not obj:BuffAny("Anti-Magic Shell")
 					and not obj:State("silence")
 					and (obj:drState("Asphyxiate") == 1 or obj:drState("Asphyxiate")==-1)
-					and _A.notimmune(obj)
+					and _Y.notimmune(obj)
 					and obj:los() then
 					return obj:Cast("Asphyxiate")
 				end
@@ -1350,7 +1377,7 @@ unholy.rot = {
 	end,
 	
 	darksimulacrum = function()
-		if _A.dkenergy>=20 and player and player:SpellCooldown("Dark Simulacrum")==0 then
+		if player:RunicPower()>=20 and player and player:SpellCooldown("Dark Simulacrum")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer then
 					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)] or darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)] 
@@ -1359,7 +1386,7 @@ unholy.rot = {
 							-- and obj:infront()
 							and not obj:State("silence") 
 							and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
-							and _A.notimmune(obj)
+							and _Y.notimmune(obj)
 							and obj:los() 
 							then
 							obj:Cast("Dark Simulacrum")
@@ -1371,7 +1398,7 @@ unholy.rot = {
 	end,
 	
 	root_buff = function()
-		if (_Y.frost>=1 or _Y.death>=1)
+		if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
 			and _A.castdelay(49576 ,1.5)
 			and not IsCurrentSpell(49576) 
 			then 
@@ -1385,7 +1412,7 @@ unholy.rot = {
 					and not obj:buffany(48707)							
 					and not obj:buffany(50435)	
 					and not obj:buffany("Bladestorm")
-					and _A.notimmune(obj)
+					and _Y.notimmune(obj)
 					and not obj:buffany(1044)
 					and hasspeedbuff(obj)
 					and obj:los() 
@@ -1397,7 +1424,7 @@ unholy.rot = {
 	end,
 	
 	root = function()
-		if (_Y.frost>=1 or _Y.death>=1) and _A.castdelay(49576 ,1.5) and not IsCurrentSpell(49576) then
+		if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1) and _A.castdelay(49576 ,1.5) and not IsCurrentSpell(49576) then
 			local target = Object("target")
 			if target  
 				and target.isplayer
@@ -1415,7 +1442,7 @@ unholy.rot = {
 				and not target:buffany("Bladestorm")
 				and not target:Debuff("Chains of Ice") -- remove this
 				and not target:state("root")
-				and _A.notimmune(target)
+				and _Y.notimmune(target)
 				then if target:los()
 					then 
 					
@@ -1434,7 +1461,7 @@ unholy.rot = {
 				and target:enemy()
 				and target:SpellRange("Outbreak")
 				-- and target:infront()
-				and _A.notimmune(target)
+				and _Y.notimmune(target)
 				then
 				if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
 					if  target:los() then
@@ -1448,12 +1475,12 @@ unholy.rot = {
 	
 	dotsnapshotPS = function()
 		local target = Object("target")
-		if _Y.death>=1 or _Y.unholy>=1 then 
+		if player:RuneCount("Death")>=1 or player:RuneCount("Unholy")>=1 then 
 			if target and target:exists()
 				and target:enemy()
 				and target:SpellRange("Plague Strike")
 				-- and target:infront()
-				and _A.notimmune(target)
+				and _Y.notimmune(target)
 				then
 				if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
 					if target:los() then
@@ -1512,7 +1539,7 @@ unholy.rot = {
 	
 	dkuhaoe = function()
 		local pestcheck = false
-		if _Y.blood>=1 or _Y.death>=1 then
+		if player:RuneCount("Blood")>=1 or player:RuneCount("Death")>=1 then
 			if player:Talent("Roiling Blood") then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj:range()<=10 then
@@ -1520,7 +1547,7 @@ unholy.rot = {
 							return player:Cast("Blood Boil")
 						end
 						if (Obj:Debuff("Frost Fever") and Obj:Debuff("Blood Plague")) then
-							if  _A.notimmune(Obj) then
+							if  _Y.notimmune(Obj) then
 								pestcheck = true
 							end
 						end
@@ -1531,7 +1558,7 @@ unholy.rot = {
 						if (Obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid") and Obj:range()<10 then
 							-- if  Obj:range()<10 then
 							if (not Obj:Debuff("Frost Fever") and not Obj:Debuff("Blood Plague")) then
-								if not _A.notimmune(Obj) then
+								if not _Y.notimmune(Obj) then
 									return player:Cast("Blood Boil")
 								end
 							end
@@ -1614,7 +1641,7 @@ unholy.rot = {
 	
 	pettransform = function()
 		if player:BuffStack("Shadow Infusion")==5
-			and (_Y.unholy>=1 or _Y.death>=1) -- default just unholy check
+			and (player:RuneCount("Unholy")>=1 or player:RuneCount("Death")>=1) -- default just unholy check
 			and HasPetUI()
 			then
 			local pet = Object("pet")
@@ -1625,7 +1652,7 @@ unholy.rot = {
 	end,
 	
 	DeathcoilDump = function()
-		if _A.dkenergy >= 85 then
+		if player:RunicPower() >= 85 then
 			if player:SpellCooldown("Death Coil")<.3 
 				and not player:BuffAny("Runic Corruption") then
 				local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
@@ -1650,7 +1677,7 @@ unholy.rot = {
 	end,
 	
 	SoulReaper = function()
-		if (_Y.death>=1 or _Y.unholy>=1) and player:SpellCooldown("Soul Reaper")<.3
+		if (player:RuneCount("Death")>=1 or player:RuneCount("Unholy")>=1) and player:SpellCooldown("Soul Reaper")<.3
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Soul Reaper)")
 			if lowestmelee then
@@ -1662,7 +1689,7 @@ unholy.rot = {
 	end,
 	
     NecroStrike = function()
-        if  _Y.death>=1
+        if  player:RuneCount("Death")>=1
             then
             local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
             if lowestmelee then
@@ -1671,8 +1698,18 @@ unholy.rot = {
 		end
 	end,
 	
+    gnaw_TEST = function()
+        if player:SpellCooldown("Gnaw")<.3
+            then
+            local lowestmelee = Object("pettarget")
+            if lowestmelee then
+				return lowestmelee:Cast("Gnaw")
+			end
+		end
+	end,
+	
 	icytouchdispell = function() -- BAD IDEA
-		if player:SpellCooldown("Icy Touch")<.3 and _Y.frost>=1 then
+		if player:SpellCooldown("Icy Touch")<.3 and player:RuneCount("Frost")>=1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
 			if lowestmelee and lowestmelee:exists() and lowestmelee:bufftype("Magic") then
 				return lowestmelee:Cast("Icy Touch")
@@ -1682,7 +1719,7 @@ unholy.rot = {
 	end,
 	
 	icytouch = function()
-		if _Y.frost>=1 then
+		if player:RuneCount("Frost")>=1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
 			if lowestmelee  then
 				return lowestmelee:Cast("Icy Touch")
@@ -1691,7 +1728,7 @@ unholy.rot = {
 	end,
 	
 	bloodboil_blood = function()
-		if _Y.blood>=1
+		if player:RuneCount("Blood")>=1
 			then
 			local lowestmelee = Object("lowestEnemyInRangeNOTARNOFACE(9)")
 			if lowestmelee then
@@ -1702,7 +1739,7 @@ unholy.rot = {
 	
 	festeringstrike = function()
 		-- if player:SpellCooldown("Festering Strike")<.3 then
-		if _Y.blood >= 1 and _Y.frost>= 1 then
+		if player:RuneCount("Blood") >= 1 and player:RuneCount("Frost")>= 1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
 				if not lowestmelee.isplayer then
@@ -1713,7 +1750,7 @@ unholy.rot = {
 	end,
 	
 	Deathcoil = function()
-		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or _A.dkenergy>=32)
+		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or player:RunicPower()>=32)
 			and not player:BuffAny("Runic Corruption")  
 			then 
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
@@ -1725,7 +1762,7 @@ unholy.rot = {
 	end,
 	
 	Deathcoil_totems = function()
-		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or _A.dkenergy>=32)
+		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or player:RunicPower()>=32)
 			and not player:BuffAny("Runic Corruption")  
 			then 
 			local lowestmelee = Object("HealingStreamTotemPLAYUH")
@@ -1737,7 +1774,7 @@ unholy.rot = {
 	end,
 	
 	DeathcoilRefund = function()
-		if _A.dkenergy<=80 
+		if player:RunicPower()<=80 
 			and not player:BuffAny("Runic Corruption") 
 			then
 			if player:Glyph("Glyph of Death's Embrace") and player:SpellCooldown("Death Coil")<.3 and player:buff("Sudden Doom") then 
@@ -1750,7 +1787,7 @@ unholy.rot = {
 	end,
 	
     scourgestrike = function()
-        if _Y.unholy>=1 then
+        if player:RuneCount("Unholy")>=1 then
             local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Strike)")
             if lowestmelee then
 				if (lowestmelee:health()>35 or player:SpellCooldown("Soul Reaper") > player:gcd()+1)
@@ -1762,7 +1799,7 @@ unholy.rot = {
 	end,
 	
 	Buffbuff = function()
-		if player:SpellCooldown("Horn of Winter")<.3 and _A.dkenergy <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if player:SpellCooldown("Horn of Winter")<.3 and player:RunicPower() <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Horn of Winter")
 		end
 	end,
@@ -1799,8 +1836,7 @@ local inCombat = function()
 		-- if unholy.rot.pathoffrost() then return true end
 		return true
 	end
-	unholy.rot.caching()
-	-- print(_Y.death)
+	-- print(player:RuneCount("Death"))
 	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 	-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
 	---------------------- NON GCD SPELLS
@@ -1809,6 +1845,7 @@ local inCombat = function()
 	unholy.rot.GrabGrabHunter()
 	-- pet
 	unholy.rot.pet_cower()
+	-- unholy.rot.gnaw_TEST()
 	-- Bursts
 	unholy.rot.items_strpot()
 	unholy.rot.items_strflask()
@@ -1824,7 +1861,7 @@ local inCombat = function()
 	unholy.rot.antimagicshell()
 	unholy.rot.deathpact()
 	unholy.rot.Lichborne()
-	if unholy.rot.strangulatesnipe() then  print(0) return true end
+	if unholy.rot.strangulatesnipe() then return true end
 	---------------------- GCD SPELLS
 	-- BINDS
 	if player:keybind("T") and unholy.rot.massgrip() then print(1) return true end
@@ -1839,7 +1876,7 @@ local inCombat = function()
 	-- if unholy.rot.darksimulacrum() then return true end -- causes jams maybe
 	if unholy.rot.root_buff() then print(8) return true end
 	-- DEFS
-	if unholy.rot.petres() then  print(9) return true end
+	if unholy.rot.petres() then print(9) return true end
 	-- rotation
 	if unholy.rot.DeathcoilDump() then print(10) return true end
 	if unholy.rot.dkuhaoe() then print(11) return true end
@@ -1853,14 +1890,14 @@ local inCombat = function()
 	if _A.pull_location == "party" or _A.pull_location == "raid" then
 		if unholy.rot.dotsnapshotOutBreak() then print(18) return true end
 		if unholy.rot.dotsnapshotPS() then print(19) return true end
-		if unholy.rot.festeringstrike() then print(20) return true end
+		if unholy.rot.festeringstrike() then  print(20) return true end
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 		-- this always keeps one rune of each type regenning all the time
-		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then print(21) return true end
-		if _Y.frost>=2 and unholy.rot.icytouch() then print(22) return   true end
-		if _Y.unholy>=2 and unholy.rot.scourgestrike() then print(23) return true end
+		if player:RuneCount("Blood")>= 2 and unholy.rot.bloodboil_blood() then print(21) return true end
+		if player:RuneCount("Frost")>=2 and unholy.rot.icytouch() then print(22) return true end
+		if player:RuneCount("Unholy")>=2 and unholy.rot.scourgestrike() then print(23) return true end
 		--
 		if unholy.rot.bloodboil_blood() then print(24) return true end
 		if unholy.rot.icytouch() then print(25) return true end
@@ -1868,7 +1905,7 @@ local inCombat = function()
 	end
 	----filler
 	if unholy.rot.Deathcoil_totems() then print(27) return true end
-	if unholy.rot.Deathcoil() then print(28) return true end
+	if unholy.rot.Deathcoil() then print(28) return  true end
 	if unholy.rot.festeringstrike() then print(29) return true end
 	if unholy.rot.scourgestrike() then print(30) return true end
 	if unholy.rot.Buffbuff() then print(31) return true end
