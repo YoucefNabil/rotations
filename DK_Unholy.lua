@@ -1627,16 +1627,12 @@ unholy.rot = {
 	DeathcoilDump = function()
 		if _A.dkenergy >= 85 then
 			if player:SpellCooldown("Death Coil")<.3 
-				and not player:BuffAny("Runic Corruption") 
-				then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+				and not player:BuffAny("Runic Corruption") then
 				local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
-				-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 				if lowestmelee then
-					if lowestmelee:exists() then
-						if not player:Buff("Lichborne") then
-							return lowestmelee:Cast("Death Coil")
-							else return player:Cast("Death Coil")
-						end
+					if not player:Buff("Lichborne") then
+						return lowestmelee:Cast("Death Coil")
+						else return player:Cast("Death Coil")
 					end
 				end
 			end
@@ -1755,9 +1751,9 @@ unholy.rot = {
 	
     scourgestrike = function()
         if _Y.unholy>=1 then
-            local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+            local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Strike)")
             if lowestmelee then
-				if (lowestmelee:health()>35 or player:SpellCooldown("Soul Reaper") > 1)
+				if (lowestmelee:health()>35 or player:SpellCooldown("Soul Reaper") > player:gcd()+1)
 					then
 					return lowestmelee:Cast("Scourge Strike")
 				end
@@ -1800,7 +1796,7 @@ local inCombat = function()
 	if  player:isCastingAny() then return true end
 	if UnitInVehicle("player") then return true end
 	if player:mounted() then
-		if unholy.rot.pathoffrost() then return true end
+		-- if unholy.rot.pathoffrost() then return true end
 		return true
 	end
 	unholy.rot.caching()
@@ -1828,54 +1824,54 @@ local inCombat = function()
 	unholy.rot.antimagicshell()
 	unholy.rot.deathpact()
 	unholy.rot.Lichborne()
-	if unholy.rot.strangulatesnipe() then return true end
+	if unholy.rot.strangulatesnipe() then  print(0) return true end
 	---------------------- GCD SPELLS
 	-- BINDS
-	if player:keybind("T") and unholy.rot.massgrip() then return true end
-	if player:keybind("X") and unholy.rot.root() then return true end
-	if player:keybind("R") and unholy.rot.manual_deathgrip() then return true end
+	if player:keybind("T") and unholy.rot.massgrip() then print(1) return true end
+	if player:keybind("X") and unholy.rot.root() then print(2) return true end
+	if player:keybind("R") and unholy.rot.manual_deathgrip() then print(3) return true end
 	--
-	if unholy.rot.gargoyle() then return true end
-	if unholy.rot.remorselesswinter() then return true end
+	if unholy.rot.gargoyle() then print(4) return true end
+	if unholy.rot.remorselesswinter() then print(5) return true end
 	-- PVP INTERRUPTS AND CC
-	if unholy.rot.Asphyxiatesnipe() then return true end
-	if unholy.rot.AsphyxiateBurst() then return true end
-	if unholy.rot.darksimulacrum() then return true end
-	if unholy.rot.root_buff() then return true end
+	if unholy.rot.Asphyxiatesnipe() then print(6) return true end
+	if unholy.rot.AsphyxiateBurst() then print(7) return true end
+	-- if unholy.rot.darksimulacrum() then return true end -- causes jams maybe
+	if unholy.rot.root_buff() then print(8) return true end
 	-- DEFS
-	if unholy.rot.petres() then return true end
+	if unholy.rot.petres() then  print(9) return true end
 	-- rotation
-	if unholy.rot.DeathcoilDump() then return true end
-	if unholy.rot.dkuhaoe() then return true end
-	if unholy.rot.outbreak() then return true end
-	if unholy.rot.dotapplication() then return true end
-	if unholy.rot.pettransform() then return true end
-	if unholy.rot.BonusDeathStrike() then return true end
-	if unholy.rot.DeathcoilHEAL() then return true end
-	if unholy.rot.SoulReaper() then return true end
+	if unholy.rot.DeathcoilDump() then print(10) return true end
+	if unholy.rot.dkuhaoe() then print(11) return true end
+	if unholy.rot.outbreak() then print(12) return true end
+	if unholy.rot.dotapplication() then print(13) return true end
+	if unholy.rot.pettransform() then print(14) return true end
+	if unholy.rot.BonusDeathStrike() then print(15) return true end
+	if unholy.rot.DeathcoilHEAL() then print(16) return true end
+	if unholy.rot.SoulReaper() then print(17) return true end
 	----pve part
 	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		if unholy.rot.dotsnapshotOutBreak() then return true end
-		if unholy.rot.dotsnapshotPS() then return true end
-		if unholy.rot.festeringstrike() then return true end
+		if unholy.rot.dotsnapshotOutBreak() then print(18) return true end
+		if unholy.rot.dotsnapshotPS() then print(19) return true end
+		if unholy.rot.festeringstrike() then print(20) return true end
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 		-- this always keeps one rune of each type regenning all the time
-		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then return true end
-		if _Y.frost>=2 and unholy.rot.icytouch() then return  true end
-		if _Y.unholy>=2 and unholy.rot.scourgestrike() then return true end
+		if _Y.blood>= 2 and unholy.rot.bloodboil_blood() then print(21) return true end
+		if _Y.frost>=2 and unholy.rot.icytouch() then print(22) return   true end
+		if _Y.unholy>=2 and unholy.rot.scourgestrike() then print(23) return true end
 		--
-		if unholy.rot.bloodboil_blood() then return true end
-		if unholy.rot.icytouch() then return true end
-		if unholy.rot.NecroStrike() then return true end
+		if unholy.rot.bloodboil_blood() then print(24) return true end
+		if unholy.rot.icytouch() then print(25) return true end
+		if unholy.rot.NecroStrike() then print(26) return true end
 	end
 	----filler
-	if unholy.rot.Deathcoil_totems() then return true end
-	if unholy.rot.Deathcoil() then return true end
-	if unholy.rot.festeringstrike() then return true end
-	if unholy.rot.scourgestrike() then return true end
-	if unholy.rot.Buffbuff() then return true end
+	if unholy.rot.Deathcoil_totems() then print(27) return true end
+	if unholy.rot.Deathcoil() then print(28) return true end
+	if unholy.rot.festeringstrike() then print(29) return true end
+	if unholy.rot.scourgestrike() then print(30) return true end
+	if unholy.rot.Buffbuff() then print(31) return true end
 end
 local outCombat = function()
 	return inCombat()
