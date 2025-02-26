@@ -1076,41 +1076,12 @@ local exeOnUnload = function()
 	Listener:Remove("DK_STUFF")
 end
 unholy.rot = {
-	blank = function()
-	end,
-	
-	gnawinterrupt = function()
-	end,
-	
-	leapinterrupt = function()
-	end,
-	
-	petmagnet = function()
-	end,
-	
 	items_healthstone = function()
 		if player:health() <= 35 then
 			if player:ItemCooldown(5512) == 0
 				and player:ItemCount(5512) > 0
 				and player:ItemUsable(5512) then
 				player:useitem("Healthstone")
-			end
-		end
-	end,
-	
-	stance_dance = function()
-		if not _A.IsForeground() then
-			if player:stance()~=1 and player:SpellCooldown(48263)<.3 then
-				if player:health()<50 then return player:cast(48263)
-				end
-				-- if not _A.IsForeground() then return player:cast(48263)
-				-- end
-				if player:buff("Horde Flag") or player:buff("Alliance Flag") then return player:cast(48263)
-				end
-			end
-			if player:SpellCooldown(48265)<.3 and player:stance()~=3 then
-				-- if player:health()>80 and not player:buff("Horde Flag") and not player:buff("Alliance Flag") and _A.IsForeground() then return player:cast(48265) end -- unholy
-				if player:health()>80 and not player:buff("Horde Flag") and not player:buff("Alliance Flag") then return player:cast(48265) end  -- unholy
 			end
 		end
 	end,
@@ -1183,7 +1154,6 @@ unholy.rot = {
 	
 	Frenzy = function()
 		if player:combat() and player:buff("Call of Victory") then
-			-- if player:combat() and player:buff("Surge of Victory") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee
 				and lowestmelee:health()>=65
@@ -1197,7 +1167,6 @@ unholy.rot = {
 	
 	bloodtap = function()
 		if player:combat() and player:buff("Call of Victory") then
-			-- if player:combat() and player:buff("Surge of Victory") then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee
 				and lowestmelee:health()>=65
@@ -1240,7 +1209,6 @@ unholy.rot = {
 		if player:SpellCooldown("Mind Freeze")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike") 
-					-- and obj:infront()
 					and obj:caninterrupt() 
 					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
 					)
@@ -1260,7 +1228,6 @@ unholy.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if (_A.pull_location ~= "arena") or (_A.pull_location == "arena" and not hunterspecs[_A.UnitSpec(obj.guid)]) then
 					if obj.isplayer and obj:isCastingAny() and obj:SpellRange("Death Grip") 
-						-- and obj:infront() 
 						and (player:SpellCooldown("Mind Freeze")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
 						and not obj:State("root")
 						and _A.castdelay(45524 ,1.5)
@@ -1286,7 +1253,6 @@ unholy.rot = {
 				if roster and roster:DebuffAny("Scatter Shot") then
 					for _, obj in pairs(_A.OM:Get('Enemy')) do
 						if 	obj.isplayer and hunterspecs[_A.UnitSpec(obj.guid)] and obj:SpellRange("Death Grip") 
-							-- and obj:infront() 
 							and not obj:State("root")
 							and _A.castdelay(45524 ,1.5)
 							and _Y.notimmune(obj)
@@ -1304,7 +1270,6 @@ unholy.rot = {
 			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _Y.someoneisuperlow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
-						-- and obj:infront() 
 						and not obj:buffany("Bear Form")
 						and obj:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
@@ -1331,7 +1296,6 @@ unholy.rot = {
 				and _A.castdelay(45524,0.5)
 				and _A.isthishuman(target.guid)
 				and _Y.notimmune(target)
-				-- and target:infront()
 				and target:los() then
 				return target:Cast("Death Grip")
 			end
@@ -1342,7 +1306,6 @@ unholy.rot = {
 		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  
-					-- and obj:infront() 	
 					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 					and not obj:DebuffAny("Asphyxiate")
 					and not obj:State("silence")
@@ -1360,7 +1323,6 @@ unholy.rot = {
 		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer  and not _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  
-					-- and obj:infront()
 					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
 					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 					and not obj:DebuffAny("Asphyxiate")
@@ -1383,7 +1345,6 @@ unholy.rot = {
 					if darksimulacrumspecsBGS[_A.UnitSpec(obj.guid)] or darksimulacrumspecsARENA[_A.UnitSpec(obj.guid)] 
 						then
 						if obj:SpellRange("Dark Simulacrum") 
-							-- and obj:infront()
 							and not obj:State("silence") 
 							and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
 							and _Y.notimmune(obj)
@@ -1404,7 +1365,6 @@ unholy.rot = {
 			then 
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:SpellRange("Chains of Ice") 
-					-- and obj:infront() 
 					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
 					and not obj:Debuffany("Chains of Ice")
 					and not obj:buffany("Hand of Freedom")
@@ -1430,8 +1390,6 @@ unholy.rot = {
 				and target.isplayer
 				and not target:spellRange("Death Strike") 
 				and target:spellRange("Chains of Ice") 
-				-- and target:infront()
-				-- and _A.isthishuman("target")
 				and target:exists()
 				and target:enemy() 
 				and not target:buffany(50435)
@@ -1445,9 +1403,7 @@ unholy.rot = {
 				and _Y.notimmune(target)
 				then if target:los()
 					then 
-					
 					return target:Cast("Chains of Ice")
-					-- slow/root
 				end
 			end
 		end
@@ -1460,12 +1416,10 @@ unholy.rot = {
 			if target and target:exists()
 				and target:enemy()
 				and target:SpellRange("Outbreak")
-				-- and target:infront()
 				and _Y.notimmune(target)
 				then
 				if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
 					if  target:los() then
-						-- print("refreshing dot")
 						return target:Cast("Outbreak")
 					end
 				end
@@ -1479,12 +1433,10 @@ unholy.rot = {
 			if target and target:exists()
 				and target:enemy()
 				and target:SpellRange("Plague Strike")
-				-- and target:infront()
 				and _Y.notimmune(target)
 				then
 				if _A.enemyguidtab[target.guid]~=nil and _A.myscore()>enemyguidtab[target.guid] then
 					if target:los() then
-						-- print("refreshing dot")
 						return target:Cast("Plague Strike")
 					end
 				end
@@ -1668,8 +1620,7 @@ unholy.rot = {
 	
 	DeathcoilHEAL = function()
 		if player:SpellCooldown("Death Coil")<.3 and player:Buff("Lichborne") 
-			-- and not player:BuffAny("Runic Corruption") 
-			then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+			then
 			if _A.enoughmana(47541) then
 				return player:Cast("Death Coil")
 			end
@@ -1714,7 +1665,6 @@ unholy.rot = {
 			if lowestmelee and lowestmelee:exists() and lowestmelee:bufftype("Magic") then
 				return lowestmelee:Cast("Icy Touch")
 			end
-			-- end
 		end
 	end,
 	
@@ -1738,7 +1688,6 @@ unholy.rot = {
 	end,
 	
 	festeringstrike = function()
-		-- if player:SpellCooldown("Festering Strike")<.3 then
 		if player:RuneCount("Blood") >= 1 and player:RuneCount("Frost")>= 1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
@@ -1754,7 +1703,6 @@ unholy.rot = {
 			and not player:BuffAny("Runic Corruption")  
 			then 
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
-			-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 			if lowestmelee then
 				return lowestmelee:Cast("Death Coil")
 			end
@@ -1766,7 +1714,6 @@ unholy.rot = {
 			and not player:BuffAny("Runic Corruption")  
 			then 
 			local lowestmelee = Object("HealingStreamTotemPLAYUH")
-			-- local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 			if lowestmelee then
 				return lowestmelee:Cast("Death Coil")
 			end
