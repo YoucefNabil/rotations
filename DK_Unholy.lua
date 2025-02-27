@@ -807,7 +807,7 @@ local exeOnLoad = function()
 	
 	function _Y.someoneisuperlow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if _A.isthishuman(Obj.guid) and Obj:range()<40  then
+			if Obj.isplayer and Obj:range()<40  then
 				if Obj:Health()<35 or (Obj:Health()<45 and _A.pull_location~="arena") then
 					return true
 				end
@@ -1051,7 +1051,6 @@ local exeOnLoad = function()
 		end
 		return false
 	end
-	local actions = {petstunsnipe, attacktotem, attacklowest, petfollow, petfollow2 }
 	function _Y.petengine()
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
@@ -1065,8 +1064,11 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return true end
 		if petpassive() then return true end
 		-- Rotation
-		for _, func in ipairs(actions) do
-			if func() then return true end  -- Stop as soon as one action runs
+		if petstunsnipe() then return true
+			elseif attacktotem() then return true
+			elseif attacklowest() then return true
+			elseif petfollow() then return true
+			elseif petfollow2() then return true 
 		end
 	end
 end
@@ -1778,14 +1780,11 @@ local inCombat = function()
 	if not _A.pull_location then return true end
 	if _A.buttondelayfunc()  then return true end
 	if  player:isCastingAny() then return true end
-	if UnitInVehicle("player") then return true end
 	if player:mounted() then
-		if unholy.rot.pathoffrost() then return true end
+		-- if unholy.rot.pathoffrost() then return true end
 		return true
 	end
-	-- print(player:RuneCount("Death"))
-	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
-	-- if player: state("stun || incapacitate || fear || disorient || charm || misc || sleep")   then return end 
+	if UnitInVehicle("player") then return true end
 	---------------------- NON GCD SPELLS
 	-- Grabs
 	unholy.rot.GrabGrab()
