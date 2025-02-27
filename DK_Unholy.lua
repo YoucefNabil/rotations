@@ -952,7 +952,7 @@ local exeOnLoad = function()
 	_A.PetGUID  = nil
 	local function attacktotem()
 		local htotem = Object("HealingStreamTotem")
-		local pettargetguid = _A.PetGUID and _A.UnitTarget(_A.PetGUID) or nil
+		local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
 		if htotem then
 			if _A.PetGUID and (not pettargetguid or pettargetguid~=htotem.guid) then
 				_A.CallWowApi("PetAttack", htotem.guid)
@@ -964,7 +964,7 @@ local exeOnLoad = function()
 	end
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRangePETPOVPOV")
-		local pettargetguid = _A.PetGUID and _A.UnitTarget(_A.PetGUID) or nil
+		local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
 		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				if _A.PetGUID and (not pettargetguid or pettargetguid~=target.guid) then
@@ -1021,7 +1021,7 @@ local exeOnLoad = function()
 	end
 	local function petstunsnipe()
 		local temptable = {}
-		local pettargetguid = _A.PetGUID and _A.UnitTarget(_A.PetGUID) or nil
+		local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
 		if player:SpellCooldown("Gnaw")==0 and _Y.someoneisuperlow() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=40 
@@ -1043,12 +1043,14 @@ local exeOnLoad = function()
 			if temptable[1] then 
 				local pet = Object("pet")
 				if _A.PetGUID and (not pettargetguid or pettargetguid~=temptable[1].GUID) then
+					print("GOING TO HEALER")
 					_A.CallWowApi("PetAttack", temptable[1].GUID)
 					return true
 				end
 				if pet and pettargetguid and pettargetguid==temptable[1].GUID
 					and pet:rangefrom(temptable[1].OBJ)<=4
 					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
+					print("GNAW ON HEALER")
 					_A.RunMacroText("/cast [@pettarget] Gnaw")
 					return true
 				end -- this may not work
