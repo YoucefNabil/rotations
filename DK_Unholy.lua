@@ -13,7 +13,7 @@ local healerspecid = {
 	-- [266]="Lock Demono",
 	-- [267]="Lock Destro",
 	[105]="Druid Resto",
-	[102]="Druid Balance",
+	-- [102]="Druid Balance",
 	[270]="monk mistweaver",
 	[65]="Paladin Holy",
 	-- [66]="Paladin prot",
@@ -1019,11 +1019,12 @@ local exeOnLoad = function()
 		local temptable = {}
 		if player:SpellCooldown("Gnaw")==0 and _Y.someoneisuperlow() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer  and _A.isthisahealer(obj)
-					and obj:range()<=40
+				if obj.isplayer and obj:range()<=40 
+					and _A.isthisahealer(obj)
 					and not obj:buffany("Bear Form")
+					and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
 					and _Y.notimmune(obj)
-					and not obj:state("incapacitate || fear || disorient || charm || misc || sleep") then
+					then
 					temptable[#temptable+1] = {
 						OBJ = obj,
 						GUID = obj.guid,
@@ -1040,7 +1041,8 @@ local exeOnLoad = function()
 					_A.CallWowApi("PetAttack", temptable[1].GUID)
 					return true
 				end
-				if pet and pet:rangefrom(temptable[1].OBJ)<=3
+				if pet 
+					and pet:distancefrom(temptable[1].OBJ)<=5
 					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
 					_A.RunMacroText("/cast [@pettarget] Gnaw")
 					return true
@@ -1064,12 +1066,11 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return true end
 		if petpassive() then return true end
 		-- Rotation
-		if petstunsnipe() then return true
-			elseif attacktotem() then return true
-			elseif attacklowest() then return true
-			elseif petfollow() then return true
-			elseif petfollow2() then return true 
-		end
+		if petstunsnipe() then return true end
+		if attacktotem() then return true end
+		if attacklowest() then return true end
+		if petfollow() then return true end
+		if petfollow2() then return true end
 	end
 end
 local exeOnUnload = function()
