@@ -3,6 +3,7 @@ local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
 local C_Timer = _A.C_Timer
 local looping = C_Timer.NewTicker
+local cdcd
 _A.FaceAlways = true
 -- top of the CR
 local player
@@ -404,6 +405,7 @@ local exeOnLoad = function()
 	_A.STARTSLOT = 1
 	_A.STOPSLOT = 8
 	_A.GRABKEY = "R"
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	function _A.enoughmana(id)
 		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
 		if powertype then
@@ -950,8 +952,9 @@ local exeOnLoad = function()
 	_A.PetGUID  = nil
 	local function attacktotem()
 		local htotem = Object("HealingStreamTotem")
+		local pettargetguid = _A.PetGUID and _A.UnitTarget(_A.PetGUID) or nil
 		if htotem then
-			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
+			if _A.PetGUID and (not pettargetguid or pettargetguid~=htotem.guid) then
 				_A.CallWowApi("PetAttack", htotem.guid)
 				return true
 			end
@@ -961,9 +964,10 @@ local exeOnLoad = function()
 	end
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRangePETPOVPOV")
+		local pettargetguid = _A.PetGUID and _A.UnitTarget(_A.PetGUID) or nil
 		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
+				if _A.PetGUID and (not pettargetguid or pettargetguid~=target.guid) then
 					_A.CallWowApi("PetAttack", target.guid)
 					return true
 				end
@@ -1017,6 +1021,7 @@ local exeOnLoad = function()
 	end
 	local function petstunsnipe()
 		local temptable = {}
+		local pettargetguid = _A.PetGUID and _A.UnitTarget(_A.PetGUID) or nil
 		if player:SpellCooldown("Gnaw")==0 and _Y.someoneisuperlow() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=40 
@@ -1037,12 +1042,12 @@ local exeOnLoad = function()
 			end
 			if temptable[1] then 
 				local pet = Object("pet")
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=temptable[1].GUID) then
+				if _A.PetGUID and (not pettargetguid or pettargetguid~=temptable[1].GUID) then
 					_A.CallWowApi("PetAttack", temptable[1].GUID)
 					return true
 				end
-				if pet 
-					and pet:distancefrom(temptable[1].OBJ)<=5
+				if pet and pettargetguid and pettargetguid==temptable[1].GUID
+					and pet:rangefrom(temptable[1].OBJ)<=4
 					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
 					_A.RunMacroText("/cast [@pettarget] Gnaw")
 					return true
@@ -1056,7 +1061,7 @@ local exeOnLoad = function()
 	function _Y.petengine()
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
-		if not player:combat() then return true end
+		-- if not player:combat() then return true end
 		if not player:alive() then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
 		if player:mounted() then return true end
@@ -1183,7 +1188,7 @@ unholy.rot = {
 	
 	gargoyle = function()
 		if (player:Buff("Unholy Frenzy")) 
-			and player:SpellCooldown("Summon Gargoyle")<.3 then
+			and player:SpellCooldown("Summon Gargoyle")<cdcd then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Summon Gargoyle)")
 			if lowestmelee 
 				then 
@@ -1306,7 +1311,7 @@ unholy.rot = {
 	end,
 	
 	Asphyxiatesnipe = function()
-		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
+		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  
 					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
@@ -1323,7 +1328,7 @@ unholy.rot = {
 	end,
 	
 	AsphyxiateBurst = function()
-		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<.3 then
+		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer  and not _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  
 					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
@@ -1415,7 +1420,7 @@ unholy.rot = {
 	
 	dotsnapshotOutBreak = function()
 		local target = Object("target")
-		if player:SpellCooldown("Outbreak")<.3 then 
+		if player:SpellCooldown("Outbreak")<cdcd then 
 			if target and target:exists()
 				and target:enemy()
 				and target:SpellRange("Outbreak")
@@ -1448,7 +1453,7 @@ unholy.rot = {
 	end,
 	
 	petres = function()
-		if player:SpellCooldown("Raise Dead")<.3 then
+		if player:SpellCooldown("Raise Dead")<cdcd then
 			if not _A.UnitExists("pet")
 				or _A.UnitIsDeadOrGhost("pet")
 				or not _A.HasPetUI()
@@ -1534,7 +1539,7 @@ unholy.rot = {
 	end,
 	
 	outbreak = function()
-		if player:SpellCooldown("Outbreak")<.3 --OUTBREAK
+		if player:SpellCooldown("Outbreak")<cdcd --OUTBREAK
 			and _A.enoughmana(77575)
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Outbreak)")
@@ -1574,7 +1579,7 @@ unholy.rot = {
 	end,
 	
 	remorselesswinter = function()
-		if player:Talent("Remorseless Winter") and player:SpellCooldown("Remorseless Winter")<.3 --Remorseless Winter
+		if player:Talent("Remorseless Winter") and player:SpellCooldown("Remorseless Winter")<cdcd --Remorseless Winter
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
@@ -1586,7 +1591,7 @@ unholy.rot = {
 	end,
 	
 	massgrip = function()
-		if player:Talent("Gorefiend's Grasp") and player:SpellCooldown("Gorefiend's Grasp")<.3 --Remorseless Winter
+		if player:Talent("Gorefiend's Grasp") and player:SpellCooldown("Gorefiend's Grasp")<cdcd --Remorseless Winter
 			then
 			if _A.numplayerenemies(20) >= 3 then
 				return player:Cast("Gorefiend's Grasp")
@@ -1608,7 +1613,7 @@ unholy.rot = {
 	
 	DeathcoilDump = function()
 		if player:RunicPower() >= 85 then
-			if player:SpellCooldown("Death Coil")<.3 
+			if player:SpellCooldown("Death Coil")<cdcd
 				and not player:BuffAny("Runic Corruption") then
 				local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
 				if lowestmelee then
@@ -1622,7 +1627,7 @@ unholy.rot = {
 	end,
 	
 	DeathcoilHEAL = function()
-		if player:SpellCooldown("Death Coil")<.3 and player:Buff("Lichborne") 
+		if player:SpellCooldown("Death Coil")<cdcd and player:Buff("Lichborne") 
 			then
 			if _A.enoughmana(47541) then
 				return player:Cast("Death Coil")
@@ -1631,7 +1636,7 @@ unholy.rot = {
 	end,
 	
 	SoulReaper = function()
-		if (player:RuneCount("Death")>=1 or player:RuneCount("Unholy")>=1) and player:SpellCooldown("Soul Reaper")<.3
+		if (player:RuneCount("Death")>=1 or player:RuneCount("Unholy")>=1) and player:SpellCooldown("Soul Reaper")<cdcd
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Soul Reaper)")
 			if lowestmelee then
@@ -1648,16 +1653,6 @@ unholy.rot = {
             local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
             if lowestmelee then
 				return lowestmelee:Cast("Necrotic Strike")
-			end
-		end
-	end,
-	
-    gnaw_TEST = function()
-        if player:SpellCooldown("Gnaw")<.3
-            then
-            local lowestmelee = Object("pettarget")
-            if lowestmelee then
-				return lowestmelee:Cast("Gnaw")
 			end
 		end
 	end,
@@ -1702,7 +1697,7 @@ unholy.rot = {
 	end,
 	
 	Deathcoil = function()
-		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or player:RunicPower()>=32)
+		if player:SpellCooldown("Death Coil")<cdcd and (player:buff("Sudden Doom") or player:RunicPower()>=32)
 			and not player:BuffAny("Runic Corruption")  
 			then 
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
@@ -1713,7 +1708,7 @@ unholy.rot = {
 	end,
 	
 	Deathcoil_totems = function()
-		if player:SpellCooldown("Death Coil")<.3 and (player:buff("Sudden Doom") or player:RunicPower()>=32)
+		if player:SpellCooldown("Death Coil")<cdcd and (player:buff("Sudden Doom") or player:RunicPower()>=32)
 			and not player:BuffAny("Runic Corruption")  
 			then 
 			local lowestmelee = Object("HealingStreamTotemPLAYUH")
@@ -1727,7 +1722,7 @@ unholy.rot = {
 		if player:RunicPower()<=80 
 			and not player:BuffAny("Runic Corruption") 
 			then
-			if player:Glyph("Glyph of Death's Embrace") and player:SpellCooldown("Death Coil")<.3 and player:buff("Sudden Doom") then 
+			if player:Glyph("Glyph of Death's Embrace") and player:SpellCooldown("Death Coil")<cdcd and player:buff("Sudden Doom") then 
 				local lowestmelee = Object("pet")
 				if lowestmelee and lowestmelee:exists() and lowestmelee:alive() and lowestmelee:SpellRange("Death Coil") and lowestmelee:los() then
 					return lowestmelee:Cast("Death Coil")
@@ -1749,7 +1744,7 @@ unholy.rot = {
 	end,
 	
 	Buffbuff = function()
-		if player:SpellCooldown("Horn of Winter")<.3 and player:RunicPower() <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
+		if player:SpellCooldown("Horn of Winter")<cdcd and player:RunicPower() <= 90 then -- and _A.UnitIsPlayer(lowestmelee.guid)==1
 			return player:Cast("Horn of Winter")
 		end
 	end,
@@ -1772,6 +1767,7 @@ local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return true end
 	player = Object("player")
 	if not player then return true end
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
 	_Y.petengine()
@@ -1818,6 +1814,7 @@ local inCombat = function()
 	if unholy.rot.gargoyle() then return true end
 	if unholy.rot.remorselesswinter() then return true end
 	-- PVP INTERRUPTS AND CC
+	if player:SpellCooldown("Death Coil")>cdcd then return true end
 	if unholy.rot.Asphyxiatesnipe() then return true end
 	if unholy.rot.AsphyxiateBurst() then return true end
 	-- if unholy.rot.darksimulacrum() then return true end -- causes jams maybe
