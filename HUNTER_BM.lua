@@ -1286,47 +1286,36 @@ local exeOnLoad = function()
 	_A.PetGUID  = nil
 	local function attacktotem()
 		local htotem = Object("HealingStreamTotemNOLOS")
+		local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
 		if htotem and (_A.pull_location=="arena" or (toggle("pet_attacktotem") and htotem:range()<=60)) then
-			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
-				return _A.CallWowApi("PetAttack", htotem.guid), 1
+			if _A.PetGUID and (not pettargetguid or pettargetguid~=htotem.guid) then
+				_A.CallWowApi("PetAttack", htotem.guid)
+				return true
 			end
-			return 1
+			return true
 		end
+		return false
 	end
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
+		local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
 		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-					return _A.CallWowApi("PetAttack", target.guid), 3
+				if _A.PetGUID and (not pettargetguid or pettargetguid~=target.guid) then
+					_A.CallWowApi("PetAttack", target.guid)
+					return true
 				end
 			end
-			return 3
+			return true
 		end
-	end
-	local function attackfocus()
-		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOSfocus")
-		if target and _A.pull_location~="arena" then
-			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-				-- print("ATTACKING FOCUS")
-				return _A.CallWowApi("PetAttack", target.guid), 3
-			end
-			return 3
-		end
-	end
-	local function petfollow_whenselftargeting() -- when pet target has a breakable cc
-		local target = Object("target")
-		if target and target.guid == player.guid then
-			if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
-				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
-			end
-		end
+		return false
 	end
 	local function petfollow() -- when pet target has a breakable cc
 		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
 			local target = Object(_A.UnitTarget(_A.PetGUID))
 			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
-				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+				_A.CallWowApi("RunMacroText", "/petfollow")
+				return true
 			end
 		end
 	end
@@ -1367,7 +1356,6 @@ local exeOnLoad = function()
 		-------- PET ROTATION
 		if petpassive() then return true end
 		if attacktotem() then return true end
-		-- if attackfocus() then return true end
 		if attacklowest() then return true end
 		if petfollow() then return true end
 	end
