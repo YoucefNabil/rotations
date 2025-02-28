@@ -1329,32 +1329,16 @@ local exeOnLoad = function()
 				return nil
 			end)
 			_A.PetGUID = nil
-			local function attacktotem()
-				local htotem = Object("HealingStreamTotemNOLOS")
-				if htotem and (_A.pull_location == "arena" or htotem:range() <= 60) then
-					if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID) ~= htotem.guid) then
-						return _A.CallWowApi("PetAttack", htotem.guid), 1
-					end
-					return 1
-				end
-			end
 			local function attacklowest()
 				local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
+				local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
 				if target then
 					if (_A.pull_location ~= "party" and _A.pull_location ~= "raid") or target:combat() then -- avoid pulling shit by accident
-						if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID) ~= target.guid) then
+						if _A.PetGUID and (not pettargetguid or pettargetguid ~= target.guid) then
 							return _A.CallWowApi("PetAttack", target.guid), 3
 						end
 					end
 					return 3
-				end
-			end
-			local function petfollow() -- when pet target has a breakable cc
-				if _A.PetGUID and _A.UnitTarget(_A.PetGUID) ~= nil then
-					local target = Object(_A.UnitTarget(_A.PetGUID))
-					if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
-						return _A.CallWowApi("RunMacroText", "/petfollow"), 4
-					end
 				end
 			end
 			function _Y.GetPetStance()
@@ -1396,13 +1380,9 @@ local exeOnLoad = function()
 				end
 				_A.PetGUID = _A.UnitGUID("pet")
 				if _A.PetGUID == nil then return end
-				-- print(_A.PetGUID)
-				-- print(_Y.GetPetStance())
 				-------- PET ROTATION
-				-- if petpassive() then return end
-				-- if attacktotem() then return end
+				if petpassive() then return end
 				if attacklowest() then return end
-				-- if petfollow() then return end
 			end
 			
 			function _Y.cancelbuff(spellid)
