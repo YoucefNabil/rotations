@@ -394,7 +394,7 @@ Listener:Add("Entering_timerPLZ", "PLAYER_ENTERING_WORLD", function(event)
 	enteredworldat = _A.GetTime()
 	local stuffsds = pull_location()
 	_A.pull_location = stuffsds
-	print("HEY HEY HEY HEY")
+	-- print("HEY HEY HEY HEY")
 end
 )
 enteredworldat = enteredworldat or _A.GetTime()
@@ -1041,7 +1041,7 @@ local exeOnLoad = function()
 				-- table.sort(temptable, function(a,b) return a.range < b.range end )
 			end
 			if temptable[1] then 
-				print(pettargetguid and pettargetguid, temptable[1].GUID, pettargetguid and pettargetguid==temptable[1].GUID)
+				-- print(pettargetguid and pettargetguid, temptable[1].GUID, pettargetguid and pettargetguid==temptable[1].GUID)
 				local pet = Object("pet")
 				if pet
 					and pet:rangefrom(temptable[1].OBJ)<=4
@@ -1052,8 +1052,8 @@ local exeOnLoad = function()
 					return true
 				end -- this may not work
 				if _A.PetGUID and (not pettargetguid or pettargetguid~=temptable[1].GUID) then
-					print(pettargetguid and pettargetguid==temptable[1].GUID)
-					print("GOING TO HEALER")
+					-- print(pettargetguid and pettargetguid==temptable[1].GUID)
+					-- print("GOING TO HEALER")
 					_A.CallWowApi("PetAttack", temptable[1].GUID)
 					return true
 				end
@@ -1075,7 +1075,8 @@ local exeOnLoad = function()
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return true end
 		local pettargetguid_test = _A.UnitTarget("pet") or nil
-		if pettargetguid_test then print(UnitName(pettargetguid_test)) end
+		-- if pettargetguid_test then --print(UnitName(pettargetguid_test))
+		-- end
 		if petpassive() then return true end
 		-- Rotation
 		if petstunsnipe() then return true end
