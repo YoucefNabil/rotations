@@ -1298,7 +1298,7 @@ local exeOnLoad = function()
 	end
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRangePetPOVKCNOLOS")
-		local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
+		local pettargetguid = _A.UnitTarget("pet") or nil
 		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				if _A.PetGUID and (not pettargetguid or pettargetguid~=target.guid) then
@@ -1311,8 +1311,8 @@ local exeOnLoad = function()
 		return false
 	end
 	local function petfollow() -- when pet target has a breakable cc
-		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
-			local target = Object(_A.UnitTarget(_A.PetGUID))
+		if _A.UnitTarget("pet")~=nil then
+			local target = Object(_A.UnitTarget("pet"))
 			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
 				_A.CallWowApi("RunMacroText", "/petfollow")
 				return true

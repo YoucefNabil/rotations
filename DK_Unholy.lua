@@ -400,6 +400,7 @@ end
 enteredworldat = enteredworldat or _A.GetTime()
 _A.pull_location = _A.pull_location or pull_location()
 local exeOnLoad = function()
+	player = Object("player")
 	_A.pressedbuttonat = 0
 	_A.buttondelay = 0.5
 	_A.STARTSLOT = 1
@@ -440,7 +441,6 @@ local exeOnLoad = function()
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		--print(slot)
-		local player = Object("player")
 		Type, id, subType = _A.GetActionInfo(slot)
 		if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
 			then
@@ -952,7 +952,7 @@ local exeOnLoad = function()
 	_A.PetGUID  = nil
 	local function attacktotem()
 		local htotem = Object("HealingStreamTotem")
-		local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
+		local pettargetguid = _A.UnitTarget("pet") or nil
 		if htotem then
 			if _A.PetGUID and (not pettargetguid or pettargetguid~=htotem.guid) then
 				_A.CallWowApi("PetAttack", htotem.guid)
@@ -964,7 +964,7 @@ local exeOnLoad = function()
 	end
 	local function attacklowest()
 		local target = Object("lowestEnemyInSpellRangePETPOVPOV")
-		local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
+		local pettargetguid = _A.UnitTarget("pet") or nil
 		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				if _A.PetGUID and (not pettargetguid or pettargetguid~=target.guid) then
@@ -1003,8 +1003,8 @@ local exeOnLoad = function()
 		end
 	end
 	local function petfollow() -- when pet target has a breakable cc
-		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
-			local target = Object(_A.UnitTarget(_A.PetGUID))
+		if _A.PetGUID and _A.UnitTarget("pet")~=nil then
+			local target = Object(_A.UnitTarget("pet"))
 			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
 				_A.CallWowApi("RunMacroText", "/petfollow")
 				return true
@@ -1013,7 +1013,7 @@ local exeOnLoad = function()
 		return false
 	end
 	local function petfollow2() -- when pet target has a breakable cc
-		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
+		if _A.PetGUID and _A.UnitTarget("pet")~=nil then
 			_A.CallWowApi("RunMacroText", "/petfollow")
 			return true
 		end
@@ -1021,7 +1021,7 @@ local exeOnLoad = function()
 	end
 	local function petstunsnipe()
 		local temptable = {}
-		local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
+		local pettargetguid = _A.UnitTarget("pet") or nil
 		if player:SpellCooldown("Gnaw")==0 and _Y.someoneisuperlow() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=40 
@@ -1038,22 +1038,25 @@ local exeOnLoad = function()
 				end
 			end
 			if #temptable>1 then
-				table.sort(temptable, function(a,b) return a.range < b.range end )
+				-- table.sort(temptable, function(a,b) return a.range < b.range end )
 			end
 			if temptable[1] then 
+				print(pettargetguid and pettargetguid, temptable[1].GUID, pettargetguid and pettargetguid==temptable[1].GUID)
 				local pet = Object("pet")
+				if pet
+					and pet:rangefrom(temptable[1].OBJ)<=4
+					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
+					print("GNAW ON HEALER")
+					-- _A.RunMacroText("/cast [@pettarget] Gnaw")
+					temptable[1].OBJ:cast("Gnaw")
+					return true
+				end -- this may not work
 				if _A.PetGUID and (not pettargetguid or pettargetguid~=temptable[1].GUID) then
+					print(pettargetguid and pettargetguid==temptable[1].GUID)
 					print("GOING TO HEALER")
 					_A.CallWowApi("PetAttack", temptable[1].GUID)
 					return true
 				end
-				if pet and pettargetguid and pettargetguid==temptable[1].GUID
-					and pet:rangefrom(temptable[1].OBJ)<=4
-					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
-					print("GNAW ON HEALER")
-					_A.RunMacroText("/cast [@pettarget] Gnaw")
-					return true
-				end -- this may not work
 				return true
 			end
 			return false
@@ -1071,6 +1074,8 @@ local exeOnLoad = function()
 		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return true end
+		local pettargetguid_test = _A.UnitTarget("pet") or nil
+		if pettargetguid_test then print(UnitName(pettargetguid_test)) end
 		if petpassive() then return true end
 		-- Rotation
 		if petstunsnipe() then return true end
@@ -1767,11 +1772,11 @@ unholy.rot = {
 ---========================
 local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return true end
-	player = Object("player")
-	if not player then return true end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
+	player = Object("player")
+	if not player then return true end
 	_Y.petengine()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .2 + _A.latency
