@@ -668,6 +668,27 @@ local exeOnLoad = function()
 			return tempTable[num] and tempTable[num].guid
 		end
 	end)
+	_A.FakeUnits:Add('ClosestEnemyHealer', function(num)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj.isplayer and Obj:range()<=40 and healerspecid[Obj:spec()]
+				and not Obj:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") 
+				then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					range = Obj:range()
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort(tempTable, function(a,b)
+				return a.range < b.range
+			end)
+		end
+		if #tempTable>=1 then
+			return tempTable[num] and tempTable[num].guid
+		end
+	end)
 	--
 	_A.FakeUnits:Add('lowestEnemyInRangeNOTARNOFACE', function(num, range_target)
 		local tempTable = {}
@@ -976,6 +997,20 @@ local exeOnLoad = function()
 		end
 		return false
 	end
+	local function attackclosesthealer()
+		local target = Object("ClosestEnemyHealer")
+		local pettargetguid = _A.UnitTarget("pet") or nil
+		if target then
+			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
+				if _A.PetGUID and (not pettargetguid or pettargetguid~=target.guid) then
+					_A.CallWowApi("PetAttack", target.guid)
+					return true
+				end
+			end
+			return true
+		end
+		return false
+	end
 	function _Y.GetPetStance()
 		local STANCE_ICONS = {
 			"PET_MODE_PASSIVE",
@@ -1081,6 +1116,7 @@ local exeOnLoad = function()
 		-- Rotation
 		if petstunsnipe() then return true end
 		if attacktotem() then return true end
+		if attackclosesthealer() then return true end
 		if attacklowest() then return true end
 		if petfollow() then return true end
 		if petfollow2() then return true end
