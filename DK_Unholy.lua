@@ -18,7 +18,7 @@ local healerspecid = {
 	[270]="monk mistweaver",
 	[65]="Paladin Holy",
 	-- [66]="Paladin prot",
-	-- [70]="Paladin retri",
+	[70]="Paladin retri",
 	[257]="Priest Holy",
 	[256]="Priest discipline",
 	-- [258]="Priest shadow",
@@ -1057,7 +1057,9 @@ local exeOnLoad = function()
 	local function petstunsnipe()
 		local temptable = {}
 		local pettargetguid = _A.UnitTarget("pet") or nil
-		if player:SpellCooldown("Gnaw")==0 and _Y.someoneisuperlow() then
+		if player:SpellCooldown("Gnaw")==0 and player:SpellCooldown("Strangulate")~=0 and player:SpellCooldown("Strangulate")<58 
+		and not IsCurrentSpell(47476) 
+		and  _Y.someoneisuperlow() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=40 
 					and _A.isthisahealer(obj)
@@ -1116,7 +1118,7 @@ local exeOnLoad = function()
 		-- Rotation
 		if petstunsnipe() then return true end
 		if attacktotem() then return true end
-		if attackclosesthealer() then return true end
+		-- if attackclosesthealer() then return true end
 		if attacklowest() then return true end
 		if petfollow() then return true end
 		if petfollow2() then return true end
