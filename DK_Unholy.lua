@@ -1057,8 +1057,7 @@ local exeOnLoad = function()
 	local function petstunsnipe()
 		local temptable = {}
 		local pettargetguid = _A.UnitTarget("pet") or nil
-		if player:SpellCooldown("Gnaw")==0 and player:SpellCooldown("Strangulate")~=0 and player:SpellCooldown("Strangulate")<58 
-		and not IsCurrentSpell(47476) 
+		if player:SpellCooldown("Gnaw")==0
 		and  _Y.someoneisuperlow() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=40 
@@ -1116,9 +1115,9 @@ local exeOnLoad = function()
 		-- end
 		if petpassive() then return true end
 		-- Rotation
-		if petstunsnipe() then return true end
+		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and unholy.rot.strangulatesnipe() then return true end
+		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and petstunsnipe() then return true end
 		if attacktotem() then return true end
-		-- if attackclosesthealer() then return true end
 		if attacklowest() then return true end
 		if petfollow() then return true end
 		if petfollow2() then return true end
@@ -1323,7 +1322,7 @@ unholy.rot = {
 		if (player:RuneCount("Blood")>=1 or player:RuneCount("Death")>=1)  then
 			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _Y.someoneisuperlow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj.isplayer  and _A.isthisahealer(obj)  and obj:SpellRange("Strangulate")  
+					if obj.isplayer  and _A.isthisahealer(obj) and obj:SpellRange("Strangulate")  
 						and not obj:buffany("Bear Form")
 						and obj:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
@@ -1850,7 +1849,6 @@ local inCombat = function()
 	unholy.rot.antimagicshell()
 	unholy.rot.deathpact()
 	unholy.rot.Lichborne()
-	if unholy.rot.strangulatesnipe() then return true end
 	---------------------- GCD SPELLS
 	-- BINDS
 	if player:keybind("T") and unholy.rot.massgrip() then return true end
