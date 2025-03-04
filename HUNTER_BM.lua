@@ -1887,7 +1887,7 @@ survival.rot = {
 			if lowestmelee and lowestmelee.isplayer
 				-- and lowestmelee:health()>=35
 				then 
-				player:useitem(76089)
+				player:useitem("Virmen's Bite")
 				return player:cast("Rapid Fire")
 			end
 		end
