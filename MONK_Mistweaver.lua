@@ -1764,14 +1764,14 @@ local mw_rot = {
 					local SMobj = Object(_A.SMguid)
 					if SMobj and SMobj:SpellRange("Renewing Mist") then
 						if SMobj:buff(132120) then _A.CallWowApi("SpellStopCasting") end
-						if player:Chi() >= 3 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
-						if player:SpellUsable(116694) and player:Chi() < 3 and SMobj:los() then
+						if player:level()>=16 and player:Chi() >= 3 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
+						if player:level()>=34 and player:SpellUsable(116694) and player:Chi() < 3 and SMobj:los() then
 							return SMobj:cast(
 							"Surging Mist", true)
 						end
 					end
 				end
-				if not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
+				if player:level()>=10 and not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
 					return lowest
 					:cast("Soothing Mist")
 				end
@@ -2741,7 +2741,7 @@ local inCombat = function()
 		if mw_rot.dpsstanceswap() then return true end
 	end
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
-	if mylevel >= 34 and mw_rot.ctrl_mode() then return true end -- ctrl
+	if mw_rot.ctrl_mode() then return true end -- ctrl
 	-- healing spheres don't get you in combat lol (increased mana regen)
 	-- if not player:combat() and (_A.pull_location =="pvp" or _A.pull_location =="arena") then
 	-- if mw_rot.dpsstance_healstance() then return true end
