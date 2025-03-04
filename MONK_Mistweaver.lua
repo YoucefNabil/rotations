@@ -1762,7 +1762,7 @@ local mw_rot = {
 				local lowest = Object("lowestallNOHOT")
 				if player:isChanneling("Soothing Mist") and _A.SMguid then
 					local SMobj = Object(_A.SMguid)
-					if SMobj and SMobj:SpellRange("Soothing Mist") then
+					if SMobj and SMobj:SpellRange("Renewing Mist") then
 						if SMobj:buff(132120) then _A.CallWowApi("SpellStopCasting") end
 						if player:level()>=16 and player:Chi() >= 3 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
 						if player:level()>=34 and player:SpellUsable(116694) and player:Chi() < 3 and SMobj:los() then
