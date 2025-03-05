@@ -2753,7 +2753,7 @@ local inCombat = function()
 	------------------ High Prio
 	-- KEYBINDS
 	-- OH SHIT ORBS
-	if mylevel >= 64 and mw_rot.tsulongHealing() then return true end -- SUPER PRIO
+	if mylevel >= 90 and mw_rot.tsulongHealing() then return true end -- SUPER PRIO
 	if player:keybind("R") or player:ui("leveling") then
 		if mylevel >= 56 and mw_rot.manatea() then return true end
 		if mylevel >= 28 and mw_rot.pvp_disable_target() then return true end
