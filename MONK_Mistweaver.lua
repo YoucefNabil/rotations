@@ -657,6 +657,9 @@ local exeOnLoad = function()
 			-- end
 			if guidsrc == UnitGUID("player")
 				then
+				if subevent =="SPELL_CAST_SUCCESS" and idd==124682 then
+					_A.CallWowApi("SpellStopCasting")
+				end
 				-- DEBUG
 				-- if subevent == "SPELL_CAST_SUCCESS" then
 				-- if idd==115460 then
@@ -1777,30 +1780,22 @@ local mw_rot = {
 					:cast("Soothing Mist")
 				end
 			end
-			else
-			if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
+			-- else
+			-- if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
 		end
 	end,
 	
 	enveloping_mist_mode = function()
-		-- if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
 		if player:chi()>=3 then
 			if not player:moving() then
 				local lowest = Object("lowestall")
-				-- local lowest = Object("lowestallNOHOT")
-				if player:isChanneling("Soothing Mist") and _A.SMguid then
-					local SMobj = Object(_A.SMguid)
-					if SMobj and SMobj:SpellRange("Renewing Mist") then
-						if SMobj:buff(132120) then _A.CallWowApi("SpellStopCasting") end
-						if player:level()>=16 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
-					end
+				if player:isChanneling("Soothing Mist") then
+					if player:level()>=16 then return player:cast("Enveloping Mist", true) end -- true) means casts while channeling stuff
 				end
 				if player:level()>=10 and not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
 					return lowest:cast("Soothing Mist")
 				end
 			end
-			else
-			if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
 		end
 	end,
 	
@@ -2060,101 +2055,99 @@ local mw_rot = {
 	end,
 	
 	ringofpeacev3 = function()
-		-- Early return checks
-		if not player:Talent("Ring of Peace") then return end
-		if player:SpellCooldown("Ring of Peace") >= cdcd then return end
+		if not (player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace") < cdcd) then return end
 		
-		-- Cache common checks for enemies
-		local function isValidEnemy(enemy)
-			return enemy.isplayer and 
-			not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and 
-			_A.notimmune(enemy)
+		-- Cache positions for friendlies and enemies
+		local friendlies = {}
+		local friendlyPositions = {}
+		for _, f in pairs(_A.OM:Get('Friendly')) do
+			if f.isplayer and _A.nothealimmune(f) then
+				local x, y, z = _A.ObjectPosition(f.guid)
+				friendlies[#friendlies+1] = f
+				friendlyPositions[f.guid] = {x, y, z}
+			end
 		end
+		if #friendlies == 0 then return end
 		
-		-- Version 1: Check enemies targeting friendlies
-		local most, mostGuid = 0, nil
-		for _, enemy in pairs(_A.OM:Get('Enemy')) do
-			if isValidEnemy(enemy) and 
-				not enemy:state("Disarm || stun || incapacitate || fear || disorient || charm || misc || sleep") and
-				not healerspecid[enemy:spec()] then
-				
-				local tguid = UnitTarget(enemy.guid)
-				if tguid then
-					local tobj = Object(tguid)
-					if tobj and _A.nothealimmune(tobj) and tobj:Distancefrom(enemy) < 7 then
-						local currentCount = (most == 0 or tguid ~= mostGuid) and 1 or most + 1
-						if currentCount > most then
-							most = currentCount
-							mostGuid = tguid
-						end
-					end
-				end
+		local enemies = {}
+		local enemyPositions = {}
+		for _, e in pairs(_A.OM:Get('Enemy')) do
+			if e.isplayer and _A.notimmune(e) and not e:state("stun || incapacitate || fear || disorient || charm || misc || sleep") then
+				local x, y, z = _A.ObjectPosition(e.guid)
+				enemies[#enemies+1] = {
+					obj = e,
+					pos = {x, y, z},
+					isHealer = healerspecid[e:spec()],
+					state = {
+						bladeStorm = e:BuffAny("Bladestorm || Divine Shield || Deterrence"),
+						disarm = e:state("Disarm"),
+						canInterrupt = e:caninterrupt(),
+						drState = e:drState(137460),
+						silence = e:state("silence")
+					}
+				}
+				enemyPositions[e.guid] = {x, y, z}
 			end
 		end
 		
-		if mostGuid then
-			local target = Object(mostGuid)
-			if target and target:SpellRange("Ring of Peace") and 
-				not target:BuffAny("Ring of Peace") and target:los() and
-				(most >= 2 or (most >= 1 and (target:health() < 45 or 
-				(_A.pull_location == "arena" and target:health() < 65)))) then
-				return target:Cast("Ring of Peace")
-			end
+		-- Squared distance check with cached positions
+		local function withinRange(pos1, pos2, range)
+			local dx, dy, dz = pos1[1]-pos2[1], pos1[2]-pos2[2], pos1[3]-pos2[3]
+			return (dx*dx + dy*dy + dz*dz) < (range*range)
 		end
 		
-		-- Version 2: Check for enemy clusters near friendlies
-		local bestCount, bestTarget = 0, nil
-		for _, friend in pairs(_A.OM:Get('Friendly')) do
-			if friend.isplayer and _A.nothealimmune(friend) then
-				local count = 0
-				for _, enemy in pairs(_A.OM:Get('Enemy')) do
-					if isValidEnemy(enemy) and friend:Distancefrom(enemy) < 7 and
-						not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep || Disarm") then
+		-- Version 1: Target protection
+		local lowHP = _A.pull_location == "arena" and 65 or 45
+		for _, f in ipairs(friendlies) do
+			local fpos = friendlyPositions[f.guid]
+			local count = 0
+			for _, e in ipairs(enemies) do
+				if not e.state.bladeStorm and not e.state.disarm and not e.isHealer then
+					local tguid = UnitTarget(e.obj.guid)
+					if tguid == f.guid and withinRange(e.pos, fpos, 7) then
 						count = count + 1
-						if count >= 3 then -- Early exit if we find 3+ enemies
-							if friend:SpellRange("Ring of Peace") and 
-								not friend:BuffAny("Ring of Peace") and friend:los() then
-								return friend:Cast("Ring of Peace")
-							end
-							break
-						end
 					end
 				end
-				if count > bestCount then
-					bestCount = count
-					bestTarget = friend
+			end
+			if count > 0 and f:SpellRange("Ring of Peace") and not f:BuffAny("Ring of Peace") and f:los() then
+				if count >= 2 or (count >= 1 and f:health() < lowHP) then
+					return f:Cast("Ring of Peace")
 				end
 			end
 		end
 		
-		-- Version 3: Interrupt high priority casts
-		for _, friend in pairs(_A.OM:Get('Friendly')) do
-			if friend.isplayer and _A.nothealimmune(friend) and friend:SpellRange("Ring of Peace") and 
-				not friend:BuffAny("Ring of Peace") and friend:los() then
-				for _, enemy in pairs(_A.OM:Get('Enemy')) do
-					if isValidEnemy(enemy) and friend:Distancefrom(enemy) < 7 and 
-						kickcheck_highprio(enemy) and
-						(player:SpellCooldown("Spear Hand Strike") > _A.interrupttreshhold or 
-							not enemy:caninterrupt() or 
-						not enemy:SpellRange("Blackout Kick")) then
-						return friend:Cast("Ring of Peace")
+		-- Version 2: Cluster detection
+		for _, f in ipairs(friendlies) do
+			local fpos = friendlyPositions[f.guid]
+			local count = 0
+			for _, e in ipairs(enemies) do
+				if not e.state.bladeStorm and not e.state.disarm and withinRange(e.pos, fpos, 7) then
+					count = count + 1
+				end
+			end
+			if count >= 3 and f:SpellRange("Ring of Peace") and not f:BuffAny("Ring of Peace") and f:los() then
+				return f:Cast("Ring of Peace")
+			end
+		end
+		
+		-- Version 3: High priority interrupts
+		for _, e in ipairs(enemies) do
+			if kickcheck_highprio(e.obj) and (player:SpellCooldown("Spear Hand Strike") > _A.interrupttreshhold or not e.state.canInterrupt) then
+				for _, f in ipairs(friendlies) do
+					if withinRange(e.pos, friendlyPositions[f.guid], 7) and f:los() then
+						return f:Cast("Ring of Peace")
 					end
 				end
 			end
 		end
 		
-		-- Version 4: Silence healers when someone is low
+		-- Version 4: Healer silence
 		if _A.someoneislow() then
-			for _, friend in pairs(_A.OM:Get('Friendly')) do
-				if friend.isplayer and _A.nothealimmune(friend) and friend:SpellRange("Ring of Peace") and 
-					not friend:BuffAny("Ring of Peace") and friend:los() then
-					for _, enemy in pairs(_A.OM:Get('Enemy')) do
-						if isValidEnemy(enemy) and friend:Distancefrom(enemy) < 7 and 
-							healerspecid[enemy:spec()] and 
-							not enemy:state("silence || stun || incapacitate || fear || disorient || charm || misc || sleep") and
-							(enemy:drState(137460) == 1 or enemy:drState(137460) == -1) then
-							return friend:Cast("Ring of Peace")
-						end
+			for _, f in ipairs(friendlies) do
+				local fpos = friendlyPositions[f.guid]
+				for _, e in ipairs(enemies) do
+					if e.isHealer and withinRange(e.pos, fpos, 7) and not e.state.silence and e.state.drState ~= 2 then
+						return f:Cast("Ring of Peace")
 					end
 				end
 			end
@@ -2624,7 +2617,7 @@ local mw_rot = {
 					then
 					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 					if lowestmelee then
-						return lowestmelee:Cast("Tiger Palm", true)
+						return lowestmelee:Cast("Tiger Palm")
 					end
 				end
 			end
@@ -2673,7 +2666,7 @@ local mw_rot = {
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
 					----------------------------------
-					return lowestmelee:Cast("Blackout Kick", true)
+					return lowestmelee:Cast("Blackout Kick")
 				end
 			end
 			--------------------------------- damage based
@@ -2727,7 +2720,7 @@ local mw_rot = {
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee then
-				return lowestmelee:Cast("Jab", true)
+				return lowestmelee:Cast("Jab")
 			end
 		end
 	end,
@@ -2858,6 +2851,7 @@ local inCombat = function()
 	_A.interrupttreshhold = .3 + _A.latency
 	if player:mounted() then return true end
 	if player:isChanneling("Crackling Jade Lightning") then return true end -- ¨pausing when casting this
+	-- if player:isChanneling("Soothing Mist") then if player:ui("use_enveloping") then mw_rot.enveloping_mist_mode() end return true end -- ¨pausing when casting this
 	-- Out of GCD
 	mw_rot.autoattackmanager()
 	_Y.petengine_MONK()
