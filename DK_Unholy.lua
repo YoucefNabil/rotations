@@ -3,6 +3,8 @@ local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
 local C_Timer = _A.C_Timer
 local looping = C_Timer.NewTicker
+local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
+local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
 local cdcd
 _A.FaceAlways = true
 -- top of the CR
@@ -18,7 +20,7 @@ local healerspecid = {
 	[270]="monk mistweaver",
 	[65]="Paladin Holy",
 	-- [66]="Paladin prot",
-	-- [70]="Paladin retri",
+	[70]="Paladin retri",
 	[257]="Priest Holy",
 	[256]="Priest discipline",
 	-- [258]="Priest shadow",
@@ -80,6 +82,9 @@ local usableitems= { -- item slots
 }
 local speedbuffs = {
 	"Tiger's lust",
+	"Blazing Speed",
+	"Displacer Beast",
+	"Dash",
 	"Angelic Feather"
 }
 local function hasspeedbuff(unit)
@@ -90,7 +95,6 @@ local function hasspeedbuff(unit)
 		end
 	end
 end
-
 local function cditemRemains(itemid)
 	local itempointerpoint;
 	if itemid ~= nil
@@ -114,7 +118,6 @@ local function cditemRemains(itemid)
 		return 0
 	end
 end
-
 local immunebuffs = {
 	"Deterrence",
 	-- "Anti-Magic Shell",
@@ -131,7 +134,13 @@ local immunedebuffs = {
 	"Cyclone",
 	-- "Smoke Bomb"
 }
-
+local grabthisfuck = {
+}
+local rootthisfuck = {
+	["Chi Torpedo"]=true,
+	["Roll"]=true,
+	["Disengage"]=true,
+}
 local spelltable = {
 	[5782] = 2,     -- Fear
 	[1120] = 1,     -- Drain Soul
@@ -552,6 +561,7 @@ local exeOnLoad = function()
 	local ijustdidthatthing = false
 	local ijustdidthatthingtime = 0
 	Listener:Add("DK_STUFF", {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED"} ,function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+		player = player or Object("player")
 		if event == "PLAYER_ENTERING_WORLD"
 			or event == "PLAYER_REGEN_ENABLED"
 			then
@@ -563,12 +573,38 @@ local exeOnLoad = function()
 		end
 		if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT"
 			then
+			-- non player related
+			if subevent=="SPELL_CAST_SUCCESS" and player and guidsrc ~= player.guid then -- only filter by me
+				-- if UnitCanAttack(guidsrc) then
+				local unit = Object(guidsrc)
+				if unit and unit.isplayer and unit:enemy() and rootthisfuck[spell_name(idd)] then
+					C_Timer.NewTicker(.1, function()
+						if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
+							then 
+							if unit:SpellRange("Chains of Ice") 
+								and not unit: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
+								and not unit:Debuffany("Chains of Ice || Hand of Freedom || Bladestorm")
+								and not unit:buffany(45524)
+								and not unit:buffany(48707)							
+								and not unit:buffany(50435)	
+								and _Y.notimmune(unit)
+								-- and not unit:immune("snare")
+								and not unit:buffany(1044)
+								and unit:los() 
+								then
+								return unit:Cast("Chains of Ice")
+							end
+						end
+					end, 10, "responsecast")
+				end
+			end
+			
+			-- player related
 			if guidsrc == UnitGUID("player") then -- only filter by me
 				if subevent =="SPELL_CAST_SUCCESS" then
 					if idd==85948 then --festering strike, refreshes dot duration but not stats
 						ijustdidthatthing = true -- when true, means I just used FS
 						ijustdidthatthingtime = GetTime()
-						-- print(ijustdidthatthingtime)
 					end
 				end
 				if (idd==45462) or (idd==77575) -- or (idd==50842) -- outbreak -- Plague Strike -- pestilence(doesnt work because it only works on the target, and not on everyone else)
@@ -579,7 +615,6 @@ local exeOnLoad = function()
 						-- every spell aura refresh of dk refreshes both stats and duration, EXCEPT festering strike (only duration), that's what that check is for
 						then
 						_A.enemyguidtab[guiddest]=_A.myscore()
-						-- print(_A.enemyguidtab[guiddest])
 					end
 					if subevent=="SPELL_AURA_REMOVED" 
 						then
@@ -587,6 +622,7 @@ local exeOnLoad = function()
 					end
 				end	
 			end
+			--
 		end
 	end)
 	
@@ -831,7 +867,7 @@ local exeOnLoad = function()
 	function _Y.someoneisuperlow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj.isplayer and Obj:range()<40  then
-				if Obj:Health()<35 or (Obj:Health()<45 and _A.pull_location~="arena") then
+				if Obj:Health()<35 then
 					return true
 				end
 			end
@@ -997,20 +1033,6 @@ local exeOnLoad = function()
 		end
 		return false
 	end
-	local function attackclosesthealer()
-		local target = Object("ClosestEnemyHealer")
-		local pettargetguid = _A.UnitTarget("pet") or nil
-		if target then
-			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
-				if _A.PetGUID and (not pettargetguid or pettargetguid~=target.guid) then
-					_A.CallWowApi("PetAttack", target.guid)
-					return true
-				end
-			end
-			return true
-		end
-		return false
-	end
 	function _Y.GetPetStance()
 		local STANCE_ICONS = {
 			"PET_MODE_PASSIVE",
@@ -1058,7 +1080,7 @@ local exeOnLoad = function()
 		local temptable = {}
 		local pettargetguid = _A.UnitTarget("pet") or nil
 		if player:SpellCooldown("Gnaw")==0
-		and  _Y.someoneisuperlow() then
+			and _Y.someoneisuperlow() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=40 
 					and _A.isthisahealer(obj)
@@ -1074,22 +1096,18 @@ local exeOnLoad = function()
 				end
 			end
 			if #temptable>1 then
-				-- table.sort(temptable, function(a,b) return a.range < b.range end )
+				table.sort(temptable, function(a,b) return a.range < b.range end )
 			end
 			if temptable[1] then 
-				-- print(pettargetguid and pettargetguid, temptable[1].GUID, pettargetguid and pettargetguid==temptable[1].GUID)
 				local pet = Object("pet")
 				if pet
 					and pet:rangefrom(temptable[1].OBJ)<=4
 					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
 					print("GNAW ON HEALER")
-					-- _A.RunMacroText("/cast [@pettarget] Gnaw")
 					temptable[1].OBJ:cast("Gnaw")
 					return true
-				end -- this may not work
+				end
 				if _A.PetGUID and (not pettargetguid or pettargetguid~=temptable[1].GUID) then
-					-- print(pettargetguid and pettargetguid==temptable[1].GUID)
-					-- print("GOING TO HEALER")
 					_A.CallWowApi("PetAttack", temptable[1].GUID)
 					return true
 				end
@@ -1418,7 +1436,7 @@ unholy.rot = {
 			then 
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:SpellRange("Chains of Ice") 
-					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
+					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root || snare") 
 					and not obj:Debuffany("Chains of Ice")
 					and not obj:buffany("Hand of Freedom")
 					and not obj:buffany(45524)
