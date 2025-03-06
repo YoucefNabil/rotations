@@ -287,6 +287,7 @@ local GUI = {
 	{ type = "spacer",   size = spacer_size },
 	{ type = "checkbox", size = checkbox_tsize, text = "Use DPS leveling Rotation " .. _A.Core:GetSpellIcon(100787, 15, 15) .. " (R)", key = "leveling", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = "Alert on Statue out of range " .. _A.Core:GetSpellIcon(115313, 15, 15),        key = "draw_statue_range", default = false },
+	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(124682, 15, 15, true), key = "use_enveloping", default = false },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "spacer",   size = spacer_size },
 	{ type = 'text',     size = info_tsize,     text = '© .youcef & _2related (UI)' },
@@ -1781,6 +1782,28 @@ local mw_rot = {
 		end
 	end,
 	
+	enveloping_mist_mode = function()
+		-- if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
+		if player:chi()>=3 then
+			if not player:moving() then
+				local lowest = Object("lowestall")
+				-- local lowest = Object("lowestallNOHOT")
+				if player:isChanneling("Soothing Mist") and _A.SMguid then
+					local SMobj = Object(_A.SMguid)
+					if SMobj and SMobj:SpellRange("Renewing Mist") then
+						if SMobj:buff(132120) then _A.CallWowApi("SpellStopCasting") end
+						if player:level()>=16 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
+					end
+				end
+				if player:level()>=10 and not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
+					return lowest:cast("Soothing Mist")
+				end
+			end
+			else
+			if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
+		end
+	end,
+	
 	burstdisarm = function() -- should be arena only
 		if player:SpellCooldown("Grapple Weapon") < cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -2012,6 +2035,108 @@ local mw_rot = {
 				end
 			end
 			-- end
+		end
+	end,
+	
+	ringofpeacev3 = function()
+		-- Early return checks
+		if not player:Talent("Ring of Peace") then return end
+		if player:SpellCooldown("Ring of Peace") >= cdcd then return end
+		
+		-- Cache common checks for enemies
+		local function isValidEnemy(enemy)
+			return enemy.isplayer and 
+			not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and 
+			_A.notimmune(enemy)
+		end
+		
+		-- Version 1: Check enemies targeting friendlies
+		local most, mostGuid = 0, nil
+		for _, enemy in pairs(_A.OM:Get('Enemy')) do
+			if isValidEnemy(enemy) and 
+				not enemy:state("Disarm || stun || incapacitate || fear || disorient || charm || misc || sleep") and
+				not healerspecid[enemy:spec()] then
+				
+				local tguid = UnitTarget(enemy.guid)
+				if tguid then
+					local tobj = Object(tguid)
+					if tobj and _A.nothealimmune(tobj) and tobj:Distancefrom(enemy) < 7 then
+						local currentCount = (most == 0 or tguid ~= mostGuid) and 1 or most + 1
+						if currentCount > most then
+							most = currentCount
+							mostGuid = tguid
+						end
+					end
+				end
+			end
+		end
+		
+		if mostGuid then
+			local target = Object(mostGuid)
+			if target and target:SpellRange("Ring of Peace") and 
+				not target:BuffAny("Ring of Peace") and target:los() and
+				(most >= 2 or (most >= 1 and (target:health() < 45 or 
+				(_A.pull_location == "arena" and target:health() < 65)))) then
+				return target:Cast("Ring of Peace")
+			end
+		end
+		
+		-- Version 2: Check for enemy clusters near friendlies
+		local bestCount, bestTarget = 0, nil
+		for _, friend in pairs(_A.OM:Get('Friendly')) do
+			if friend.isplayer and _A.nothealimmune(friend) then
+				local count = 0
+				for _, enemy in pairs(_A.OM:Get('Enemy')) do
+					if isValidEnemy(enemy) and friend:Distancefrom(enemy) < 7 and
+						not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep || Disarm") then
+						count = count + 1
+						if count >= 3 then -- Early exit if we find 3+ enemies
+							if friend:SpellRange("Ring of Peace") and 
+								not friend:BuffAny("Ring of Peace") and friend:los() then
+								return friend:Cast("Ring of Peace")
+							end
+							break
+						end
+					end
+				end
+				if count > bestCount then
+					bestCount = count
+					bestTarget = friend
+				end
+			end
+		end
+		
+		-- Version 3: Interrupt high priority casts
+		for _, friend in pairs(_A.OM:Get('Friendly')) do
+			if friend.isplayer and _A.nothealimmune(friend) and friend:SpellRange("Ring of Peace") and 
+				not friend:BuffAny("Ring of Peace") and friend:los() then
+				for _, enemy in pairs(_A.OM:Get('Enemy')) do
+					if isValidEnemy(enemy) and friend:Distancefrom(enemy) < 7 and 
+						kickcheck_highprio(enemy) and
+						(player:SpellCooldown("Spear Hand Strike") > _A.interrupttreshhold or 
+							not enemy:caninterrupt() or 
+						not enemy:SpellRange("Blackout Kick")) then
+						return friend:Cast("Ring of Peace")
+					end
+				end
+			end
+		end
+		
+		-- Version 4: Silence healers when someone is low
+		if _A.someoneislow() then
+			for _, friend in pairs(_A.OM:Get('Friendly')) do
+				if friend.isplayer and _A.nothealimmune(friend) and friend:SpellRange("Ring of Peace") and 
+					not friend:BuffAny("Ring of Peace") and friend:los() then
+					for _, enemy in pairs(_A.OM:Get('Enemy')) do
+						if isValidEnemy(enemy) and friend:Distancefrom(enemy) < 7 and 
+							healerspecid[enemy:spec()] and 
+							not enemy:state("silence || stun || incapacitate || fear || disorient || charm || misc || sleep") and
+							(enemy:drState(137460) == 1 or enemy:drState(137460) == -1) then
+							return friend:Cast("Ring of Peace")
+						end
+					end
+				end
+			end
 		end
 	end,
 	
@@ -2732,7 +2857,7 @@ local inCombat = function()
 	------------------ High Prio
 	-- KEYBINDS
 	-- OH SHIT ORBS
-	--if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
+	if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if player:keybind("R") or player:ui("leveling") then
 		if mylevel >= 56 and mw_rot.manatea() then return true end
 		if mylevel >= 28 and mw_rot.pvp_disable_target() then return true end
@@ -2741,14 +2866,7 @@ local inCombat = function()
 		if mw_rot.dpsstanceswap() then return true end
 	end
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
-	if mw_rot.ctrl_mode() then return true end -- ctrl
-	-- healing spheres don't get you in combat lol (increased mana regen)
-	-- if not player:combat() and (_A.pull_location =="pvp" or _A.pull_location =="arena") then
-	-- if mw_rot.dpsstance_healstance() then return true end
-	-- if mylevel >= 64 and mw_rot.healingsphere_nocombat() then return true end
-	-- return true
-	-- end
-	--
+	if not player:ui("use_enveloping") and mw_rot.ctrl_mode() then return true end -- ctrl
 	-- GCD CDS
 	if mylevel >= 50 and mw_rot.lifecocoon() then return true end
 	if mylevel >= 68 and mw_rot.burstdisarm() then
@@ -2767,7 +2885,8 @@ local inCombat = function()
 	if mylevel >= 3 and mw_rot.tigerpalm_mm() then return true end
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
-	if mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
+	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
+	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	-- OH SHIT ORBS
 	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
 	if _A.manaengine_highprio() then                             -- HIGH PRIO
@@ -2777,7 +2896,7 @@ local inCombat = function()
 	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if mw_rot.Xuen() then return true end
 	--------------------- CC
-	if mw_rot.ringofpeacev2() then return true end
+	if mw_rot.ringofpeacev3() then return true end
 	if mw_rot.kick_legsweep() then return true end
 	if mw_rot.stun_legsweep() then return true end
 	if mylevel >= 44 then
