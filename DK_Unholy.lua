@@ -577,7 +577,7 @@ local exeOnLoad = function()
 			-- non player related
 			if subevent=="SPELL_CAST_SUCCESS" and player and guidsrc and guidsrc ~= player.guid then -- only filter by me
 				-- if UnitCanAttack(guidsrc) then
-				local unit_event = Object(guidsrc)
+				local unit_event = guidsrc and Object(guidsrc) or nil
 				if unit_event and unit_event.isplayer and unit_event:enemy() and rootthisfuck[spell_name(idd)] then
 					C_Timer.NewTicker(.1, function()
 						if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
