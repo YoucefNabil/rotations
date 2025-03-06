@@ -562,6 +562,7 @@ local exeOnLoad = function()
 	local ijustdidthatthingtime = 0
 	Listener:Add("DK_STUFF", {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED"} ,function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		player = player or Object("player")
+		if not _A.Cache.Utils.PlayerInGame then return true end
 		if event == "PLAYER_ENTERING_WORLD"
 			or event == "PLAYER_REGEN_ENABLED"
 			then
@@ -574,25 +575,25 @@ local exeOnLoad = function()
 		if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT"
 			then
 			-- non player related
-			if subevent=="SPELL_CAST_SUCCESS" and player and guidsrc ~= player.guid then -- only filter by me
+			if subevent=="SPELL_CAST_SUCCESS" and player and guidsrc and guidsrc ~= player.guid then -- only filter by me
 				-- if UnitCanAttack(guidsrc) then
-				local unit = Object(guidsrc)
-				if unit and unit.isplayer and unit:enemy() and rootthisfuck[spell_name(idd)] then
+				local unit_event = Object(guidsrc)
+				if unit_event and unit_event.isplayer and unit_event:enemy() and rootthisfuck[spell_name(idd)] then
 					C_Timer.NewTicker(.1, function()
 						if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
 							then 
-							if unit:SpellRange("Chains of Ice") 
-								and not unit: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
-								and not unit:Debuffany("Chains of Ice || Hand of Freedom || Bladestorm")
-								and not unit:buffany(45524)
-								and not unit:buffany(48707)							
-								and not unit:buffany(50435)	
-								and _Y.notimmune(unit)
+							if unit_event:SpellRange("Chains of Ice") 
+								and not unit_event: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
+								and not unit_event:Debuffany("Chains of Ice || Hand of Freedom || Bladestorm")
+								and not unit_event:buffany(45524)
+								and not unit_event:buffany(48707)							
+								and not unit_event:buffany(50435)	
+								and _Y.notimmune(unit_event)
 								-- and not unit:immune("snare")
-								and not unit:buffany(1044)
-								and unit:los() 
+								and not unit_event:buffany(1044)
+								and unit_event:los() 
 								then
-								return unit:Cast("Chains of Ice")
+								return unit_event:Cast("Chains of Ice")
 							end
 						end
 					end, 10, "responsecast")
