@@ -1902,6 +1902,27 @@ local mw_rot = {
 		end
 	end,
 	
+	tsulongHealing = function()
+		local healingsphere = GetSpellInfo(115460)
+		local boss = Object("boss1")
+		if not boss then return end
+		if not boss.id == 62442 then return end
+		if not player:debuff(122858) then return end
+		
+		-- Integrated healing sphere logic
+		if player:SpellUsable(healingsphere) then
+			if player:Stance() == 1 then
+				if player:SpellUsable(healingsphere) then
+					if boss:range() < 40 then
+						if boss:los() then
+							return _A.clickcast(boss, healingsphere)
+						end
+					end
+				end
+			end
+		end
+	end,
+	
 	pvp_disable_root = function()
 		if player:Stance() == 1 --and pull_location()=="arena"
 			then
@@ -2857,7 +2878,8 @@ local inCombat = function()
 	------------------ High Prio
 	-- KEYBINDS
 	-- OH SHIT ORBS
-	if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
+	-- if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
+	if mylevel >= 64 ) and mw_rot.tsulongHealing() then return true end -- SUPER PRIO
 	if player:keybind("R") or player:ui("leveling") then
 		if mylevel >= 56 and mw_rot.manatea() then return true end
 		if mylevel >= 28 and mw_rot.pvp_disable_target() then return true end
