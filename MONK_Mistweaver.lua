@@ -2996,6 +2996,7 @@ local inCombat = function()
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
 	if not player:ui("use_enveloping") and player:ui("use_blackout") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
+	if not player:ui("use_enveloping") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
 	-- OH SHIT ORBS
 	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
 	if _A.manaengine_highprio() then                             -- HIGH PRIO
