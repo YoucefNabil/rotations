@@ -20,7 +20,7 @@ local healerspecid = {
 	[270]="monk mistweaver",
 	[65]="Paladin Holy",
 	-- [66]="Paladin prot",
-	[70]="Paladin retri",
+	-- [70]="Paladin retri",
 	[257]="Priest Holy",
 	[256]="Priest discipline",
 	-- [258]="Priest shadow",
@@ -207,6 +207,7 @@ local spelltable = {
 	[78674] = 1,    -- Starsurge
 	[113792] = 1,   -- Psychic Terror (Psyfiend)
 	[115175] = 2,   -- Soothing Mist
+	["Soothing Mist"] = 2,   -- Soothing Mist
 	[115750] = 2,   -- Blinding Light
 	[103103] = 1,   -- Drain Soul
 	[113724] = 2,   -- Ring of Frost
@@ -575,9 +576,9 @@ local exeOnLoad = function()
 		if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT"
 			then
 			-- non player related
-			if subevent=="SPELL_CAST_SUCCESS" and player and guidsrc and guidsrc ~= player.guid then -- only filter by me
+			if subevent=="SPELL_CAST_SUCCESS" and player and guidsrc and guidsrc ~= UnitGUID("player") then -- only filter by me
 				-- if UnitCanAttack(guidsrc) then
-				local unit_event = guidsrc and Object(guidsrc) or nil
+				local unit_event = guidsrc and _A.Object(guidsrc)
 				if unit_event and unit_event.isplayer and unit_event:enemy() and rootthisfuck[spell_name(idd)] then
 					C_Timer.NewTicker(.1, function()
 						if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
@@ -1283,6 +1284,7 @@ unholy.rot = {
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike") 
 					and obj:caninterrupt() 
 					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
+					or (obj:spec()==270 and obj:chi()>=3)
 					)
 					and _Y.notimmune(obj)
 					then
@@ -1300,11 +1302,11 @@ unholy.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if (_A.pull_location ~= "arena") or (_A.pull_location == "arena" and not hunterspecs[_A.UnitSpec(obj.guid)]) then
 					if obj.isplayer and obj:isCastingAny() and obj:SpellRange("Death Grip") 
-						and (player:SpellCooldown("Mind Freeze")>_A.interrupttreshhold or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
+						and (player:SpellCooldown("Mind Freeze")>0 or not obj:caninterrupt() or not obj:SpellRange("Death Strike"))
 						and not obj:State("root")
 						and _A.castdelay(45524 ,1.5)
 						and _Y.notimmune(obj)
-						and ( not _A.castdelay(49576,3) or ((obj:castsecond() < _A.interrupttreshhold) or obj:chanpercent()<=95))
+						and ( not _A.castdelay(49576,3) or ((obj:castsecond() < _A.interrupttreshhold) or obj:chanpercent()<=95 or (obj:spec()==270 and obj:chi()>=3)))
 						
 						then 
 						if (kickcheck_nomove_highprio(obj) or  ( not _A.castdelay(49576,3) and kickcheck_nomove(obj))) or (healerspecid[obj:spec()] and obj:health()<=40 and kickcheck_nomove(obj)) then
