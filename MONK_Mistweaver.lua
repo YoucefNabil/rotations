@@ -1871,8 +1871,9 @@ local mw_rot = {
 				local guidofinterest = minHPv2()
 				local lowest = guidofinterest and _A.Object(guidofinterest) or _A.Object("lowestall")
 				if player:isChanneling("Soothing Mist") then
+					_Y.SMobj = _A.SMguid and _A.Object(_A.SMguid)
 					if player:level()>=16 and player:chi()>=3 then return player:cast("Enveloping Mist", true) end -- true) means casts while channeling stuff
-					if player:level()>=34 and player:chi()<3 then return player:cast("Surging Mist", true) end -- true) means casts while channeling stuff
+					if _Y.SMobj  and _Y.SMobj:SpellRange("Renewing Mist") and player:level()>=34 and player:chi()<3 and _Y.SMobj:los() then return _Y.SMobj:cast("Surging Mist", true) end -- true) means casts while channeling stuff
 				end
 				if player:level()>=10 and not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
 					return lowest:cast("Soothing Mist")
