@@ -1865,6 +1865,24 @@ local mw_rot = {
 		end
 	end,
 	
+	ctrl_modev2 = function()
+		if _A.modifier_ctrl() then
+			if not player:moving() then
+				local guidofinterest = minHPv2()
+				local lowest = guidofinterest and _A.Object(guidofinterest) or _A.Object("lowestall")
+				if player:isChanneling("Soothing Mist") then
+					if player:level()>=16 and player:chi()>=3 then return player:cast("Enveloping Mist", true) end -- true) means casts while channeling stuff
+					if player:level()>=34 and player:chi()<3 then return player:cast("Surging Mist", true) end -- true) means casts while channeling stuff
+				end
+				if player:level()>=10 and not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
+					return lowest:cast("Soothing Mist")
+				end
+			end
+			else
+			if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
+		end
+	end,
+	
 	burstdisarm = function() -- should be arena only
 		if player:SpellCooldown("Grapple Weapon") < cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -2420,7 +2438,7 @@ local mw_rot = {
 							and _A.nothealimmune(fr)
 							and fr:los()
 							then
-							print("UNCCING")
+							-- print("UNCCING")
 							return fr:cast("Detox")
 						end
 					end
@@ -2439,7 +2457,7 @@ local mw_rot = {
 							and not fr:DebuffAny("Unstable Affliction")
 							-- and (not fr:debuffany("Unstable Affliction") or _A.pull_location=="arena")
 							and fr:los() then
-							print("UNSLOWING")
+							-- print("UNSLOWING")
 							return fr:cast("Detox")
 						end
 					end
@@ -2459,7 +2477,7 @@ local mw_rot = {
 							then
 							for _, v in ipairs(dangerousdebuffs) do
 								if fr:DebuffAny(v) and _A.nothealimmune(fr) and fr:los() then
-									print("REMOVING DANGEROUS")
+									-- print("REMOVING DANGEROUS")
 									return fr:cast("Detox")
 								end
 							end
@@ -2973,11 +2991,11 @@ local inCombat = function()
 		if mw_rot.dpsstanceswap() then return true end
 	end
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
-	if not player:ui("use_enveloping") and mw_rot.ctrl_mode() then return true end -- ctrl
+	if not player:ui("use_enveloping") and mw_rot.ctrl_modev2() then return true end -- ctrl
 	-- GCD CDS
 	if mylevel >= 50 and mw_rot.lifecocoon() then return true end
 	if mylevel >= 68 and mw_rot.burstdisarm() then
-		print("DISARMING")
+		-- print("DISARMING")
 		return true
 	end
 	if mylevel >= 64 and _A.modifier_shift() and mw_rot.healingsphere() then return true end
