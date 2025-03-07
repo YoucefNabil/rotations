@@ -1823,33 +1823,6 @@ local mw_rot = {
 		end
 	end,
 	
-	ctrl_mode = function()
-		-- if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
-		if _A.modifier_ctrl() then
-			if not player:moving() then
-				-- local lowest = Object("lowestall")
-				local lowest = Object("lowestallNOHOT")
-				if player:isChanneling("Soothing Mist") and _A.SMguid then
-					local SMobj = Object(_A.SMguid)
-					if SMobj and SMobj:SpellRange("Renewing Mist") then
-						if SMobj:buff(132120) then _A.CallWowApi("SpellStopCasting") end
-						if player:level()>=16 and player:Chi() >= 3 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
-						if player:level()>=34 and player:SpellUsable(116694) and player:Chi() < 3 and SMobj:los() then
-							return SMobj:cast(
-							"Surging Mist", true)
-						end
-					end
-				end
-				if player:level()>=10 and not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
-					return lowest
-					:cast("Soothing Mist")
-				end
-			end
-			-- else
-			-- if player:isChanneling("Soothing Mist") then _A.CallWowApi("SpellStopCasting") end
-		end
-	end,
-	
 	enveloping_mist_mode = function()
 		if player:chi()>=3 then
 			if not player:moving() then
