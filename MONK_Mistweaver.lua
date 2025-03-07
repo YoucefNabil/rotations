@@ -2668,7 +2668,7 @@ local mw_rot = {
 	
 	tp_buff = function()
 		if player:Stance() == 1 then
-			if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory")
+			-- if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory")
 				if player:Chi() >= 1
 					and not player:Buff("Tiger Power")
 					then
@@ -2678,7 +2678,7 @@ local mw_rot = {
 					end
 				end
 			end
-		end
+		-- end
 	end,
 	
 	tp_buff_keybind = function()
@@ -2981,7 +2981,7 @@ local inCombat = function()
 	end
 	if mw_rot.tigerslust() then return true end
 	--------------------- high prio
-	if mw_rot.tigerpalm_mm() then return true end
+	if not player:ui("use_blackout") and mw_rot.tigerpalm_mm() then return true end
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
