@@ -288,6 +288,7 @@ local GUI = {
 	{ type = "checkbox", size = checkbox_tsize, text = "Use DPS leveling Rotation " .. _A.Core:GetSpellIcon(100787, 15, 15) .. " (R)", key = "leveling", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = "Alert on Statue out of range " .. _A.Core:GetSpellIcon(115313, 15, 15),        key = "draw_statue_range", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(124682, 15, 15, true), key = "use_enveloping", default = false },
+	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(100784, 15, 15, true), key = "use_blackout", default = true },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "spacer",   size = spacer_size },
 	{ type = 'text',     size = info_tsize,     text = '© .youcef & _2related (UI)' },
@@ -2593,6 +2594,20 @@ local mw_rot = {
 		end
 	end,
 	
+	blackoutkick_always = function()
+		if player:Stance() == 1 then
+			if player:Chi() >= 2 then
+				----------------------------------
+				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+				if lowestmelee then
+					----------------------------------
+					return lowestmelee:Cast("Blackout Kick")
+				end
+			end
+			--------------------------------- damage based
+		end
+	end,
+	
 	tigerpalm_mm = function()
 		if player:Stance() == 1 then
 			if player:Chi() >= 1 then
@@ -2907,8 +2922,8 @@ local inCombat = function()
 	if player:keybind("R") or player:ui("leveling") then
 		if mylevel >= 56 and mw_rot.manatea() then return true end
 		if mylevel >= 28 and mw_rot.pvp_disable_target() then return true end
-		if mylevel >= 3 and mw_rot.tp_buff_keybind() then return true end
-		if mylevel >= 7 and mw_rot.blackout_keybind() then return true end
+		if mw_rot.tp_buff_keybind() then return true end
+		if mw_rot.blackout_keybind() then return true end
 		if mw_rot.dpsstanceswap() then return true end
 	end
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
@@ -2928,10 +2943,11 @@ local inCombat = function()
 	end
 	if mw_rot.tigerslust() then return true end
 	--------------------- high prio
-	if mylevel >= 3 and mw_rot.tigerpalm_mm() then return true end
+	if mw_rot.tigerpalm_mm() then return true end
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
+	if not player:ui("use_enveloping") and player:ui("use_blackout") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	-- OH SHIT ORBS
 	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
