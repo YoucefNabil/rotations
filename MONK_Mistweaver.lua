@@ -327,7 +327,7 @@ local exeOnLoad = function()
 		local numrw = 0
 		for _, fr in pairs(_A.OM:Get('Roster')) do
 			if fr.isplayer and fr:buff("Renewing Mist") 
-				and fr:health()<99 
+				and fr:health()<90
 				then
 				numrw = numrw + 1
 			end
