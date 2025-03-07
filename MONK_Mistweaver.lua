@@ -2982,6 +2982,7 @@ local inCombat = function()
 	if mw_rot.tigerslust() then return true end
 	--------------------- high prio
 	if not player:ui("use_blackout") and mw_rot.tigerpalm_mm() then return true end
+	if player:ui("use_blackout") and not player:buff("Muscle Memory") and mw_rot.tp_buff() then return true end
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
