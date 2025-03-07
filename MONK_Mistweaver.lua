@@ -2994,7 +2994,7 @@ local inCombat = function()
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
-	if not player:ui("use_enveloping") and player:ui("use_blackout") and mw_rot.blackoutkick_always() then return true end    -- really important
+	if (not player:ui("use_enveloping") or _A.pull_location=="arena") and player:ui("use_blackout") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	if not player:ui("use_enveloping") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
 	-- OH SHIT ORBS
