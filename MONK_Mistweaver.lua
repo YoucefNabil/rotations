@@ -601,6 +601,29 @@ local exeOnLoad = function()
 			return
 		end
 	end)
+	_A.FakeUnits:Add('lowestEnemyInSpellRangeNoTarget', function(num, spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) 
+				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") 
+				and _A.notimmune(Obj) 
+				and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort(tempTable, function(a,b)
+				if a.isplayer ~= b.isplayer then return a.isplayer < b.isplayer
+					else return a.health < b.health
+				end
+			end)
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
 	-- disarm
 	--[[
 		burstdisarm = function()
@@ -2583,7 +2606,7 @@ local mw_rot = {
 			if player:Chi() >= 2 then
 				if player:Buff("Muscle Memory") then
 					----------------------------------
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						----------------------------------
 						return lowestmelee:Cast("Blackout Kick")
@@ -2598,7 +2621,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if player:Chi() >= 2 then
 				----------------------------------
-				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+				local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 				if lowestmelee then
 					----------------------------------
 					return lowestmelee:Cast("Blackout Kick")
@@ -2613,7 +2636,7 @@ local mw_rot = {
 			if player:Chi() >= 1 then
 				if player:Buff("Muscle Memory") then
 					----------------------------------
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						----------------------------------
 						return lowestmelee:Cast("Tiger Palm")
@@ -2630,7 +2653,7 @@ local mw_rot = {
 				if player:Chi() >= 2
 					and not player:Buff("Serpent's Zeal") -- and player:Buff("Muscle Memory")
 					then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Blackout Kick")
 					end
@@ -2645,7 +2668,7 @@ local mw_rot = {
 				if player:Chi() >= 1
 					and not player:Buff("Tiger Power")
 					then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Tiger Palm")
 					end
@@ -2660,7 +2683,7 @@ local mw_rot = {
 				if player:Chi() >= 1
 					and not player:Buff("Tiger Power")
 					then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Tiger Palm")
 					end
@@ -2694,7 +2717,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if player:Chi() == 1 then
 				if player:Buff("Muscle Memory") then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Tiger Palm")
 					end
@@ -2722,7 +2745,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if _A.manaengine() then
 				if player:Buff("Rushing Jade Wind") and not player:Buff("Muscle Memory") then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Jab")
 					end
@@ -2737,7 +2760,7 @@ local mw_rot = {
 			if not player:Buff("Muscle Memory")
 				or (player:chi() <= 1 and not player:talent("Rushing Jade Wind"))
 				then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+				local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 				if lowestmelee then
 					return lowestmelee:Cast("Jab")
 				end
