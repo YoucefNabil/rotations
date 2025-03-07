@@ -950,6 +950,35 @@ local exeOnLoad = function()
 				return maxx
 			end
 			
+			function minHPv2()
+				local maxx = 999
+				local GUID = nil
+				if next(MW_HealthUsedData) == nil then
+					return 0
+					else
+					for k in pairs(MW_HealthUsedData) do
+						if MW_HealthUsedData[k] ~= nil then
+							if next(MW_HealthUsedData[k]) ~= nil then
+								if MW_HealthUsedData[k].healthnegative ~= nil then
+									if UnitIsDeadOrGhost(k) == nil then
+										-- if UnitHealth(k)<UnitHealthMax(k) then
+										local unitObject = Object(k)
+										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
+											if MW_HealthUsedData[k].healthnegative < maxx then
+												maxx = MW_HealthUsedData[k].healthnegative
+												GUID = k
+											end
+											-- end
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+				return GUID
+			end
+			
 			function hybridHPv2()
 				local maxmodifier = maxHPv2() * 0.6
 				local avgmodifier = averageHPv1() * 0.4
@@ -1788,7 +1817,8 @@ local mw_rot = {
 	enveloping_mist_mode = function()
 		if player:chi()>=3 then
 			if not player:moving() then
-				local lowest = Object("lowestall")
+				local guidofinterest = minHPv2()
+				local lowest = guidofinterest and Object(guidofinterest)
 				if player:isChanneling("Soothing Mist") then
 					if player:level()>=16 then return player:cast("Enveloping Mist", true) end -- true) means casts while channeling stuff
 				end
