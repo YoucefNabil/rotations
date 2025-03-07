@@ -323,6 +323,18 @@ local exeOnLoad = function()
 		end
 	end
 	
+	function _Y.numRW()
+		local numrw = 0
+		for _, fr in pairs(_A.OM:Get('Roster')) do
+			if fr.isplayer and fr:buff("Renewing Mist") 
+				and fr:health()<99 
+				then
+				numrw = numrw + 1
+			end
+		end
+		return numrw
+	end
+	
 	function _A.tbltostr(tbl)
 		local result = {}
 		for _, value in ipairs(tbl) do
@@ -1056,7 +1068,7 @@ local exeOnLoad = function()
 				end
 				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 				if lowest and lowest:health()<=60 then
-					return (manaBudget - hybridHPv2() > 2.25)
+					return (manaBudget - maxHPv2() > 2.25)
 				end
 				return false
 			end
@@ -2702,6 +2714,17 @@ local mw_rot = {
 		end
 	end,
 	
+	uplift_prio = function()
+		if player:Stance() == 1 then
+			if player:SpellUsable("Uplift")
+				and player:Chi() >= 2
+				and _Y.numRW()>=3
+				then
+				return player:Cast("Uplift")
+			end
+		end
+	end,
+	
 	expelharm = function()
 		if player:Stance() == 1 then
 			if player:Chi() < player:ChiMax()
@@ -2970,6 +2993,7 @@ local inCombat = function()
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
+	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
 	if not player:ui("use_enveloping") and player:ui("use_blackout") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	-- OH SHIT ORBS
