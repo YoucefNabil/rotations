@@ -569,7 +569,7 @@ local exeOnLoad = function()
 			then
 			if next(_A.enemyguidtab)~=nil then
 				for k in pairs(_A.enemyguidtab) do
-					_A.enemyguidtab[k]=nil
+					if _A.enemyguidtab[k] then _A.enemyguidtab[k]=nil end
 				end
 			end
 		end
