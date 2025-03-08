@@ -1,5 +1,6 @@
 local _, _A = ...
 C_Timer = _A.C_Timer
+local player
 -- Create GUI
 local RelatedHelper_GUI = _A.Interface:BuildGUI({
     key = "RelatedHelper",
@@ -86,7 +87,7 @@ local lootedCorpses = {}
 -- autoloot
 local function autoloot()
     if RelatedHelper_GUI:F("enable_autoloot") then
-        local player = Object("player")
+        player = player or Object("player")
         if not player then
             return
 		end
@@ -117,7 +118,7 @@ local lastInteractTime = {}
 -- autofarm
 local function autofarm()
     if RelatedHelper_GUI:F("enable_autofarm") then
-        local player = Object("player")
+        player = player or Object("player")
         if not player then
             return
 		end
@@ -176,7 +177,7 @@ local spells = {
 
 local function ChaseBack()
     if RelatedHelper_GUI:F("enable_chaseback") then
-        local player = player or Object("player")
+        player = player or Object("player")
         local target = Object("target")
         if player and target and target:Exists() and target:Enemy() and target:alive() and player:keybind(RelatedHelper_GUI:F("chaseback_key", "E")) then
             local tx, ty, tz = _A.ObjectPosition(target.guid)
