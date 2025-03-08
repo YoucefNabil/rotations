@@ -305,8 +305,8 @@ local function AutoAcceptLFG()
 end
 
 -- Initialize Auto Accept LFG
-C_Timer.After(1, AutoAcceptLFG)
--- AutoAcceptLFG()
+-- C_Timer.After(1, AutoAcceptLFG)
+AutoAcceptLFG()
 
 -- Return the plugin
 return {
