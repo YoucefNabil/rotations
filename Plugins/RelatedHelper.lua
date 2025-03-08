@@ -1,5 +1,5 @@
 local _, _A = ...
-local C_Timer = _A.C_Timer	
+C_Timer = _A.C_Timer
 -- Create GUI
 local RelatedHelper_GUI = _A.Interface:BuildGUI({
     key = "RelatedHelper",
@@ -241,14 +241,30 @@ end
 
 -- Update the AutoAcceptLFG function
 local function AutoAcceptLFG()
-    if not RelatedHelper_GUI:F("enable_autoaccept") then return end
-
-    local player = Object("player")
-    if not player then return end
-
+    -- Handle battlefield leave and flag clicking
+    local function CheckBattlefieldLeave()
+        if not _A.Cache.Utils.PlayerInGame then return end
+		local player = Object("player")
+        if not player then return end
+        -- Add flag clicking functionality
+        ClickPVPFlags()
+        if RelatedHelper_GUI:F("enable_autoleave") then
+            local battlefieldstatus = GetBattlefieldWinner()
+            if battlefieldstatus ~= nil then
+                if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
+                    _A.FlashWow()
+                end
+                LeaveBattlefield()
+            end
+        end
+    end
+    C_Timer.NewTicker(0.1, CheckBattlefieldLeave, false, "clickpvp")
     -- Handle LFG proposal
     local function OnLFGProposal(evt)
+        if not _A.Cache.Utils.PlayerInGame then return end
+		local player = Object("player")
         if not player then return end
+		if not RelatedHelper_GUI:F("enable_autoaccept") then return end
         if evt == "LFG_PROPOSAL_SHOW" then
             if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
                 _A.FlashWow()
@@ -270,35 +286,14 @@ local function AutoAcceptLFG()
 
     -- Handle role check and ready check
     local function OnRoleCheck()
+        if not _A.Cache.Utils.PlayerInGame then return end
+		local player = Object("player")
         if not player then return end
+		if not RelatedHelper_GUI:F("enable_autoaccept") then return end
         -- Set role as DPS
         --SetLFGRoles(false, false, true) -- q as dps (tank, healer, dps)
         -- Try direct button click first
         _A.CallWowApi("RunMacroText", "/click LFDRoleCheckPopupAcceptButton")
-    end
-
-    -- Handle battlefield leave and flag clicking
-    local function CheckBattlefieldLeave()
-        if not _A.Cache.Utils.PlayerInGame then return end
-        player = player or Object("player")
-        if not player then return end
-
-        if RelatedHelper_GUI:F("enable_autoleave") then
-            local battlefieldstatus = GetBattlefieldWinner()
-            if battlefieldstatus ~= nil then
-                if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
-                    _A.FlashWow()
-                end
-                LeaveBattlefield()
-            end
-        end
-        
-        -- Add flag clicking functionality
-        ClickPVPFlags()
-
-        -- Update ticker duration if needed
-        local newDuration = _A.Parser.frequency or 0.1
-        return newDuration
     end
 
     -- Add listeners with original names to maintain compatibility
@@ -306,11 +301,12 @@ local function AutoAcceptLFG()
     Listener:Add("BG2", { 'LFG_ROLE_CHECK_SHOW', 'LFG_READY_CHECK_SHOW' }, OnRoleCheck)
 
     -- Add battlefield leave and flag checker with original name
-    C_Timer.NewTicker(0.1, CheckBattlefieldLeave, false, "clickpvp")
+
 end
 
 -- Initialize Auto Accept LFG
 C_Timer.After(1, AutoAcceptLFG)
+-- AutoAcceptLFG()
 
 -- Return the plugin
 return {
