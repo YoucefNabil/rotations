@@ -284,12 +284,12 @@ local GUI = {
 		default = "0",
 		list = hpdeltas
 	},
+	{ type = 'spinner',  size = checkbox_tsize, text = "High Prio threshold: ", key = 'highprio_treshhold',  default = 1.75, step = 0.01, max = 10, min = 0.5 },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "checkbox", size = checkbox_tsize, text = "Use DPS leveling Rotation " .. _A.Core:GetSpellIcon(100787, 15, 15) .. " (R)", key = "leveling", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = "Alert on Statue out of range " .. _A.Core:GetSpellIcon(115313, 15, 15),        key = "draw_statue_range", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(124682, 15, 15, true), key = "use_enveloping", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(100784, 15, 15, true), key = "use_blackout", default = false },
-	{ type = 'spinner',  size = checkbox_tsize, text = "High Prio threshold: ", key = 'highprio_treshhold',  default = 1.75, step = 0.01, max = 10, min = 0.5 },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "spacer",   size = spacer_size },
 	{ type = 'text',     size = info_tsize,     text = '© .youcef & _2related (UI)' },

@@ -23,7 +23,7 @@ local RelatedHelper_GUI = _A.Interface:BuildGUI({
         { type = 'spacer',           size = 10 },
         { key = "update_freq",       type = "spinner",        size = 15, text = "Update Frequency (seconds)", default = 0.05,   step = 0.05,                      min = 0.05,        max = 5 },
         { key = "line_distance",     type = "spinner",        size = 15, text = "Line Draw Distance (yards)", default = 40,  step = 5,                        min = 10,       max = 100 },
-    }
+	}
 })
 
 -- Add to menu
@@ -41,17 +41,17 @@ local function interactIdList(UNIT, tbl)
     for _, id in pairs(tbl) do
         if UNIT.id == id then
             return true
-        end
-    end
+		end
+	end
 end
 
 -- Drawing function
 local function drawFarmNodes()
     if not RelatedHelper_GUI:F("enable_visuals") then return end
-
+	
     local px, py, pz = _A.ObjectPosition("player")
     local lineDistance = RelatedHelper_GUI:F("line_distance", 20)
-
+	
     for _, farm in pairs(_A.OM:Get('GameObject')) do
         if interactIdList(farm, _A.related.OreHerb) then
             local x, y, z = _A.ObjectPosition(farm.key)
@@ -61,23 +61,23 @@ local function drawFarmNodes()
                 -- Set color with lower alpha (more transparent)
                 if distance <= 5 then
                     _A.LibDraw:SetColorRaw(0, 255, 0, 0.5) -- Green at 30% opacity
-                else
+					else
                     _A.LibDraw:SetColorRaw(255, 0, 0, 0.5) -- Red at 30% opacity
-                end
-
+				end
+				
                 -- Draw circle on ground
                 _A.LibDraw:Circle(x, y, z, 0.7, true)
-
+				
                 -- Draw text higher above the object
                 _A.LibDraw:Text(farm.name, GameFontNormal, x, y, z + 2)
-
+				
                 -- Draw line to player if beyond set distance
                 if distance > lineDistance then
                     _A.LibDraw:Line(px, py, pz + 1, x, y, z)
-                end
-            end
-        end
-    end
+				end
+			end
+		end
+	end
 end
 
 -- Table to store looted corpses
@@ -89,26 +89,26 @@ local function autoloot()
         local player = Object("player")
         if not player then
             return
-        end
+		end
         -- Don't loot if player is moving
         if player:moving() or player:combat() then
             return
-        end
-
+		end
+		
         for _, loot in pairs(_A.OM:Get('Dead')) do
             -- Only process if we haven't looted this corpse yet
             if not lootedCorpses[loot.guid] then
                 if loot:distance() <= 5
                     and loot:hasloot()
                     and _A.GetNumLootItems() == 0
-                then
+					then
                     _A.InteractUnit(loot.key)
                     -- Add to looted corpses table
                     lootedCorpses[loot.guid] = true
-                end
-            end
-        end
-    end
+				end
+			end
+		end
+	end
 end
 
 -- autofarm table
@@ -120,7 +120,7 @@ local function autofarm()
         local player = Object("player")
         if not player then
             return
-        end
+		end
         if player:combat() then return end
         -- autoFarm (ore / herbs / container)
         if player:ui("farming") then
@@ -130,27 +130,27 @@ local function autofarm()
                     local currentTime = GetTime()
                     if lastInteractTime[farm.guid] and (currentTime - lastInteractTime[farm.guid] < 5) then
                         return
-                    end
-
+					end
+					
                     if _A.GetNumLootItems() > 0 then
                         return
-                    end
+					end
                     if not interactIdList(farm, _A.related.OreHerb) then
                         return
-                    end
+					end
                     if player:moving() then
                         return
-                    end
+					end
                     if player:IscastingAnySpell() then
                         return
-                    end
-
+					end
+					
                     lastInteractTime[farm.guid] = currentTime
                     _A.InteractUnit(farm.key)
-                end
-            end
-        end
-    end
+				end
+			end
+		end
+	end
 end
 
 C_Timer.NewTicker(.1, autoloot, false, "RelatedHelper_Autoloot")
@@ -185,18 +185,18 @@ local function ChaseBack()
             local destX = tx - math.cos(facing) * 1.5
             local destY = ty - math.sin(facing) * 1.5
             local now = _A.GetTime() or GetTime()
-
+			
             -- Move to position behind target
             _A.ClickToMove(destX, destY, tz)
-
+			
             -- Warrior specific charge logic
             if player:spec() == 71 and target:SpellRange("Charge") and 
-               not player:BuffAny("Bladestorm") and target:infront() and 
-               target:los() and not IsCurrentSpell(100) then
+				not player:BuffAny("Bladestorm") and target:infront() and 
+				target:los() and not IsCurrentSpell(100) then
                 target:cast("Charge")
-            end
-        end
-    end
+			end
+		end
+	end
 end
 
 -- Update ticker with original name
@@ -230,12 +230,12 @@ local function ClickPVPFlags()
             tempTable[#tempTable+1] = {
                 guid = Obj.guid,
                 distance = Obj:distance()
-            }
-        end
-    end
+			}
+		end
+	end
     if #tempTable > 1 then
         table.sort(tempTable, function(a, b) return a.distance < b.distance end)
-    end
+	end
     if tempTable[1] then _A.ObjectInteract(tempTable[1].guid) end
 end
 
@@ -253,37 +253,39 @@ local function AutoAcceptLFG()
             if battlefieldstatus ~= nil then
                 if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
                     _A.FlashWow()
-                end
+				end
                 LeaveBattlefield()
-            end
-        end
-    end
+			end
+		end
+	end
     C_Timer.NewTicker(0.1, CheckBattlefieldLeave, false, "clickpvp")
     -- Handle LFG proposal
     local function OnLFGProposal(evt)
-        if not _A.Cache.Utils.PlayerInGame then return end
-		local player = Object("player")
-        if not player then return end
-		if not RelatedHelper_GUI:F("enable_autoaccept") then return end
-        if evt == "LFG_PROPOSAL_SHOW" then
-            if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
-                _A.FlashWow()
-            end
-            _A.AcceptProposal()
-        else
-            for i = 1, 3 do
-                local status, _, _ = _A.GetBattlefieldStatus(i)
-                if status == "confirm" then
-                    if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
-                        _A.FlashWow()
-                    end
-                    _A.CallWowApi("AcceptBattlefieldPort", i, 1)
-                    _A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
-                end
-            end
-        end
-    end
-
+		C_Timer.After(1,function()
+			if not _A.Cache.Utils.PlayerInGame then return end
+			local player = Object("player")
+			if not player then return end
+			if not RelatedHelper_GUI:F("enable_autoaccept") then return end
+			if evt == "LFG_PROPOSAL_SHOW" then
+				if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
+					_A.FlashWow()
+				end
+				_A.AcceptProposal()
+				else
+				for i = 1, 3 do
+					local status, _, _ = _A.GetBattlefieldStatus(i)
+					if status == "confirm" then
+						if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
+							_A.FlashWow()
+						end
+						_A.CallWowApi("AcceptBattlefieldPort", i, 1)
+						_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
+					end
+				end
+			end
+		end)
+	end
+	
     -- Handle role check and ready check
     local function OnRoleCheck()
         if not _A.Cache.Utils.PlayerInGame then return end
@@ -294,14 +296,14 @@ local function AutoAcceptLFG()
         --SetLFGRoles(false, false, true) -- q as dps (tank, healer, dps)
         -- Try direct button click first
         _A.CallWowApi("RunMacroText", "/click LFDRoleCheckPopupAcceptButton")
-    end
-
+	end
+	
     -- Add listeners with original names to maintain compatibility
     Listener:Add("BG", { 'LFG_PROPOSAL_SHOW', 'UPDATE_BATTLEFIELD_STATUS' }, OnLFGProposal)
     Listener:Add("BG2", { 'LFG_ROLE_CHECK_SHOW', 'LFG_READY_CHECK_SHOW' }, OnRoleCheck)
-
+	
     -- Add battlefield leave and flag checker with original name
-
+	
 end
 
 -- Initialize Auto Accept LFG
