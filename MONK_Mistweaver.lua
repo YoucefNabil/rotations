@@ -289,6 +289,7 @@ local GUI = {
 	{ type = "checkbox", size = checkbox_tsize, text = "Alert on Statue out of range " .. _A.Core:GetSpellIcon(115313, 15, 15),        key = "draw_statue_range", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(124682, 15, 15, true), key = "use_enveloping", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(100784, 15, 15, true), key = "use_blackout", default = false },
+	{ type = 'spinner',  size = checkbox_tsize, text = "High Prio threshold: ", key = 'highprio_treshhold',  default = 1.5, step = 0.1, max = 10, min = 0.5 },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "spacer",   size = spacer_size },
 	{ type = 'text',     size = info_tsize,     text = '© .youcef & _2related (UI)' },
@@ -1051,7 +1052,7 @@ local exeOnLoad = function()
 					hpDelta = maxHPv2()
 				end
 				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-				return (manaBudget - hpDelta > 1.5)
+				return (manaBudget - hpDelta > player:ui("highprio_treshhold_spin"))
 			end
 			
 			function _A.manaengine_highprio_pot()
@@ -1068,7 +1069,7 @@ local exeOnLoad = function()
 				end
 				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 				if lowest and lowest:health()<=60 then
-					return (manaBudget - maxHPv2() > 2.25)
+					return (manaBudget - maxHPv2() > (player:ui("highprio_treshhold_spin") + .75))
 				end
 				return false
 			end
@@ -2950,6 +2951,7 @@ local inCombat = function()
 	mw_rot.cancel_badnoggen()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
+	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
 	if _A.buttondelayfunc() then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
@@ -2972,7 +2974,8 @@ local inCombat = function()
 		-- print("DISARMING")
 		return true
 	end
-	if mylevel >= 64 and _A.modifier_shift() and mw_rot.healingsphere() then return true end
+	if mylevel >= 56 and player:mana()<=60 and mw_rot.manatea() then return true end
+	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
 	--------------------- dispells and root freedom
 	if mylevel >= 20 then
 		if mw_rot.dispellunCC() then return true end
@@ -2990,12 +2993,10 @@ local inCombat = function()
 	if not player:ui("use_enveloping") and (player:ui("use_blackout")  or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	if not player:ui("use_enveloping") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
-	-- OH SHIT ORBS
-	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
-	if _A.manaengine_highprio() then                             -- HIGH PRIO
+	-- if _A.manaengine_highprio() then                             -- HIGH PRIO
 		-- print("HIGH PRIO")
-		if mylevel >= 64 and mw_rot.healingsphere() then return true end
-	end
+		-- if mylevel >= 64 and mw_rot.healingsphere() then return true end
+	-- end
 	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if mw_rot.Xuen() then return true end
 	--------------------- CC
