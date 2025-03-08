@@ -1,5 +1,5 @@
 local _, _A = ...
-
+local C_Timer = _A.C_Timer	
 -- Create GUI
 local RelatedHelper_GUI = _A.Interface:BuildGUI({
     key = "RelatedHelper",
