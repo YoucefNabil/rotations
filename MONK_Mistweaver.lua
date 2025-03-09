@@ -2921,6 +2921,7 @@ local mw_rot = {
 	end,
 }
 local inCombat = function()
+	if not _A.Cache.Utils.PlayerInGame then return true end
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime() - enteredworldat) < (3)) then return end
 	if not _A.pull_location then return true end
