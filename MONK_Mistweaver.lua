@@ -363,7 +363,7 @@ local exeOnLoad = function()
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		-- print(slot)
-		player = player or Object("player")
+		local player = Object("player")
 		if slot == STARTSLOT then
 			_A.pressedbuttonat = 0
 			if _A.DSL:Get("toggle")(_, "MasterToggle") ~= true then
@@ -466,7 +466,7 @@ local exeOnLoad = function()
 	end
 	
 	function _A.nothealimmune(unit)
-		player = Object("player")
+		local player = Object("player")
 		if unit then
 			if unit:DebuffAny("Cyclone || Spirit of Redemption || Beast of Nightmares") then return false end
 			if unit:BuffAny("Spirit of Redemption") then return false end
@@ -477,7 +477,7 @@ local exeOnLoad = function()
 	-----------------------------------
 	-----------------------------------
 	local function fall()
-		player = player or Object("player")
+		local player = Object("player")
 		local px, py, pz = _A.ObjectPosition("player")
 		local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
 		if player:Falling() then
@@ -1023,7 +1023,7 @@ local exeOnLoad = function()
 			end
 			
 			function _A.manaengine() -- make it so it's tied with group hpF
-				player = player or Object("player")
+				local player = Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local hpdeltas = player:ui("hpdeltas")
 				local hpDelta
@@ -1040,7 +1040,7 @@ local exeOnLoad = function()
 			
 			--------------------------------------------------------
 			function _A.manaengine_highprio()
-				player = player or Object("player")
+				local player = Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local hpdeltas = player:ui("hpdeltas")
 				local hpDelta
@@ -1056,7 +1056,7 @@ local exeOnLoad = function()
 			end
 			
 			function _A.manaengine_highprio_pot()
-				player = player or Object("player")
+				local player = Object("player")
 				local hpdeltas = player:ui("hpdeltas")
 				local lowest = Object("lowestall")
 				local hpDelta
@@ -1201,7 +1201,7 @@ local exeOnLoad = function()
 				local distance = -speed
 				-- local distance = 0
 				-- UNIT IS PLAYER
-				player = player or Object("player")
+				local player = Object("player")
 				if munit:is(player) then
 					local strafeDirection = IsPStr()
 					if strafeDirection == "left" then
@@ -1226,7 +1226,7 @@ local exeOnLoad = function()
 				return newX, newY, z
 			end
 			function _A.CastPredictedPos(unit, spell, distance)
-				player = player or Object("player")
+				local player = Object("player")
 				local px, py, pz = _A.groundpositiondetail(pSpeed(unit, distance))
 				if px then
 					_A.CallWowApi("CastSpellByName", spell)
@@ -2711,7 +2711,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if player:SpellUsable("Uplift")
 				and player:Chi() >= 2
-				and _Y.numRW()>=3
+				and (_Y.numRW()>=3 or player:buff("Thunder Focus Tea"))
 				then
 				return player:Cast("Uplift")
 			end
@@ -2921,11 +2921,12 @@ local mw_rot = {
 	end,
 }
 local inCombat = function()
+	player = nil
 	if not _A.Cache.Utils.PlayerInGame then return true end
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime() - enteredworldat) < (3)) then return end
 	if not _A.pull_location then return true end
-	player = player or Object("player")
+	player = Object("player")
 	if not player then return true end
 	local mylevel = player:level()
 	cdcd = _A.Parser.frequency and _A.Parser.frequency * 3 or .3
@@ -3032,7 +3033,7 @@ end
 local statueAlertShown = false -- Track alert state
 
 local function alertStatueRange()
-	player = player or Object("player")
+	local player = Object("player")
 	if not player then return true end
 	if player:spec()~=270 then return true end
 	if not player:ui("draw_statue_range") then return true end

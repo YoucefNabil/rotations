@@ -15,6 +15,7 @@ local RelatedHelper_GUI = _A.Interface:BuildGUI({
         { key = "enable_autoaccept", type = "checkbox",       cw = 15,   ch = 15,                             size = 15,     text = "Enable Auto Accept LFG", default = false },
         { key = "enable_flashwow",   type = "checkbox",       cw = 15,   ch = 15,                             size = 15,     text = "Enable Flash WoW",       default = false },
         { key = "enable_autoleave",  type = "checkbox",       cw = 15,   ch = 15,                             size = 15,     text = "Auto Leave Battlefield", default = false },
+		{ type = 'spinner', cw = 15, ch = 15, size = 15,  size = checkbox_tsize, text = "Delay Before Joining BGs: ", key = 'bg_delay',  default = 0, step = 0.01, max = 30, min = 0 },
         { type = 'ruler' },
         { key = "enable_visuals",    type = "checkbox",       cw = 15,   ch = 15,                             size = 15,     text = "Enable Farm Visuals",    default = false },
         { key = "enable_autoloot",   type = "checkbox",       cw = 15,   ch = 15,                             size = 15,     text = "Enable Autoloot",        default = false },
@@ -262,11 +263,11 @@ local function AutoAcceptLFG()
     C_Timer.NewTicker(0.1, CheckBattlefieldLeave, false, "clickpvp")
     -- Handle LFG proposal
     local function OnLFGProposal(evt)
-		C_Timer.After(1,function()
-			if not _A.Cache.Utils.PlayerInGame then return end
-			local player = Object("player")
-			if not player then return end
-			if not RelatedHelper_GUI:F("enable_autoaccept") then return end
+		if not _A.Cache.Utils.PlayerInGame then return end
+		local player = Object("player")
+		if not player then return end
+		if not RelatedHelper_GUI:F("enable_autoaccept") then return end
+		C_Timer.After(RelatedHelper_GUI:F("bg_delay_spin"),function()
 			if evt == "LFG_PROPOSAL_SHOW" then
 				if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
 					_A.FlashWow()
