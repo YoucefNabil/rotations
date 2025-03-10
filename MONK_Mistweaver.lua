@@ -285,6 +285,8 @@ local GUI = {
 		list = hpdeltas
 	},
 	{ type = 'spinner',  size = checkbox_tsize, text = "High Prio threshold: ", key = 'highprio_treshhold',  default = 1.75, step = 0.01, max = 10, min = 0.5 },
+	{ type = "spacer", size = spacer_size },
+	{ type = 'spinner',  size = checkbox_tsize, text = "Healing Sphere Min Health: ", key = 'sphere_health',  default = 75, step = 1, max = 90, min = 50 },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "checkbox", size = checkbox_tsize, text = "Use DPS leveling Rotation " .. _A.Core:GetSpellIcon(100787, 15, 15) .. " (R)", key = "leveling", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = "Alert on Statue out of range " .. _A.Core:GetSpellIcon(115313, 15, 15),        key = "draw_statue_range", default = false },
@@ -2564,7 +2566,7 @@ local mw_rot = {
 						--- ORBS
 						local lowest = Object("lowestall")
 						if lowest then
-							if (lowest:health() < 75) then
+							if (lowest:health() < player:ui("sphere_health_spin")) then
 								return _A.clickcast(lowest, "Healing Sphere")
 							end
 						end
