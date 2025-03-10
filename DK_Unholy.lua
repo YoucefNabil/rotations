@@ -410,7 +410,7 @@ end
 enteredworldat = enteredworldat or _A.GetTime()
 _A.pull_location = _A.pull_location or pull_location()
 local exeOnLoad = function()
-	player = Object("player")
+	local player = Object("player")
 	_A.pressedbuttonat = 0
 	_A.buttondelay = 0.5
 	_A.STARTSLOT = 1
@@ -562,7 +562,7 @@ local exeOnLoad = function()
 	local ijustdidthatthing = false
 	local ijustdidthatthingtime = 0
 	Listener:Add("DK_STUFF", {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED"} ,function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-		player = player or Object("player")
+		local player = Object("player")
 		if not _A.Cache.Utils.PlayerInGame then return true end
 		if event == "PLAYER_ENTERING_WORLD"
 			or event == "PLAYER_REGEN_ENABLED"
@@ -1830,6 +1830,7 @@ unholy.rot = {
 ---========================
 ---========================
 local inCombat = function()
+	player = nil
 	if not _A.Cache.Utils.PlayerInGame then return true end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if not enteredworldat then return true end
