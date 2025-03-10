@@ -2564,7 +2564,7 @@ local mw_rot = {
 						--- ORBS
 						local lowest = Object("lowestall")
 						if lowest then
-							if (lowest:health() < 85) then
+							if (lowest:health() < 75) then
 								return _A.clickcast(lowest, "Healing Sphere")
 							end
 						end
