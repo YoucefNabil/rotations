@@ -1830,7 +1830,6 @@ unholy.rot = {
 ---========================
 ---========================
 local inCombat = function()
-	player = nil
 	if not _A.Cache.Utils.PlayerInGame then return true end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if not enteredworldat then return true end

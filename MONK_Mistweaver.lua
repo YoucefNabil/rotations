@@ -2923,7 +2923,6 @@ local mw_rot = {
 	end,
 }
 local inCombat = function()
-	player = nil
 	if not _A.Cache.Utils.PlayerInGame then return true end
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime() - enteredworldat) < (3)) then return end
@@ -2994,7 +2993,7 @@ local inCombat = function()
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
-	if not player:ui("use_enveloping") and (player:ui("use_blackout")  or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important
+	if not player:ui("use_enveloping") and (player:ui("use_blackout") or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	if not player:ui("use_enveloping") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
 	-- if _A.manaengine_highprio() then                             -- HIGH PRIO
