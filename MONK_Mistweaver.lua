@@ -284,9 +284,14 @@ local GUI = {
 		default = "0",
 		list = hpdeltas
 	},
+	{ type = 'spinner',  size = checkbox_tsize, text = "High Prio threshold: ", key = 'highprio_treshhold',  default = 1.75, step = 0.01, max = 10, min = 0.5 },
+	{ type = "spacer", size = spacer_size },
+	{ type = 'spinner',  size = checkbox_tsize, text = "Healing Sphere Min Health: ", key = 'sphere_health',  default = 75, step = 1, max = 90, min = 50 },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "checkbox", size = checkbox_tsize, text = "Use DPS leveling Rotation " .. _A.Core:GetSpellIcon(100787, 15, 15) .. " (R)", key = "leveling", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = "Alert on Statue out of range " .. _A.Core:GetSpellIcon(115313, 15, 15),        key = "draw_statue_range", default = false },
+	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(124682, 15, 15, true), key = "use_enveloping", default = false },
+	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(100784, 15, 15, true), key = "use_blackout", default = false },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "spacer",   size = spacer_size },
 	{ type = 'text',     size = info_tsize,     text = '© .youcef & _2related (UI)' },
@@ -321,6 +326,18 @@ local exeOnLoad = function()
 		end
 	end
 	
+	function _Y.numRW()
+		local numrw = 0
+		for _, fr in pairs(_A.OM:Get('Roster')) do
+			if fr.isplayer and fr:buff("Renewing Mist") 
+				and fr:health()<90
+				then
+				numrw = numrw + 1
+			end
+		end
+		return numrw
+	end
+	
 	function _A.tbltostr(tbl)
 		local result = {}
 		for _, value in ipairs(tbl) do
@@ -348,7 +365,7 @@ local exeOnLoad = function()
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		-- print(slot)
-		player = player or Object("player")
+		local player = Object("player")
 		if slot == STARTSLOT then
 			_A.pressedbuttonat = 0
 			if _A.DSL:Get("toggle")(_, "MasterToggle") ~= true then
@@ -451,7 +468,7 @@ local exeOnLoad = function()
 	end
 	
 	function _A.nothealimmune(unit)
-		player = Object("player")
+		local player = Object("player")
 		if unit then
 			if unit:DebuffAny("Cyclone || Spirit of Redemption || Beast of Nightmares") then return false end
 			if unit:BuffAny("Spirit of Redemption") then return false end
@@ -462,7 +479,7 @@ local exeOnLoad = function()
 	-----------------------------------
 	-----------------------------------
 	local function fall()
-		player = player or Object("player")
+		local player = Object("player")
 		local px, py, pz = _A.ObjectPosition("player")
 		local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
 		if player:Falling() then
@@ -599,6 +616,29 @@ local exeOnLoad = function()
 			return
 		end
 	end)
+	_A.FakeUnits:Add('lowestEnemyInSpellRangeNoTarget', function(num, spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) 
+				and not Obj:state("incapacitate || fear || disorient || charm || misc || sleep") 
+				and _A.notimmune(Obj) 
+				and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort(tempTable, function(a,b)
+				if a.isplayer ~= b.isplayer then return a.isplayer < b.isplayer
+					else return a.health < b.health
+				end
+			end)
+		end
+		return tempTable[num] and tempTable[num].guid
+	end)
 	-- disarm
 	--[[
 		burstdisarm = function()
@@ -656,6 +696,9 @@ local exeOnLoad = function()
 			-- end
 			if guidsrc == UnitGUID("player")
 				then
+				if subevent =="SPELL_CAST_SUCCESS" and idd==124682 then
+					_A.CallWowApi("SpellStopCasting")
+				end
 				-- DEBUG
 				-- if subevent == "SPELL_CAST_SUCCESS" then
 				-- if idd==115460 then
@@ -946,6 +989,35 @@ local exeOnLoad = function()
 				return maxx
 			end
 			
+			function minHPv2()
+				local maxx = 999
+				local GUID = nil
+				if next(MW_HealthUsedData) == nil then
+					return 0
+					else
+					for k in pairs(MW_HealthUsedData) do
+						if MW_HealthUsedData[k] ~= nil then
+							if next(MW_HealthUsedData[k]) ~= nil then
+								if MW_HealthUsedData[k].healthnegative ~= nil then
+									if UnitIsDeadOrGhost(k) == nil then
+										-- if UnitHealth(k)<UnitHealthMax(k) then
+										local unitObject = Object(k)
+										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
+											if MW_HealthUsedData[k].healthnegative < maxx then
+												maxx = MW_HealthUsedData[k].healthnegative
+												GUID = k
+											end
+											-- end
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+				return GUID
+			end
+			
 			function hybridHPv2()
 				local maxmodifier = maxHPv2() * 0.6
 				local avgmodifier = averageHPv1() * 0.4
@@ -953,7 +1025,7 @@ local exeOnLoad = function()
 			end
 			
 			function _A.manaengine() -- make it so it's tied with group hpF
-				player = player or Object("player")
+				local player = Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local hpdeltas = player:ui("hpdeltas")
 				local hpDelta
@@ -970,7 +1042,7 @@ local exeOnLoad = function()
 			
 			--------------------------------------------------------
 			function _A.manaengine_highprio()
-				player = player or Object("player")
+				local player = Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local hpdeltas = player:ui("hpdeltas")
 				local hpDelta
@@ -982,11 +1054,11 @@ local exeOnLoad = function()
 					hpDelta = maxHPv2()
 				end
 				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-				return (manaBudget - hpDelta > 1.5)
+				return (manaBudget - hpDelta > player:ui("highprio_treshhold_spin"))
 			end
 			
 			function _A.manaengine_highprio_pot()
-				player = player or Object("player")
+				local player = Object("player")
 				local hpdeltas = player:ui("hpdeltas")
 				local lowest = Object("lowestall")
 				local hpDelta
@@ -999,7 +1071,7 @@ local exeOnLoad = function()
 				end
 				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 				if lowest and lowest:health()<=60 then
-					return (manaBudget - hybridHPv2() > 2.25)
+					return (manaBudget - maxHPv2() > (player:ui("highprio_treshhold_spin") + .75))
 				end
 				return false
 			end
@@ -1131,7 +1203,7 @@ local exeOnLoad = function()
 				local distance = -speed
 				-- local distance = 0
 				-- UNIT IS PLAYER
-				player = player or Object("player")
+				local player = Object("player")
 				if munit:is(player) then
 					local strafeDirection = IsPStr()
 					if strafeDirection == "left" then
@@ -1156,7 +1228,7 @@ local exeOnLoad = function()
 				return newX, newY, z
 			end
 			function _A.CastPredictedPos(unit, spell, distance)
-				player = player or Object("player")
+				local player = Object("player")
 				local px, py, pz = _A.groundpositiondetail(pSpeed(unit, distance))
 				if px then
 					_A.CallWowApi("CastSpellByName", spell)
@@ -1754,26 +1826,33 @@ local mw_rot = {
 		end
 	end,
 	
-	ctrl_mode = function()
-		-- if _A.modifier_ctrl() and _A.castdelay(124682, 6) then
-		if _A.modifier_ctrl() then
+	enveloping_mist_mode = function()
+		if player:chi()>=3 then
 			if not player:moving() then
-				-- local lowest = Object("lowestall")
-				local lowest = Object("lowestallNOHOT")
-				if player:isChanneling("Soothing Mist") and _A.SMguid then
-					local SMobj = Object(_A.SMguid)
-					if SMobj and SMobj:SpellRange("Renewing Mist") then
-						if SMobj:buff(132120) then _A.CallWowApi("SpellStopCasting") end
-						if player:level()>=16 and player:Chi() >= 3 and SMobj:los() then return SMobj:cast("Enveloping Mist", true) end
-						if player:level()>=34 and player:SpellUsable(116694) and player:Chi() < 3 and SMobj:los() then
-							return SMobj:cast(
-							"Surging Mist", true)
-						end
-					end
+				local guidofinterest = minHPv2()
+				local lowest = guidofinterest and Object(guidofinterest)
+				if player:isChanneling("Soothing Mist") then
+					if player:level()>=16 then return player:cast("Enveloping Mist", true) end -- true) means casts while channeling stuff
 				end
 				if player:level()>=10 and not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
-					return lowest
-					:cast("Soothing Mist")
+					return lowest:cast("Soothing Mist")
+				end
+			end
+		end
+	end,
+	
+	ctrl_modev2 = function()
+		if _A.modifier_ctrl() then
+			if not player:moving() then
+				local guidofinterest = minHPv2()
+				local lowest = guidofinterest and _A.Object(guidofinterest) or _A.Object("lowestall")
+				if player:isChanneling("Soothing Mist") then
+					_Y.SMobj = _A.SMguid and _A.Object(_A.SMguid)
+					if player:level()>=16 and player:chi()>=3 then return player:cast("Enveloping Mist", true) end -- true) means casts while channeling stuff
+					if _Y.SMobj  and _Y.SMobj:SpellRange("Renewing Mist") and player:level()>=34 and player:chi()<3 and _Y.SMobj:los() then return _Y.SMobj:cast("Surging Mist", true) end -- true) means casts while channeling stuff
+				end
+				if player:level()>=10 and not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
+					return lowest:cast("Soothing Mist")
 				end
 			end
 			else
@@ -1875,6 +1954,27 @@ local mw_rot = {
 			if lowestmelee and not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence") then
 				----------------------------------
 				return lowestmelee:Cast("Disable")
+			end
+		end
+	end,
+	
+	tsulongHealing = function()
+		local healingsphere = GetSpellInfo(115460)
+		local boss = Object("boss1")
+		if not boss then return end
+		if not boss.id == 62442 then return end
+		if not player:debuff(122858) then return end
+		
+		-- Integrated healing sphere logic
+		if player:SpellUsable(healingsphere) then
+			if player:Stance() == 1 then
+				if player:SpellUsable(healingsphere) then
+					if boss:range() < 40 then
+						if boss:los() then
+							return _A.clickcast(boss, healingsphere)
+						end
+					end
+				end
 			end
 		end
 	end,
@@ -2012,6 +2112,106 @@ local mw_rot = {
 				end
 			end
 			-- end
+		end
+	end,
+	
+	ringofpeacev3 = function()
+		if not (player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace") < cdcd) then return end
+		
+		-- Cache positions for friendlies and enemies
+		local friendlies = {}
+		local friendlyPositions = {}
+		for _, f in pairs(_A.OM:Get('Friendly')) do
+			if f.isplayer and _A.nothealimmune(f) then
+				local x, y, z = _A.ObjectPosition(f.guid)
+				friendlies[#friendlies+1] = f
+				friendlyPositions[f.guid] = {x, y, z}
+			end
+		end
+		if #friendlies == 0 then return end
+		
+		local enemies = {}
+		local enemyPositions = {}
+		for _, e in pairs(_A.OM:Get('Enemy')) do
+			if e.isplayer and _A.notimmune(e) and not e:state("stun || incapacitate || fear || disorient || charm || misc || sleep") then
+				local x, y, z = _A.ObjectPosition(e.guid)
+				enemies[#enemies+1] = {
+					obj = e,
+					pos = {x, y, z},
+					isHealer = healerspecid[e:spec()],
+					state = {
+						bladeStorm = e:BuffAny("Bladestorm || Divine Shield || Deterrence"),
+						disarm = e:state("Disarm"),
+						canInterrupt = e:caninterrupt(),
+						drState = e:drState(137460),
+						silence = e:state("silence")
+					}
+				}
+				enemyPositions[e.guid] = {x, y, z}
+			end
+		end
+		
+		-- Squared distance check with cached positions
+		local function withinRange(pos1, pos2, range)
+			local dx, dy, dz = pos1[1]-pos2[1], pos1[2]-pos2[2], pos1[3]-pos2[3]
+			return (dx*dx + dy*dy + dz*dz) < (range*range)
+		end
+		
+		-- Version 1: Target protection
+		local lowHP = _A.pull_location == "arena" and 65 or 45
+		for _, f in ipairs(friendlies) do
+			local fpos = friendlyPositions[f.guid]
+			local count = 0
+			for _, e in ipairs(enemies) do
+				if not e.state.bladeStorm and not e.state.disarm and not e.isHealer then
+					local tguid = UnitTarget(e.obj.guid)
+					if tguid == f.guid and withinRange(e.pos, fpos, 7) then
+						count = count + 1
+					end
+				end
+			end
+			if count > 0 and f:SpellRange("Ring of Peace") and not f:BuffAny("Ring of Peace") and f:los() then
+				if count >= 2 or (count >= 1 and f:health() < lowHP) then
+					return f:Cast("Ring of Peace")
+				end
+			end
+		end
+		
+		-- Version 2: Cluster detection
+		for _, f in ipairs(friendlies) do
+			local fpos = friendlyPositions[f.guid]
+			local count = 0
+			for _, e in ipairs(enemies) do
+				if not e.state.bladeStorm and not e.state.disarm and withinRange(e.pos, fpos, 7) then
+					count = count + 1
+				end
+			end
+			if count >= 3 and f:SpellRange("Ring of Peace") and not f:BuffAny("Ring of Peace") and f:los() then
+				return f:Cast("Ring of Peace")
+			end
+		end
+		
+		-- Version 3: High priority interrupts
+		for _, e in ipairs(enemies) do
+			if kickcheck_highprio(e.obj) and (player:SpellCooldown("Spear Hand Strike") > _A.interrupttreshhold or not e.state.canInterrupt) then
+				for _, f in ipairs(friendlies) do
+					if withinRange(e.pos, friendlyPositions[f.guid], 7) and f:los() then
+						return f:Cast("Ring of Peace")
+					end
+				end
+			end
+		end
+		
+		-- Version 4: Healer silence
+		if _A.someoneislow() then
+			for _, f in ipairs(friendlies) do
+				local fpos = friendlyPositions[f.guid]
+				for _, e in ipairs(enemies) do
+					if e.isHealer and withinRange(e.pos, fpos, 7) and not e.state.silence and e.state.drState ~= 2 then
+						return f:Cast("Ring of Peace")
+					end
+				end
+			end
 		end
 	end,
 	
@@ -2215,7 +2415,7 @@ local mw_rot = {
 							and _A.nothealimmune(fr)
 							and fr:los()
 							then
-							print("UNCCING")
+							-- print("UNCCING")
 							return fr:cast("Detox")
 						end
 					end
@@ -2234,7 +2434,7 @@ local mw_rot = {
 							and not fr:DebuffAny("Unstable Affliction")
 							-- and (not fr:debuffany("Unstable Affliction") or _A.pull_location=="arena")
 							and fr:los() then
-							print("UNSLOWING")
+							-- print("UNSLOWING")
 							return fr:cast("Detox")
 						end
 					end
@@ -2254,7 +2454,7 @@ local mw_rot = {
 							then
 							for _, v in ipairs(dangerousdebuffs) do
 								if fr:DebuffAny(v) and _A.nothealimmune(fr) and fr:los() then
-									print("REMOVING DANGEROUS")
+									-- print("REMOVING DANGEROUS")
 									return fr:cast("Detox")
 								end
 							end
@@ -2366,7 +2566,7 @@ local mw_rot = {
 						--- ORBS
 						local lowest = Object("lowestall")
 						if lowest then
-							if (lowest:health() < 85) then
+							if (lowest:health() < player:ui("sphere_health_spin")) then
 								return _A.clickcast(lowest, "Healing Sphere")
 							end
 						end
@@ -2413,7 +2613,7 @@ local mw_rot = {
 			if player:Chi() >= 2 then
 				if player:Buff("Muscle Memory") then
 					----------------------------------
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						----------------------------------
 						return lowestmelee:Cast("Blackout Kick")
@@ -2424,12 +2624,26 @@ local mw_rot = {
 		end
 	end,
 	
+	blackoutkick_always = function()
+		if player:Stance() == 1 then
+			if player:Chi() >= 2 then
+				----------------------------------
+				local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
+				if lowestmelee then
+					----------------------------------
+					return lowestmelee:Cast("Blackout Kick")
+				end
+			end
+			--------------------------------- damage based
+		end
+	end,
+	
 	tigerpalm_mm = function()
 		if player:Stance() == 1 then
 			if player:Chi() >= 1 then
 				if player:Buff("Muscle Memory") then
 					----------------------------------
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						----------------------------------
 						return lowestmelee:Cast("Tiger Palm")
@@ -2446,7 +2660,7 @@ local mw_rot = {
 				if player:Chi() >= 2
 					and not player:Buff("Serpent's Zeal") -- and player:Buff("Muscle Memory")
 					then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Blackout Kick")
 					end
@@ -2457,17 +2671,17 @@ local mw_rot = {
 	
 	tp_buff = function()
 		if player:Stance() == 1 then
-			if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory")
+			-- if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory")
 				if player:Chi() >= 1
 					and not player:Buff("Tiger Power")
 					then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Tiger Palm")
 					end
 				end
 			end
-		end
+		-- end
 	end,
 	
 	tp_buff_keybind = function()
@@ -2476,9 +2690,9 @@ local mw_rot = {
 				if player:Chi() >= 1
 					and not player:Buff("Tiger Power")
 					then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
-						return lowestmelee:Cast("Tiger Palm", true)
+						return lowestmelee:Cast("Tiger Palm")
 					end
 				end
 			end
@@ -2489,6 +2703,17 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if player:SpellUsable("Uplift")
 				and player:Chi() >= 2
+				then
+				return player:Cast("Uplift")
+			end
+		end
+	end,
+	
+	uplift_prio = function()
+		if player:Stance() == 1 then
+			if player:SpellUsable("Uplift")
+				and player:Chi() >= 2
+				and (_Y.numRW()>=3 or player:buff("Thunder Focus Tea"))
 				then
 				return player:Cast("Uplift")
 			end
@@ -2510,7 +2735,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if player:Chi() == 1 then
 				if player:Buff("Muscle Memory") then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Tiger Palm")
 					end
@@ -2527,7 +2752,7 @@ local mw_rot = {
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
 					----------------------------------
-					return lowestmelee:Cast("Blackout Kick", true)
+					return lowestmelee:Cast("Blackout Kick")
 				end
 			end
 			--------------------------------- damage based
@@ -2538,7 +2763,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			if _A.manaengine() then
 				if player:Buff("Rushing Jade Wind") and not player:Buff("Muscle Memory") then
-					local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						return lowestmelee:Cast("Jab")
 					end
@@ -2553,7 +2778,7 @@ local mw_rot = {
 			if not player:Buff("Muscle Memory")
 				or (player:chi() <= 1 and not player:talent("Rushing Jade Wind"))
 				then
-				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
+				local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 				if lowestmelee then
 					return lowestmelee:Cast("Jab")
 				end
@@ -2581,7 +2806,7 @@ local mw_rot = {
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 			if lowestmelee then
-				return lowestmelee:Cast("Jab", true)
+				return lowestmelee:Cast("Jab")
 			end
 		end
 	end,
@@ -2719,10 +2944,11 @@ local mw_rot = {
 	end
 }
 local inCombat = function()
+	if not _A.Cache.Utils.PlayerInGame then return true end
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime() - enteredworldat) < (3)) then return end
 	if not _A.pull_location then return true end
-	player = player or Object("player")
+	player = Object("player")
 	if not player then return true end
 	local mylevel = player:level()
 	cdcd = _A.Parser.frequency and _A.Parser.frequency * 3 or .3
@@ -2733,6 +2959,7 @@ local inCombat = function()
 	_A.interrupttreshhold = .3 + _A.latency
 	if player:mounted() then return true end
 	if player:isChanneling("Crackling Jade Lightning") then return true end -- ¨pausing when casting this
+	-- if player:isChanneling("Soothing Mist") then if player:ui("use_enveloping") then mw_rot.enveloping_mist_mode() end return true end -- ¨pausing when casting this
 	-- Out of GCD
 	mw_rot.autoattackmanager()
 	_Y.petengine_MONK()
@@ -2748,6 +2975,7 @@ local inCombat = function()
 	mw_rot.cancel_badnoggen()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
+	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
 	if _A.buttondelayfunc() then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
@@ -2757,26 +2985,20 @@ local inCombat = function()
 	if player:keybind("R") or player:ui("leveling") then
 		if mylevel >= 56 and mw_rot.manatea() then return true end
 		if mylevel >= 28 and mw_rot.pvp_disable_target() then return true end
-		if mylevel >= 3 and mw_rot.tp_buff_keybind() then return true end
-		if mylevel >= 7 and mw_rot.blackout_keybind() then return true end
+		if mw_rot.tp_buff_keybind() then return true end
+		if mw_rot.blackout_keybind() then return true end
 		if mw_rot.dpsstanceswap() then return true end
 	end
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
-	if mw_rot.ctrl_mode() then return true end -- ctrl
-	-- healing spheres don't get you in combat lol (increased mana regen)
-	-- if not player:combat() and (_A.pull_location =="pvp" or _A.pull_location =="arena") then
-	-- if mw_rot.dpsstance_healstance() then return true end
-	-- if mylevel >= 64 and mw_rot.healingsphere_nocombat() then return true end
-	-- return true
-	-- end
-	--
+	if not player:ui("use_enveloping") and mw_rot.ctrl_modev2() then return true end -- ctrl
 	-- GCD CDS
 	if mylevel >= 50 and mw_rot.lifecocoon() then return true end
 	if mylevel >= 68 and mw_rot.burstdisarm() then
-		print("DISARMING")
+		-- print("DISARMING")
 		return true
 	end
-	if mylevel >= 64 and _A.modifier_shift() and mw_rot.healingsphere() then return true end
+	if mylevel >= 56 and player:mana()<=60 and mw_rot.manatea() then return true end
+	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
 	--------------------- dispells and root freedom
 	if mylevel >= 20 then
 		if mw_rot.dispellunCC() then return true end
@@ -2785,20 +3007,23 @@ local inCombat = function()
 	end
 	if mw_rot.tigerslust() then return true end
 	--------------------- high prio
-	if mylevel >= 3 and mw_rot.tigerpalm_mm() then return true end
+	if not player:ui("use_blackout") and mw_rot.tigerpalm_mm() then return true end
+	if player:ui("use_blackout") and not player:buff("Muscle Memory") and mw_rot.tp_buff() then return true end
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
-	if mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
-	-- OH SHIT ORBS
-	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
-	if _A.manaengine_highprio() then                             -- HIGH PRIO
+	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
+	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
+	if not player:ui("use_enveloping") and (player:ui("use_blackout") or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important
+	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
+	if not player:ui("use_enveloping") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
+	-- if _A.manaengine_highprio() then                             -- HIGH PRIO
 		-- print("HIGH PRIO")
-		if mylevel >= 64 and mw_rot.healingsphere() then return true end
-	end
+		-- if mylevel >= 64 and mw_rot.healingsphere() then return true end
+	-- end
 	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if mw_rot.Xuen() then return true end
 	--------------------- CC
-	if mw_rot.ringofpeacev2() then return true end
+	if mw_rot.ringofpeacev3() then return true end
 	if mw_rot.kick_legsweep() then return true end
 	if mw_rot.stun_legsweep() then return true end
 	if mylevel >= 44 then
@@ -2829,7 +3054,7 @@ end
 local statueAlertShown = false -- Track alert state
 
 local function alertStatueRange()
-	player = player or Object("player")
+	local player = Object("player")
 	if not player then return true end
 	if player:spec()~=270 then return true end
 	if not player:ui("draw_statue_range") then return true end

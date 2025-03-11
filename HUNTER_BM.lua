@@ -1289,7 +1289,7 @@ local exeOnLoad = function()
 		local pettargetguid = _A.UnitTarget(_A.PetGUID) or nil
 		if htotem and (_A.pull_location=="arena" or (toggle("pet_attacktotem") and htotem:range()<=60)) then
 			if _A.PetGUID and (not pettargetguid or pettargetguid~=htotem.guid) then
-				_A.CallWowApi("PetAttack", htotem.guid)
+				_A.PetAttack(htotem.guid)
 				return true
 			end
 			return true
@@ -1302,7 +1302,7 @@ local exeOnLoad = function()
 		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				if _A.PetGUID and (not pettargetguid or pettargetguid~=target.guid) then
-					_A.CallWowApi("PetAttack", target.guid)
+					_A.PetAttack(target.guid)
 					return true
 				end
 			end
