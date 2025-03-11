@@ -2927,7 +2927,7 @@ local mw_rot = {
 		local boss = Object("boss1")
 		if not boss then return end
 		if not boss.id == 62442 then return end
-		if not player:debuff(122858) then return end
+		if not player:debuffAny(122858) then return end
 		
 		-- Integrated healing sphere logic
 		if player:SpellUsable(healingsphere) then
