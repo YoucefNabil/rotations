@@ -1060,8 +1060,9 @@ local exeOnLoad = function()
 				local player = Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local manaBudget = _A.avgDeltaPercent
-				if averageHPv2_RJW_3only()~="NaN" then
-					return manaBudget >= averageHPv2_RJW_3only()
+				local delta = averageHPv2_RJW_3only()
+				if delta and delta~="NaN" then
+					return manaBudget >= delta
 				end
 				return false
 			end
@@ -3067,7 +3068,7 @@ local inCombat = function()
 	if mw_rot.dpsstance_healstance() then return true end
 	if not _A.modifier_shift() and not _A.manaengine_highprio() and mw_rot.dpsstanceswap() then return true end
 	if player:mana()<=5 and mw_rot.dpsstanceswap() then return true end
-	-- if _A.manaengine() and mw_rot.jab_filler_2() then return true end
+	if _A.manaengine() and mw_rot.jab_filler_2() then return true end
 	-- if _A.manaengine() and mw_rot.rushingjadewind() then return true end
 end
 local spellIds_Loc = function()
