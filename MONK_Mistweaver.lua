@@ -3006,7 +3006,7 @@ local inCombat = function()
 	if mw_rot.dpsstance_jab() then return true end
 	if mw_rot.dpsstance_spin() then return true end
 	if mw_rot.dpsstance_healstance() then return true end
-	if not _A.modifier_shift() and mw_rot.dpsstanceswap() then return true end
+	if not _A.modifier_shift() and not _A.manaengine_highprio() and mw_rot.dpsstanceswap() then return true end
 end
 local spellIds_Loc = function()
 end
