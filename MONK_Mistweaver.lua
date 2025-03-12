@@ -968,7 +968,7 @@ local exeOnLoad = function()
 						if MW_HealthUsedData[k] ~= nil and next(MW_HealthUsedData[k]) ~= nil and MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
 							if UnitHealth(k) < UnitHealthMax(k) then
 								local unitObject = Object(k)
-								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:range()<=9 then
+								if unitObject and unitObject.isplayer and unitObject:alive() and unitObject:friend() and unitObject:range()<=9 then
 									tempTable[#tempTable+1] = {
 										-- OBJ = unitObject
 										delta = MW_HealthUsedData[k].avgHDeltaPercent
@@ -1063,6 +1063,17 @@ local exeOnLoad = function()
 				local delta = averageHPv2_RJW_3only()
 				if delta and delta~="NaN" then
 					return manaBudget >= delta
+				end
+				return false
+			end
+			
+			function _A.manaengine_RJW_highprio() -- make it so it's tied with group hpF
+				local player = Object("player")
+				if player:buff("Lucidity") or player:mana() >= 95 then return true end
+				local manaBudget = _A.avgDeltaPercent
+				local delta = averageHPv2_RJW_3only()
+				if delta and delta~="NaN" then
+					return ((manaBudget - delta) >= (player:ui("highprio_treshhold_spin")-.5))
 				end
 				return false
 			end
@@ -3023,6 +3034,7 @@ local inCombat = function()
 		return true
 	end
 	if mylevel >= 56 and player:mana()<=60 and mw_rot.manatea() then return true end
+	if _A.manaengine_RJW_highprio() and mw_rot.rushingjadewind() then return true end
 	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
 	--------------------- dispells and root freedom
 	if mylevel >= 20 then
@@ -3069,7 +3081,7 @@ local inCombat = function()
 	if mw_rot.dpsstance_healstance() then return true end
 	if not _A.modifier_shift() and not _A.manaengine_highprio() and mw_rot.dpsstanceswap() then return true end
 	if player:mana()<=5 and mw_rot.dpsstanceswap() then return true end
-	-- if _A.manaengine() and mw_rot.jab_filler_2() then return true end
+	if _A.manaengine() and mw_rot.jab_filler_2() then return true end
 	if _A.manaengine() and mw_rot.rushingjadewind() then return true end
 end
 local spellIds_Loc = function()
