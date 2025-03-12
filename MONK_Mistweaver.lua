@@ -3005,7 +3005,7 @@ local inCombat = function()
 	------------------ High Prio
 	-- KEYBINDS
 	-- OH SHIT ORBS
-	-- if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
+	if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if mylevel >= 64 and mw_rot.tsulongHealing() then return true end -- SUPER PRIO
 	if player:keybind("R") or player:ui("leveling") then
 		if mylevel >= 56 and mw_rot.manatea() then return true end
@@ -3032,6 +3032,9 @@ local inCombat = function()
 	end
 	if mw_rot.tigerslust() then return true end
 	--------------------- high prio
+	if mw_rot.Xuen() then return true end
+	if mylevel >= 26 and player:health()<=80 and mw_rot.expelharm() then return true end
+	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if not player:ui("use_blackout") and mw_rot.tigerpalm_mm() then return true end
 	if player:ui("use_blackout") and not player:buff("Muscle Memory") and mw_rot.tp_buff() then return true end
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
@@ -3042,8 +3045,6 @@ local inCombat = function()
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	if not player:ui("use_enveloping") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
 	if mw_rot.tigerpalm_mm() then return true end
-	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
-	if mw_rot.Xuen() then return true end
 	--------------------- CC
 	if mw_rot.ringofpeacev3() then return true end
 	if mw_rot.kick_legsweep() then return true end
@@ -3069,7 +3070,7 @@ local inCombat = function()
 	if not _A.modifier_shift() and not _A.manaengine_highprio() and mw_rot.dpsstanceswap() then return true end
 	if player:mana()<=5 and mw_rot.dpsstanceswap() then return true end
 	-- if _A.manaengine() and mw_rot.jab_filler_2() then return true end
-	-- if _A.manaengine() and mw_rot.rushingjadewind() then return true end
+	if _A.manaengine() and mw_rot.rushingjadewind() then return true end
 end
 local spellIds_Loc = function()
 end
