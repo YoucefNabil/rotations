@@ -957,6 +957,39 @@ local exeOnLoad = function()
 				return num > 0 and sum / num or 0
 			end
 			
+			function averageHPv2_RJW_3only()
+				local sum = 0
+				local num = 0
+				local tempTable = {}
+				if next(MW_HealthUsedData) == nil then
+					return 0
+					else
+					for k in pairs(MW_HealthUsedData) do
+						if MW_HealthUsedData[k] ~= nil and next(MW_HealthUsedData[k]) ~= nil and MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
+							if UnitHealth(k) < UnitHealthMax(k) then
+								local unitObject = Object(k)
+								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:range()<=9 then
+									tempTable[#tempTable+1] = {
+										-- OBJ = unitObject
+										delta = MW_HealthUsedData[k].avgHDeltaPercent
+									}
+								end
+							end
+						end
+					end
+					if #tempTable > 1 then
+						table.sort(tempTable, function(a, b) return a.delta < b.delta end)
+					end
+					for i = 1,3 do
+						if tempTable[i] then
+							num = num + 1
+							sum = sum + tempTable[i].delta
+						end
+					end
+				end
+				return num >= 3 and sum / num or "NaN"
+			end
+			
 			function maxHPv2()
 				local maxx = 999
 				if next(MW_HealthUsedData) == nil then
@@ -1021,6 +1054,16 @@ local exeOnLoad = function()
 				end
 				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 				return manaBudget >= hpDelta
+			end
+			
+			function _A.manaengine_RJW() -- make it so it's tied with group hpF
+				local player = Object("player")
+				if player:buff("Lucidity") or player:mana() >= 95 then return true end
+				local manaBudget = _A.avgDeltaPercent
+				if averageHPv2_RJW_3only()~="NaN" then
+					return manaBudget >= averageHPv2_RJW_3only()
+				end
+				return false
 			end
 			
 			--------------------------------------------------------
@@ -2756,6 +2799,15 @@ local mw_rot = {
 		end -- stance 1
 	end,
 	
+	jab_filler_2 = function()
+		if player:Stance() == 1 then
+			local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
+			if lowestmelee then
+				return lowestmelee:Cast("Jab")
+			end
+		end
+	end,
+	
 	dpsstance_jab = function()
 		if player:Stance() ~= 1 and not player:buff("Rushing Jade Wind") then
 			if not player:Buff("Muscle Memory")
@@ -2772,6 +2824,17 @@ local mw_rot = {
 	spin_rjw = function()
 		if (player:Stance() == 1)
 			and player:buffany("Lucidity") then
+			if player:Talent("Rushing Jade Wind")
+				and player:SpellCooldown("Rushing Jade Wind") < cdcd
+				then
+				return player:Cast("Rushing Jade Wind")
+			end
+		end
+		-- add friendly finder on top
+	end,
+	
+	rushingjadewind = function()
+		if (player:Stance() == 1) then
 			if player:Talent("Rushing Jade Wind")
 				and player:SpellCooldown("Rushing Jade Wind") < cdcd
 				then
@@ -2979,10 +3042,7 @@ local inCombat = function()
 	if not player:ui("use_enveloping") and (player:ui("use_blackout") or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	if not player:ui("use_enveloping") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
-	-- if _A.manaengine_highprio() then                             -- HIGH PRIO
-	-- print("HIGH PRIO")
-	-- if mylevel >= 64 and mw_rot.healingsphere() then return true end
-	-- end
+	if mw_rot.tigerpalm_mm() then return true end
 	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if mw_rot.Xuen() then return true end
 	--------------------- CC
@@ -2997,6 +3057,7 @@ local inCombat = function()
 	------------------ Rotation Proper
 	if mylevel >= 56 and mw_rot.manatea() then return true end
 	if mylevel >= 64 and mw_rot.healingsphere() then return true end
+	if _A.manaengine_RJW() and mw_rot.rushingjadewind() then return true end
 	if mw_rot.spin_rjw() then return true end
 	if mylevel >= 70 and mw_rot.healstatue() then return true end
 	if mylevel >= 26 and mw_rot.expelharm() then return true end
