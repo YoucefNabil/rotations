@@ -923,7 +923,7 @@ local exeOnLoad = function()
 								if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
 									if UnitIsDeadOrGhost(k) == nil then
 										local unitObject = Object(k)
-										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
+										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:SpellRange("Renewing Mist") then
 											num = num + 1
 											sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
 										end
@@ -942,44 +942,35 @@ local exeOnLoad = function()
 					return 0
 					else
 					for k in pairs(MW_HealthUsedData) do
-						if MW_HealthUsedData[k] ~= nil then
-							if next(MW_HealthUsedData[k]) ~= nil then
-								if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
-									if UnitIsDeadOrGhost(k) == nil then
-										if UnitHealth(k) < UnitHealthMax(k) then
-											local unitObject = Object(k)
-											if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
-												num = num + 1
-												sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
-											end
-										end
-									end
+						if MW_HealthUsedData[k] ~= nil and next(MW_HealthUsedData[k]) ~= nil and MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
+							if UnitHealth(k) < UnitHealthMax(k) then
+								local unitObject = Object(k)
+								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:SpellRange("Renewing Mist") then
+									num = num + 1
+									sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
 								end
 							end
 						end
 					end
+					
 				end
 				return num > 0 and sum / num or 0
 			end
 			
 			function maxHPv2()
 				local maxx = 999
+				local unitObject = nil
 				if next(MW_HealthUsedData) == nil then
 					return 0
 					else
 					for k in pairs(MW_HealthUsedData) do
-						if MW_HealthUsedData[k] ~= nil then
-							if next(MW_HealthUsedData[k]) ~= nil then
-								if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
-									if UnitIsDeadOrGhost(k) == nil then
-										-- if UnitHealth(k)<UnitHealthMax(k) then
-										local unitObject = Object(k)
-										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
-											if MW_HealthUsedData[k].avgHDeltaPercent < maxx then
-												maxx = MW_HealthUsedData[k].avgHDeltaPercent
-											end
-											-- end
-										end
+						if MW_HealthUsedData[k] ~= nil and next(MW_HealthUsedData[k]) ~= nil and MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
+							unitObject = Object(k)
+							if unitObject then
+								if unitObject:alive() and unitObject:friend() and unitObject:SpellRange("Renewing Mist") then
+									if MW_HealthUsedData[k].avgHDeltaPercent < maxx then
+										maxx = MW_HealthUsedData[k].avgHDeltaPercent
+										
 									end
 								end
 							end
@@ -996,24 +987,17 @@ local exeOnLoad = function()
 					return 0
 					else
 					for k in pairs(MW_HealthUsedData) do
-						if MW_HealthUsedData[k] ~= nil then
-							if next(MW_HealthUsedData[k]) ~= nil then
-								if MW_HealthUsedData[k].healthnegative ~= nil then
-									if UnitIsDeadOrGhost(k) == nil then
-										-- if UnitHealth(k)<UnitHealthMax(k) then
-										local unitObject = Object(k)
-										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
-											if MW_HealthUsedData[k].healthnegative < maxx then
-												maxx = MW_HealthUsedData[k].healthnegative
-												GUID = k
-											end
-											-- end
-										end
-									end
+						if MW_HealthUsedData[k] ~= nil and next(MW_HealthUsedData[k]) ~= nil and MW_HealthUsedData[k].healthnegative ~= nil then
+							local unitObject = Object(k)
+							if unitObject and unitObject:alive() and unitObject:friend() and unitObject:SpellRange("Renewing Mist") then
+								if MW_HealthUsedData[k].healthnegative < maxx then
+									maxx = MW_HealthUsedData[k].healthnegative
+									GUID = k
 								end
 							end
 						end
 					end
+					
 				end
 				return GUID
 			end
@@ -2672,15 +2656,15 @@ local mw_rot = {
 	tp_buff = function()
 		if player:Stance() == 1 then
 			-- if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory")
-				if player:Chi() >= 1
-					and not player:Buff("Tiger Power")
-					then
-					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
-					if lowestmelee then
-						return lowestmelee:Cast("Tiger Palm")
-					end
+			if player:Chi() >= 1
+				and not player:Buff("Tiger Power")
+				then
+				local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
+				if lowestmelee then
+					return lowestmelee:Cast("Tiger Palm")
 				end
 			end
+		end
 		-- end
 	end,
 	
@@ -2997,8 +2981,8 @@ local inCombat = function()
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	if not player:ui("use_enveloping") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
 	-- if _A.manaengine_highprio() then                             -- HIGH PRIO
-		-- print("HIGH PRIO")
-		-- if mylevel >= 64 and mw_rot.healingsphere() then return true end
+	-- print("HIGH PRIO")
+	-- if mylevel >= 64 and mw_rot.healingsphere() then return true end
 	-- end
 	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if mw_rot.Xuen() then return true end
