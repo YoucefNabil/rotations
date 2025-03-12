@@ -959,13 +959,12 @@ local exeOnLoad = function()
 			
 			function maxHPv2()
 				local maxx = 999
-				local unitObject = nil
 				if next(MW_HealthUsedData) == nil then
 					return 0
 					else
 					for k in pairs(MW_HealthUsedData) do
 						if MW_HealthUsedData[k] ~= nil and next(MW_HealthUsedData[k]) ~= nil and MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
-							unitObject = Object(k)
+							local unitObject = Object(k)
 							if unitObject then
 								if unitObject:alive() and unitObject:friend() and unitObject:SpellRange("Renewing Mist") then
 									if MW_HealthUsedData[k].avgHDeltaPercent < maxx then
