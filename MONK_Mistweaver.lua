@@ -3034,7 +3034,7 @@ local inCombat = function()
 		return true
 	end
 	if mylevel >= 56 and player:mana()<=60 and mw_rot.manatea() then return true end
-	if _A.manaengine_RJW_highprio() and mw_rot.rushingjadewind() then return true end
+	if _A.manaengine_RJW_highprio() and (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.rushingjadewind() then return true end
 	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
 	--------------------- dispells and root freedom
 	if mylevel >= 20 then
@@ -3069,7 +3069,7 @@ local inCombat = function()
 	------------------ Rotation Proper
 	if mylevel >= 56 and mw_rot.manatea() then return true end
 	if mylevel >= 64 and mw_rot.healingsphere() then return true end
-	if _A.manaengine_RJW() and mw_rot.rushingjadewind() then return true end
+	if _A.manaengine_RJW() and (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.rushingjadewind() then return true end
 	if mw_rot.spin_rjw() then return true end
 	if mylevel >= 70 and mw_rot.healstatue() then return true end
 	if mylevel >= 26 and mw_rot.expelharm() then return true end
@@ -3079,10 +3079,11 @@ local inCombat = function()
 	if mw_rot.dpsstance_jab() then return true end
 	if mw_rot.dpsstance_spin() then return true end
 	if mw_rot.dpsstance_healstance() then return true end
+	------------------ DPS STANCE
 	if not _A.modifier_shift() and not _A.manaengine_highprio() and mw_rot.dpsstanceswap() then return true end
 	if player:mana()<=5 and mw_rot.dpsstanceswap() then return true end
-	if _A.manaengine() and mw_rot.rushingjadewind() then return true end
-	if _A.manaengine() and mw_rot.jab_filler_2() then return true end
+	if player:talent("Rushing Jade Wind") and not (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.dpsstanceswap() then return true end
+	-- if player:talent("Rushing Jade Wind") and mw_rot.dpsstanceswap() then return true end
 end
 local spellIds_Loc = function()
 end
