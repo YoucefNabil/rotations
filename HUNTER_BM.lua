@@ -651,7 +651,7 @@ local exeOnLoad = function()
 		if pet and not pet:alive() then return end
 		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
 		--
-		if target and target:exists() and target:enemy()  and target:alive() and _A.notimmune(target) then
+		if target and target:exists() and target:enemy()  and target:alive() then
 			if _A.pull_location~="arena" or (not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and not _A.scattertargets[target.guid])  then
 				return target and target.guid -- this is good
 			end
