@@ -318,6 +318,12 @@ local exeOnLoad = function()
 		text = "ON = Pet attacks totem if in range | OFF = Pet doesnt (unless in arena where it always does)",
 		icon = select(3,GetSpellInfo("Scare Beast")),
 	})
+	_A.Interface:AddToggle({
+		key = "enable_tranq", 
+		name = "Enable Auto Tranq Shotting", 
+		text = "ON = Purges magic effects | OFF = Do not purge automatically",
+		icon = select(3,GetSpellInfo("Tranquilizing Shot")),
+	})
 	_A.Interface:ShowToggle("cooldowns", false)
 	_A.Interface:ShowToggle("interrupts", false)
 	_A.Interface:ShowToggle("aoe", false)
@@ -1927,7 +1933,7 @@ survival.rot = {
 	end,
 	frenzy = function()
 		local pet = Object("pet")
-		if pet and pet:alive() and player:combat() and player:BuffStackAny("Frenzy")==5 and not IsCurrentSpell(82692) then
+		if pet and pet:alive() and player:BuffStackAny("Frenzy")==5 and not IsCurrentSpell(82692) then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee
 				then 
@@ -2165,8 +2171,8 @@ local inCombat = function()
 	if player:buff("Camouflage") then return true end
 	-- Defs
 	survival.rot.deterrence()
-	if survival.rot.disengage_freemovement() then return end
-	if survival.rot.masterscall() then return end
+	if survival.rot.disengage_freemovement() then return true end
+	if survival.rot.masterscall() then return true end
 	survival.rot.masterscall_party1()
 	survival.rot.masterscall_party2()
 	-- no gcd
@@ -2176,8 +2182,8 @@ local inCombat = function()
 	end
 	-- Traps
 	if not toggle("TrapEnable") then
-		if survival.rot.traps_ICE() then return end
-		if survival.rot.traps_SNAKE() then return end
+		if survival.rot.traps_ICE() then return true end
+		if survival.rot.traps_SNAKE() then return true end
 	end
 	if not player:buff("Deterrence") then 
 		survival.rot.bindingshot()
@@ -2187,13 +2193,13 @@ local inCombat = function()
 	-- if focus or _A.pull_location~="pvp" then
 	if toggle("TrapEnable") then
 		if player:talent("Wyvern Sting") and toggle("WyvernEnable") then
-			if survival.rot.sleep2() then return end
+			if survival.rot.sleep2() then return true end
 			if survival.rot.freezing2() then return true end
-			if survival.rot.scatter2() then return end
+			if survival.rot.scatter2() then return true end
 			else
-			if survival.rot.scatter() then return end
-			if survival.rot.freezing() then return end
-			if survival.rot.sleep() then return end
+			if survival.rot.scatter() then return true end
+			if survival.rot.freezing() then return true end
+			if survival.rot.sleep() then return true end
 		end
 	end
 	-- end
@@ -2212,21 +2218,21 @@ local inCombat = function()
 	survival.rot.direbeast()
 	survival.rot.stampede()
 	survival.rot.kick()
-	if AOEcheck() and survival.rot.barrage() then return end -- make a complete aoe check function
-	-- if AOEcheck() and survival.rot.multishot() then return end -- make a complete aoe check function
+	if AOEcheck() and survival.rot.barrage() then return true end -- make a complete aoe check function
+	-- if AOEcheck() and survival.rot.multishot() then return true end -- make a complete aoe check function
 	survival.rot.killshot()
 	survival.rot.mendpet()
-	if not _A.modifier_ctrl() and _A.pull_location=="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
-	if (_A.modifier_ctrl() or _A.pull_location=="arena") and survival.rot.tranq_hop() then return end
-	if _A.modifier_ctrl() and _A.pull_location~="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
+	-- if not _A.modifier_ctrl() and _A.pull_location=="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
+	if (_A.modifier_ctrl() or toggle("enable_tranq")) and  survival.rot.tranquillshot_midprio() then return true end -- only worth it in arena
+	if (_A.modifier_ctrl() or _A.pull_location=="arena") and survival.rot.tranq_hop() then return true end
 	if _A.modifier_alt() then survival.rot.concussion() end
 	-- important spell
-	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return end
-	if survival.rot.serpentsting_check() then return end
-	if survival.rot.amoc() then return end
-	if survival.rot.glaivetoss() then return end
+	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return true end
+	if survival.rot.serpentsting_check() then return true end
+	if survival.rot.amoc() then return true end
+	if survival.rot.glaivetoss() then return true end
 	-- fill
-	if survival.rot.arcaneshot() then return end
+	if survival.rot.arcaneshot() then return true end
 end
 local spellIds_Loc = function()
 end
