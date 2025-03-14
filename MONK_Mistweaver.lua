@@ -923,7 +923,7 @@ local exeOnLoad = function()
 								if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
 									if UnitIsDeadOrGhost(k) == nil then
 										local unitObject = Object(k)
-										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
+										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:SpellRange("Renewing Mist") then
 											num = num + 1
 											sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
 										end
@@ -942,24 +942,52 @@ local exeOnLoad = function()
 					return 0
 					else
 					for k in pairs(MW_HealthUsedData) do
-						if MW_HealthUsedData[k] ~= nil then
-							if next(MW_HealthUsedData[k]) ~= nil then
-								if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
-									if UnitIsDeadOrGhost(k) == nil then
-										if UnitHealth(k) < UnitHealthMax(k) then
-											local unitObject = Object(k)
-											if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
-												num = num + 1
-												sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
-											end
-										end
-									end
+						if MW_HealthUsedData[k] ~= nil and next(MW_HealthUsedData[k]) ~= nil and MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
+							if UnitHealth(k) < UnitHealthMax(k) then
+								local unitObject = Object(k)
+								if unitObject and unitObject:alive() and unitObject:friend() and unitObject:SpellRange("Renewing Mist") then
+									num = num + 1
+									sum = sum + MW_HealthUsedData[k].avgHDeltaPercent
 								end
 							end
 						end
 					end
+					
 				end
 				return num > 0 and sum / num or 0
+			end
+			
+			function averageHPv2_RJW_3only()
+				local sum = 0
+				local num = 0
+				local tempTable = {}
+				if next(MW_HealthUsedData) == nil then
+					return 0
+					else
+					for k in pairs(MW_HealthUsedData) do
+						if MW_HealthUsedData[k] ~= nil and next(MW_HealthUsedData[k]) ~= nil and MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
+							if UnitHealth(k) < UnitHealthMax(k) then
+								local unitObject = Object(k)
+								if unitObject and unitObject.isplayer and unitObject:alive() and unitObject:friend() and unitObject:range()<=9 then
+									tempTable[#tempTable+1] = {
+										-- OBJ = unitObject
+										delta = MW_HealthUsedData[k].avgHDeltaPercent
+									}
+								end
+							end
+						end
+					end
+					if #tempTable > 1 then
+						table.sort(tempTable, function(a, b) return a.delta < b.delta end)
+					end
+					for i = 1,3 do
+						if tempTable[i] then
+							num = num + 1
+							sum = sum + tempTable[i].delta
+						end
+					end
+				end
+				return num >= 3 and sum / num or "NaN"
 			end
 			
 			function maxHPv2()
@@ -968,18 +996,13 @@ local exeOnLoad = function()
 					return 0
 					else
 					for k in pairs(MW_HealthUsedData) do
-						if MW_HealthUsedData[k] ~= nil then
-							if next(MW_HealthUsedData[k]) ~= nil then
-								if MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
-									if UnitIsDeadOrGhost(k) == nil then
-										-- if UnitHealth(k)<UnitHealthMax(k) then
-										local unitObject = Object(k)
-										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
-											if MW_HealthUsedData[k].avgHDeltaPercent < maxx then
-												maxx = MW_HealthUsedData[k].avgHDeltaPercent
-											end
-											-- end
-										end
+						if MW_HealthUsedData[k] ~= nil and next(MW_HealthUsedData[k]) ~= nil and MW_HealthUsedData[k].avgHDeltaPercent ~= nil then
+							local unitObject = Object(k)
+							if unitObject then
+								if unitObject:alive() and unitObject:friend() and unitObject:SpellRange("Renewing Mist") then
+									if MW_HealthUsedData[k].avgHDeltaPercent < maxx then
+										maxx = MW_HealthUsedData[k].avgHDeltaPercent
+										
 									end
 								end
 							end
@@ -996,24 +1019,17 @@ local exeOnLoad = function()
 					return 0
 					else
 					for k in pairs(MW_HealthUsedData) do
-						if MW_HealthUsedData[k] ~= nil then
-							if next(MW_HealthUsedData[k]) ~= nil then
-								if MW_HealthUsedData[k].healthnegative ~= nil then
-									if UnitIsDeadOrGhost(k) == nil then
-										-- if UnitHealth(k)<UnitHealthMax(k) then
-										local unitObject = Object(k)
-										if unitObject and unitObject:alive() and unitObject:friend() and unitObject:combat() and unitObject:SpellRange("Renewing Mist") then
-											if MW_HealthUsedData[k].healthnegative < maxx then
-												maxx = MW_HealthUsedData[k].healthnegative
-												GUID = k
-											end
-											-- end
-										end
-									end
+						if MW_HealthUsedData[k] ~= nil and next(MW_HealthUsedData[k]) ~= nil and MW_HealthUsedData[k].healthnegative ~= nil then
+							local unitObject = Object(k)
+							if unitObject and unitObject:alive() and unitObject:friend() and unitObject:SpellRange("Renewing Mist") then
+								if MW_HealthUsedData[k].healthnegative < maxx then
+									maxx = MW_HealthUsedData[k].healthnegative
+									GUID = k
 								end
 							end
 						end
 					end
+					
 				end
 				return GUID
 			end
@@ -1038,6 +1054,28 @@ local exeOnLoad = function()
 				end
 				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 				return manaBudget >= hpDelta
+			end
+			
+			function _A.manaengine_RJW() -- make it so it's tied with group hpF
+				local player = Object("player")
+				if player:buff("Lucidity") or player:mana() >= 95 then return true end
+				local manaBudget = _A.avgDeltaPercent
+				local delta = averageHPv2_RJW_3only()
+				if delta and delta~="NaN" then
+					return manaBudget >= delta
+				end
+				return false
+			end
+			
+			function _A.manaengine_RJW_highprio() -- make it so it's tied with group hpF
+				local player = Object("player")
+				if player:buff("Lucidity") or player:mana() >= 95 then return true end
+				local manaBudget = _A.avgDeltaPercent
+				local delta = averageHPv2_RJW_3only()
+				if delta and delta~="NaN" then
+					return ((manaBudget - delta) >= (player:ui("highprio_treshhold_spin")-.5))
+				end
+				return false
 			end
 			
 			--------------------------------------------------------
@@ -1963,16 +2001,14 @@ local mw_rot = {
 		local boss = Object("boss1")
 		if not boss then return end
 		if not boss.id == 62442 then return end
-		if not player:debuff(122858) then return end
+		if not player:DebuffAny(122858) then return end
 		
 		-- Integrated healing sphere logic
 		if player:SpellUsable(healingsphere) then
 			if player:Stance() == 1 then
-				if player:SpellUsable(healingsphere) then
-					if boss:range() < 40 then
-						if boss:los() then
-							return _A.clickcast(boss, healingsphere)
-						end
+				if boss:range() < 40 then
+					if boss:los() then
+						return _A.clickcast(boss, healingsphere)
 					end
 				end
 			end
@@ -2672,15 +2708,15 @@ local mw_rot = {
 	tp_buff = function()
 		if player:Stance() == 1 then
 			-- if not player:Buff("Thunder Focus Tea") then -- and player:Buff("Muscle Memory")
-				if player:Chi() >= 1
-					and not player:Buff("Tiger Power")
-					then
-					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
-					if lowestmelee then
-						return lowestmelee:Cast("Tiger Palm")
-					end
+			if player:Chi() >= 1
+				and not player:Buff("Tiger Power")
+				then
+				local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
+				if lowestmelee then
+					return lowestmelee:Cast("Tiger Palm")
 				end
 			end
+		end
 		-- end
 	end,
 	
@@ -2773,6 +2809,15 @@ local mw_rot = {
 		end -- stance 1
 	end,
 	
+	jab_filler_2 = function()
+		if player:Stance() == 1 then
+			local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
+			if lowestmelee then
+				return lowestmelee:Cast("Jab")
+			end
+		end
+	end,
+	
 	dpsstance_jab = function()
 		if player:Stance() ~= 1 and not player:buff("Rushing Jade Wind") then
 			if not player:Buff("Muscle Memory")
@@ -2789,6 +2834,17 @@ local mw_rot = {
 	spin_rjw = function()
 		if (player:Stance() == 1)
 			and player:buffany("Lucidity") then
+			if player:Talent("Rushing Jade Wind")
+				and player:SpellCooldown("Rushing Jade Wind") < cdcd
+				then
+				return player:Cast("Rushing Jade Wind")
+			end
+		end
+		-- add friendly finder on top
+	end,
+	
+	rushingjadewind = function()
+		if (player:Stance() == 1) then
 			if player:Talent("Rushing Jade Wind")
 				and player:SpellCooldown("Rushing Jade Wind") < cdcd
 				then
@@ -2998,6 +3054,7 @@ local inCombat = function()
 		return true
 	end
 	if mylevel >= 56 and player:mana()<=60 and mw_rot.manatea() then return true end
+	if _A.manaengine_RJW_highprio() and (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.rushingjadewind() then return true end
 	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
 	--------------------- dispells and root freedom
 	if mylevel >= 20 then
@@ -3007,6 +3064,9 @@ local inCombat = function()
 	end
 	if mw_rot.tigerslust() then return true end
 	--------------------- high prio
+	if mw_rot.Xuen() then return true end
+	if mylevel >= 26 and player:health()<=80 and mw_rot.expelharm() then return true end
+	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if not player:ui("use_blackout") and mw_rot.tigerpalm_mm() then return true end
 	if player:ui("use_blackout") and not player:buff("Muscle Memory") and mw_rot.tp_buff() then return true end
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
@@ -3016,12 +3076,7 @@ local inCombat = function()
 	if not player:ui("use_enveloping") and (player:ui("use_blackout") or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
 	if not player:ui("use_enveloping") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
-	-- if _A.manaengine_highprio() then                             -- HIGH PRIO
-		-- print("HIGH PRIO")
-		-- if mylevel >= 64 and mw_rot.healingsphere() then return true end
-	-- end
-	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
-	if mw_rot.Xuen() then return true end
+	if mw_rot.tigerpalm_mm() then return true end
 	--------------------- CC
 	if mw_rot.ringofpeacev3() then return true end
 	if mw_rot.kick_legsweep() then return true end
@@ -3034,6 +3089,7 @@ local inCombat = function()
 	------------------ Rotation Proper
 	if mylevel >= 56 and mw_rot.manatea() then return true end
 	if mylevel >= 64 and mw_rot.healingsphere() then return true end
+	if _A.manaengine_RJW() and (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.rushingjadewind() then return true end
 	if mw_rot.spin_rjw() then return true end
 	if mylevel >= 70 and mw_rot.healstatue() then return true end
 	if mylevel >= 26 and mw_rot.expelharm() then return true end
@@ -3043,7 +3099,11 @@ local inCombat = function()
 	if mw_rot.dpsstance_jab() then return true end
 	if mw_rot.dpsstance_spin() then return true end
 	if mw_rot.dpsstance_healstance() then return true end
-	if not _A.modifier_shift() and mw_rot.dpsstanceswap() then return true end
+	------------------ DPS STANCE
+	if not _A.modifier_shift() and not _A.manaengine_highprio() and mw_rot.dpsstanceswap() then return true end
+	if player:mana()<=5 and mw_rot.dpsstanceswap() then return true end
+	if player:talent("Rushing Jade Wind") and not (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.dpsstanceswap() then return true end
+	-- if player:talent("Rushing Jade Wind") and mw_rot.dpsstanceswap() then return true end
 end
 local spellIds_Loc = function()
 end
