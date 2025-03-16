@@ -2224,7 +2224,7 @@ local inCombat = function()
 	survival.rot.mendpet()
 	-- if not _A.modifier_ctrl() and _A.pull_location=="arena" and  survival.rot.tranquillshot_midprio() then return end -- only worth it in arena
 	if (_A.modifier_ctrl() or toggle("enable_tranq")) and  survival.rot.tranquillshot_midprio() then return true end -- only worth it in arena
-	if (_A.modifier_ctrl() or _A.pull_location=="arena") and survival.rot.tranq_hop() then return true end
+	if (_A.modifier_ctrl() or _A.pull_location=="arena" or toggle("enable_tranq")) and survival.rot.tranq_hop() then return true end
 	if _A.modifier_alt() then survival.rot.concussion() end
 	-- important spell
 	if player:buff("Thrill of the Hunt") and player:buffduration("Arcane Intensity")<1.5 and _A.MissileExists("Arcane Shot")==false and survival.rot.arcaneshot() then return true end

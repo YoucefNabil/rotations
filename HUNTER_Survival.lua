@@ -316,6 +316,12 @@ local exeOnLoad = function()
 		text = "ON = Pet attacks totem if in range | OFF = Pet doesnt (unless in arena where it always does)",
 		icon = select(3,GetSpellInfo("Scare Beast")),
 	})
+	_A.Interface:AddToggle({
+		key = "enable_tranq", 
+		name = "Enable Auto Tranq Shotting", 
+		text = "ON = Purges magic effects | OFF = Do not purge automatically",
+		icon = select(3,GetSpellInfo("Tranquilizing Shot")),
+	})
 	_A.Interface:ShowToggle("cooldowns", false)
 	_A.Interface:ShowToggle("interrupts", false)
 	_A.Interface:ShowToggle("aoe", false)
@@ -2252,8 +2258,7 @@ local inCombat = function()
 	survival.rot.killshot()
 	survival.rot.mendpet()
 	if player:buff("Lock and Load") and survival.rot.explosiveshot() then return true end
-	if (not _A.modifier_ctrl() and _A.pull_location=="arena") and survival.rot.tranquillshot_highprio() then return true end -- ctrl disables tranq in arena
-	if (_A.modifier_ctrl() and _A.pull_location~="arena") and survival.rot.tranquillshot_highprio() then return true end -- ctrl enables tranq outisde arena
+	if (_A.modifier_ctrl() or toggle("enable_tranq")) and survival.rot.tranquillshot_highprio() then return true end -- ctrl enables tranq outisde arena
 	if _A.modifier_alt() then survival.rot.concussion() end -- alt slows
 	-- important spells
 	if survival.rot.tranq_hop() then return true end
