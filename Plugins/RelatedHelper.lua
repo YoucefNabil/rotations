@@ -26,7 +26,7 @@ local RelatedHelper_GUI = _A.Interface:BuildGUI({
         { key = "enable_hsgrab",     type = "checkbox",       cw = 15,   ch = 15,                             size = 15,             text = "Enable HS Grab",             default = false },
         { type = 'spacer',           size = 10 },
         { key = "update_freq",       type = "spinner",        size = 15, text = "Update Frequency (seconds)", default = 0.05,        step = 0.05,                         min = 0.05,       max = 5 },
-        { key = "line_distance",     type = "spinner",        size = 15, text = "Line Draw Distance (yards)", default = 40,          step = 5,                            min = 10,         max = 400 },
+        { key = "draw_distance",     type = "spinner",        size = 15, text = "Draw Distance (yards)", default = 100,          step = 5,                            min = 10,         max = 400 },
     }
 })
 
@@ -64,10 +64,11 @@ local function drawFarmNodes()
         return
     end
 
-    local lineDistance = RelatedHelper_GUI:F("line_distance", 20)
+    local lineDistance = RelatedHelper_GUI:F("draw_distance")
     local foundNode = false
 
     for _, farm in pairs(_A.OM:Get('GameObject')) do
+        if farm:distance() > lineDistance then return end
         if interactIdList(farm, _A.related.OreHerb) then
             foundNode = true
             local isInRange = farm:distance() <= 5
