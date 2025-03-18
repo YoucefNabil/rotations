@@ -289,7 +289,7 @@ local GUI = {
 	{ type = 'spinner',  size = checkbox_tsize, text = "Healing Sphere Min Health: ", key = 'sphere_health',  default = 75, step = 1, max = 90, min = 50 },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "checkbox", size = checkbox_tsize, text = "Use DPS leveling Rotation " .. _A.Core:GetSpellIcon(100787, 15, 15) .. " (R)", key = "leveling", default = false },
-	{ type = "checkbox", size = checkbox_tsize, text = "Alert on Statue out of range " .. _A.Core:GetSpellIcon(115313, 15, 15),        key = "draw_statue_range", default = false },
+	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(115313, 15, 15, true) .. " Draw",        key = "draw_statue_range", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(124682, 15, 15, true), key = "use_enveloping", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(100784, 15, 15, true), key = "use_blackout", default = false },
 	{ type = "spacer",   size = spacer_size },
@@ -3091,30 +3091,58 @@ local blacklist = function()
 end
 
 -- alert when out of statue range
-local statueAlertShown = false -- Track alert state
+local drawn = false
+local currentStatueGuid = nil -- Track current statue GUID
+local currentColor = nil -- Track current circle color
 
 local function alertStatueRange()
-	local player = Object("player")
-	if not player then return true end
-	if player:spec()~=270 then return true end
-	if not player:ui("draw_statue_range") then return true end
-	for _, statue in pairs(_A.OM:Get('Friendly')) do
-		if statue.id == 60849 and _A.ObjectCreator(statue.guid) == player.guid then
-			if statue:distance() > 20 then
-				if not statueAlertShown then -- Only show if we haven't shown it yet
-					_A.ui:alert({
-						text = " Statue out of range",
-						icon = 115313,
-						size = 25
-					})
-					statueAlertShown = true -- Mark as shown
-				end
-				else
-				statueAlertShown = false -- Reset when back in range
-			end
-			break
-		end
-	end
+    local player = Object("player")
+    if not player then return true end
+    if player:spec()~=270 then return true end
+    if not player:ui("draw_statue_range") then 
+        if drawn then
+            DrawTick:UnRender("statue_range")
+            drawn = false
+            currentStatueGuid = nil
+            currentColor = nil
+        end
+        return true 
+    end
+
+    local foundStatue = false
+    for _, statue in pairs(_A.OM:Get('Friendly')) do
+        if statue.id == 60849 and _A.ObjectCreator(statue.guid) == player.guid then
+            foundStatue = true
+            
+            -- Determine circle color based on distance
+            local isInRange = statue:distance() <= 20
+            local circleColor = isInRange and 0xC000ff00 or 0xC0ff0000 -- Green when in range, Red when out of range
+            
+            -- Only redraw if this is a new statue, haven't drawn yet, or color needs to change
+            if not drawn or currentStatueGuid ~= statue.guid or currentColor ~= circleColor then
+                local x, y, z = _A.ObjectPosition(statue.guid)
+                local object, rotation = {x, y, z}, {0, 0, 0}
+                
+                DrawTick:UnRender("statue_range") -- Clear existing drawing
+                DrawTick:Render("statue_range", function()
+                    Draw:Circle3D(object, 20, circleColor, 1, 0, false, 1.5, rotation, -1)
+                end)
+                
+                drawn = true
+                currentStatueGuid = statue.guid
+                currentColor = circleColor
+            end
+            break
+        end
+    end
+
+    -- Clear drawing if no statue found
+    if not foundStatue and drawn then
+        DrawTick:UnRender("statue_range")
+        drawn = false
+        currentStatueGuid = nil
+        currentColor = nil
+    end
 end
 
 C_Timer.NewTicker(.1, alertStatueRange, false, "alertStatueRange")
