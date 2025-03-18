@@ -1554,7 +1554,7 @@ survival.rot = {
 		end
 	end,
 	kick = function()
-		if player:SpellCooldown("Counter Shot")==0 and player:spellusable("Counter Shot") then
+		if player:SpellCooldown("Silencing Shot")==0 and player:spellusable("Silencing Shot") then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Arcane Shot") 
 					-- and obj:InConeOf("player", 170)
@@ -1564,7 +1564,7 @@ survival.rot = {
 					and _A.notimmune(obj)
 					then
 					if kickcheck(obj) then
-						obj:FaceCast("Counter Shot", true)
+						obj:FaceCast("Silencing Shot", true)
 					end
 				end
 			end
