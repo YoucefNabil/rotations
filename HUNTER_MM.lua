@@ -881,8 +881,7 @@ local exeOnLoad = function()
 		-- Define abilities with cooldowns and conditions
 		if not player:talent("Glaive Toss") then return false end
 		local spells = {
-			{ name = "Explosive Shot", ready = true },
-			{ name = "Black Arrow", ready = _A.IsSpellKnown(3674) },
+			{ name = "Chimera Shot", ready = true },
 			{ name = "A Murder of Crows", ready = player:talent("A Murder of Crows") }
 		}
 		-- Sort spells by cooldown (shortest first)
@@ -915,14 +914,6 @@ local exeOnLoad = function()
 			time_elapsed = cooldown -- Update elapsed time
 		end
 		
-		if spells[3].ready then
-			cooldown = player:SpellCooldown(spells[3].name)
-			focus_cost = required_focus(spells[3].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
-		end
-		
 		-- If all focus checks pass, Arcane Shot can be cast
 		return true
 	end
@@ -932,49 +923,6 @@ local exeOnLoad = function()
 	------------------------------------------------------------------
 	------------------------------------------------------------------
 	------------------------------------------------------------------
-	_A.chimeracheck = function()
-		-- Avoid focus capping
-		-- if player:focus() >= (player:FocusMax() - 5) then return true end
-		if player:buff("Lock and Load") then return true end
-		
-		-- Define abilities with cooldowns and conditions
-		local spells = {
-			{ name = "Black Arrow", ready = _A.IsSpellKnown(3674) },
-			{ name = "A Murder of Crows", ready = player:talent("A Murder of Crows") }
-		}
-		
-		-- Sort spells by cooldown (shortest first)
-		table.sort(spells, function(a, b)
-			return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
-		end)
-		
-		-- Track elapsed time and current focus
-		local time_elapsed = 0
-		local current_focus = player:focus() - player:spellcost("Explosive Shot")
-		
-		-- Simulate focus pooling without loops (nested conditions)
-		local focus_cost, cooldown
-		
-		-- First spell
-		if spells[1].ready then
-			cooldown = player:SpellCooldown(spells[1].name)
-			focus_cost = required_focus(spells[1].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
-		end
-		
-		if spells[2].ready then
-			cooldown = player:SpellCooldown(spells[2].name)
-			focus_cost = required_focus(spells[2].name, time_elapsed)
-			if current_focus < -focus_cost then return false end
-			current_focus = current_focus + focus_cost
-			time_elapsed = cooldown -- Update elapsed time
-		end
-		
-		-- If all focus checks pass, Arcane Shot can be cast
-		return true
-	end
 	------------------------------------------------------------------
 	------------------------------------------------------------------
 	------------------------------------------------------------------
