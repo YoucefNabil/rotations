@@ -2205,7 +2205,7 @@ local inCombat = function()
 	-- heal pet
 	-- excess focus priority
 	if survival.rot.serpentsting_check() then return true end
-	if survival.rot.venom() then return true end
+	-- if survival.rot.venom() then return true end
 	if survival.rot.aimedshot() then return true end
 end
 local spellIds_Loc = function()
