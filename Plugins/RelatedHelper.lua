@@ -64,11 +64,11 @@ local function drawFarmNodes()
         return
     end
 
-    local lineDistance = RelatedHelper_GUI:F("draw_distance")
+    local drawDistance = RelatedHelper_GUI:F("draw_distance_spin")
     local foundNode = false
 
     for _, farm in pairs(_A.OM:Get('GameObject')) do
-        if farm:distance() > lineDistance then return end
+        if farm:distance() > drawDistance then return end
         if interactIdList(farm, _A.related.OreHerb) then
             foundNode = true
             local isInRange = farm:distance() <= 5
@@ -216,7 +216,7 @@ C_Timer.NewTicker(.1, autofarm, false, "RelatedHelper_Autofarm")
 -- Initialize
 C_Timer.After(5, function()
     _A.LibDraw:Sync(drawFarmNodes)
-    _A.LibDraw:Enable(RelatedHelper_GUI:F("update_freq", 0.05))
+    _A.LibDraw:Enable(RelatedHelper_GUI:F("update_freq_spin"))
 end)
 
 -- Chase Back variables
