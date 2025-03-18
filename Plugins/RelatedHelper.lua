@@ -26,7 +26,7 @@ local RelatedHelper_GUI = _A.Interface:BuildGUI({
         { key = "enable_hsgrab",     type = "checkbox",       cw = 15,   ch = 15,                             size = 15,             text = "Enable HS Grab",             default = false },
         { type = 'spacer',           size = 10 },
         { key = "update_freq",       type = "spinner",        size = 15, text = "Update Frequency (seconds)", default = 0.05,        step = 0.05,                         min = 0.05,       max = 5 },
-        { key = "line_distance",     type = "spinner",        size = 15, text = "Line Draw Distance (yards)", default = 40,          step = 5,                            min = 10,         max = 100 },
+        { key = "draw_distance",     type = "spinner",        size = 15, text = "Draw Distance (yards)", default = 100,          step = 5,                            min = 10,         max = 400 },
     }
 })
 
@@ -50,37 +50,55 @@ local function interactIdList(UNIT, tbl)
 end
 
 -- Drawing function
+local drawn = false
+local currentNodeKey = nil
+local currentColor = nil
 local function drawFarmNodes()
-    if not RelatedHelper_GUI:F("enable_visuals") then return end
+    if not RelatedHelper_GUI:F("enable_visuals") then
+        if drawn then
+            DrawTick:UnRender("farmVisuals")
+            drawn = false
+            currentNodeKey = nil
+            currentColor = nil
+        end
+        return
+    end
 
-    local px, py, pz = _A.ObjectPosition("player")
-    local lineDistance = RelatedHelper_GUI:F("line_distance", 20)
+    local drawDistance = RelatedHelper_GUI:F("draw_distance_spin")
+    local foundNode = false
 
     for _, farm in pairs(_A.OM:Get('GameObject')) do
+        if farm:distance() > drawDistance then return end
         if interactIdList(farm, _A.related.OreHerb) then
-            local x, y, z = _A.ObjectPosition(farm.key)
-            if x and y and z then
-                local distance = farm:distance()
-                _A.LibDraw:SetWidth(2)
-                -- Set color with lower alpha (more transparent)
-                if distance <= 5 then
-                    _A.LibDraw:SetColorRaw(0, 255, 0, 0.5) -- Green at 30% opacity
-                else
-                    _A.LibDraw:SetColorRaw(255, 0, 0, 0.5) -- Red at 30% opacity
-                end
+            foundNode = true
+            local isInRange = farm:distance() <= 5
+            local circleColor = isInRange and 0xC000ff00 or 0xC0ff0000
 
-                -- Draw circle on ground
-                _A.LibDraw:Circle(x, y, z, 0.7, true)
+            -- Only redraw if something changed
+            if not drawn or currentNodeKey ~= farm.key or currentColor ~= circleColor then
+                local x, y, z = _A.ObjectPosition(farm.key)
+                local object, rotation = { x, y, z }, { 0, 0, 0 }
 
-                -- Draw text higher above the object
-                _A.LibDraw:Text(farm.name, GameFontNormal, x, y, z + 2)
+                -- Only unrender if we're about to draw something new
+                DrawTick:UnRender("farmVisuals")
+                DrawTick:Render("farmVisuals", function()
+                    Draw:Circle3D(object, 5, circleColor, 1, 0, true, 1.5, rotation, -1)
+                end)
 
-                -- Draw line to player if beyond set distance
-                if distance > lineDistance then
-                    _A.LibDraw:Line(px, py, pz + 1, x, y, z)
-                end
+                drawn = true
+                currentNodeKey = farm.key
+                currentColor = circleColor
             end
+            return -- Exit after finding and processing first node
         end
+    end
+
+    -- Only unrender if we previously had a node but now don't
+    if not foundNode and drawn then
+        DrawTick:UnRender("farmVisuals")
+        drawn = false
+        currentNodeKey = nil
+        currentColor = nil
     end
 end
 
@@ -158,33 +176,31 @@ local function autofarm()
         if not player then
             return
         end
-        if player:combat() then return end
+        
+        -- Early returns for player states
+        if player:combat() or player:moving() or player:IscastingAnySpell() then
+            return
+        end
+        
+        -- Don't try to interact if we're already looting
+        if _A.GetNumLootItems() > 0 then
+            return
+        end
+
         -- autoFarm (ore / herbs / container)
-        if player:ui("farming") then
-            for _, farm in pairs(_A.OM:Get('GameObject')) do
-                if farm:distance() <= 5 then
-                    -- Check if we've interacted recently
-                    local currentTime = GetTime()
-                    if lastInteractTime[farm.guid] and (currentTime - lastInteractTime[farm.guid] < 5) then
-                        return
-                    end
-
-                    if _A.GetNumLootItems() > 0 then
-                        return
-                    end
-                    if not interactIdList(farm, _A.related.OreHerb) then
-                        return
-                    end
-                    if player:moving() then
-                        return
-                    end
-                    if player:IscastingAnySpell() then
-                        return
-                    end
-
-                    lastInteractTime[farm.guid] = currentTime
-                    _A.InteractUnit(farm.key)
+        for _, farm in pairs(_A.OM:Get('GameObject')) do
+            -- Check if it's a valid node first
+            if interactIdList(farm, _A.related.OreHerb) and farm:distance() <= 5 then
+                -- Check if we've interacted recently using guid (more reliable than key)
+                local currentTime = GetTime()
+                if lastInteractTime[farm.key] and (currentTime - lastInteractTime[farm.key] < 5) then
+                    return
                 end
+
+                -- Attempt interaction and record the time
+                lastInteractTime[farm.key] = currentTime
+                _A.InteractUnit(farm.key)
+                return -- Exit after attempting one interaction
             end
         end
     end
@@ -200,7 +216,7 @@ C_Timer.NewTicker(.1, autofarm, false, "RelatedHelper_Autofarm")
 -- Initialize
 C_Timer.After(5, function()
     _A.LibDraw:Sync(drawFarmNodes)
-    _A.LibDraw:Enable(RelatedHelper_GUI:F("update_freq", 0.05))
+    _A.LibDraw:Enable(RelatedHelper_GUI:F("update_freq_spin"))
 end)
 
 -- Chase Back variables
