@@ -2109,7 +2109,7 @@ survival.rot = {
 local function AOEcheck()
 	if _A.pull_location=="arena" then return false end
 	if _A.modifier_shift() then return true end
-	if (_Y.clumpnumber>=enemytreshhold) then return true end
+	-- if (_Y.clumpnumber>=enemytreshhold) then return true end
 	return false
 end
 ---========================
