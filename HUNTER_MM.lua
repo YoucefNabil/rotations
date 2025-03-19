@@ -1446,7 +1446,7 @@ survival.rot = {
 				then
 				-- cancel cast
 				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-				if player:isCastingAny() then return player:cast("Deterrence") end
+				if not player:isCastingAny() then return player:cast("Deterrence") end
 			end
 		end
 	end,
@@ -1466,7 +1466,7 @@ survival.rot = {
 			and not player:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then
 			-- cancel cast
 				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-				if player:isCastingAny() then return player:cast("Deterrence") end
+				if not player:isCastingAny() then return player:cast("Deterrence") end
 		end
 	end,
 	masterscall = function()
@@ -1477,7 +1477,7 @@ survival.rot = {
 					if pet and pet:exists() and pet:alive() and not pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:range()<40 and pet:los() then
 						-- cancel cast
 				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-				if player:isCastingAny() then return player:cast("Deterrence") end
+				if not player:isCastingAny() then return player:cast("Deterrence") end
 					end
 				end
 			end
@@ -1490,7 +1490,7 @@ survival.rot = {
 			if pet and pet:exists() and pet:alive() and not pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:rangefrom(party1)<40 and pet:losFrom(party1) then
 				-- cancel cast
 				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-				if player:isCastingAny() then return player:cast("Deterrence") end
+				if not player:isCastingAny() then return player:cast("Deterrence") end
 			end
 		end
 	end,
@@ -1502,7 +1502,7 @@ survival.rot = {
 				and pet:rangefrom(party1)<40 and pet:losFrom(party1) then
 				-- cancel cast
 				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-				if player:isCastingAny() then return player:cast("Deterrence") end
+				if not player:isCastingAny() then return player:cast("Deterrence") end
 			end
 		end
 	end,
