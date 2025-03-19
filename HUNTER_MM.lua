@@ -1445,10 +1445,8 @@ survival.rot = {
 			if player:SpellCooldown("Deterrence") == 0 and not player:buff("Deterrence") and _A.castdelay("Deterrence", 1.5) and player:spellusable("Deterrence")
 				then
 				-- cancel cast
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")
-					else
-					return player:cast("Deterrence")
-				end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
+				if player:isCastingAny() then return player:cast("Deterrence") end
 			end
 		end
 	end,
@@ -1467,9 +1465,8 @@ survival.rot = {
 		if player:talent("Posthaste") and player:SpellCooldown("Disengage")==0 and player:stateYOUCEF("root || snare") 
 			and not player:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then
 			-- cancel cast
-			if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
-				else return player:cast("Disengage")
-			end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
+				if player:isCastingAny() then return player:cast("Deterrence") end
 		end
 	end,
 	masterscall = function()
@@ -1479,9 +1476,8 @@ survival.rot = {
 					local pet = Object("pet")
 					if pet and pet:exists() and pet:alive() and not pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:range()<40 and pet:los() then
 						-- cancel cast
-						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
-							else return player:cast("Master's Call")
-						end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
+				if player:isCastingAny() then return player:cast("Deterrence") end
 					end
 				end
 			end
@@ -1493,9 +1489,8 @@ survival.rot = {
 			local pet = Object("pet")
 			if pet and pet:exists() and pet:alive() and not pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:rangefrom(party1)<40 and pet:losFrom(party1) then
 				-- cancel cast
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
-					else return party1:cast("Master's Call")
-				end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
+				if player:isCastingAny() then return player:cast("Deterrence") end
 			end
 		end
 	end,
@@ -1506,9 +1501,8 @@ survival.rot = {
 			if pet and pet:exists() and pet:alive() and not pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") 
 				and pet:rangefrom(party1)<40 and pet:losFrom(party1) then
 				-- cancel cast
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  
-					else return party1:cast("Master's Call")
-				end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
+				if player:isCastingAny() then return player:cast("Deterrence") end
 			end
 		end
 	end,
@@ -1596,7 +1590,7 @@ survival.rot = {
 			if lowestmelee then
 				if player:Spellcooldown("Ice Trap")<cdcd
 					then
-					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
+					-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
 						return _A.clickcast(lowestmelee, "Ice Trap")					
 					end 
@@ -1611,7 +1605,7 @@ survival.rot = {
 			if lowestmelee then
 				if player:Spellcooldown("Snake Trap")<cdcd and _A.castdelay(82941, 6) 
 					then
-					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
+					-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 					if not player:isCastingAny() then
 						return _A.clickcast(lowestmelee, "Snake Trap")			
 					end 
@@ -1633,7 +1627,7 @@ survival.rot = {
 				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
 				and (focus:drstate("Scatter Shot")==1 or focus:drstate("Scatter Shot")==-1)
 				and focus:los() then
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not player:isCastingAny() then  return focus:FaceCast("Scatter Shot") end
 			end
 			if not focus then
@@ -1646,7 +1640,7 @@ survival.rot = {
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
 						and (Obj:drstate("Scatter Shot")==1 or Obj:drstate("Scatter Shot")==-1)
 						and Obj:los() then
-						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+						-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not player:isCastingAny() then  return Obj:Facecast("Scatter Shot") end
 					end
 				end
@@ -1660,7 +1654,7 @@ survival.rot = {
 				and (focus:debuff("Scatter Shot") or (focus:stateduration("disorient || charm || sleep || stun")>1 and focus:stateduration("disorient || charm || sleep || stun")<4)) 
 				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
 				and not focus:debuffany("Wyvern Sting") and _A.notimmune(focus) and focus:los() then
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny()  then
 					return scatter_x and focus:debuff("Scatter Shot") and _A.clickcastdetail(scatter_x, scatter_y, scatter_z, "Freezing Trap") or _A.clickcast(focus, "Freezing Trap")
 					-- return _A.clickcast(focus, "Freezing Trap")
@@ -1673,7 +1667,7 @@ survival.rot = {
 						and (Obj:debuff("Scatter Shot") or (Obj:stateduration("disorient || charm || sleep || stun")>1 and Obj:stateduration("disorient || charm || sleep || stun")<4)) 
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
 						and not Obj:debuffany("Wyvern Sting") and _A.notimmune(Obj) and Obj:los() then
-						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+						-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not  player:isCastingAny()  then
 							return scatter_x and Obj:debuff("Scatter Shot") and _A.clickcastdetail(scatter_x, scatter_y, scatter_z, "Freezing Trap") or _A.clickcast(Obj, "Freezing Trap")
 							-- return _A.clickcast(Obj, "Freezing Trap")
@@ -1691,7 +1685,7 @@ survival.rot = {
 				-- and focus:InConeOf("player", 170)
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 				and _A.notimmune(focus) and focus:los() then
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny()  then
 					return focus:FaceCast("Wyvern Sting")
 				end
@@ -1703,7 +1697,7 @@ survival.rot = {
 						and healerspecid[Obj:spec()] 
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and _A.notimmune(Obj) and Obj:los() then
-						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+						-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not  player:isCastingAny()  then
 							return Obj:FaceCast("Wyvern Sting")
 						end
@@ -1727,7 +1721,7 @@ survival.rot = {
 				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
 				and (focus:drstate("Wyvern Sting")==1 or focus:drstate("Wyvern Sting")==-1)
 				and focus:los() then
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not player:isCastingAny() then  return focus:facecast("Wyvern Sting") end
 			end
 			if not focus then
@@ -1740,7 +1734,7 @@ survival.rot = {
 						and (Obj:drstate("Freezing Trap")==1 or Obj:drstate("Freezing Trap")==-1) 
 						and (Obj:drstate("Wyvern Sting")==1 or Obj:drstate("Wyvern Sting")==-1)
 						and Obj:los() then
-						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+						-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not player:isCastingAny() then  return Obj:facecast("Wyvern Sting") end
 					end
 				end
@@ -1755,7 +1749,7 @@ survival.rot = {
 				and focus:stateduration("sleep || stun || misc || incapacitate")<4
 				and not focus:moving()
 				and _A.notimmune(focus) and focus:los() then
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny()  then
 					return _A.clickcast(focus, "Freezing Trap")
 				end
@@ -1768,7 +1762,7 @@ survival.rot = {
 						and Obj:stateduration("sleep || stun || misc || incapacitate")<4
 						and not Obj:moving()
 						and _A.notimmune(Obj) and Obj:los() then
-						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+						-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not  player:isCastingAny()  then
 							return _A.clickcast(Obj, "Freezing Trap")
 						end
@@ -1786,7 +1780,7 @@ survival.rot = {
 				and focus:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 				and (_A.castdelay(60192,2) or (focus:debuffduration("Freezing Trap")<2 and focus:debuffduration("Freezing Trap")>0))
 				and _A.notimmune(focus) and focus:los() then
-				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 				if not  player:isCastingAny()  then
 					return focus:facecast("Scatter Shot")
 				end
@@ -1799,7 +1793,7 @@ survival.rot = {
 						and Obj:stateduration("incapacitate || disorient || charm || misc || sleep || stun || fear")<1.5
 						and (_A.castdelay(60192,2) or (Obj:debuffduration("Freezing Trap")<2 and Obj:debuffduration("Freezing Trap")>0))
 						and _A.notimmune(Obj) and Obj:los() then
-						if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+						-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 						if not  player:isCastingAny()  then
 							return Obj:facecast("Scatter Shot")
 						end
@@ -1820,7 +1814,7 @@ survival.rot = {
 					and _A.notimmune(Obj) 
 					-- and Obj:InConeOf("player", 170) 
 					and Obj:los() then
-					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+					-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 					if not player:isCastingAny() then  return Obj:facecast("Wyvern Sting") end
 				end
 			end
@@ -1835,7 +1829,7 @@ survival.rot = {
 					and _A.notimmune(Obj) 
 					-- and Obj:InConeOf("player", 170) 
 					and Obj:los() then
-					if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
+					-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
 					if not player:isCastingAny() then  return Obj:facecast("Scatter Shot") end
 				end
 			end
@@ -1922,7 +1916,6 @@ survival.rot = {
 			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
 				return lowestmelee:Cast("Aimed Shot")
-				elseif _A.CobraCheck() then return lowestmelee:Cast("Steady Shot") 
 			end
 		end
 	end,
