@@ -1466,7 +1466,7 @@ survival.rot = {
 			and not player:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then
 			-- cancel cast
 				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-				if not player:isCastingAny() then return player:cast("Deterrence") end
+				if not player:isCastingAny() then return player:cast("Disengage") end
 		end
 	end,
 	masterscall = function()
@@ -1477,7 +1477,7 @@ survival.rot = {
 					if pet and pet:exists() and pet:alive() and not pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:range()<40 and pet:los() then
 						-- cancel cast
 				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-				if not player:isCastingAny() then return player:cast("Deterrence") end
+				if not player:isCastingAny() then return player:cast("Master's Call") end
 					end
 				end
 			end
@@ -1490,7 +1490,7 @@ survival.rot = {
 			if pet and pet:exists() and pet:alive() and not pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") and pet:rangefrom(party1)<40 and pet:losFrom(party1) then
 				-- cancel cast
 				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-				if not player:isCastingAny() then return player:cast("Deterrence") end
+				if not player:isCastingAny() then return player:cast("Master's Call") end
 			end
 		end
 	end,
@@ -1502,7 +1502,7 @@ survival.rot = {
 				and pet:rangefrom(party1)<40 and pet:losFrom(party1) then
 				-- cancel cast
 				-- if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
-				if not player:isCastingAny() then return player:cast("Deterrence") end
+				if not player:isCastingAny() then return player:cast("Master's Call") end
 			end
 		end
 	end,
@@ -2185,16 +2185,16 @@ local inCombat = function()
 	_Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,8.5)
 	if AOEcheck() and survival.rot.barrage() then return true end -- make a complete aoe check function
 	if AOEcheck() and survival.rot.multishot() then return true end -- make a complete aoe check function
-	survival.rot.killshot()
+	-- survival.rot.killshot() -- seems wasteful in MM
 	survival.rot.mendpet()
 	if (_A.modifier_ctrl() or toggle("enable_tranq")) and survival.rot.tranquillshot_highprio() then return true end -- ctrl enables tranq outisde arena
 	if _A.modifier_alt() then survival.rot.concussion() end -- alt slows
 	-- important spells
 	if survival.rot.aimedshot_proc() then return true end
 	if survival.rot.tranq_hop() then return true end
-	if survival.rot.amoc() then return true end
-	if survival.rot.chimerashot() then return true end --82926
-	if survival.rot.glaivetoss() then return true end
+	if survival.rot.amoc() then return true end -- preferably use blink
+	if survival.rot.chimerashot() then return true end 
+	if survival.rot.glaivetoss() then return true end -- preferably don't use any tier 6/lvl 90 talents
 	-- heal pet
 	-- excess focus priority
 	if survival.rot.serpentsting_check() then return true end
