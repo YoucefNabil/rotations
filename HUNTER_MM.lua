@@ -1996,7 +1996,7 @@ survival.rot = {
 		if player:spellcooldown("Aimed Shot")<cdcd  then
 			local lowestmelee = _A.totemtar or Object("lowestEnemyInSpellRange(Arcane Shot)")
 			if lowestmelee then
-				if player:SpellUsable("Aimed Shot") and _A.lowpriocheck("Aimed Shot") then
+				if player:SpellUsable("Aimed Shot") and _A.lowpriocheck("Aimed Shot") and not player:iscurrentspell(19434) then
 					return lowestmelee:Cast("Aimed Shot")
 					elseif _A.CobraCheck() then return lowestmelee:Cast("Steady Shot")
 				end
@@ -2198,8 +2198,9 @@ local inCombat = function()
 	-- heal pet
 	-- excess focus priority
 	if survival.rot.serpentsting_check() then return true end
-	-- if survival.rot.venom() then return true end
 	if survival.rot.aimedshot() then return true end
+	-- filler?
+	if survival.rot.killshot() then return true end-- seems wasteful in MM
 end
 local spellIds_Loc = function()
 end

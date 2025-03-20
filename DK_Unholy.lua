@@ -576,6 +576,7 @@ local exeOnLoad = function()
 		if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT"
 			then
 			-- non player related
+			--[[
 			if subevent=="SPELL_CAST_SUCCESS" and player and guidsrc and guidsrc ~= UnitGUID("player") then -- only filter by me
 				-- if UnitCanAttack(guidsrc) then
 				local unit_event = guidsrc and _A.Object(guidsrc)
@@ -584,7 +585,7 @@ local exeOnLoad = function()
 						if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
 							then 
 							if unit_event:SpellRange("Chains of Ice") 
-								and not unit_event: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
+								and not unit_event:state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
 								and not unit_event:Debuffany("Chains of Ice || Hand of Freedom || Bladestorm")
 								and not unit_event:buffany(45524)
 								and not unit_event:buffany(48707)							
@@ -600,7 +601,7 @@ local exeOnLoad = function()
 					end, 10, "responsecast")
 				end
 			end
-			
+			--]]
 			-- player related
 			if guidsrc == UnitGUID("player") then -- only filter by me
 				if subevent =="SPELL_CAST_SUCCESS" then

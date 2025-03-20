@@ -498,7 +498,7 @@ affliction.rot = {
 					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0
 				}
 			end -- end of enemy filter
-			if warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range(1)<5 and Obj:BuffAny("Spell Reflection") and Obj:los() then
+			if warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
 				_A.reflectcheck = true
 			end
 		end -- end of iteration
@@ -710,7 +710,7 @@ affliction.rot = {
 	
 	bloodhorrorremovalopti = function() -- rework this
 		if _A.reflectcheck == true then
-			-- print("REMOVING REMOVING REMOVING")
+			print("REMOVING REMOVING REMOVING")
 			_A.RunMacroText("/cancelaura Blood Horror")
 		end
 	end,
