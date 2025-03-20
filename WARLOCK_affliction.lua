@@ -371,9 +371,10 @@ local exeOnLoad = function()
 		local htotem = Object("HealingStreamTotemNOLOS")
 		if htotem and (_A.pull_location=="arena" or (toggle("pet_attacktotem") and htotem:range()<=60)) then
 			if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=htotem.guid) then
-				return _A.CallWowApi("PetAttack", htotem.guid), 1
+				_A.PetAttack(htotem.guid)
+				return true
 			end
-			return 1
+			return true
 		end
 	end
 	_A.FakeUnits:Add('lowestEnemyInSpellRangePetPOVKCNOLOS', function(num)
@@ -395,17 +396,19 @@ local exeOnLoad = function()
 		if target then
 			if (_A.pull_location~="party" and _A.pull_location~="raid") or target:combat() then -- avoid pulling shit by accident
 				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
-					return _A.CallWowApi("PetAttack", target.guid), 3
+					_A.PetAttack(target.guid)
+					return true
 				end
 			end
-			return 3
+			return true
 		end
 	end
 	local function petfollow() -- when pet target has a breakable cc
 		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
 			local target = Object(_A.UnitTarget(_A.PetGUID))
 			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
-				return _A.CallWowApi("RunMacroText", "/petfollow"), 4
+				_A.CallWowApi("RunMacroText", "/petfollow")
+				return true
 			end
 		end
 	end
