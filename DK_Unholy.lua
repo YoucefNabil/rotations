@@ -1802,9 +1802,21 @@ unholy.rot = {
         if player:RuneCount("Unholy")>=1 then
             local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Strike)")
             if lowestmelee then
-				if (lowestmelee:health()>35 or player:SpellCooldown("Soul Reaper") > player:gcd()+1)
+				if (lowestmelee:health()>35 or player:level()<87 or andplayer:SpellCooldown("Soul Reaper") > player:gcd()+1)
 					then
 					return lowestmelee:Cast("Scourge Strike")
+				end
+			end
+		end
+	end,
+	
+    plaguestrike = function()
+        if player:RuneCount("Unholy")>=1 then
+            local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Strike)")
+            if lowestmelee then
+				if (lowestmelee:health()>35 or player:level()<87 or andplayer:SpellCooldown("Soul Reaper") > player:gcd()+1)
+					then
+					return lowestmelee:Cast("Plague Strike")
 				end
 			end
 		end
@@ -1837,6 +1849,7 @@ local inCombat = function()
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
 	player = Object("player")
 	if not player then return true end
+	local mylevel = player:level()
 	_Y.petengine()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .2 + _A.latency
@@ -1877,47 +1890,50 @@ local inCombat = function()
 	if player:keybind("X") and unholy.rot.root() then return true end
 	if player:keybind("R") and unholy.rot.manual_deathgrip() then return true end
 	--
-	if unholy.rot.gargoyle() then return true end
+	if mylevel>=74 and unholy.rot.gargoyle() then return true end
 	if unholy.rot.remorselesswinter() then return true end
 	-- PVP INTERRUPTS AND CC
 	if player:SpellCooldown("Death Coil")>cdcd then return true end
 	if unholy.rot.Asphyxiatesnipe() then return true end
 	if unholy.rot.AsphyxiateBurst() then return true end
 	-- if unholy.rot.darksimulacrum() then return true end -- causes jams maybe
-	if unholy.rot.root_buff() then return true end
+	if mylevel>=74 and unholy.rot.root_buff() then return true end
 	-- DEFS
 	if unholy.rot.petres() then return true end
 	-- rotation
 	if unholy.rot.DeathcoilDump() then return true end
 	if unholy.rot.dkuhaoe() then return true end
-	if unholy.rot.outbreak() then return true end
+	if mylevel>=81 and unholy.rot.outbreak() then return true end
 	if unholy.rot.dotapplication() then return true end
-	if unholy.rot.pettransform() then return true end
+	if mylevel>=70 and unholy.rot.pettransform() then return true end
 	if unholy.rot.BonusDeathStrike() then return true end
 	if unholy.rot.DeathcoilHEAL() then return true end
-	if unholy.rot.SoulReaper() then return true end
+	if mylevel>=87 and unholy.rot.SoulReaper() then return true end
 	----pve part
 	if _A.pull_location == "party" or _A.pull_location == "raid" then
-		if unholy.rot.dotsnapshotOutBreak() then return true end
+		if mylevel>=81 and unholy.rot.dotsnapshotOutBreak() then return true end
 		if unholy.rot.dotsnapshotPS() then return true end
-		if unholy.rot.festeringstrike() then return true end
+		if mylevel>=62 and unholy.rot.festeringstrike() then return true end
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 		-- this always keeps one rune of each type regenning all the time
+		if mylevel>=62 and unholy.rot.festeringstrike() then return true end
 		if player:RuneCount("Blood")>= 2 and unholy.rot.bloodboil_blood() then return true end
 		if player:RuneCount("Frost")>=2 and unholy.rot.icytouch() then return true end
-		if player:RuneCount("Unholy")>=2 and unholy.rot.scourgestrike() then return true end
+		if player:RuneCount("Unholy")>=2 and mylevel>=58 and unholy.rot.scourgestrike() then return true end
 		--
 		if unholy.rot.bloodboil_blood() then return true end
 		if unholy.rot.icytouch() then return true end
-		if unholy.rot.NecroStrike() then return true end
+		if mylevel>=83 and unholy.rot.NecroStrike() then return true end
+		if mylevel<83 and mylevel>=58 and unholy.rot.scourgestrike() then return true end
+		if mylevel<83 and unholy.rot.plaguestrike() then return true end
 	end
 	----filler
 	if unholy.rot.Deathcoil_totems() then return true end
 	if unholy.rot.Deathcoil() then return  true end
-	if unholy.rot.festeringstrike() then return true end
-	if unholy.rot.scourgestrike() then return true end
+	if mylevel>=62 and unholy.rot.festeringstrike() then return true end
+	if mylevel>=58 and unholy.rot.scourgestrike() then return true end
 	if unholy.rot.Buffbuff() then return true end
 end
 local outCombat = function()
