@@ -2505,11 +2505,11 @@ local mw_rot = {
 		if player:SpellCooldown("Life Cocoon") < cdcd and player:SpellUsable(116849) then
 			if player:Stance() == 1 then
 				local lowest = Object("lowestall")
-				if lowest and lowest:SpellRange("Life Cocoon") and lowest:combat() then
+				if lowest and lowest:SpellRange("Life Cocoon") and lowest:combat() and not lowest:buffany("Die by the Sword") and not lowest:buffany("Shield Wall") then
 					--]]
 					if
 						-- (lowest:health()<40 or (pull_location()=="pvp" and lowest:health()<40))
-						lowest:health() < 30
+						lowest:health() < 30 or ( _A.modifier_alt()  and not lowest:is(player))
 						then
 						return lowest:Cast("Life Cocoon")
 					end
