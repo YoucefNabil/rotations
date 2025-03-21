@@ -3034,6 +3034,7 @@ local inCombat = function()
 		return true
 	end
 	if mylevel >= 56 and player:mana()<=60 and mw_rot.manatea() then return true end
+	--old spot
 	if _A.manaengine_RJW_highprio() and (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.rushingjadewind() then return true end
 	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
 	--------------------- dispells and root freedom
@@ -3046,11 +3047,11 @@ local inCombat = function()
 	--------------------- high prio
 	if mw_rot.Xuen() then return true end
 	if mylevel >= 26 and player:health()<=80 and mw_rot.expelharm() then return true end
-	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if not player:ui("use_blackout") and mw_rot.tigerpalm_mm() then return true end
 	if player:ui("use_blackout") and not player:buff("Muscle Memory") and mw_rot.tp_buff() then return true end
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
+	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
 	if not player:ui("use_enveloping") and (player:ui("use_blackout") or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important

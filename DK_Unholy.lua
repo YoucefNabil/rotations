@@ -1802,7 +1802,7 @@ unholy.rot = {
         if player:RuneCount("Unholy")>=1 then
             local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Strike)")
             if lowestmelee then
-				if (lowestmelee:health()>35 or player:level()<87 or andplayer:SpellCooldown("Soul Reaper") > player:gcd()+1)
+				if (lowestmelee:health()>35 or player:level()<87 or player:SpellCooldown("Soul Reaper") > player:gcd()+1)
 					then
 					return lowestmelee:Cast("Scourge Strike")
 				end
@@ -1814,7 +1814,7 @@ unholy.rot = {
         if player:RuneCount("Unholy")>=1 then
             local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Strike)")
             if lowestmelee then
-				if (lowestmelee:health()>35 or player:level()<87 or andplayer:SpellCooldown("Soul Reaper") > player:gcd()+1)
+				if (lowestmelee:health()>35 or player:level()<87 or player:SpellCooldown("Soul Reaper") > player:gcd()+1)
 					then
 					return lowestmelee:Cast("Plague Strike")
 				end
