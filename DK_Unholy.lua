@@ -410,7 +410,7 @@ end
 enteredworldat = enteredworldat or _A.GetTime()
 _A.pull_location = _A.pull_location or pull_location()
 local exeOnLoad = function()
-	local player = Object("player")
+	player = Object("player")
 	_A.pressedbuttonat = 0
 	_A.buttondelay = 0.5
 	_A.STARTSLOT = 1
@@ -562,7 +562,7 @@ local exeOnLoad = function()
 	local ijustdidthatthing = false
 	local ijustdidthatthingtime = 0
 	Listener:Add("DK_STUFF", {"COMBAT_LOG_EVENT_UNFILTERED", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED"} ,function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-		local player = Object("player")
+		player = Object("player")
 		if not _A.Cache.Utils.PlayerInGame then return true end
 		if event == "PLAYER_ENTERING_WORLD"
 			or event == "PLAYER_REGEN_ENABLED"
@@ -1123,7 +1123,6 @@ local exeOnLoad = function()
 	function _Y.petengine()
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
-		-- if not player:combat() then return true end
 		if not player:alive() then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
 		if player:mounted() then return true end
@@ -1134,7 +1133,7 @@ local exeOnLoad = function()
 		local pettargetguid_test = _A.UnitTarget("pet") or nil
 		-- if pettargetguid_test then --print(UnitName(pettargetguid_test))
 		-- end
-		if petpassive() then return true end
+		petpassive()
 		-- Rotation
 		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and unholy.rot.strangulatesnipe() then return true end
 		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and petstunsnipe() then return true end
@@ -1889,6 +1888,7 @@ local inCombat = function()
 	if player:keybind("T") and unholy.rot.massgrip() then return true end
 	if player:keybind("X") and unholy.rot.root() then return true end
 	if player:keybind("R") and unholy.rot.manual_deathgrip() then return true end
+	-- if not player:IsCurrentSpell(47476) and not player:IsCurrentSpell(47481) and unholy.rot.strangulatesnipe() then return true end
 	--
 	if mylevel>=74 and unholy.rot.gargoyle() then return true end
 	if unholy.rot.remorselesswinter() then return true end
@@ -1936,9 +1936,6 @@ local inCombat = function()
 	if mylevel>=58 and unholy.rot.scourgestrike() then return true end
 	if unholy.rot.Buffbuff() then return true end
 end
-local outCombat = function()
-	return inCombat()
-end
 local spellIds_Loc = function()
 end
 local blacklist = function()
@@ -1946,7 +1943,7 @@ end
 _A.CR:Add(252, {
 	name = "Youcef's Unholy DK",
 	ic = inCombat,
-	ooc = outCombat,
+	ooc = inCombat,
 	use_lua_engine = true,
 	gui = GUI,
 	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
