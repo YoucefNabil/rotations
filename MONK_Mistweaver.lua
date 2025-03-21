@@ -222,6 +222,21 @@ local function kickcheck(unit)
 	end
 	return false
 end
+local speedbuffs = {
+	"Tiger's lust",
+	"Blazing Speed",
+	"Displacer Beast",
+	"Dash",
+	"Angelic Feather"
+}
+local function hasspeedbuff(unit)
+	if unit then
+		for _,v in pairs(speedbuffs) do
+			if unit:BuffAny(v) then return true
+			end
+		end
+	end
+end
 local function kickcheck_highprio(unit)
 	if unit then
 		for k, v in pairs(spelltable) do
@@ -365,7 +380,7 @@ local exeOnLoad = function()
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		-- print(slot)
-		local player = Object("player")
+		player = Object("player")
 		if slot == STARTSLOT then
 			_A.pressedbuttonat = 0
 			if _A.DSL:Get("toggle")(_, "MasterToggle") ~= true then
@@ -390,7 +405,7 @@ local exeOnLoad = function()
 		--
 		if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
 			Type, id, subType = _A.GetActionInfo(slot)
-			if Type == "spell" or Type == "macro" -- remove macro?
+			if Type == "spell" -- or Type == "macro" -- remove macro?
 				then
 				_A.pressedbuttonat = _A.GetTime()
 			end
@@ -468,7 +483,7 @@ local exeOnLoad = function()
 	end
 	
 	function _A.nothealimmune(unit)
-		local player = Object("player")
+		player = Object("player")
 		if unit then
 			if unit:DebuffAny("Cyclone || Spirit of Redemption || Beast of Nightmares") then return false end
 			if unit:BuffAny("Spirit of Redemption") then return false end
@@ -479,7 +494,7 @@ local exeOnLoad = function()
 	-----------------------------------
 	-----------------------------------
 	local function fall()
-		local player = Object("player")
+		player = Object("player")
 		local px, py, pz = _A.ObjectPosition("player")
 		local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
 		if player:Falling() then
@@ -1041,7 +1056,7 @@ local exeOnLoad = function()
 			end
 			
 			function _A.manaengine() -- make it so it's tied with group hpF
-				local player = Object("player")
+				player = Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local hpdeltas = player:ui("hpdeltas")
 				local hpDelta
@@ -1057,7 +1072,7 @@ local exeOnLoad = function()
 			end
 			
 			function _A.manaengine_RJW() -- make it so it's tied with group hpF
-				local player = Object("player")
+				player = Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local manaBudget = _A.avgDeltaPercent
 				local delta = averageHPv2_RJW_3only()
@@ -1068,7 +1083,7 @@ local exeOnLoad = function()
 			end
 			
 			function _A.manaengine_RJW_highprio() -- make it so it's tied with group hpF
-				local player = Object("player")
+				player = Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local manaBudget = _A.avgDeltaPercent
 				local delta = averageHPv2_RJW_3only()
@@ -1080,7 +1095,7 @@ local exeOnLoad = function()
 			
 			--------------------------------------------------------
 			function _A.manaengine_highprio()
-				local player = Object("player")
+				player = Object("player")
 				if player:buff("Lucidity") or player:mana() >= 95 then return true end
 				local hpdeltas = player:ui("hpdeltas")
 				local hpDelta
@@ -1096,7 +1111,7 @@ local exeOnLoad = function()
 			end
 			
 			function _A.manaengine_highprio_pot()
-				local player = Object("player")
+				player = Object("player")
 				local hpdeltas = player:ui("hpdeltas")
 				local lowest = Object("lowestall")
 				local hpDelta
@@ -1241,7 +1256,7 @@ local exeOnLoad = function()
 				local distance = -speed
 				-- local distance = 0
 				-- UNIT IS PLAYER
-				local player = Object("player")
+				player = Object("player")
 				if munit:is(player) then
 					local strafeDirection = IsPStr()
 					if strafeDirection == "left" then
@@ -1266,7 +1281,7 @@ local exeOnLoad = function()
 				return newX, newY, z
 			end
 			function _A.CastPredictedPos(unit, spell, distance)
-				local player = Object("player")
+				player = Object("player")
 				local px, py, pz = _A.groundpositiondetail(pSpeed(unit, distance))
 				if px then
 					_A.CallWowApi("CastSpellByName", spell)
@@ -1496,7 +1511,7 @@ local exeOnLoad = function()
 			end
 			
 			function _Y.cancelbuff(spellid)
-				local player = Object("player")
+				player = Object("player")
 				local SPELLIDD = (tonumber(spellid) and spellid or _A.Core:GetSpellID(spellid))
 				if SPELLIDD and player:buffany(spellid) then
 					for buff = 1, 40 do
@@ -2960,6 +2975,47 @@ local mw_rot = {
 		end
 	end,
 	
+	root_buff = function()
+		if player:SpellCooldown("Paralysis")<cdcd
+			then 
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:SpellRange("Paralysis") 
+					and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep || root || snare") 
+					and not obj:state("incapacitate")
+					and not obj:buffany(48707)							
+					and not obj:buffany(1044)
+					and not obj:buffany("Bladestorm")
+					and _Y.notimmune(obj)
+					and hasspeedbuff(obj)
+					and obj:los() 
+					then
+					return obj:Cast("Paralysis")
+				end
+			end
+		end
+	end,
+	
+	root_buff2 = function()
+		if player:SpellCooldown("Disable")<cdcd
+			then 
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:SpellRange("Disable") 
+					and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep || root || snare") 
+					and not obj:immune("snare") 
+					and not obj:buffany(48707)							
+					and not obj:buffany("Hand of Freedom")							
+					and not obj:buffany(1044)
+					and not obj:buffany("Bladestorm")
+					and _Y.notimmune(obj)
+					and hasspeedbuff(obj)
+					and obj:los() 
+					then
+					return obj:Cast("Disable")
+				end
+			end
+		end
+	end,
+	
 	
 	dpsstanceswap = function()
 		if player:Stance() ~= 2 then
@@ -2989,6 +3045,10 @@ local inCombat = function()
 	cdcd = _A.Parser.frequency and _A.Parser.frequency * 3 or .3
 	-- print(player:combat())
 	-- print(GetManaRegen())
+	-- print(_A.Queuer.Queue)
+	-- for spell, v in pairs(_A.Queuer.Queue) do
+		-- print(spell)
+	-- end
 	if not player:alive() then return true end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats())) / 100)) / 10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
@@ -3011,11 +3071,14 @@ local inCombat = function()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
-	if _A.buttondelayfunc() then return true end -- pausing for manual casts
+	-- if _A.buttondelayfunc() then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	-- KEYBINDS
 	-- OH SHIT ORBS
+	if mw_rot.root_buff() then return true end
+	if mw_rot.root_buff2() then return true end
+	-- if player then return _A.clickcast(player, "Healing Sphere") end
 	if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if mylevel >= 64 and mw_rot.tsulongHealing() then return true end -- SUPER PRIO
 	if player:keybind("R") or player:ui("leveling") then
@@ -3097,7 +3160,7 @@ local currentStatueGuid = nil -- Track current statue GUID
 local currentColor = nil -- Track current circle color
 
 local function alertStatueRange()
-    local player = Object("player")
+    player = Object("player")
     if not player then return true end
     if player:spec()~=270 then return true end
     if not player:ui("draw_statue_range") then 
@@ -3106,10 +3169,10 @@ local function alertStatueRange()
             drawn = false
             currentStatueGuid = nil
             currentColor = nil
-        end
+		end
         return true 
-    end
-
+	end
+	
     local foundStatue = false
     for _, statue in pairs(_A.OM:Get('Friendly')) do
         if statue.id == 60849 and _A.ObjectCreator(statue.guid) == player.guid then
@@ -3127,23 +3190,23 @@ local function alertStatueRange()
                 DrawTick:UnRender("statue_range") -- Clear existing drawing
                 DrawTick:Render("statue_range", function()
                     Draw:Circle3D(object, 20, circleColor, 1, 0, false, 1.5, rotation, -1)
-                end)
+				end)
                 
                 drawn = true
                 currentStatueGuid = statue.guid
                 currentColor = circleColor
-            end
+			end
             break
-        end
-    end
-
+		end
+	end
+	
     -- Clear drawing if no statue found
     if not foundStatue and drawn then
         DrawTick:UnRender("statue_range")
         drawn = false
         currentStatueGuid = nil
         currentColor = nil
-    end
+	end
 end
 
 C_Timer.NewTicker(.1, alertStatueRange, false, "alertStatueRange")
