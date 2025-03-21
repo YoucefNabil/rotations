@@ -576,11 +576,13 @@ local exeOnLoad = function()
 		if event == "COMBAT_LOG_EVENT_UNFILTERED" --or event == "COMBAT_LOG_EVENT"
 			then
 			-- non player related
-			--[[
+			--
 			if subevent=="SPELL_CAST_SUCCESS" and player and guidsrc and guidsrc ~= UnitGUID("player") then -- only filter by me
 				-- if UnitCanAttack(guidsrc) then
-				local unit_event = guidsrc and _A.Object(guidsrc)
+				-- local unit_event = guidsrc and _A.Object(guidsrc)
+				local unit_event = _A.OM["Enemy"][guidsrc]
 				if unit_event and unit_event.isplayer and unit_event:enemy() and rootthisfuck[spell_name(idd)] then
+					-- print("HEY IM WORKING")
 					C_Timer.NewTicker(.1, function()
 						if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
 							then 

@@ -409,7 +409,7 @@ local exeOnLoad = function()
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		-- print(slot)
-		local player = Object("player")
+		player = Object("player")
 		if slot==STARTSLOT then 
 			_A.pressedbuttonat = 0
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then
