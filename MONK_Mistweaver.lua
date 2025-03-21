@@ -2081,21 +2081,6 @@ local mw_rot = {
 		end
 	end,
 	
-	ringofpeace = function()
-		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace") < cdcd then
-			local peacetarget = Object("mostTargetedRosterPVP")
-			if peacetarget then
-				if peacetarget:SpellRange("Ring of Peace") and peacetarget:health() <= 85 and not peacetarget:BuffAny("Ring of Peace") then
-					if (peacetarget:areaEnemies(6) >= 3) or (peacetarget:areaEnemies(6) >= 1 and peacetarget:health() < 75) then
-						if peacetarget:los() then
-							return peacetarget:Cast("Ring of Peace")
-						end
-					end
-				end
-			end
-		end
-	end,
-	
 	
 	ringofpeacev2 = function()
 		if player:Talent("Ring of Peace") and player:SpellCooldown("Ring of Peace") < cdcd then
@@ -2298,7 +2283,7 @@ local mw_rot = {
 		for _, f in ipairs(friendlies) do
 			local fpos = friendlyPositions[f.guid]
 			for _, e in ipairs(enemies) do
-				if (e.isHealer or e.isCaster or e.isBursting)  and withinRange(e.pos, fpos, 7) and (e.state.drState == 1 or e.state.drState == -1) then
+				if (e.isHealer or (e.isCaster and _A.pull_location=="arena") or (e.isBursting and _A.pull_location=="arena"))  and withinRange(e.pos, fpos, 7) and (e.state.drState == 1 or e.state.drState == -1) then
 					return f:Cast("Ring of Peace")
 				end
 			end
