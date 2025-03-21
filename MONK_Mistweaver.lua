@@ -120,6 +120,44 @@ local healerspecid = {
 	-- MONK
 	-- [269] = "ww monk",
 }
+local casterspecid = {
+	-- HEALERS
+	-- [105] = "Druid Resto",
+	-- [270] = "monk mistweaver",
+	-- [65] = "Paladin Holy",
+	-- [257] = "Priest Holy",
+	-- [256] = "Priest discipline",
+	-- [264] = "Sham Resto",
+	--DRUIDS
+	[102]="Druid Balance",
+	-- [103]="Druid Feral",
+	-- LOCKS
+	[265]="Lock Affli",
+	[266]="Lock Demono",
+	[267]="Lock Destro",
+	--PALADINS
+	-- [66]="Paladin prot",
+	-- [70]="Paladin retri",
+	-- PRIEST
+	[258]="Priest shadow",
+	-- SHAM
+	[262]="Sham Elem",
+	-- [263]="Sham enh",
+	-- MAGE
+	[62]="Mage Arcane",
+	[63]="Mage Fire",
+	[64]="Mage Frost",
+	-- Hunter
+	-- [253] = "hunter",
+	-- [254] = "hunter",
+	-- [255] = "hunter",
+	-- ROGUE
+	-- [259] = "rogue",
+	-- [260] = "rogue",
+	-- [261] = "rogue",
+	-- MONK
+	-- [269] = "ww monk",
+}
 --
 local spelltable = {
 	[5782] = 2,          -- Fear
@@ -405,7 +443,7 @@ local exeOnLoad = function()
 		--
 		if slot ~= STARTSLOT and slot ~= STOPSLOT and clickType ~= nil then
 			Type, id, subType = _A.GetActionInfo(slot)
-			if Type == "spell" -- or Type == "macro" -- remove macro?
+			if Type == "spell" or Type == "macro" -- remove macro?
 				then
 				_A.pressedbuttonat = _A.GetTime()
 			end
@@ -2184,18 +2222,20 @@ local mw_rot = {
 		local enemies = {}
 		local enemyPositions = {}
 		for _, e in pairs(_A.OM:Get('Enemy')) do
-			if e.isplayer and _A.notimmune(e) and not e:state("stun || incapacitate || fear || disorient || charm || misc || sleep") then
+			if e.isplayer and _A.notimmune(e) and e:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then
 				local x, y, z = _A.ObjectPosition(e.guid)
 				enemies[#enemies+1] = {
 					obj = e,
 					pos = {x, y, z},
 					isHealer = healerspecid[e:spec()],
+					isCaster = casterspecid[e:spec()],
+					isBursting = e:BuffAny("Call of Victory || Call of Conquest || Call of Dominance"),
 					state = {
 						bladeStorm = e:BuffAny("Bladestorm || Divine Shield || Deterrence"),
 						disarm = e:state("Disarm"),
 						canInterrupt = e:caninterrupt(),
 						drState = e:drState(137460),
-						silence = e:state("silence")
+						-- silence = e:state("silence")
 					}
 				}
 				enemyPositions[e.guid] = {x, y, z}
@@ -2254,16 +2294,16 @@ local mw_rot = {
 		end
 		
 		-- Version 4: Healer silence
-		if _A.someoneislow() then
-			for _, f in ipairs(friendlies) do
-				local fpos = friendlyPositions[f.guid]
-				for _, e in ipairs(enemies) do
-					if e.isHealer and withinRange(e.pos, fpos, 7) and not e.state.silence and e.state.drState ~= 2 then
-						return f:Cast("Ring of Peace")
-					end
+		-- if _A.someoneislow() then
+		for _, f in ipairs(friendlies) do
+			local fpos = friendlyPositions[f.guid]
+			for _, e in ipairs(enemies) do
+				if (e.isHealer or e.isCaster or e.isBursting)  and withinRange(e.pos, fpos, 7) and (e.state.drState == 1 or e.state.drState == -1) then
+					return f:Cast("Ring of Peace")
 				end
 			end
 		end
+		-- end
 	end,
 	
 	chi_wave = function()
@@ -2985,7 +3025,7 @@ local mw_rot = {
 					and not obj:buffany(48707)							
 					and not obj:buffany(1044)
 					and not obj:buffany("Bladestorm")
-					and _Y.notimmune(obj)
+					and _A.notimmune(obj)
 					and hasspeedbuff(obj)
 					and obj:los() 
 					then
@@ -3006,8 +3046,29 @@ local mw_rot = {
 					and not obj:buffany("Hand of Freedom")							
 					and not obj:buffany(1044)
 					and not obj:buffany("Bladestorm")
-					and _Y.notimmune(obj)
+					and _A.notimmune(obj)
 					and hasspeedbuff(obj)
+					and obj:los() 
+					then
+					return obj:Cast("Disable")
+				end
+			end
+		end
+	end,
+	
+	root_buff3 = function()
+		if player:SpellCooldown("Disable")<cdcd
+			then 
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:SpellRange("Disable") 
+					and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep || root || snare") 
+					and not obj:immune("snare") 
+					and not obj:buffany(48707)							
+					and not obj:buffany("Hand of Freedom")							
+					and not obj:buffany(1044)
+					and not obj:buffany("Bladestorm")
+					and _A.notimmune(obj)
+					and (obj:spec()==102 or obj:spec()==105)
 					and obj:los() 
 					then
 					return obj:Cast("Disable")
@@ -3046,9 +3107,9 @@ local inCombat = function()
 	-- print(player:combat())
 	-- print(GetManaRegen())
 	-- print(_A.Queuer.Queue)
-	-- for spell, v in pairs(_A.Queuer.Queue) do
-		-- print(spell)
-	-- end
+	for spell, v in pairs(_A.Queuer.Queue) do
+		print(spell)
+	end
 	if not player:alive() then return true end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats())) / 100)) / 10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
@@ -3071,13 +3132,14 @@ local inCombat = function()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
-	-- if _A.buttondelayfunc() then return true end -- pausing for manual casts
+	if _A.buttondelayfunc() then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	-- KEYBINDS
 	-- OH SHIT ORBS
 	if mw_rot.root_buff() then return true end
 	if mw_rot.root_buff2() then return true end
+	if mw_rot.root_buff3() then return true end
 	-- if player then return _A.clickcast(player, "Healing Sphere") end
 	if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if mylevel >= 64 and mw_rot.tsulongHealing() then return true end -- SUPER PRIO
