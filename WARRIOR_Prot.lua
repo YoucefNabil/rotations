@@ -810,7 +810,7 @@ local inCombat = function()
 	_A.numenemiesinfront()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
-	if _A.buttondelayfunc()  then return true end
+	-- if _A.buttondelayfunc()  then return true end
 	if  player:isCastingAny() then return true end
 	if player:iscasting("Throw") then return true end
 	-- print(player:iscasting("Throw"))

@@ -3117,7 +3117,7 @@ local inCombat = function()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
-	if _A.buttondelayfunc() then return true end -- pausing for manual casts
+	-- if _A.buttondelayfunc() then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	-- KEYBINDS

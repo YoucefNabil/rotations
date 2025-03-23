@@ -840,7 +840,7 @@ local inCombat = function()
 	destro.rot.caching()
 	destro.rot.rainoffire() 
 	if player:mounted() then return end
-	if _A.buttondelayfunc()  then return end
+	-- if _A.buttondelayfunc()  then return end
 	-- if player:isCastingAny() then return end
 	destro.rot.Buffbuff()
 	destro.rot.petres()

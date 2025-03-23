@@ -594,7 +594,7 @@ local inCombat = function()
 	if not player then return end
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .2) 
-	if _A.buttondelayfunc()  then return end
+	-- if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end
 	-- if player:lostcontrol()  then return end 

@@ -1861,7 +1861,7 @@ local inCombat = function()
 	_A.interrupttreshhold = .2 + _A.latency
 	if not _A.latency and not _A.interrupttreshhold then return true end
 	if not _A.pull_location then return true end
-	if _A.buttondelayfunc()  then return true end
+	-- if _A.buttondelayfunc()  then return true end
 	if  player:isCastingAny() then return true end
 	if player:mounted() then
 		-- if unholy.rot.pathoffrost() then return true end

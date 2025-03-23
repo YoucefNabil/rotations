@@ -904,7 +904,7 @@ local inCombat = function()
 	--HEALS
 	affliction.rot.Darkregeneration()
 	affliction.rot.items_healthstone()
-	if _A.buttondelayfunc()  then return end
+	-- if _A.buttondelayfunc()  then return end
 	-- if player:lostcontrol()  then return end 
 	--delayed lifetap
 	if affliction.rot.lifetap_delayed() then return end

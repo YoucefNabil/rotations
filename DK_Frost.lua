@@ -1321,7 +1321,7 @@ frost.rot = {
 local inCombat = function()	
 	player = player or Object("player")
 	if not player then return end
-	if _A.buttondelayfunc()  then return end
+	-- if _A.buttondelayfunc()  then return end
 	if  player:isCastingAny() then return end
 	if player:mounted() then return end
 	-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end

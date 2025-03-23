@@ -1522,7 +1522,7 @@ local inCombat = function()
 	_A.interrupttreshhold = _A.Parser.frequency and _A.Parser.frequency*2 + _A.latency or .1 + _A.latency 
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	local mylevel = player:level()
-	if _A.buttondelayfunc()  then return true end
+	-- if _A.buttondelayfunc()  then return true end
 	if  player:isCastingAny() then return true end
 	if player:mounted() then return true end
 	if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return true end
