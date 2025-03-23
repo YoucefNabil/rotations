@@ -598,7 +598,7 @@ local exeOnLoad = function()
 		local tempTable = {}
 		local location = _A.pull_location
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
-			if fr.isplayer
+			if (fr.isplayer and not fr:ispet())
 				or string.lower(fr.name) == "ebon gargoyle"
 				or fr.name == "Vanndar Stormpike"
 				or fr.name == "Overlord Agmar"
