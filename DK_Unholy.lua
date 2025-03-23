@@ -858,14 +858,12 @@ local exeOnLoad = function()
 	
 	function _A.someoneislow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if _A.isthishuman(Obj.guid) then
+			if Obj.isplayer and Obj:range()<40 then
 				if Obj:Health()<65 then
-					if Obj:range()<40 then
 						return true
 					end
 				end
 			end
-		end
 		return false
 	end
 	
@@ -1111,6 +1109,13 @@ local exeOnLoad = function()
 					print("GNAW ON HEALER")
 					temptable[1].OBJ:cast("Gnaw")
 					return true
+				end
+				if pet and player:SpellCooldown("Leap")==0
+					and pet:rangefrom(temptable[1].OBJ)<=30
+					and pet:rangefrom(temptable[1].OBJ)>=6
+					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
+					print("LEAP ON HEALER")
+					temptable[1].OBJ:cast("Leap")
 				end
 				if _A.PetGUID and (not pettargetguid or pettargetguid~=temptable[1].GUID) then
 					_A.PetAttack(temptable[1].GUID)
@@ -1856,7 +1861,7 @@ local inCombat = function()
 	_A.interrupttreshhold = .2 + _A.latency
 	if not _A.latency and not _A.interrupttreshhold then return true end
 	if not _A.pull_location then return true end
-	-- if _A.buttondelayfunc()  then return true end
+	if _A.buttondelayfunc()  then return true end
 	if  player:isCastingAny() then return true end
 	if player:mounted() then
 		-- if unholy.rot.pathoffrost() then return true end
