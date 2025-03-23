@@ -8,50 +8,50 @@ related.trashMobs = {
     [40817] = true,            -- shadow of obsidius
     [39425] = function(obj)    -- temple guardian anhur
         return obj:buff(74938) -- shield of light
-    end,
+	end,
     [39984] = true,            -- Malignant Trogg
     [45704] = true,            -- Lurking Tempest
     [52430] = function(obj)    -- hakkar's chains
         return obj:buff(97417) -- barrier
-    end,
+	end,
     [42180] = function(obj)    --toxitron
         return obj:buff(79835)
-    end,
+	end,
     [42166] = function(obj) --arcanotron
         return obj:buff(79735)
-    end,
+	end,
     [42178] = function(obj) --magmatron
         return obj:buff(79582)
-    end,
+	end,
     [42179] = function(obj) --electron
         return obj:buff(79900)
-    end,
+	end,
     [52755] = function(obj)     --totem zul
         return obj:buff(97502)  --refreshing totem
-    end,
+	end,
     [56448] = function(obj)     -- wise mari
         return obj:buff(106062) -- water bubble
-    end,
+	end,
 }
 
 related.avoidMobs = function(obj)
     if not obj or not obj.id then return false end
-
+	
     local check = related.trashMobs[obj.id]
     if check then
         -- For direct boolean checks
         if type(check) == "boolean" then
             return check
-
+			
             -- For buff-based checks
-        elseif type(check) == "function" then
+			elseif type(check) == "function" then
             local success, result = pcall(check, obj)
             if success then
                 return result
-            end
-        end
-    end
-
+			end
+		end
+	end
+	
     return false
 end
 
@@ -244,56 +244,56 @@ related.debuffList = function(UNIT, tbl)
     for _, id in pairs(tbl) do
         if UNIT:debuff(id) then
             return true
-        end
-    end
+		end
+	end
 end
 
 related.debuffAnyList = function(UNIT, tbl)
     for _, id in pairs(tbl) do
         if UNIT:debuffAny(id) then
             return true
-        end
-    end
+		end
+	end
 end
 
 related.buffList = function(UNIT, tbl)
     for _, id in pairs(tbl) do
         if UNIT:buff(id) then
             return true
-        end
-    end
+		end
+	end
 end
 
 related.buffAnyList = function(UNIT, tbl)
     for _, id in pairs(tbl) do
         if UNIT:buffAny(id) then
             return true
-        end
-    end
+		end
+	end
 end
 
 related.ignoreIdList = function(UNIT, tbl)
     for _, id in pairs(tbl) do
         if UNIT.id == id then
             return true
-        end
-    end
+		end
+	end
 end
 
 related.interactIdList = function(UNIT, tbl)
     for _, id in pairs(tbl) do
         if UNIT.id == id then
             return true
-        end
-    end
+		end
+	end
 end
 
 related.castingIdList = function(UNIT, tbl)
     for _, spellname in pairs(tbl) do
         if UNIT:Casting(spellname) then
             return true
-        end
-    end
+		end
+	end
 end
 
 related.ignoreByBuff = {
@@ -320,64 +320,82 @@ function _A.Queuer:Add(id, target, type)
         time = GetTime(),
         target = target,
         type = type,
-    })
+	})
+end
+
+function _A.Queuer:Add2(id, target, type)
+    local spellName = GetSpellInfo(id)
+	for k,_ in ipairs(self.Queue) do
+		if k > 1 then
+			self.Queue[k]=nil
+		end
+	end
+	self.Queue[1] = {
+		id = id,
+		spellName = spellName,
+		time = GetTime(),
+		target = target,
+		type = type,
+	}
 end
 
 function _A.Queuer:Spell(_, data)
-    local ready = _A.DSL:Get("spell.ready")(_, data.id)
-    return data and ready
+	-- local ready = _A.DSL:Get("spell.ready")(_, data.id)
+	local player_spell = Object("player")
+	local ready = player_spell and ( player_spell:spellcooldown(data.id)<.24 and player_spell:spellusable(data.id))
+	return data and ready
 end
 
 function _A.Queuer:Execute()
-    -- Process first item in queue (FIFO)
-    local data = self.Queue[1]
-    if not data then return end
-
-    if (GetTime() - data.time) > 5 then
-        table.remove(self.Queue, 1)
-    elseif self:Spell(_, data) then
-        if data.type == "spell" then
-            local target = data.target or Object("target")
-            if target then
-                target:Cast(data.spellName)
-                table.remove(self.Queue, 1)
-                return true
-            end
-        elseif data.type == "ground" then
-            local target = data.target
-            if target then
-                target:CastGround(data.spellName)
-                table.remove(self.Queue, 1)
-                return true
-            end
-        end
-    end
+	-- Process first item in queue (FIFO)
+	local data = self.Queue[1]
+	if not data then return end
+	
+	if (GetTime() - data.time) > 5 then
+		table.remove(self.Queue, 1)
+		elseif self:Spell(_, data) then
+		if data.type == "spell" then
+			local target = data.target or Object("target")
+			if target then
+				target:Cast(data.spellName)
+				table.remove(self.Queue, 1)
+				return true
+			end
+			elseif data.type == "ground" then
+			local target = data.target
+			if target then
+				target:CastGround(data.spellName)
+				table.remove(self.Queue, 1)
+				return true
+			end
+		end
+	end
 end
 
 _A.DSL:Register("queue", function(unit, spell)
-    return _A.Queuer:Add(spell, unit, "spell")
+	return _A.Queuer:Add(spell, unit, "spell")
 end)
 
 _A.DSL:Register("queueGround", function(unit, spell)
-    return _A.Queuer:Add(spell, unit, "ground")
+	return _A.Queuer:Add(spell, unit, "ground")
 end)
 
 -- Add this near the other initialization code
 local oldCastCommand = SlashCmdList["CAST"]
 SlashCmdList["CAST"] = function(msg)
-    local player = Object("player")
-    -- If in combat, block the cast
-    if player:combat() then
-        print("[Combat] Spell casting via /cast is disabled in combat")
-        return
-    end
-
-    -- Out of combat, proceed with normal cast behavior
-    oldCastCommand(msg)
+	local player = Object("player")
+	-- If in combat, block the cast
+	if player:combat() then
+		print("[Combat] Spell casting via /cast is disabled in combat")
+		return
+	end
+	
+	-- Out of combat, proceed with normal cast behavior
+	oldCastCommand(msg)
 end
 
 -- Hook the other cast command variations
 for _, cmd in ipairs({ "CAST" }) do
-    _G["SLASH_" .. cmd .. "1"] = "/" .. string.lower(cmd)
-    _G["SLASH_" .. cmd .. "2"] = "#" .. string.lower(cmd)
+	_G["SLASH_" .. cmd .. "1"] = "/" .. string.lower(cmd)
+	_G["SLASH_" .. cmd .. "2"] = "#" .. string.lower(cmd)
 end
