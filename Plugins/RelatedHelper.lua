@@ -1,32 +1,57 @@
-local _, _A = ...
+local mediaPath, _A, _R = ...
 C_Timer = _A.C_Timer
 local player
 local Object = _A.Object
+_A.AutoLogin(false)
+
 -- Create GUI
 local RelatedHelper_GUI = _A.Interface:BuildGUI({
     key = "RelatedHelper",
-    width = 300,
-    height = 440,
+    width = 380,
+    height = 560,
     title = "|cFFffd000Related Helper Settings|r",
     config = {
         { type = 'ruler' },
-        { type = 'header',           text = "Related Helper", size = 20, align = "CENTER" },
+        { type = 'header',           text = "|cFF00FF00Related Helper|r",        size = 20,                                                                                                                 align = "CENTER" },
         { type = 'ruler' },
-        { type = 'header',           text = "LFG Settings",   size = 15, align = "LEFT" },
-        { key = "enable_autoaccept", type = "checkbox",       cw = 15,   ch = 15,                             size = 15,             text = "Enable Auto Accept LFG",     default = false },
-        { key = "enable_flashwow",   type = "checkbox",       cw = 15,   ch = 15,                             size = 15,             text = "Enable Flash WoW",           default = false },
-        { key = "enable_autoleave",  type = "checkbox",       cw = 15,   ch = 15,                             size = 15,             text = "Auto Leave Battlefield",     default = false },
-        { type = 'spinner',          cw = 15,                 ch = 15,   size = 15,                           size = checkbox_tsize, text = "Delay Before Joining BGs: ", key = 'bg_delay', default = 0, step = 0.01, max = 30, min = 0 },
+
+        -- Battleground Settings Group
+        { type = 'header',           text = "|cFFFF6B00Battleground Settings|r", size = 15,                                                                                                                 align = "LEFT" },
+        { key = "enable_autoaccept", type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Enable Auto Accept LFG",                                                                                                                            default = false },
+        { key = "enable_flashwow",   type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Enable Flash WoW",                                                                                                                                  default = false },
+        { key = "enable_autoleave",  type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Auto Leave Battlefield",                                                                                                                            default = false },
+        { key = 'bg_delay',          type = 'spinner',                           cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Delay Before Joining BGs: ",                                                                                                                        default = 0,    step = 0.01, max = 30, min = 0 },
         { type = 'ruler' },
-        { key = "enable_visuals",    type = "checkbox",       cw = 15,   ch = 15,                             size = 15,             text = "Enable Farm Visuals",        default = false },
-        { key = "enable_autoloot",   type = "checkbox",       cw = 15,   ch = 15,                             size = 15,             text = "Enable Autoloot",            default = false },
-        { key = "enable_autofarm",   type = "checkbox",       cw = 15,   ch = 15,                             size = 15,             text = "Enable Auto Farm",           default = false },
-        { key = "enable_chaseback",  type = "checkbox",       cw = 15,   ch = 15,                             size = 15,             text = "Enable Chase Back",          default = false },
-        { key = "chaseback_key",     type = "input",          size = 15, text = "Chase Back Key",             default = "E", },
-        { key = "enable_hsgrab",     type = "checkbox",       cw = 15,   ch = 15,                             size = 15,             text = "Enable HS Grab",             default = false },
-        { type = 'spacer',           size = 10 },
-        { key = "update_freq",       type = "spinner",        size = 15, text = "Update Frequency (seconds)", default = 0.05,        step = 0.05,                         min = 0.05,       max = 5 },
-        { key = "draw_distance",     type = "spinner",        size = 15, text = "Draw Distance (yards)", default = 100,          step = 5,                            min = 10,         max = 400 },
+
+        -- Farming Settings Group
+        { type = 'header',           text = "|cFF00FFFFFarming Settings|r",      size = 15,                                                                                                                 align = "LEFT" },
+        { key = "enable_visuals",    type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Enable Farm Visuals",                                                                                                                               default = false },
+        { key = "enable_autoloot",   type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Enable Autoloot",                                                                                                                                   default = false },
+        { key = "enable_autofarm",   type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Enable Auto Farm",                                                                                                                                  default = false },
+        { key = "update_freq",       type = "spinner",                           size = 15,                                                                                                                 text = "Update Frequency (seconds)", default = 0.05, step = 0.05,                                                                                                                                                min = 0.05,     max = 5 },
+        { key = "draw_distance",     type = "spinner",                           size = 15,                                                                                                                 text = "Draw Distance (yards)",      default = 100,  step = 5,                                                                                                                                                   min = 10,       max = 400 },
+        { type = 'ruler' },
+
+        -- Button Delay Settings Group
+        { type = 'header',           text = "|cFFFF0000Button Delay Settings|r", size = 15,                                                                                                                 align = "LEFT" },
+        { type = 'text',             size = 15,                                  text = "Button delay helps to queue spells between rotation execution\nRecommended to keep enabled for better performance" },
+        { type = "spacer",           size = 15 },
+        { key = "hook_ActionBars",   type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "|cFFFFFF00Enable Button Delay|r",                                                                                                                   default = true },
+        { key = "queueSpells",       type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Enable Queue Spells\n|cFFffd000ON: |rQueue Spells with interrupting current cast\n|cFFffd000OFF: |rQueue Spells without interrupting current cast", default = false },
+        { key = "queueMacros",       type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Enable Queue Macros\n|cFFffd000ON: |rQueue Macros with interrupting current cast\n|cFFffd000OFF: |rQueue Macros without interrupting current cast", default = false },
+        { type = "spacer",           size = 15 },
+        { type = 'ruler' },
+
+        -- Combat Settings Group
+        { type = 'header',           text = "|cFFFF69B4Combat Settings|r",       size = 15,                                                                                                                 align = "LEFT" },
+        { key = "enable_chaseback",  type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Enable Chase Back",                                                                                                                                 default = false },
+        { key = "chaseback_key",     type = "input",                             size = 15,                                                                                                                 text = "Chase Back Key",             default = "E" },
+        { key = "enable_hsgrab",     type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Enable HS Grab",                                                                                                                                    default = false },
+        { type = 'ruler' },
+
+        -- Advanced Settings Group
+        { type = 'header',           text = "|cFF9370DBAdvanced Settings|r",     size = 15,                                                                                                                 align = "LEFT" },
+        { key = "enable_glitch",     type = "checkbox",                          cw = 15,                                                                                                                   ch = 15,                             size = 15,      text = "Enable Mining Glitch",                                                                                                                              default = false },
     }
 })
 
@@ -42,64 +67,115 @@ end
 
 -- Helper function to check if object is in our list
 local function interactIdList(UNIT, tbl)
-    for _, id in pairs(tbl) do
-        if UNIT.id == id then
-            return true
-        end
+    -- Check if the unit ID matches any herb or ore ID
+    if tbl[UNIT.id] then
+        return true
     end
+    return false
+end
+
+-- Helper function to check if object is in our list and get its data
+local function getNodeData(UNIT)
+    local hasHerb = false
+    local hasOre = false
+
+    -- Check player's professions
+    for _, key in pairs({ GetProfessions() }) do
+        local _, _, _, _, _, _, skillline = GetProfessionInfo(key)
+        if skillline == 182 then hasHerb = true end
+        if skillline == 186 then hasOre = true end
+    end
+
+    -- Check herbs only if player has herbalism
+    if hasHerb and _A.related.Herbs[UNIT.id] then
+        return _A.related.Herbs[UNIT.id]
+    end
+
+    -- Check ores only if player has mining
+    if hasOre and _A.related.Ores[UNIT.id] then
+        return _A.related.Ores[UNIT.id]
+    end
+
+    return nil
 end
 
 -- Drawing function
-local drawn = false
-local currentNodeKey = nil
-local currentColor = nil
+local drawn = {}
 local function drawFarmNodes()
     if not RelatedHelper_GUI:F("enable_visuals") then
-        if drawn then
-            DrawTick:UnRender("farmVisuals")
-            drawn = false
-            currentNodeKey = nil
-            currentColor = nil
-        end
+        -- Clear all drawings if visuals are disabled
+        DrawTick:UnRender("farmVisuals")
+        drawn = {}
         return
     end
 
     local drawDistance = RelatedHelper_GUI:F("draw_distance_spin")
-    local foundNode = false
+    local foundNodes = {}
+    local hasHerb = false
+    local hasOre = false
 
+    for _, key in pairs({ GetProfessions() }) do
+        local name, icon, rank, maxrank, numspells, spelloffset, skillline = GetProfessionInfo(key)
+        if skillline == 182 then hasHerb = true end
+        if skillline == 186 then hasOre = true end
+    end
+    if not hasHerb and not hasOre then return end
+
+    -- Collect all valid nodes first
     for _, farm in pairs(_A.OM:Get('GameObject')) do
-        if farm:distance() > drawDistance then return end
-        if interactIdList(farm, _A.related.OreHerb) then
-            foundNode = true
+        local nodeData = getNodeData(farm)
+        if farm:distance() <= drawDistance and nodeData then
             local isInRange = farm:distance() <= 5
             local circleColor = isInRange and 0xC000ff00 or 0xC0ff0000
-
-            -- Only redraw if something changed
-            if not drawn or currentNodeKey ~= farm.key or currentColor ~= circleColor then
-                local x, y, z = _A.ObjectPosition(farm.key)
-                local object, rotation = { x, y, z }, { 0, 0, 0 }
-
-                -- Only unrender if we're about to draw something new
-                DrawTick:UnRender("farmVisuals")
-                DrawTick:Render("farmVisuals", function()
-                    Draw:Circle3D(object, 5, circleColor, 1, 0, true, 1.5, rotation, -1)
-                end)
-
-                drawn = true
-                currentNodeKey = farm.key
-                currentColor = circleColor
-            end
-            return -- Exit after finding and processing first node
+            local x, y, z = _A.ObjectPosition(farm.key)
+            foundNodes[farm.key] = {
+                position = { x, y, z },
+                color = circleColor,
+                icon = nodeData.icon,
+                id = nodeData.id,
+                name = farm.name or "Unknown Node"
+            }
         end
     end
 
-    -- Only unrender if we previously had a node but now don't
-    if not foundNode and drawn then
-        DrawTick:UnRender("farmVisuals")
-        drawn = false
-        currentNodeKey = nil
-        currentColor = nil
+    -- Remove drawings for nodes that no longer exist
+    for key in pairs(drawn) do
+        if not foundNodes[key] then
+            drawn[key] = nil
+        end
     end
+
+    -- Clear and redraw all nodes
+    DrawTick:UnRender("farmVisuals")
+    local fontObj = Draw:LoadFont(mediaPath .. "calibrib.ttf", 24, "Latin")
+    DrawTick:Render("farmVisuals", function()
+        for key, node in pairs(foundNodes) do
+            local needsUpdate = not drawn[key] or drawn[key] ~= node.color
+            if needsUpdate then
+                drawn[key] = node.color
+            end
+
+
+            -- Draw circle
+            Draw:Circle3D(
+                { node.position[1], node.position[2], node.position[3] }, -- position
+                5,                                                        -- radius
+                node.color,                                               -- color
+                1,                                                        -- segments
+                0,                                                        -- offset
+                true,                                                     -- filled
+                1.5,                                                      -- thickness
+                { 0, 0, 0 },                                              -- rotation
+                -1                                                        -- layer
+            )
+
+
+
+            -- Draw text above the node
+            local textpos = { node.position[1], node.position[2], node.position[3] + 2.5 }
+            Draw:Text3D(node.name, textpos, fontObj, 24, 0xFFFFFFFF, true, 0)
+        end
+    end)
 end
 
 -- HS Grab
@@ -171,40 +247,94 @@ local lastInteractTime = {}
 
 -- autofarm
 local function autofarm()
-    if RelatedHelper_GUI:F("enable_autofarm") then
+    if RelatedHelper_GUI:F("enable_autofarm") or RelatedHelper_GUI:F("enable_glitch") then
         player = player or Object("player")
         if not player then
             return
         end
-        
+
+        local hasFreeSlot = false
+        for i = 0, 4 do
+            local freeSlots = _A.GetContainerNumFreeSlots(i)
+            if freeSlots > 0 then
+                hasFreeSlot = true
+                break
+            end
+        end
+
+        if not hasFreeSlot then
+            return
+        end
+
         -- Early returns for player states
         if player:combat() or player:moving() or player:IscastingAnySpell() then
             return
         end
-        
+
         -- Don't try to interact if we're already looting
         if _A.GetNumLootItems() > 0 then
             return
         end
 
         -- autoFarm (ore / herbs / container)
+        local tempTable = {}
         for _, farm in pairs(_A.OM:Get('GameObject')) do
             -- Check if it's a valid node first
-            if interactIdList(farm, _A.related.OreHerb) and farm:distance() <= 5 then
-                -- Check if we've interacted recently using guid (more reliable than key)
-                local currentTime = GetTime()
-                if lastInteractTime[farm.key] and (currentTime - lastInteractTime[farm.key] < 5) then
-                    return
-                end
-
-                -- Attempt interaction and record the time
-                lastInteractTime[farm.key] = currentTime
-                _A.InteractUnit(farm.key)
-                return -- Exit after attempting one interaction
+            if (interactIdList(farm, _A.related.Ores)) or (interactIdList(farm, _A.related.Herbs)) and farm:distance() <= 5 then
+                tempTable[#tempTable + 1] = {
+                    guid = farm.guid,
+                    distance = farm:distance()
+                }
             end
+        end
+
+        if #tempTable > 1 then
+            table.sort(tempTable, function(a, b) return a.distance < b.distance end)
+        end
+
+        if tempTable[1] and lastInteractTime[tempTable[1].guid] and (GetTime() - lastInteractTime[tempTable[1].guid] < 5) then
+            return
+        end
+        if tempTable[1] then
+            lastInteractTime[tempTable[1].guid] = GetTime()
+            return _A.ObjectInteract(tempTable[1].guid)
         end
     end
 end
+
+local function ClickFarm()
+    if not RelatedHelper_GUI:F("enable_glitch") then return end
+    local player = Object("player")
+    if not player then return end
+    local MapID = _A.MapId()
+    if MapID ~= 959 then return end
+    local hasFreeSlot = false
+    for i = 0, 4 do
+        local freeSlots = _A.GetContainerNumFreeSlots(i)
+        if freeSlots > 0 then
+            hasFreeSlot = true
+            break
+        end
+    end
+
+    if not hasFreeSlot then
+        if not player:isCastingAnySpell() and player:ItemUsable(GetItemInfo(6948)) then
+            player:UseItem(GetItemInfo(6948))
+        end
+        return
+    end
+
+    if player:IscastingAnySpell() or player:Dead() or player:Mounted() or player:LostControl() then
+        return
+    end
+
+    if player then
+        _A.AutoLogin(true)
+        player:Macro("/logout")
+    end
+end
+
+C_Timer.NewTicker(0.1, ClickFarm, false, "ClickFarm")
 
 C_Timer.NewTicker(.1, autoloot, false, "RelatedHelper_Autoloot")
 C_Timer.NewTicker(300, function()
@@ -255,14 +385,21 @@ end
 -- Update ticker with original name
 C_Timer.NewTicker(0.1, ChaseBack, false, "moving")
 
--- Add flag clicking functionality
+-- Create a table with names instead of IDs
 local heFLAGS = {
-    ["Horde Flag"] = true,
-    ["Alliance Flag"] = true,
-    ["Alliance Mine Cart"] = true,
-    ["Horde Mine Cart"] = true,
-    ["Huge Seaforium Bombs"] = true,
-    ["Orb of Power"] = true,
+    [179830] = true, -- Alliance Flag (Base)
+    [179785] = true, -- Alliance Flag (Open Field)
+    [179831] = true, -- Horde Flag (Base)
+    [179786] = true, -- Horde Flag (Open Field)
+    [220164] = true, -- Alliance Mine Cart
+    [220166] = true, -- Horde Mine Cart
+    [212091] = true, -- Orb of Power
+    [212092] = true, -- Orb of Power
+    [212093] = true, -- Orb of Power
+    [212094] = true, -- Orb of Power
+    [195332] = true, -- Huge Seaforium Bombs
+    [195333] = true, -- Huge Seaforium Bombs
+    [184142] = true, -- Netherstorm Flag
 }
 
 local function pull_location()
@@ -279,7 +416,7 @@ end)
 local function ClickPVPFlags()
     local tempTable = {}
     for _, Obj in pairs(_A.OM:Get('GameObject')) do
-        if heFLAGS[Obj.name] then
+        if heFLAGS[Obj.id] then
             tempTable[#tempTable + 1] = {
                 guid = Obj.guid,
                 distance = Obj:distance()
@@ -361,6 +498,113 @@ end
 -- Initialize Auto Accept LFG
 -- C_Timer.After(1, AutoAcceptLFG)
 AutoAcceptLFG()
+
+-- BUTTON DELAY functionality
+local function ParseMacroBody(body)
+    if not body then return nil, nil end
+
+    -- First, clean up the input by removing any leading/trailing whitespace
+    body = string.gsub(body, "^%s*(.-)%s*$", "%1")
+
+    -- Pattern to match variations of cast commands
+    -- Will match: cast [@mouseover] Fear, cast [target=focus] Fear, cast Fear
+    local target = string.match(body, "@([%w_]+)") or string.match(body, "target=([%w_]+)")
+    local spellName = string.match(body, "]%s*([^%[]+)$") or string.match(body, "cast%s+([^%[]+)$")
+
+    if spellName then
+        spellName = string.gsub(spellName, "^%s*(.-)%s*$", "%1")
+    end
+
+    return target, spellName
+end
+
+_A.hooksecurefunc("UseAction", function(...)
+    player = player or Object("player")
+    if not RelatedHelper_GUI:F("hook_ActionBars") then
+        return
+    end
+    local inTarget = Object("target") or Object("player")
+    if not inTarget then return end
+    -- if not player:combat() then return end
+    local slot, target, clickType = ...
+    local Type, id
+    local blacklistedSpells = {
+        [121827] = true, -- Roll
+        [121828] = true, -- Chi Torpedo
+    }
+    if slot and clickType ~= nil then
+        Type, id = _A.GetActionInfo(slot)
+        if blacklistedSpells[id] then
+            return
+        end
+        if Type == "spell" then
+            _A.ui:alert({
+                text = "Pressed " .. GetSpellInfo(id),
+                icon = select(3, GetSpellInfo(id)),
+                fade = { 2, 0.175, 0.3 },
+                size = 20
+            })
+            _A.C_Timer.After(0.2, function()
+                if player:lastCast(id) and player:lastCastSeen(id) <= player:SpellCasttime(id) then return end
+                local castid, channelid = player:UnitCastID()
+                if RelatedHelper_GUI:F("queueSpells") and castid ~= id and channelid ~= id then
+                    _A.SpellStopCasting()
+                end
+                return _A.Queuer:Add(id, inTarget, "spell")
+            end)
+        end
+        if Type == "macro" then
+            if not RelatedHelper_GUI:F("queueMacros") then return end
+            local name, icon, body, isLocal = _A.GetMacroInfo(id)
+            local macroTarget, spellName = ParseMacroBody(body)
+            local acceptedTargets = {
+                ["player"] = true,
+                ["target"] = true,
+                ["focus"] = true,
+                ["mouseover"] = true,
+                ["pet"] = true,
+                ["pettarget"] = true,
+                ["arena1"] = true,
+                ["arena2"] = true,
+                ["arena3"] = true,
+                ["arena4"] = true,
+                ["arena5"] = true,
+                ["boss1"] = true,
+                ["boss2"] = true,
+                ["boss3"] = true,
+                ["boss4"] = true,
+                ["boss5"] = true,
+                ["cursor"] = true,
+            }
+            if not acceptedTargets[macroTarget] then return end
+            -- Get the appropriate target based on macro conditions
+            local targetObj
+            if macroTarget and macroTarget ~= "cursor" and acceptedTargets[macroTarget] then
+                targetObj = Object(macroTarget)
+            end
+            if macroTarget == "cursor" and spellName then
+                local cursor = Object("cursor")
+                _A.SpellStopCasting()
+                _A.SpellCancelQueuedSpell()
+                _A.Queuer:Add(spellName, cursor, "ground")
+                return
+            end
+            -- Use the found target or fall back to default target
+            local finalTarget = targetObj.guid or inTarget.guid
+
+            if finalTarget and spellName then
+                if player:lastCast(spellName) and player:lastCastSeen(spellName) <= player:SpellCasttime(spellName) then return end
+                local spell = UnitCastingInfo("player")
+                if RelatedHelper_GUI:F("queueSpells") and spell ~= spellName then
+                    _A.SpellStopCasting()
+                    return _A.Queuer:Add(spellName, finalTarget, "spell")
+                else
+                    return _A.Queuer:Add(spellName, finalTarget, "spell")
+                end
+            end
+        end
+    end
+end)
 
 -- Return the plugin
 return {
