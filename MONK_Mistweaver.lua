@@ -575,7 +575,35 @@ local exeOnLoad = function()
 				or string.lower(fr.name) == "ebon gargoyle"
 				or fr.name == "Vanndar Stormpike"
 				or fr.name == "Overlord Agmar"
-				-- or (location == "arena" and fr:ispet()) then
+				or (location == "arena" and fr:ispet()) then
+				if fr:SpellRange("Renewing Mist")
+					and _A.nothealimmune(fr) and fr:los() then
+					tempTable[#tempTable + 1] = {
+						HP = fr:health(),
+						guid = fr.guid
+					}
+				end
+			end
+		end
+		if #tempTable > 1 then
+			table.sort(tempTable, function(a, b) return (a.HP < b.HP) end)
+		end
+		if #tempTable >= 1 then
+			return tempTable[1] and tempTable[1].guid
+			else
+			return
+		end
+	end)
+	_A.FakeUnits:Add('lowestall_nopet', function(num, spell)
+		local tempTable = {}
+		local location = _A.pull_location
+		for _, fr in pairs(_A.OM:Get('Friendly')) do
+			if fr.isplayer
+				or string.lower(fr.name) == "ebon gargoyle"
+				or fr.name == "Vanndar Stormpike"
+				or fr.name == "Overlord Agmar"
+				-- or (location == "arena" and fr:ispet()) 
+				then
 				if fr:SpellRange("Renewing Mist")
 					and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable + 1] = {
@@ -2544,7 +2572,7 @@ local mw_rot = {
 	lifecocoon = function()
 		if player:SpellCooldown("Life Cocoon") < cdcd and player:SpellUsable(116849) then
 			if player:Stance() == 1 then
-				local lowest = Object("lowestall")
+				local lowest = Object("lowestall_nopet")
 				if lowest and lowest:SpellRange("Life Cocoon") and lowest:combat() and not lowest:buffany("Die by the Sword") and not lowest:buffany("Shield Wall") then
 					--]]
 					if
