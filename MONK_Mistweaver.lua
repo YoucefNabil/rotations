@@ -575,7 +575,7 @@ local exeOnLoad = function()
 				or string.lower(fr.name) == "ebon gargoyle"
 				or fr.name == "Vanndar Stormpike"
 				or fr.name == "Overlord Agmar"
-				or (location == "arena" and fr:ispet()) then
+				-- or (location == "arena" and fr:ispet()) then
 				if fr:SpellRange("Renewing Mist")
 					and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable + 1] = {
