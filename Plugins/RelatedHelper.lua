@@ -539,12 +539,12 @@ _A.hooksecurefunc("UseAction", function(...)
 			return
 		end
 		if Type == "spell" then
-			_A.ui:alert({
-				text = "Pressed " .. GetSpellInfo(id),
-				icon = select(3, GetSpellInfo(id)),
-				fade = { 2, 0.175, 0.3 },
-				size = 20
-			})
+			-- _A.ui:alert({
+				-- text = "Pressed " .. GetSpellInfo(id),
+				-- icon = select(3, GetSpellInfo(id)),
+				-- fade = { 2, 0.175, 0.3 },
+				-- size = 20
+			-- })
 			_A.C_Timer.After(0.2, function()
 				if player:lastCast(id) and player:lastCastSeen(id) <= player:SpellCasttime(id) then return end
 				local castid, channelid = player:UnitCastID()
