@@ -343,7 +343,6 @@ local GUI = {
 	{ type = "spacer",   size = spacer_size },
 	{ type = "checkbox", size = checkbox_tsize, text = "Use DPS leveling Rotation " .. _A.Core:GetSpellIcon(100787, 15, 15) .. " (R)", key = "leveling", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(115313, 15, 15, true) .. " Draw",        key = "draw_statue_range", default = false },
-	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(124682, 15, 15, true), key = "use_enveloping", default = false },
 	{ type = "checkbox", size = checkbox_tsize, text = FlexIcon(100784, 15, 15, true), key = "use_blackout", default = false },
 	{ type = "spacer",   size = spacer_size },
 	{ type = "spacer",   size = spacer_size },
@@ -1945,21 +1944,6 @@ local mw_rot = {
 		end
 	end,
 	
-	enveloping_mist_mode = function()
-		if player:chi()>=3 then
-			if not player:moving() then
-				local guidofinterest = minHPv2()
-				local lowest = guidofinterest and Object(guidofinterest)
-				if player:isChanneling("Soothing Mist") then
-					if player:level()>=16 then return player:cast("Enveloping Mist", true) end -- true) means casts while channeling stuff
-				end
-				if player:level()>=10 and not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
-					return lowest:cast("Soothing Mist")
-				end
-			end
-		end
-	end,
-	
 	ctrl_modev2 = function()
 		if _A.modifier_ctrl() then
 			if not player:moving() then
@@ -3126,7 +3110,6 @@ local inCombat = function()
 	_A.interrupttreshhold = .3 + _A.latency
 	if player:mounted() then return true end
 	if player:isChanneling("Crackling Jade Lightning") then return true end -- ¨pausing when casting this
-	-- if player:isChanneling("Soothing Mist") then if player:ui("use_enveloping") then mw_rot.enveloping_mist_mode() end return true end -- ¨pausing when casting this
 	-- Out of GCD
 	mw_rot.autoattackmanager()
 	_Y.petengine_MONK()
@@ -3162,7 +3145,7 @@ local inCombat = function()
 		if mw_rot.dpsstanceswap() then return true end
 	end
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
-	if not player:ui("use_enveloping") and mw_rot.ctrl_modev2() then return true end -- ctrl
+	if mw_rot.ctrl_modev2() then return true end -- ctrl
 	-- GCD CDS
 	if mylevel >= 50 and mw_rot.lifecocoon() then return true end
 	if mylevel >= 68 and mw_rot.burstdisarm() then
@@ -3188,12 +3171,11 @@ local inCombat = function()
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
-	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
-	if not player:ui("use_enveloping") and (player:ui("use_blackout") or _A.pull_location=="arena") and player:buffany("Muscle Memory") and mw_rot.blackoutkick_always() then return true end    -- really important
-	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
-	if not player:ui("use_enveloping") and (player:ui("use_blackout") or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important
-	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
-	if not player:ui("use_enveloping") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
+	if (player:ui("use_blackout") or _A.pull_location=="arena") and player:buffany("Muscle Memory") and mw_rot.blackoutkick_always() then return true end    -- really important
+	if  mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
+	if (player:ui("use_blackout") or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important
+	if mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
+	if mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
 	if mw_rot.tigerpalm_mm() then return true end
 	--------------------- CC
 	if mw_rot.ringofpeacev3() then return true end
