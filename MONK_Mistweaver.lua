@@ -3,7 +3,7 @@ if class ~= "MONK" then return end
 local _, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local player
-_A.FaceAlways = true
+-- _A.FaceAlways = true
 local enteredworldat
 local bossestoavoid = { 69427, 68065, 69017, 69465, 71454 }
 local MyAddon = "niceAddon"
@@ -1917,7 +1917,7 @@ local mw_rot = {
 							and (obj:drState("Paralysis") == -1 or obj:drState("Paralysis") == 1)
 							and _A.notimmune(obj)
 							and obj:los() then
-							return obj:Cast("Paralysis")
+							return obj:FaceCast("Paralysis")
 						end
 					end
 				end
@@ -1938,7 +1938,7 @@ local mw_rot = {
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 2.5
 					and _A.notimmune(obj)
 					and obj:los() then
-					return obj:Cast("Paralysis")
+					return obj:FaceCast("Paralysis")
 				end
 			end
 		end
@@ -1977,7 +1977,7 @@ local mw_rot = {
 					and (_A.pull_location == "arena" or (UnitTarget(obj.guid) == player.guid and obj:range() < 10))
 					and _A.notimmune(obj)
 					and obj:los() then
-					return obj:Cast("Grapple Weapon")
+					return obj:FaceCast("Grapple Weapon")
 				end
 			end
 		end
@@ -1997,7 +1997,7 @@ local mw_rot = {
 					and (kickcheck(obj) or (_A.pull_location == "raid" or _A.pull_location == "party"))
 					and _A.notimmune(obj)
 					then
-					obj:Cast("Spear Hand Strike")
+					obj:FaceCast("Spear Hand Strike")
 				end
 			end
 		end
@@ -2044,7 +2044,7 @@ local mw_rot = {
 				if not lowestmelee:BuffAny("Bladestorm || Divine Shield || Die by the Sword || Hand of Protection || Hand of Freedom || Deterrence")
 					and not lowestmelee:Debuff("Disable") and not lowestmelee:state("snare") and lowestmelee:los()  then
 					----------------------------------
-					return lowestmelee:Cast("Disable")
+					return lowestmelee:FaceCast("Disable")
 				end
 			end
 		end
@@ -2705,7 +2705,7 @@ local mw_rot = {
 					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						----------------------------------
-						return lowestmelee:Cast("Blackout Kick")
+						return lowestmelee:FaceCast("Blackout Kick")
 					end
 				end
 				--------------------------------- damage based
@@ -2720,7 +2720,7 @@ local mw_rot = {
 				local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 				if lowestmelee then
 					----------------------------------
-					return lowestmelee:Cast("Blackout Kick")
+					return lowestmelee:FaceCast("Blackout Kick")
 				end
 			end
 			--------------------------------- damage based
@@ -2735,7 +2735,7 @@ local mw_rot = {
 					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
 						----------------------------------
-						return lowestmelee:Cast("Tiger Palm")
+						return lowestmelee:FaceCast("Tiger Palm")
 					end
 				end
 				--------------------------------- damage based
@@ -2751,7 +2751,7 @@ local mw_rot = {
 					then
 					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
-						return lowestmelee:Cast("Blackout Kick")
+						return lowestmelee:FaceCast("Blackout Kick")
 					end
 				end
 			end
@@ -2766,7 +2766,7 @@ local mw_rot = {
 				then
 				local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 				if lowestmelee then
-					return lowestmelee:Cast("Tiger Palm")
+					return lowestmelee:FaceCast("Tiger Palm")
 				end
 			end
 		end
@@ -2781,7 +2781,7 @@ local mw_rot = {
 					then
 					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
-						return lowestmelee:Cast("Tiger Palm")
+						return lowestmelee:FaceCast("Tiger Palm")
 					end
 				end
 			end
@@ -2826,7 +2826,7 @@ local mw_rot = {
 				if player:Buff("Muscle Memory") then
 					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
-						return lowestmelee:Cast("Tiger Palm")
+						return lowestmelee:FaceCast("Tiger Palm")
 					end
 				end
 			end
@@ -2841,7 +2841,7 @@ local mw_rot = {
 				local lowestmelee = Object("lowestEnemyInSpellRange(Blackout Kick)")
 				if lowestmelee then
 					----------------------------------
-					return lowestmelee:Cast("Blackout Kick")
+					return lowestmelee:FaceCast("Blackout Kick")
 				end
 			end
 			--------------------------------- damage based
@@ -2854,7 +2854,7 @@ local mw_rot = {
 				if player:Buff("Rushing Jade Wind") and not player:Buff("Muscle Memory") then
 					local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 					if lowestmelee then
-						return lowestmelee:Cast("Jab")
+						return lowestmelee:FaceCast("Jab")
 					end
 				end
 			end
@@ -2866,7 +2866,7 @@ local mw_rot = {
 		if player:Stance() == 1 then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 			if lowestmelee then
-				return lowestmelee:Cast("Jab")
+				return lowestmelee:FaceCast("Jab")
 			end
 		end
 	end,
@@ -2878,7 +2878,7 @@ local mw_rot = {
 				then
 				local lowestmelee = Object("lowestEnemyInSpellRangeNoTarget(Blackout Kick)")
 				if lowestmelee then
-					return lowestmelee:Cast("Jab")
+					return lowestmelee:FaceCast("Jab")
 				end
 			end
 		end
@@ -3027,7 +3027,7 @@ local mw_rot = {
 					and hasspeedbuff(obj)
 					and obj:los() 
 					then
-					return obj:Cast("Paralysis")
+					return obj:FaceCast("Paralysis")
 				end
 			end
 		end
@@ -3048,7 +3048,7 @@ local mw_rot = {
 					and hasspeedbuff(obj)
 					and obj:los() 
 					then
-					return obj:Cast("Disable")
+					return obj:FaceCast("Disable")
 				end
 			end
 		end
@@ -3069,7 +3069,7 @@ local mw_rot = {
 					and (obj:spec()==102 or obj:spec()==105)
 					and obj:los() 
 					then
-					return obj:Cast("Disable")
+					return obj:FaceCast("Disable")
 				end
 			end
 		end
