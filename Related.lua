@@ -342,7 +342,7 @@ end
 function _A.Queuer:Spell(_, data)
 	-- local ready = _A.DSL:Get("spell.ready")(_, data.id)
 	local player_spell = Object("player")
-	local ready = player_spell and ( player_spell:spellcooldown(data.id)<.24 and player_spell:spellusable(data.id))
+	local ready = player_spell and data.id~=119996 and ( player_spell:spellcooldown(data.id)<.24 and player_spell:spellusable(data.id))
 	return data and ready
 end
 
