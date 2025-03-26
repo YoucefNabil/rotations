@@ -1896,7 +1896,7 @@ local mw_rot = {
 					and _A.notimmune(obj)
 					and (kickcheck_highprio(obj) or (_A.pull_location == "raid" or _A.pull_location == "party"))
 					and obj:los() then
-					return obj:Cast("Paralysis")
+					return obj:FaceCast("Paralysis")
 				end
 			end
 		end
