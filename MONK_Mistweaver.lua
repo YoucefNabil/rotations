@@ -3121,9 +3121,6 @@ local inCombat = function()
 	-- print(player:combat())
 	-- print(GetManaRegen())
 	-- print(_A.Queuer.Queue)
-	for spell, v in pairs(_A.Queuer.Queue) do
-		print(spell)
-	end
 	if not player:alive() then return true end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats())) / 100)) / 10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
@@ -3192,6 +3189,7 @@ local inCombat = function()
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if player:ui("use_enveloping") and mw_rot.enveloping_mist_mode() then return true end    -- really important
+	if not player:ui("use_enveloping") and (player:ui("use_blackout") or _A.pull_location=="arena") and player:buffany("Muscle Memory") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
 	if not player:ui("use_enveloping") and (player:ui("use_blackout") or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if not player:ui("use_enveloping") and mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
