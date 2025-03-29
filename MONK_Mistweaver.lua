@@ -367,11 +367,11 @@ local exeOnLoad = function()
 	_A.buttondelay = 0.6
 	local STARTSLOT = 97
 	local STOPSLOT = 104
+	local cusflags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
 	function _A.groundposition(unit)
 		if unit then
 			local x, y, z = _A.ObjectPosition(unit.guid)
-			local flags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
-			local los, cx, cy, cz = _A.TraceLine(x, y, z + 5, x, y, z - 200, flags)
+			local los, cx, cy, cz = _A.TraceLine(x, y, z + 5, x, y, z - 200, cusflags)
 			if not los then
 				return cx, cy, cz
 			end
@@ -1597,9 +1597,31 @@ local exeOnLoad = function()
 				end
 				return false
 			end
+			_A.casttimers = {}
+			_A.casttimersdetailed = {}
+			_A.Listener:Add("delaycasts_MW", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+				if guidsrc == UnitGUID("player") then
+					-- print(subevent)
+					-- Delay Cast Function
+					if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+						_A.casttimers[idd] = _A.GetTime()
+						-- if not _A.casttimersdetailed[idd] then
+						-- A.casttimersdetailed[idd] = {} 
+						-- _A.casttimersdetailed[idd].[guiddest] = _A.GetTime() 
+						-- else 
+						-- _A.casttimersdetailed[idd].[guiddest] = _A.GetTime() end
+					end
+				end
+			end)
+			function _A.castdelay(idd, delay)
+				if delay == nil then return true end
+				if _A.casttimers[idd]==nil then return true end
+				return (_A.GetTime() - _A.casttimers[idd])>=delay
+			end
 end
 local exeOnUnload = function()
 	Listener:Remove("DeathCleaning")
+	Listener:Remove("delaycasts_MW")
 	Listener:Remove("Entering_timerPLZ2")
 	Listener:Remove("delaycasts_Monk_and_misc")
 	Listener:Remove("Health_change_track")
@@ -1949,6 +1971,7 @@ local mw_rot = {
 			if not player:moving() then
 				local guidofinterest = minHPv2()
 				local lowest = guidofinterest and _A.Object(guidofinterest) or _A.Object("lowestall")
+				-- local lowest = _A.Object("lowestall")
 				if player:isChanneling("Soothing Mist") then
 					_Y.SMobj = _A.SMguid and _A.Object(_A.SMguid)
 					if player:level()>=16 and player:chi()>=3 then return player:cast("Enveloping Mist", true) end -- true) means casts while channeling stuff

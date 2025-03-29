@@ -31,6 +31,11 @@ local healerspecid = {
 	-- [63]="Mage Fire",
 	-- [64]="Mage Frost"
 }
+local highdamagespecs = {
+	[102]="Druid Balance",
+	[63]="Mage Fire",
+	[64]="Mage Frost"
+}
 local darksimulacrumspecsBGS = {
 	[265]="Lock Affli",
 	[266]="Lock Demono",
@@ -85,6 +90,7 @@ local speedbuffs = {
 	"Blazing Speed",
 	"Displacer Beast",
 	"Dash",
+	"Posthaste",
 	"Angelic Feather"
 }
 local function hasspeedbuff(unit)
@@ -1127,6 +1133,55 @@ local exeOnLoad = function()
 		end
 		return false
 	end
+	local function petstunsnipe_burst()
+		local temptable = {}
+		local pettargetguid = _A.UnitTarget("pet") or nil
+		if player:SpellCooldown("Gnaw")==0
+			and _Y.someoneisuperlow() then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:range()<=40 
+					and highdamagespecs[obj:spec()]
+					and obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance")
+					and not obj:buffany("Bear Form")
+					and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
+					and _Y.notimmune(obj)
+					then
+					temptable[#temptable+1] = {
+						OBJ = obj,
+						GUID = obj.guid,
+						range = obj:range()
+					}
+				end
+			end
+			if #temptable>1 then
+				table.sort(temptable, function(a,b) return a.range < b.range end )
+			end
+			if temptable[1] then 
+				local pet = Object("pet")
+				if pet
+					and pet:rangefrom(temptable[1].OBJ)<=4
+					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
+					print("GNAW ON BURST")
+					temptable[1].OBJ:cast("Gnaw")
+					return true
+				end
+				if pet and player:SpellCooldown("Leap")==0
+					and pet:rangefrom(temptable[1].OBJ)<=30
+					and pet:rangefrom(temptable[1].OBJ)>=6
+					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
+					print("LEAP ON BURST")
+					temptable[1].OBJ:cast("Leap")
+				end
+				if _A.PetGUID and (not pettargetguid or pettargetguid~=temptable[1].GUID) then
+					_A.PetAttack(temptable[1].GUID)
+					return true
+				end
+				return true
+			end
+			return false
+		end
+		return false
+	end
 	function _Y.petengine()
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
@@ -1143,7 +1198,9 @@ local exeOnLoad = function()
 		petpassive()
 		-- Rotation
 		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and unholy.rot.strangulatesnipe() then return true end
+		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and unholy.rot.strangulatesnipe_burst() then return true end
 		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and petstunsnipe() then return true end
+		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and petstunsnipe_burst() then return true end
 		if attacktotem() then return true end
 		if attacklowest() then return true end
 		if petfollow() then return true end
@@ -1351,6 +1408,24 @@ unholy.rot = {
 			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _Y.someoneisuperlow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and _A.isthisahealer(obj) and obj:SpellRange("Strangulate")  
+						and not obj:buffany("Bear Form")
+						and obj:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5
+						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
+						and _Y.notimmune(obj)
+						and obj:los() then
+						obj:Cast("Strangulate")
+					end
+				end
+			end
+		end
+	end,
+	
+	strangulatesnipe_burst = function()
+		if (player:RuneCount("Blood")>=1 or player:RuneCount("Death")>=1)  then
+			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _Y.someoneisuperlow() then
+				for _, obj in pairs(_A.OM:Get('Enemy')) do
+					if obj.isplayer  and highdamagespecs[obj:spec()] and obj:SpellRange("Strangulate")  
+						and obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance")
 						and not obj:buffany("Bear Form")
 						and obj:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5
 						and (obj:drState("Strangulate") == 1 or obj:drState("Strangulate")==-1)
