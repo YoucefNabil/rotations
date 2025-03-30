@@ -5,6 +5,7 @@ local C_Timer = _A.C_Timer
 local looping = C_Timer.NewTicker
 local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
 local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
+local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
 local cdcd
 _A.FaceAlways = true
 -- top of the CR
@@ -91,6 +92,7 @@ local speedbuffs = {
 	"Displacer Beast",
 	"Dash",
 	"Posthaste",
+	"Nitro Boosts",
 	"Angelic Feather"
 }
 local function hasspeedbuff(unit)
@@ -423,6 +425,15 @@ local exeOnLoad = function()
 	_A.STOPSLOT = 8
 	_A.GRABKEY = "R"
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
+	_A.Interface:ShowToggle("cooldowns", false)
+	_A.Interface:ShowToggle("interrupts", false)
+	_A.Interface:ShowToggle("aoe", false)
+	_A.Interface:AddToggle({
+		key = "def_cc", 
+		name = "Enable CC on bursting casters", 
+		text = "ON = strang/gnaw on bursting casters as well as healers when someone is low | OFF = CC is reserved for healers",
+		icon = select(3,GetSpellInfo("Strangulate")),
+	})
 	function _A.enoughmana(id)
 		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
 		if powertype then
@@ -1198,9 +1209,9 @@ local exeOnLoad = function()
 		petpassive()
 		-- Rotation
 		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and unholy.rot.strangulatesnipe() then return true end
-		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and unholy.rot.strangulatesnipe_burst() then return true end
+		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and toggle("def_cc") and unholy.rot.strangulatesnipe_burst() then return true end
 		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and petstunsnipe() then return true end
-		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and petstunsnipe_burst() then return true end
+		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and toggle("def_cc") and petstunsnipe_burst() then return true end
 		if attacktotem() then return true end
 		if attacklowest() then return true end
 		if petfollow() then return true end
@@ -1949,7 +1960,6 @@ local inCombat = function()
 	unholy.rot.GrabGrabHunter()
 	-- pet
 	unholy.rot.pet_cower()
-	-- unholy.rot.gnaw_TEST()
 	-- Bursts
 	unholy.rot.items_strpot()
 	unholy.rot.items_strflask()
