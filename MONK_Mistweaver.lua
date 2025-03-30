@@ -2,6 +2,7 @@ local _, class = UnitClass("player")
 if class ~= "MONK" then return end
 local _, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
+_Y.spheretarget = nil
 local player
 -- _A.FaceAlways = true
 local enteredworldat
@@ -1369,6 +1370,22 @@ local exeOnLoad = function()
 					end
 				end
 			end
+			function _A.clickcastsimple(unit, spell)
+				local px, py, pz = _A.groundposition(unit)
+				if px then
+					if player:SpellIsTargeting() then
+						_A.ClickPosition(px, py, pz)
+						_A.CallWowApi("SpellStopTargeting")
+					end
+				end
+			end
+			_A.Listener:Add("Spheres", {"CURSOR_UPDATE","ACTIONBAR_UPDATE_STATE","CURRENT_SPELL_CAST_CHANGED"},
+				function(event)
+					if _Y.spheretarget then
+						_A.clickcastsimple(_Y.spheretarget, "Healing Sphere")
+					end
+				end
+			)
 			
 			-------------------------------------------------------
 			-------------------------------------------------------
@@ -2679,45 +2696,17 @@ local mw_rot = {
 						local lowest = Object("lowestall")
 						if lowest then
 							if (lowest:health() < player:ui("sphere_health_spin")) then
-								return _A.clickcast(lowest, "Healing Sphere")
+								_Y.spheretarget = lowest
+								if not player:IsCurrentSpell(115460) then lowest:cast("Healing Sphere") end
+								return true
 							end
 						end
 					end
 				end
 			end
 		end
-	end,
-	
-	healingsphere_nocombat = function()
-		if player:SpellUsable("Healing Sphere") then
-			if player:Stance() == 1 then
-				if player:SpellUsable(115460) then
-					--- ORBS
-					if _A.modifier_shift() or _A.manaengine() or _A.manaengine_highprio() then
-						local lowest = Object("lowestall")
-						if lowest then
-							if (lowest:health() < 92) then
-								return _A.clickcast(lowest, "Healing Sphere")
-							end
-						end
-					end
-				end
-			end
-		end
-	end,
-	
-	healingsphere_superlow = function()
-		if player:SpellUsable("Healing Sphere") then
-			if player:Stance() == 1 then
-				if player:SpellUsable(115460) then
-					local lowest = Object("lowestall")
-					if lowest and lowest:health() < 22 then
-						-- return _A.CastPredictedPos(lowest.guid, "Healing Sphere", 88)
-						return _A.clickcast(lowest, "Healing Sphere")
-					end
-				end
-			end
-		end
+		_Y.spheretarget = nil
+		if player:IsCurrentSpell(115460) then _A.CallWowApi("SpellStopTargeting") end
 	end,
 	
 	blackout_mm = function()
@@ -3232,7 +3221,7 @@ local spellIds_Loc = function()
 end
 local blacklist = function()
 end
-
+-- C_Timer.NewTicker(.1, function() if player and player:IsCurrentSpell(115460) then print("YEEEEEEEES") end end, false, "petengineengineSurvival")
 -- alert when out of statue range
 local drawn = false
 local currentStatueGuid = nil -- Track current statue GUID
