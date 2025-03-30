@@ -35,7 +35,10 @@ local healerspecid = {
 local highdamagespecs = {
 	[102]="Druid Balance",
 	[63]="Mage Fire",
-	[64]="Mage Frost"
+	[64]="Mage Frost",
+	[267]="lock",
+	[266]="lock",
+	[265]="lock",
 }
 local darksimulacrumspecsBGS = {
 	[265]="Lock Affli",
@@ -1147,8 +1150,7 @@ local exeOnLoad = function()
 	local function petstunsnipe_burst()
 		local temptable = {}
 		local pettargetguid = _A.UnitTarget("pet") or nil
-		if player:SpellCooldown("Gnaw")==0
-			and _Y.someoneisuperlow() then
+		if player:SpellCooldown("Gnaw")==0 then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=40 
 					and highdamagespecs[obj:spec()]
@@ -1433,7 +1435,7 @@ unholy.rot = {
 	
 	strangulatesnipe_burst = function()
 		if (player:RuneCount("Blood")>=1 or player:RuneCount("Death")>=1)  then
-			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _Y.someoneisuperlow() then
+			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and highdamagespecs[obj:spec()] and obj:SpellRange("Strangulate")  
 						and obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance")
