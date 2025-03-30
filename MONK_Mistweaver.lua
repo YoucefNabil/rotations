@@ -1379,13 +1379,13 @@ local exeOnLoad = function()
 					end
 				end
 			end
-			_A.Listener:Add("Spheres", {"CURSOR_UPDATE","ACTIONBAR_UPDATE_STATE","CURRENT_SPELL_CAST_CHANGED"},
-				function(event)
-					if _Y.spheretarget then
-						_A.clickcastsimple(_Y.spheretarget, "Healing Sphere")
-					end
-				end
-			)
+			-- _A.Listener:Add("Spheres", {"CURSOR_UPDATE","ACTIONBAR_UPDATE_STATE","CURRENT_SPELL_CAST_CHANGED"},
+			-- function(event)
+			-- if _Y.spheretarget then
+			-- _A.clickcastsimple(_Y.spheretarget, "Healing Sphere")
+			-- end
+			-- end
+			-- )
 			
 			-------------------------------------------------------
 			-------------------------------------------------------
@@ -2696,8 +2696,8 @@ local mw_rot = {
 						local lowest = Object("lowestall")
 						if lowest then
 							if (lowest:health() < player:ui("sphere_health_spin")) then
-								_Y.spheretarget = lowest
-								if not player:IsCurrentSpell(115460) then lowest:cast("Healing Sphere") end
+								-- _Y.spheretarget = lowest
+								_A.clickcast(lowest, "Healing Sphere")
 								return true
 							end
 						end
@@ -2705,8 +2705,8 @@ local mw_rot = {
 				end
 			end
 		end
-		_Y.spheretarget = nil
-		if player:IsCurrentSpell(115460) then _A.CallWowApi("SpellStopTargeting") end
+		-- _Y.spheretarget = nil
+		-- if player:IsCurrentSpell(115460) then _A.CallWowApi("SpellStopTargeting") end
 	end,
 	
 	blackout_mm = function()
