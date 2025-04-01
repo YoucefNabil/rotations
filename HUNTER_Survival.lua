@@ -2132,7 +2132,8 @@ survival.rot = {
 	venom = function()
 		if _A.MissileExists("Widow Venom")==false and player:spellcooldown("Widow Venom")<cdcd then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Widow Venom)")
-			if lowestmelee and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
+			local target = Object("target")
+			if target and lowestmelee and lowestmelee:is(target) and lowestmelee.isplayer and not lowestmelee:debuff("Widow Venom") then
 				if player:SpellUsable("Widow Venom") and _A.lowpriocheck("Widow Venom") then
 					return lowestmelee:Cast("Widow Venom")
 					elseif _A.CobraCheck() then return player:level()>=81 and lowestmelee:Cast("Cobra Shot") or lowestmelee:Cast("Steady Shot")
@@ -2241,6 +2242,7 @@ local inCombat = function()
 	-------------------------- MAIN ROTATION
 	if player:buff("Deterrence") then return true end
 	survival.rot.autoattackmanager()
+	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
 	-- survival.rot.autoattackmanagerv2()
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return true end
 	-- Burst

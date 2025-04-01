@@ -781,17 +781,17 @@ local exeOnLoad = function()
 					_A.CallWowApi("SpellStopCasting")
 				end
 				-- DEBUG
-				-- if subevent == "SPELL_CAST_SUCCESS" then
-				-- if idd==115460 then
-				-- _Y.healingspheretime = GetTime()
-				-- end
-				-- if idd==115464 then
-				-- if _Y.healingspheretime then
-				-- print(GetTime()-_Y.healingspheretime)
-				-- _Y.healingspheretime = nil
-				-- end
-				-- end
-				-- end
+				if subevent == "SPELL_CAST_SUCCESS" then
+					if idd==115460 then
+						_Y.healingspheretime = GetTime()
+					end
+					if idd==115464 then
+						if _Y.healingspheretime then
+							print(GetTime()-_Y.healingspheretime)
+							_Y.healingspheretime = nil
+						end
+					end
+				end
 				-- print(subevent)
 				-- Delay Cast Function
 				if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
@@ -1370,22 +1370,6 @@ local exeOnLoad = function()
 					end
 				end
 			end
-			function _A.clickcastsimple(unit, spell)
-				local px, py, pz = _A.groundposition(unit)
-				if px then
-					if player:SpellIsTargeting() then
-						_A.ClickPosition(px, py, pz)
-						_A.CallWowApi("SpellStopTargeting")
-					end
-				end
-			end
-			-- _A.Listener:Add("Spheres", {"CURSOR_UPDATE","ACTIONBAR_UPDATE_STATE","CURRENT_SPELL_CAST_CHANGED"},
-			-- function(event)
-			-- if _Y.spheretarget then
-			-- _A.clickcastsimple(_Y.spheretarget, "Healing Sphere")
-			-- end
-			-- end
-			-- )
 			
 			-------------------------------------------------------
 			-------------------------------------------------------
@@ -3113,10 +3097,11 @@ local inCombat = function()
 	player = Object("player")
 	if not player then return true end
 	local mylevel = player:level()
-	cdcd = _A.Parser.frequency and _A.Parser.frequency * 3 or .3
+	cdcd = _A.Parser.frequency and _A.Parser.frequency * 4 or .3
 	-- print(player:combat())
 	-- print(GetManaRegen())
 	-- print(_A.Queuer.Queue)
+	-- print(_A.BUTTONHOOK_RELATED)
 	if not player:alive() then return true end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats())) / 100)) / 10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
@@ -3138,7 +3123,7 @@ local inCombat = function()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
 	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
-	-- if _A.buttondelayfunc() then return true end -- pausing for manual casts
+	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
 	------------------ High Prio
 	-- KEYBINDS

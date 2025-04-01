@@ -2173,6 +2173,7 @@ local inCombat = function()
 	-------------------------- MAIN ROTATION
 	if player:buff("Deterrence") then return true end
 	survival.rot.autoattackmanager()
+	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
 	if not (not player:isCastingAny() or player:CastingRemaining() < 0.3) then return true end
 	-- Burst
 	survival.rot.activetrinket()

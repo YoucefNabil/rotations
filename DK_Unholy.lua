@@ -1212,8 +1212,8 @@ local exeOnLoad = function()
 		-- Rotation
 		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and unholy.rot.strangulatesnipe() then return true end
 		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and toggle("def_cc") and unholy.rot.strangulatesnipe_burst() then return true end
-		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and petstunsnipe() then return true end
-		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and toggle("def_cc") and petstunsnipe_burst() then return true end
+		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and _A.castdelay(47476, .5) and petstunsnipe() then return true end
+		if not IsCurrentSpell(47476) and not IsCurrentSpell(47481) and _A.castdelay(47476, .5) and toggle("def_cc") and petstunsnipe_burst() then return true end
 		if attacktotem() then return true end
 		if attacklowest() then return true end
 		if petfollow() then return true end
@@ -2012,7 +2012,7 @@ local inCombat = function()
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 		-- this always keeps one rune of each type regenning all the time
-		if mylevel>=62 and unholy.rot.festeringstrike() then return true end
+		-- if mylevel>=62 and unholy.rot.festeringstrike() then return true end
 		if player:RuneCount("Blood")>= 2 and unholy.rot.bloodboil_blood() then return true end
 		if player:RuneCount("Frost")>=2 and unholy.rot.icytouch() then return true end
 		if player:RuneCount("Unholy")>=2 and mylevel>=58 and unholy.rot.scourgestrike() then return true end

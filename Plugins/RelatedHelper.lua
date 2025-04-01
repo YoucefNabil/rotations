@@ -56,6 +56,7 @@ local RelatedHelper_GUI = _A.Interface:BuildGUI({
 	}
 })
 
+
 -- Add to menu
 if not menu then menu = _A.Interface:AddCustomMenu("|rRelated Helper|r") end
 _A.Interface:AddCustomSubMenu(menu, "|cFF349eebSettings|r", function() RelatedHelper_GUI.parent:Show() end)
@@ -65,6 +66,14 @@ RelatedHelper_GUI.parent:Hide()
 function RelatedHelper_GUI.F(_, key, default)
     return _A.Interface:Fetch('RelatedHelper', key, default or false)
 end
+
+_A.BUTTONHOOK_RELATED = nil
+C_Timer.NewTicker(1, function() 
+	player = Object("player")
+	if player then _A.BUTTONHOOK_RELATED = RelatedHelper_GUI:F("hook_ActionBars")
+	-- print(RelatedHelper_GUI:F("hook_ActionBars"))
+	end
+end, false, "updatevar")	
 
 -- Helper function to check if object is in our list
 local function interactIdList(UNIT, tbl)
@@ -540,10 +549,10 @@ _A.hooksecurefunc("UseAction", function(...)
 		end
 		if Type == "spell" then
 			-- _A.ui:alert({
-				-- text = "Pressed " .. GetSpellInfo(id),
-				-- icon = select(3, GetSpellInfo(id)),
-				-- fade = { 2, 0.175, 0.3 },
-				-- size = 20
+			-- text = "Pressed " .. GetSpellInfo(id),
+			-- icon = select(3, GetSpellInfo(id)),
+			-- fade = { 2, 0.175, 0.3 },
+			-- size = 20
 			-- })
 			_A.C_Timer.After(0.2, function()
 				if player:lastCast(id) and player:lastCastSeen(id) <= player:SpellCasttime(id) then return end
@@ -588,8 +597,8 @@ _A.hooksecurefunc("UseAction", function(...)
 				_A.SpellStopCasting()
 				_A.SpellCancelQueuedSpell()
 				if RelatedHelper_GUI:F("ququeOne") then _A.Queuer:Add2(spellName, cursor, "ground")
-				else
-				_A.Queuer:Add(spellName, cursor, "ground")
+					else
+					_A.Queuer:Add(spellName, cursor, "ground")
 				end
 				return
 			end
