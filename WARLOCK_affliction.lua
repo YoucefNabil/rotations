@@ -471,9 +471,9 @@ affliction.rot = {
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") then corruptiontbl[Obj.guid]=nil end
-				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") then agonytbl[Obj.guid]=nil end
-				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") then unstabletbl[Obj.guid]=nil end
+				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then corruptiontbl[Obj.guid]=nil end
+				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then agonytbl[Obj.guid]=nil end
+				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then unstabletbl[Obj.guid]=nil end
 				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
 					obj = Obj,
@@ -498,6 +498,7 @@ affliction.rot = {
 				end
 				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = {
 					obj = Obj,
+					isplayer = Obj.isplayer and 1 or 0,
 					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0
 				}
 			end -- end of enemy filter
@@ -753,11 +754,15 @@ affliction.rot = {
 	
 	corruptionsnap = function()
 		if #_A.temptabletbl>1 then
-			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
-				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
-				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
-			end )
+			table.sort(_A.temptabletbl, function(a,b)
+				if 	
+					a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					elseif 
+					a.score ~= b.score then return a.score > b.score
+					else return 
+					a.range < b.range
+				end
+			end)
 		end
 		if _A.temptabletbl[1] and _A.enoughmana(172)  then 
 			if _A.myscore()>_A.temptabletbl[1].corruptionscore then return _A.temptabletbl[1].obj:Cast("Corruption")
@@ -767,11 +772,15 @@ affliction.rot = {
 	
 	agonysnap = function()
 		if #_A.temptabletbl>1 then
-			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
-				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
-				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
-			end )
+			table.sort(_A.temptabletbl, function(a,b)
+				if 	
+					a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					elseif 
+					a.score ~= b.score then return a.score > b.score
+					else return 
+					a.range < b.range
+				end
+			end)
 		end
 		if _A.temptabletbl[1] and _A.myscore()>_A.temptabletbl[1].agonyscore and _A.enoughmana(980) 
 			then return _A.temptabletbl[1].obj:Cast("Agony")
@@ -780,11 +789,15 @@ affliction.rot = {
 	
 	unstablesnapinstant = function()
 		if #_A.temptabletbl>1 then
-			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
-				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
-				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
-			end )
+			table.sort(_A.temptabletbl, function(a,b)
+				if 	
+					a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					elseif 
+					a.score ~= b.score then return a.score > b.score
+					else return 
+					a.range < b.range
+				end
+			end)
 		end
 		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore and player:SpellCooldown("Unstable Affliction")<.3 then 
 			if player:buff(74434) then
@@ -798,11 +811,15 @@ affliction.rot = {
 	
 	unstablesnap = function()
 		if #_A.temptabletbl>1 then
-			table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) -- order by score
-				or ( a.score == b.score and a.isplayer > b.isplayer ) -- if same score order by isplayer
-				or ( a.score == b.score and a.isplayer == b.isplayer and a.range < b.range ) -- if same score and same isplayer, order by closest
-				-- or ( a.score == b.score and a.isplayer == b.isplayer and a.health > b.health ) -- if same score and same isplayer, order by highest health
-			end )
+			table.sort(_A.temptabletbl, function(a,b)
+				if 	
+					a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					elseif 
+					a.score ~= b.score then return a.score > b.score
+					else return 
+					a.range < b.range
+				end
+			end)
 		end
 		if _A.temptabletbl[1] and not player:buff(74434) and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
 			if not player:moving() and not player:Iscasting("Unstable Affliction") and _A.shards==0 then
@@ -821,9 +838,9 @@ affliction.rot = {
 	end,
 	
 	grasp = function()
-		if not player:isCastingAny() and not player:Ischanneling("Malefic Grasp")  and not player:moving() and _A.enoughmana(103103)  then
+		if not player:isCastingAny() and not player:IsCurrentSpell(103103)  and not player:moving() and _A.enoughmana(103103)  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-			if lowest and lowest:exists() and lowest:health()>20 then
+			if lowest and lowest:exists() and lowest:health()>30 then
 				return lowest:cast("Malefic Grasp", true)
 			end
 		end
@@ -840,11 +857,11 @@ affliction.rot = {
 	
 	drainsoul = function()
 		if not player:moving() 
-			and not player:Ischanneling("Drain Soul") 
+			and not player:IsCurrentSpell(1120) 
 			and _A.enoughmana(1120)
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-			if lowest and lowest:exists() and lowest:health()<=20 then
+			if lowest and lowest:exists() and lowest:health()<=30 then
 				return lowest:cast("Drain Soul", true)
 			end
 		end
@@ -853,7 +870,9 @@ affliction.rot = {
 	soulswapopti = function()
 		if  #_A.temptabletbl>1 and soulswaporigin == nil and _A.enoughmana(86121) then
 			if #_A.temptabletblsoulswap > 1 then
-				table.sort( _A.temptabletblsoulswap, function(a,b) return ( a.duration > b.duration ) end ) -- highest duration is always the best solution for soulswap
+				table.sort(_A.temptabletblsoulswap, function(a,b)
+						return a.duration > b.duration -- always by highest duration
+				end)
 			end
 			return _A.temptabletblsoulswap[1] and _A.temptabletblsoulswap[1].obj:Cast(86121)
 		end
@@ -862,12 +881,16 @@ affliction.rot = {
 	exhaleopti = function()
 		if soulswaporigin ~= nil then
 			if #_A.temptabletblexhale > 1 then
-				table.sort(_A.temptabletblexhale, function(a,b) return  (a.duration < b.duration )  -- order by duration
-					or (a.duration == b.duration and a.isplayer > b.isplayer ) -- if same (or no) duration, order by players first
-					-- or (a.duration == b.duration and a.isplayer == b.isplayer and a.rangedis < b.rangedis )  -- if same (or no) duration, and same isplayer, order by closest
-					or (a.duration == b.duration and a.isplayer == b.isplayer and a.health > b.health )  -- if same (or no) duration, and same isplayer, order by highest health
-				end
-				)
+				table.sort(_A.temptabletblexhale, function(a,b)
+					if 	
+						a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- by default comes second
+						elseif 
+						a.duration ~= b.duration then return a.duration < b.duration
+						else return
+						a.health > b.health
+					end
+				end)
+				
 			end
 			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
 		end
@@ -892,7 +915,8 @@ affliction.rot = {
 ---========================
 ---========================
 local inCombat = function()	
-	player = player or Object("player")
+	if not _A.Cache.Utils.PlayerInGame then return true end
+	player = ddddddddddObject("player")
 	if not player then return end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	affliction.rot.caching()
@@ -904,7 +928,7 @@ local inCombat = function()
 	--HEALS
 	affliction.rot.Darkregeneration()
 	affliction.rot.items_healthstone()
-	-- if _A.buttondelayfunc()  then return end
+	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
 	-- if player:lostcontrol()  then return end 
 	--delayed lifetap
 	if affliction.rot.lifetap_delayed() then return end
@@ -934,10 +958,10 @@ local inCombat = function()
 	-- Heal pet
 	if affliction.rot.healthfunnel() then return end
 	-- DOT DOT
+	if affliction.rot.unstablesnapinstant() then return end
 	if affliction.rot.agonysnap()  then return end
 	if affliction.rot.corruptionsnap()  then return end
 	-- if affliction.rot.sneedofcorruption()  then return end
-	if affliction.rot.unstablesnapinstant()  then return end
 	if affliction.rot.unstablesnap()  then return end
 	-- SOUL SWAP
 	if affliction.rot.soulswapopti()  then return end

@@ -590,7 +590,8 @@ items_noggenfogger = function()
 ---========================
 ---========================
 local inCombat = function()	
-	player = player or _A.Object("player")
+	if not _A.Cache.Utils.PlayerInGame then return true end
+	player = _A.Object("player")
 	if not player then return end
 	_A.latency = (select(3, GetNetStats())) and ((select(3, GetNetStats()))/1000) or 0
 	_A.interrupttreshhold = math.max(_A.latency, .2) 
