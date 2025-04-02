@@ -916,7 +916,7 @@ affliction.rot = {
 ---========================
 local inCombat = function()	
 	if not _A.Cache.Utils.PlayerInGame then return true end
-	player = ddddddddddObject("player")
+	player = Object("player")
 	if not player then return end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	affliction.rot.caching()
