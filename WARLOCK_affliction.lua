@@ -441,6 +441,15 @@ local exeOnLoad = function()
 		end
 	end
 	
+	function _A.modifier_ctrl()
+		local modkeyb = IsControlKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
+	
 	local function pull_location()
 		return string.lower(select(2, _A.GetInstanceInfo()))
 	end
@@ -1737,7 +1746,7 @@ affliction.rot = {
 	grasp = function()
 		if not player:isCastingAny() and not player:isChanneling("Malefic Grasp")  and not player:moving() and _A.enoughmana(103103)  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-			if lowest and lowest:exists() and lowest:health()>30 then
+			if lowest and lowest:exists() and lowest:health()>20 then
 				return lowest:cast("Malefic Grasp", true)
 			end
 		end
@@ -1758,7 +1767,7 @@ affliction.rot = {
 			and _A.enoughmana(1120)
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-			if lowest and lowest:exists() and lowest:health()<=30 then
+			if lowest and lowest:exists() and lowest:health()<=20 then
 				return lowest:cast("Drain Soul", true)
 			end
 		end
@@ -1846,6 +1855,8 @@ local inCombat = function()
 	if not toggle("eye_demon") and affliction.rot.petres_supremacy3() then return end
 	if toggle("eye_demon") and affliction.rot.petres_supremacy2() then return end
 	if affliction.rot.summ_healthstone() then return end
+	if _A.modifier_ctrl() and affliction.rot.drainsoul() then return end
+	if _A.modifier_ctrl() and affliction.rot.grasp()  then return end
 	if affliction.rot.CauterizeMaster()  then return end
 	if affliction.rot.MortalCoil()  then return end
 	if affliction.rot.twilightward()  then return end
@@ -1859,9 +1870,6 @@ local inCombat = function()
 	-- shift
 	if modifier_shift()==true then
 		if affliction.rot.haunt()  then return end
-		if affliction.rot.drainsoul() then return end
-		if affliction.rot.grasp()  then return end
-		if affliction.rot.felflame()  then return end
 	end
 	-- Heal pet
 	if affliction.rot.healthfunnel() then return end
