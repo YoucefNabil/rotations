@@ -265,7 +265,7 @@ local exeOnLoad = function()
 		key = "def_cc", 
 		name = "Defensive CCS", 
 		text = "Only CC bursting and casting enemies",
-		icon = select(3,GetSpellInfo(691)),
+		icon = select(3,GetSpellInfo(5782)),
 	})
 	_A.Interface:ShowToggle("cooldowns", false)
 	_A.Interface:ShowToggle("interrupts", false)
@@ -986,6 +986,21 @@ affliction.rot = {
 		end
 	end,
 	
+	ccstun_def = function()
+		if player:talent("Shadowfury") and player:SpellCooldown("Shadowfury") < cdcd then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:range()<=30
+					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
+					and (obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance") or obj:isCastingAny())
+					and (obj:drState("Shadowfury") == 1 or obj:drState("Shadowfury") == -1)
+					and _A.notimmune(obj)
+					and obj:los() then
+					return _A.clickcastv2(obj, "Shadowfury")
+				end
+			end
+		end
+	end,
+	
 	corruptionsnap = function()
 		if #_A.temptabletbl>1 then
 			table.sort(_A.temptabletbl, function(a,b)
@@ -1184,7 +1199,8 @@ local inCombat = function()
 	--utility
 	if affliction.rot.bloodhorrorremovalopti()  then return end
 	if affliction.rot.bloodhorror()  then return end
-	if affliction.rot.ccstun()  then return end
+	if not toggle(def_cc) and affliction.rot.ccstun()  then return end
+	if toggle(def_cc) and affliction.rot.ccstun_def()  then return end
 	if affliction.rot.snare_curse()  then return end
 	-- shift
 	if modifier_shift()==true then
