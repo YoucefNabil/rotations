@@ -572,7 +572,7 @@ local exeOnLoad = function()
 						and not obj:buffany("Bear Form")
 						and obj:caninterrupt()
 						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
-						and _Y.notimmune(obj)
+						and _A.notimmune(obj)
 						then
 						temptable[#temptable+1] = {
 							OBJ = obj,
@@ -666,7 +666,7 @@ affliction.rot = {
 		_A.temptabletblsoulswap = {}
 		_A.temptabletblexhale = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and not Obj:charmed() and Obj:los() then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
 				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then corruptiontbl[Obj.guid]=nil end
 				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then agonytbl[Obj.guid]=nil end
@@ -976,11 +976,26 @@ affliction.rot = {
 		if player:talent("Shadowfury") and player:SpellCooldown("Shadowfury") < cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=30
+					and obj:infront()
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
 					and (obj:drState("Shadowfury") == 1 or obj:drState("Shadowfury") == -1)
 					and _A.notimmune(obj)
 					and obj:los() then
 					return _A.clickcastv2(obj, "Shadowfury")
+				end
+			end
+		end
+	end,
+	
+	fearkeybind = function()
+		if not player:moving() and not player:isCastingAny() then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:range()<=30
+					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
+					and (obj:drState("Fear") == 1 or obj:drState("Fear") == -1)
+					and _A.notimmune(obj)
+					and obj:los() then
+					return obj:cast("Fear")
 				end
 			end
 		end
@@ -1199,8 +1214,9 @@ local inCombat = function()
 	--utility
 	if affliction.rot.bloodhorrorremovalopti()  then return end
 	if affliction.rot.bloodhorror()  then return end
-	if not toggle(def_cc) and affliction.rot.ccstun()  then return end
-	if toggle(def_cc) and affliction.rot.ccstun_def()  then return end
+	if not toggle("def_cc") and affliction.rot.ccstun()  then return end	
+	if toggle("def_cc") and affliction.rot.ccstun_def()  then return end
+	if player:keybind("T") and affliction.rot.fearkeybind()  then return end
 	if affliction.rot.snare_curse()  then return end
 	-- shift
 	if modifier_shift()==true then
