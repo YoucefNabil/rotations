@@ -9,6 +9,7 @@ local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
 local cdcd = .3
 local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
+local enteredworldat
 -- top of the CR
 local player
 local CallWowApi = _A.CallWowApi
@@ -267,6 +268,15 @@ local exeOnLoad = function()
 		text = "Only CC bursting and casting enemies",
 		icon = select(3,GetSpellInfo(5782)),
 	})
+	_A.pull_location = pull_location()
+	Listener:Add("Entering_timerPLZ", "PLAYER_ENTERING_WORLD", function(event)
+		enteredworldat = _A.GetTime()
+		local stuffsds = pull_location()
+		_A.pull_location = stuffsds
+		-- print("HEY HEY HEY HEY")
+	end
+	)
+	enteredworldat = enteredworldat or _A.GetTime()
 	_A.pressedbuttonat = 0
 	_A.buttondelay = 0.5
 	_A.STARTSLOT = 1
@@ -1751,12 +1761,15 @@ affliction.rot = {
 ---========================
 local inCombat = function()	
 	if not _A.Cache.Utils.PlayerInGame then return true end
+	if not enteredworldat then return true end
+	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	player = Object("player")
 	if not player then return end
+	-- if not _Y.exitedvehicleat then return true end
 	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 1 then return true end
 	-- print(player:spellcooldown("Clone Magic(Special Ability)"))
 	-- print(spell_name(115284))
-	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	affliction.rot.caching()
 	_Y.petengine_affli()
 	if player:Mounted() then return end
@@ -1813,7 +1826,7 @@ local inCombat = function()
 	--fills
 	if affliction.rot.lifetap()  then return end
 	if affliction.rot.drainsoul() then return end
-	if affliction.rot.haunt()  then return end
+	if _A.pull_location=="arena" and affliction.rot.haunt() then return end
 	if affliction.rot.grasp()  then return end
 	if affliction.rot.felflame() then return end
 end 
