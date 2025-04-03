@@ -33,6 +33,101 @@ local healerspecid = {
 	-- [63]="Mage Fire",
 	-- [64]="Mage Frost"
 }
+local rootthisfuck = {
+	["Chi Torpedo"]=true,
+	["Roll"]=true,
+	["Disengage"]=true,
+}
+local spelltable = {
+	[5782] = 2,     -- Fear
+	[1120] = 1,     -- Drain Soul
+	[689] = 1,      -- Drain Life
+	[30108] = 1,    -- Unstable Affliction
+	[1454] = 1,     -- Life Tap
+	[33786] = 2,    -- Cyclone
+	[28272] = 2,    -- Polymorph (Pig)
+	[118] = 2,      -- Polymorph
+	[61305] = 2,    -- Polymorph (Black Cat)
+	[61721] = 2,    -- Polymorph (Rabbit)
+	[61780] = 2,    -- Polymorph (Turkey)
+	[28271] = 2,    -- Polymorph (Turtle)
+	[51514] = 2,    -- Hex
+	[339] = 1,      -- Entangling Roots
+	[30451] = 1,    -- Arcane Blast
+	[20066] = 2,    -- Repentance
+	[116858] = 2,   -- Chaos Bolt
+	[113092] = 1,   -- Frost Bomb
+	[8092] = 1,     -- Mind Blast
+	[11366] = 1,    -- Pyroblast
+	[48181] = 1,    -- Haunt
+	[102051] = 1,   -- Frostjaw
+	[1064] = 1,     -- Chain Heal
+	[77472] = 2,    -- Greater Healing Wave
+	[8004] = 2,     -- Healing Surge
+	[73920] = 1,    -- Healing Rain
+	[51505] = 1,    -- Lava Burst
+	[8936] = 2,     -- Regrowth
+	[2061] = 2,     -- Flash Heal
+	[2060] = 2,     -- Heal
+	[2006] = 1,     -- Resurrection
+	[5185] = 2,     -- Healing Touch
+	[19750] = 2,    -- Flash of Light
+	[635] = 1,      -- Holy Light
+	[7328] = 1,     -- Redemption
+	[2008] = 1,     -- Ancestral Spirit
+	[50769] = 1,    -- Revive
+	[2812] = 1,     -- Holy Wrath
+	[82327] = 1,    -- Holy Radiance
+	[10326] = 2,    -- Turn Evil
+	[82326] = 2,    -- Divine Light
+	[116694] = 2,   -- Surging Mist
+	[124682] = 1,   -- Enveloping Mist
+	[115151] = 1,   -- Renewing Mist
+	[115310] = 1,   -- Revival
+	-- [126201] = 1,   -- Frostbolt (Water Elemental)
+	[44614] = 1,    -- Frostfire Bolt
+	[133] = 1,      -- Fireball
+	[1513] = 1,     -- Scare Beast
+	[982] = 2,      -- Revive Pet
+	[111771] = 2,   -- Demonic Gateway
+	-- [118297] = 1,   -- Immolate (Fel Imp)
+	[29722] = 1,    -- Incinerate
+	[124465] = 1,   -- Vampiric Touch
+	[32375] = 2,    -- Mass Dispel
+	[2948] = 1,     -- Scorch
+	[12051] = 2,    -- Evocation
+	[90337] = 2,    -- Bad Manner (Monkey Pet)
+	[47540] = 2,    -- Penance
+	[115268] = 2,   -- Mesmerize (Shivarra)
+	[6358] = 2,     -- Seduction (Succubus)
+	[51963] = 2,    -- Pain Suppression
+	[78674] = 1,    -- Starsurge
+	[113792] = 1,   -- Psychic Terror (Psyfiend)
+	[115175] = 2,   -- Soothing Mist
+	["Soothing Mist"] = 2,   -- Soothing Mist
+	[115750] = 2,   -- Blinding Light
+	[103103] = 1,   -- Drain Soul
+	[113724] = 2,   -- Ring of Frost
+	[117014] = 1,   -- Elemental Blast
+	[605] = 1,      -- Mind Control
+	[740] = 2,      -- Tranquility
+	[32546] = 2,    -- Binding Heal
+	[113506] = 2,   -- Cyclone (Symbiosis)
+	[31687] = 2,    -- Summon Water Elemental
+	[119996] = 1,   -- Transcendence: Transfer
+	[117952] = 1,    -- Crackling Jade Lightning
+	[116] = 1,      -- Frostbolt
+	[50464] = 1,   -- Nourish
+	[331] = 1,      -- Healing Wave
+	[724] = 1,      -- Lightwell
+	[129197] = 1,   -- Insanity
+	[113656] = 2,   -- Fists of Fury
+	[9484] = 2,   -- Shackle Undead
+	["Polymorph"] = 2,     -- Drain Life
+	["Cyclone"] = 2,   -- Shackle Undead
+	["Shackle Undead"] = 2,   -- Shackle Undead
+	["Hex"] = 2,   -- Shackle Undead
+}
 local darksimulacrumspecsBGS = {
 	[265]="Lock Affli",
 	[266]="Lock Demono",
@@ -160,6 +255,43 @@ local ijustexhaledattime = 0
 local GUI = {
 }
 local exeOnLoad = function()
+	_A.Interface:AddToggle({
+		key = "eye_demon", 
+		name = "Observer", 
+		text = "Observer pet",
+		icon = select(3,GetSpellInfo(691)),
+	})
+	_A.Interface:AddToggle({
+		key = "def_cc", 
+		name = "Defensive CCS", 
+		text = "Only CC bursting and casting enemies",
+		icon = select(3,GetSpellInfo(691)),
+	})
+	_A.Interface:ShowToggle("cooldowns", false)
+	_A.Interface:ShowToggle("interrupts", false)
+	_A.Interface:ShowToggle("aoe", false)
+	local cusflags = bit.bor(0x100000, 0x10000, 0x100, 0x10, 0x1)
+	function _A.groundpositionv2(unit)
+		if unit then
+			local x, y, z = _A.ObjectPosition(unit.guid)
+			if x and y and z then
+				local los, cx, cy, cz = _A.TraceLine(x, y, z + 5, x, y, z - 200, cusflags)
+				if not los then
+					return cx, cy, cz
+				end
+			end
+		end
+	end
+	function _A.clickcastv2(unit, spell)
+		local px, py, pz = _A.groundpositionv2(unit)
+		if px then
+			_A.CallWowApi("CastSpellByName", spell)
+			if player:SpellIsTargeting() then
+				_A.ClickPosition(px, py, pz)
+				_A.CallWowApi("SpellStopTargeting")
+			end
+		end
+	end
 	--Cleaning
 	_A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
 		-- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
@@ -385,6 +517,10 @@ local exeOnLoad = function()
 		if pet and not pet:alive() then return end
 		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
 		--
+		if target and target:enemy() and target:exists() and target:alive() and target:range()<=42 and _A.notimmune(target)
+			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(target) then
+			return target and target.guid -- this is good
+		end
 		local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 		if lowestmelee then
 			return lowestmelee.guid
@@ -398,6 +534,17 @@ local exeOnLoad = function()
 				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
 					_A.PetAttack(target.guid)
 					return true
+					elseif _A.UnitTarget(_A.PetGUID) and _A.UnitTarget(_A.PetGUID)==target.guid then
+					local pet = Object("pet")
+					-- XELETH SECTION
+					if pet and pet.name == "Xeleth" then
+						-- purge
+						if target:bufftype("Magic") and target:rangefrom(pet)<=30 and pet:losfrom(target) and UnitPower("pet")>=40 and player:spellcooldown("Clone Magic(Special Ability)")<1.5 then 
+						_A.CastSpellByName("Clone Magic(Special Ability)", target.guid) end
+						-- lick
+						if target:rangefrom(pet)<=6 and pet:losfrom(target) and UnitPower("pet")>=100 then _A.CastSpellByName("Tongue Lash(Basic Attack)", target.guid) end
+					end
+					--
 				end
 			end
 			return true
@@ -412,16 +559,66 @@ local exeOnLoad = function()
 			end
 		end
 	end
+	local function petsilencesnipe()
+		local pet = Object("pet")
+		local temptable = {}
+		local pettargetguid = _A.UnitTarget("pet") or nil
+		if pet and pet.name == "Xeleth" then
+			if player:SpellCooldown("Optical Burst")==0 and UnitPower("pet")>=20
+				then
+				for _, obj in pairs(_A.OM:Get('Enemy')) do
+					if obj.isplayer and obj:range()<=80
+						and healerspecid[obj:spec()]
+						and not obj:buffany("Bear Form")
+						and obj:caninterrupt()
+						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
+						and _Y.notimmune(obj)
+						then
+						temptable[#temptable+1] = {
+							OBJ = obj,
+							GUID = obj.guid,
+							range = obj:range()
+						}
+					end
+				end
+				if #temptable>1 then
+					table.sort(temptable, function(a,b) return a.range < b.range end )
+				end
+				if temptable[1] then 
+					if pet
+						and pet:rangefrom(temptable[1].OBJ)<=20
+						and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5
+						and pet:losfrom(temptable[1].OBJ)
+						then 
+						-- temptable[1].OBJ:cast(115781)
+						_A.CastSpellByName("Optical Blast(Special Ability)", temptable[1].GUID)
+						return true
+					end
+					if _A.PetGUID and (not pettargetguid or pettargetguid~=temptable[1].GUID)
+						and pet:losfrom(temptable[1].OBJ)
+						then
+						_A.PetAttack(temptable[1].GUID)
+						return true
+					end
+					return true
+				end
+				return false
+			end
+			return false
+		end
+		return false
+	end
 	function _Y.petengine_affli() -- REQUIRES RELOAD WHEN SWITCHING SPECS
 		if not _A.Cache.Utils.PlayerInGame then return end
 		if not player then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
-		-- if player:mounted() then return end
-		-- if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+		if player:mounted() then return end
+		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
 		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return end
 		-- Pet Rotation
+		if petsilencesnipe() then return end
 		if attacklowest() then return end
 		if petfollow() then return end
 	end
@@ -636,13 +833,36 @@ affliction.rot = {
 	petres_supremacy = function()
 		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
 			if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112866)<.3 and _A.castdelay(112866, 1.5) and not player:iscasting(112866) and _A.enoughmana(112866)  then
+				local petobj = UnitName("pet")
 				if 
 					not _A.UnitExists("pet")
 					or _A.UnitIsDeadOrGhost("pet")
 					or not _A.HasPetUI()
+					or (petobj and petobj~="Fizrik")
 					then 
 					if player:buff(74434) or ( not player:moving() ) then
 						return player:cast(112866)
+					end
+					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:combat() and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+						then player:cast(74434) -- shadowburn
+					end	
+				end
+			end
+		end
+	end,
+	
+	petres_supremacy2 = function()
+		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
+			if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112869)<.3 and _A.castdelay(112869, 1.5) and not player:iscasting(112869) and _A.enoughmana(112869)  then
+				local petobj = UnitName("pet") 
+				if 
+					not _A.UnitExists("pet")
+					or _A.UnitIsDeadOrGhost("pet")
+					or not _A.HasPetUI()
+					or (petobj and petobj~="Xeleth")
+					then 
+					if player:buff(74434) or ( not player:moving() ) then
+						return player:cast(112869)
 					end
 					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:combat() and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
@@ -752,6 +972,20 @@ affliction.rot = {
 		end
 	end,
 	
+	ccstun = function()
+		if player:talent("Shadowfury") and player:SpellCooldown("Shadowfury") < cdcd then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:range()<=30
+					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
+					and (obj:drState("Shadowfury") == 1 or obj:drState("Shadowfury") == -1)
+					and _A.notimmune(obj)
+					and obj:los() then
+					return _A.clickcastv2(obj, "Shadowfury")
+				end
+			end
+		end
+	end,
+	
 	corruptionsnap = function()
 		if #_A.temptabletbl>1 then
 			table.sort(_A.temptabletbl, function(a,b)
@@ -838,7 +1072,7 @@ affliction.rot = {
 	end,
 	
 	grasp = function()
-		if not player:isCastingAny() and not player:IsCurrentSpell(103103)  and not player:moving() and _A.enoughmana(103103)  then
+		if not player:isCastingAny() and not player:isChanneling("Malefic Grasp")  and not player:moving() and _A.enoughmana(103103)  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and lowest:health()>30 then
 				return lowest:cast("Malefic Grasp", true)
@@ -857,7 +1091,7 @@ affliction.rot = {
 	
 	drainsoul = function()
 		if not player:moving() 
-			and not player:IsCurrentSpell(1120) 
+			and not player:isChanneling("Drain Soul")
 			and _A.enoughmana(1120)
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
@@ -871,7 +1105,7 @@ affliction.rot = {
 		if  #_A.temptabletbl>1 and soulswaporigin == nil and _A.enoughmana(86121) then
 			if #_A.temptabletblsoulswap > 1 then
 				table.sort(_A.temptabletblsoulswap, function(a,b)
-						return a.duration > b.duration -- always by highest duration
+					return a.duration > b.duration -- always by highest duration
 				end)
 			end
 			return _A.temptabletblsoulswap[1] and _A.temptabletblsoulswap[1].obj:Cast(86121)
@@ -918,6 +1152,8 @@ local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return true end
 	player = Object("player")
 	if not player then return end
+	-- print(player:spellcooldown("Clone Magic(Special Ability)"))
+	-- print(spell_name(115284))
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	affliction.rot.caching()
 	_Y.petengine_affli()
@@ -939,7 +1175,8 @@ local inCombat = function()
 	affliction.rot.items_intflask()
 	affliction.rot.items_intpot()
 	if affliction.rot.petres()  then return end
-	if affliction.rot.petres_supremacy() then return end
+	if not toggle("eye_demon") and affliction.rot.petres_supremacy() then return end
+	if toggle("eye_demon") and affliction.rot.petres_supremacy2() then return end
 	if affliction.rot.summ_healthstone() then return end
 	if affliction.rot.CauterizeMaster()  then return end
 	if affliction.rot.MortalCoil()  then return end
@@ -947,6 +1184,7 @@ local inCombat = function()
 	--utility
 	if affliction.rot.bloodhorrorremovalopti()  then return end
 	if affliction.rot.bloodhorror()  then return end
+	if affliction.rot.ccstun()  then return end
 	if affliction.rot.snare_curse()  then return end
 	-- shift
 	if modifier_shift()==true then

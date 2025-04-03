@@ -1125,7 +1125,9 @@ local exeOnLoad = function()
 				local pet = Object("pet")
 				if pet
 					and pet:rangefrom(temptable[1].OBJ)<=4
-					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
+					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 
+					and pet:losfrom(temptable[1].OBJ)
+					then 
 					print("GNAW ON HEALER")
 					temptable[1].OBJ:cast("Gnaw")
 					return true
@@ -1133,7 +1135,9 @@ local exeOnLoad = function()
 				if pet and player:SpellCooldown("Leap")==0
 					and pet:rangefrom(temptable[1].OBJ)<=30
 					and pet:rangefrom(temptable[1].OBJ)>=6
-					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 then 
+					and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5 
+					and pet:losfrom(temptable[1].OBJ)
+					then 
 					print("LEAP ON HEALER")
 					temptable[1].OBJ:cast("Leap")
 				end
@@ -1205,7 +1209,7 @@ local exeOnLoad = function()
 		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
 		if _A.PetGUID == nil then return true end
-		local pettargetguid_test = _A.UnitTarget("pet") or nil
+		-- local pettargetguid_test = _A.UnitTarget("pet") or nil
 		-- if pettargetguid_test then --print(UnitName(pettargetguid_test))
 		-- end
 		petpassive()
