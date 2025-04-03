@@ -32,7 +32,7 @@ local healerspecid = {
 	-- [263]="Sham enh",
 	-- [62]="Mage Arcane",
 	-- [63]="Mage Fire",
-	[64]="Mage Frost",
+	-- [64]="Mage Frost",
 }
 local rootthisfuck = {
 	["Chi Torpedo"]=true,
@@ -1568,6 +1568,21 @@ affliction.rot = {
 		end
 	end,
 	
+	ccfear = function()
+		if player:SpellCooldown("Howl of Terror") < cdcd then
+			for _, obj in pairs(_A.OM:Get('Enemy')) do
+				if obj.isplayer and obj:range()<=10
+					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
+					and (obj:drState("Howl of Terror") == 1 or obj:drState("Howl of Terror") == -1)
+					and _A.notimmune(obj)
+					and not obj:immune("fear")
+					and obj:los() then
+					return player:cast("Howl of Terror")
+				end
+			end
+		end
+	end,
+	
 	fearkeybind = function()
 		if not player:moving() and not player:isCastingAny() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -1645,6 +1660,30 @@ affliction.rot = {
 			end)
 		end
 		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore and player:SpellCooldown("Unstable Affliction")<.3 then 
+			-- if not player:isCastingAny() and player:ItemCooldown(76093) == 0
+				-- and player:ItemCount(76093) > 0
+				-- and player:ItemUsable(76093)
+				-- and player:combat()
+				-- then
+				-- if _A.pull_location=="pvp" then
+					-- player:useitem("Potion of the Jade Serpent")
+				-- end
+			-- end
+			if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
+				for i=1, #usableitems do
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+						if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+							if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
+								_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+							end
+						end
+					end
+				end
+				player:cast("Lifeblood")
+				player:useitem("Potion of the Jade Serpent")
+				player:cast("Dark Soul: Misery")
+			end
+			--
 			if player:buff(74434) then
 				return _A.temptabletbl[1].obj:Cast(119678)
 			end
@@ -1774,8 +1813,8 @@ local inCombat = function()
 	_Y.petengine_affli()
 	if player:Mounted() then return end
 	--bursts
-	affliction.rot.activetrinket()
-	affliction.rot.hasteburst()
+	-- affliction.rot.activetrinket()
+	-- affliction.rot.hasteburst()
 	--HEALS
 	affliction.rot.Darkregeneration()
 	affliction.rot.items_healthstone()
@@ -1788,7 +1827,7 @@ local inCombat = function()
 	--stuff
 	if affliction.rot.Buffbuff()  then return end
 	affliction.rot.items_intflask()
-	affliction.rot.items_intpot()
+	-- affliction.rot.items_intpot()
 	if affliction.rot.petres()  then return end
 	-- if not toggle("eye_demon") and affliction.rot.petres_supremacy() then return end
 	if not toggle("eye_demon") and affliction.rot.petres_supremacy3() then return end
@@ -1799,7 +1838,8 @@ local inCombat = function()
 	if affliction.rot.twilightward()  then return end
 	--utility
 	if affliction.rot.bloodhorrorremovalopti()  then return end
-	if affliction.rot.bloodhorror()  then return end
+	if affliction.rot.bloodhorror() then return end
+	if affliction.rot.ccfear() then return end	
 	if not toggle("def_cc") and affliction.rot.ccstun()  then return end	
 	if toggle("def_cc") and affliction.rot.ccstun_def()  then return end
 	if player:keybind("T") and affliction.rot.fearkeybind()  then return end
