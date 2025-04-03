@@ -32,7 +32,7 @@ local healerspecid = {
 	-- [263]="Sham enh",
 	-- [62]="Mage Arcane",
 	-- [63]="Mage Fire",
-	-- [64]="Mage Frost",
+	[64]="Mage Frost",
 }
 local rootthisfuck = {
 	["Chi Torpedo"]=true,
@@ -263,9 +263,9 @@ local exeOnLoad = function()
 		icon = select(3,GetSpellInfo(691)),
 	})
 	_A.Interface:AddToggle({
-		key = "def_cc", 
-		name = "Defensive CCS", 
-		text = "Only CC bursting and casting enemies",
+		key = "dontdps_ccdhealer", 
+		name = "Do not dot or dps ccd healers", 
+		text = "so to not break their cc, useful with hunters and stuff",
 		icon = select(3,GetSpellInfo(5782)),
 	})
 	_A.pull_location = pull_location()
@@ -633,7 +633,9 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('EnemyHealer', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer  and Obj:spellRange(spell) and Obj:Infront() and _A.isthisahealer(Obj) and _A.notimmune(Obj) and Obj:los() then
+			if Obj.isplayer  and Obj:spellRange(spell) and Obj:Infront() and _A.isthisahealer(Obj) and _A.notimmune(Obj) 
+			and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+			and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health()
@@ -649,11 +651,15 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
+		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target) 
+		and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+		and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and Obj:Infront() and _A.notimmune(Obj) and Obj:los() then
+			if Obj:spellRange(spell) and Obj:Infront() and _A.notimmune(Obj) 
+			and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+			and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -670,7 +676,9 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
+			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) 
+			and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+			and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -1029,7 +1037,7 @@ local exeOnLoad = function()
 		if pet and not pet:alive() then return end
 		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
 		--
-		if target and target:enemy() and target:exists() and target:alive() and target:range()<=42 and _A.notimmune(target)
+		if target and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
 			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(target) then
 			return target and target.guid -- this is good
 		end
@@ -1226,7 +1234,10 @@ affliction.rot = {
 		_A.temptabletblsoulswap = {}
 		_A.temptabletblexhale = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and not Obj:charmed() and Obj:los() then
+			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and not Obj:charmed()
+			and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+			and Obj:los() 
+			then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
 				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then corruptiontbl[Obj.guid]=nil end
 				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then agonytbl[Obj.guid]=nil end
@@ -1400,12 +1411,12 @@ affliction.rot = {
 					or not _A.HasPetUI()
 					or (petobj and petobj~="Fizrik")
 					then 
-					if player:buff(74434) or ( not player:moving() ) then
-						return player:cast(112866)
-					end
 					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:combat() and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
 					end	
+					if player:buff(74434) or ( not player:moving() ) then
+						return player:cast(112866)
+					end
 				end
 			end
 		end
@@ -1421,12 +1432,12 @@ affliction.rot = {
 					or not _A.HasPetUI()
 					or (petobj and petobj~="Xeleth")
 					then 
-					if player:buff(74434) or ( not player:moving() ) then
-						return player:cast(112869)
-					end
 					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:combat() and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
 					end	
+					if player:buff(74434) or ( not player:moving() ) then
+						return player:cast(112869)
+					end
 				end
 			end
 		end
@@ -1442,12 +1453,12 @@ affliction.rot = {
 					or not _A.HasPetUI()
 					or (petobj and petobj~="Korronix")
 					then 
-					if player:buff(74434) or ( not player:moving() ) then
-						return player:cast(112867)
-					end
 					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:combat() and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
 					end	
+					if player:buff(74434) or ( not player:moving() ) then
+						return player:cast(112867)
+					end
 				end
 			end
 		end
@@ -1840,9 +1851,8 @@ local inCombat = function()
 	if affliction.rot.bloodhorrorremovalopti()  then return end
 	if affliction.rot.bloodhorror() then return end
 	if affliction.rot.ccfear() then return end	
-	if not toggle("def_cc") and affliction.rot.ccstun()  then return end	
-	if toggle("def_cc") and affliction.rot.ccstun_def()  then return end
 	if player:keybind("T") and affliction.rot.fearkeybind()  then return end
+	if affliction.rot.ccstun()  then return end	
 	if affliction.rot.snare_curse()  then return end
 	-- shift
 	if modifier_shift()==true then
