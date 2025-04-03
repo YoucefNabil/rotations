@@ -302,6 +302,8 @@ local exeOnLoad = function()
 			-- print(slot)
 			if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
 				then
+				-- local target = Object("target")
+				-- if target then print(target:spec()) end
 				Type, id, subType = _A.GetActionInfo(slot)
 				
 				if Type == "spell" or Type == "macro" -- remove macro?
@@ -1091,6 +1093,7 @@ local exeOnLoad = function()
 						and healerspecid[obj:spec()]
 						and not obj:buffany("Bear Form")
 						and obj:caninterrupt()
+						and obj:isCastingAny()
 						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
 						and _A.notimmune(obj)
 						then
@@ -1108,9 +1111,8 @@ local exeOnLoad = function()
 					if pet
 						and pet:rangefrom(temptable[1].OBJ)<=20
 						and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5
-						and pet:losfrom(temptable[1].OBJ)
+						-- and pet:losfrom(temptable[1].OBJ)
 						then 
-						-- temptable[1].OBJ:cast(115781)
 						_A.CastSpellByName("Optical Blast(Special Ability)", temptable[1].GUID)
 						return true
 					end
@@ -1876,7 +1878,7 @@ local inCombat = function()
 	--fills
 	if affliction.rot.lifetap()  then return end
 	if affliction.rot.drainsoul() then return end
-	if _A.pull_location=="arena" and affliction.rot.haunt() then return end
+	-- if _A.pull_location=="arena" and affliction.rot.haunt() then return end
 	if affliction.rot.grasp()  then return end
 	if affliction.rot.felflame() then return end
 end 
