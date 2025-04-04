@@ -1575,7 +1575,7 @@ affliction.rot = {
 			and player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
 			and player:Mana()<=80
-			and _A.castdelay(1454, 35) or player:Mana()<=12  -- 35sec delay
+			and (_A.castdelay(1454, 35) or player:Mana()<=12)  -- 35sec delay
 			then
 			return player:cast("life tap")
 		end
