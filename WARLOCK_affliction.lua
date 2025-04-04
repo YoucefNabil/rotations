@@ -1395,7 +1395,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
-							if  player:SpellCharges("Dark Soul: Misery")>=1 and not IsCurrentSpell(113860) then
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not IsCurrentSpell(113860) then
 								player:cast("Lifeblood") -- 2 min
 								player:useitem("Potion of the Jade Serpent") -- 3min
 								player:cast("Dark Soul: Misery") -- 2min x2
@@ -1410,7 +1410,7 @@ affliction.rot = {
 	end,
 	
 	hasteburst = function()
-		if player:SpellCharges("Dark Soul: Misery")>=1 and not IsCurrentSpell(113860) then
+		if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not IsCurrentSpell(113860) then
 			if player:buff("Call of Dominance") then
 				player:cast("Lifeblood")
 				player:useitem("Potion of the Jade Serpent")
@@ -1723,7 +1723,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and _Y.proc_check() then 
-							if player:SpellCharges("Dark Soul: Misery")>=1 and not IsCurrentSpell(113860) then
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not IsCurrentSpell(113860) then
 								player:cast("Lifeblood")
 								player:useitem("Potion of the Jade Serpent")
 								player:cast("Dark Soul: Misery")
@@ -1775,9 +1775,9 @@ affliction.rot = {
 	end,
 	
 	grasp = function()
-		if not player:isCastingAny() and not player:isChanneling("Malefic Grasp")  and not player:moving() and _A.enoughmana(103103)  then
+		if not player:isCastingAny() and not player:isChanneling("Malefic Grasp")  and (not player:moving() or player:talent("Kil'jaeden's Cunning")) and _A.enoughmana(103103)  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Corruption)")
-			if lowest and lowest:exists() and lowest:health()>20 then
+			if lowest and lowest:exists() and (lowest:health()>20 or (player:talent("Kil'jaeden's Cunning") and player:moving())) then
 				return lowest:FaceCast("Malefic Grasp", true)
 			end
 		end
@@ -1785,9 +1785,9 @@ affliction.rot = {
 	
 	felflame = function()
 		if not player:isCastingAny() and _A.enoughmana(77799) then
-			local lowest = Object("lowestEnemyInSpellRange(Conflagrate)")
+			local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Conflagrate)")
 			if lowest and lowest:exists() then
-				return lowest:cast("fel flame")
+				return lowest:FaceCast("fel flame")
 			end
 		end
 	end,
@@ -1886,7 +1886,7 @@ local inCombat = function()
 	end
 	--bursts
 	affliction.rot.activetrinket()
-	affliction.rot.items_intpot()
+	-- affliction.rot.items_intpot()
 	--HEALS
 	affliction.rot.Darkregeneration()
 	affliction.rot.items_healthstone()
