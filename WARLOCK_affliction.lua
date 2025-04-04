@@ -707,7 +707,7 @@ local exeOnLoad = function()
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if (Obj.isplayer or (_A.pull_location~="pvp" and _A.pull_location~="arena"))
-			and Obj:spellRange(spell) and _A.notimmune(Obj) 
+				and Obj:spellRange(spell) and _A.notimmune(Obj) 
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -871,10 +871,20 @@ local exeOnLoad = function()
 	end)
 	-- dots
 	_Y.internalcooldown = (GetTime() - 50)
+	_Y.chantarget = nil
 	_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			-------------- internal cooldown part
 			if subevent == "SPELL_AURA_APPLIED" and spell_name(idd)=="Surge of Dominance" then _Y.internalcooldown = _A.GetTime() end -- 50 sec from the moment it procced
+			-------------- STUFF
+			if (spell_name(idd)=="Malefic Grasp" or spell_name(idd)=="Drain Soul") then 
+				if (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS") then
+					_Y.chantarget = guiddest
+				end
+				if subevent == "SPELL_AURA_REMOVED" then
+					_Y.chantarget = nil
+				end
+			end
 			-------------- dots part
 			if (idd==146739) or (idd==172) then -- Corruption
 				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
@@ -1376,6 +1386,14 @@ affliction.rot = {
 			end
 		end
 	end,
+	
+	stop_chan_on_dead = function()
+		if player:isChanneling("Drain Soul") or player:isChanneling("Malefic Grasp") then
+			if _Y.chantarget and _A.UnitIsDeadOrGhost(_Y.chantarget) then
+				_A.CallWowApi("RunMacroText", "/stopcasting")
+			end
+		end
+	end,
 	--============================================
 	--============================================
 	summ_healthstone = function()
@@ -1399,8 +1417,8 @@ affliction.rot = {
 								player:cast("Lifeblood") -- 2 min
 								player:useitem("Potion of the Jade Serpent") -- 3min
 								player:cast("Dark Soul: Misery") -- 2min x2
-							else
-							return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i]))) --1min
+								else
+								return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i]))) --1min
 							end
 						end
 					end
@@ -1874,10 +1892,10 @@ local inCombat = function()
 	affliction.rot.caching()
 	_Y.petengine_affli()
 	if player:Mounted() then return true end
+	stop_chan_on_dead()
 	-- CTRL MODE (Beams)
 	if _A.modifier_ctrl() then
 		if affliction.rot.drainsoul() then return true end
-		-- if affliction.rot.drainsoul_exec() then return end
 		if affliction.rot.grasp()  then return true end
 	end
 	-- shift mode (haunt)
@@ -1886,7 +1904,6 @@ local inCombat = function()
 	end
 	--bursts
 	affliction.rot.activetrinket()
-	-- affliction.rot.items_intpot()
 	--HEALS
 	affliction.rot.Darkregeneration()
 	affliction.rot.items_healthstone()

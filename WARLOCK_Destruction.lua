@@ -142,7 +142,22 @@ local havoctable = {}
 local GUI = {
 }
 local exeOnLoad = function()
-	local _,class = UnitClass("player")
+	_A.pull_location = pull_location()
+	Listener:Add("Entering_timerPLZ", "PLAYER_ENTERING_WORLD", function(event)
+		enteredworldat = _A.GetTime()
+		local stuffsds = pull_location()
+		_A.pull_location = stuffsds
+		-- print("HEY HEY HEY HEY")
+	end
+	)
+	_Y.exitedvehicleat = GetTime()
+	Listener:Add("EXITING_VEHICLE", "UNIT_EXITING_VEHICLE", function(event, arg1)
+		if arg1=="player" then
+			_Y.exitedvehicleat = GetTime()
+			print(event, arg1)
+		end
+	end)
+	enteredworldat = enteredworldat or _A.GetTime()
 	_A.pressedbuttonat = 0
 	_A.buttondelay = 0.5
 	_A.STARTSLOT = 1
@@ -928,6 +943,12 @@ local exeOnLoad = function()
 	end
 end
 local exeOnUnload = function()
+	Listener:Remove("Entering_timerPLZ")
+	Listener:Remove("EXITING_VEHICLE")
+	Listener:Remove("destro_cleaning")
+	Listener:Remove("Destro_Havoc")
+	Listener:Remove("iscasting")
+	Listener:Remove("destrodelaycasts")
 end
 local usableitems= { -- item slots
 	13, --first trinket
@@ -1355,8 +1376,13 @@ destro.rot = {
 ---========================
 ---========================
 local inCombat = function()	
+	if not _A.Cache.Utils.PlayerInGame then return true end
+	if not enteredworldat then return true end
+	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
 	player = player or Object("player")
 	if not player then return end
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
+	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 1 then return true end
 	destro.rot.caching()
 	destro.rot.rainoffire() 
 	if player:mounted() then return end
