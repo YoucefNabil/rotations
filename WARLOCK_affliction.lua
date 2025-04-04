@@ -1853,20 +1853,19 @@ local inCombat = function()
 	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 1 then return true end
 	affliction.rot.caching()
 	_Y.petengine_affli()
-	if player:Mounted() then return end
+	if player:Mounted() then return true end
 	-- CTRL MODE (Beams)
 	if _A.modifier_ctrl() then
-		if affliction.rot.drainsoul() then return end
+		if affliction.rot.drainsoul() then return true end
 		-- if affliction.rot.drainsoul_exec() then return end
-		if affliction.rot.grasp()  then return end
+		if affliction.rot.grasp()  then return true end
 	end
 	-- shift mode (haunt)
 	if modifier_shift()==true then
-		if affliction.rot.haunt()  then return end
+		if affliction.rot.haunt()  then return true end
 	end
 	--bursts
 	affliction.rot.activetrinket()
-	-- affliction.rot.hasteburst()
 	affliction.rot.items_intpot()
 	--HEALS
 	affliction.rot.Darkregeneration()
@@ -1874,44 +1873,44 @@ local inCombat = function()
 	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
 	-- if player:lostcontrol() then return end 
 	--delayed lifetap
-	if affliction.rot.lifetap_delayed() then return end
+	if affliction.rot.lifetap_delayed() then return true end
 	--exhale
-	if affliction.rot.exhaleopti()  then return end
+	if affliction.rot.exhaleopti()  then return true end
 	--stuff
-	if affliction.rot.Buffbuff()  then return end
+	if affliction.rot.Buffbuff()  then return true end
 	affliction.rot.items_intflask()
-	if affliction.rot.petres()  then return end
-	if not toggle("eye_demon") and affliction.rot.petres_supremacy3() then return end
-	if toggle("eye_demon") and affliction.rot.petres_supremacy2() then return end
-	if affliction.rot.summ_healthstone() then return end
-	if affliction.rot.CauterizeMaster()  then return end
-	if affliction.rot.MortalCoil()  then return end
-	if affliction.rot.twilightward()  then return end
+	if affliction.rot.petres()  then return true end
+	if not toggle("eye_demon") and affliction.rot.petres_supremacy3() then return true end
+	if toggle("eye_demon") and affliction.rot.petres_supremacy2() then return true end
+	if affliction.rot.summ_healthstone() then return true end
+	if affliction.rot.CauterizeMaster()  then return true end
+	if affliction.rot.MortalCoil()  then return true end
+	if affliction.rot.twilightward()  then return true end
 	--utility 
-	if affliction.rot.bloodhorrorremovalopti()  then return end
-	if affliction.rot.bloodhorror() then return end
-	if affliction.rot.ccfear() then return end	
-	if affliction.rot.ccstun()  then return end	
-	if affliction.rot.snare_curse()  then return end
+	if affliction.rot.bloodhorrorremovalopti()  then return true end
+	if affliction.rot.bloodhorror() then return true end
+	if affliction.rot.ccfear() then return true end	
+	if affliction.rot.ccstun()  then return true end	
+	if affliction.rot.snare_curse()  then return true end
 	-- Heal pet
-	if affliction.rot.healthfunnel() then return end
+	if affliction.rot.healthfunnel() then return true end
 	-- DOT DOT
-	if not _Y.proc_check() and affliction.rot.agonysnap()  then return end
-	if not _Y.proc_check() and affliction.rot.corruptionsnap()  then return end
-	if not _Y.proc_check() and affliction.rot.unstablesnap()  then return end
-	if affliction.rot.unstablesnapinstant() then return end
-	if affliction.rot.agonysnap()  then return end
-	if affliction.rot.corruptionsnap()  then return end
-	if affliction.rot.unstablesnap()  then return end
+	if not _Y.proc_check() and affliction.rot.agonysnap()  then return true end
+	if not _Y.proc_check() and affliction.rot.corruptionsnap()  then return true end
+	if not _Y.proc_check() and affliction.rot.unstablesnap()  then return true end
+	if affliction.rot.unstablesnapinstant() then return true end
+	if affliction.rot.agonysnap()  then return true end
+	if affliction.rot.corruptionsnap()  then return true end
+	if affliction.rot.unstablesnap()  then return true end
 	-- SOUL SWAP
-	if affliction.rot.soulswapopti()  then return end
+	if affliction.rot.soulswapopti()  then return true end
 	--buff
-	affliction.rot.darkintent()
+	if affliction.rot.darkintent() then return true end
 	--fills
-	if affliction.rot.lifetap()  then return end
-	if affliction.rot.drainsoul() then return end
-	if affliction.rot.grasp()  then return end
-	if affliction.rot.felflame() then return end
+	if affliction.rot.lifetap()  then return true end
+	if affliction.rot.drainsoul() then return true end
+	if affliction.rot.grasp()  then return true end
+	if affliction.rot.felflame() then return true end
 end 
 local outCombat = function()
 	return inCombat()
