@@ -1844,20 +1844,16 @@ local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return true end
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
-	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	player = Object("player")
 	if not player then return end
-	-- print(player:SpellCharges("Dark Soul: Misery"))
-	-- if not _Y.exitedvehicleat then return true end
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 1 then return true end
-	-- print(player:spellcooldown("Clone Magic(Special Ability)"))
-	-- print(spell_name(115284))
 	affliction.rot.caching()
 	_Y.petengine_affli()
 	if player:Mounted() then return end
-	-- if _A.modifier_ctrl() and affliction.rot.drainsoul() then return end
-	if _A.modifier_ctrl() and affliction.rot.drainsoul_exec() then return end
-	-- if _A.modifier_ctrl() and affliction.rot.grasp()  then return end
+	if _A.modifier_ctrl() and affliction.rot.drainsoul() then return end
+	-- if _A.modifier_ctrl() and affliction.rot.drainsoul_exec() then return end
+	if _A.modifier_ctrl() and affliction.rot.grasp()  then return end
 	-- shift
 	if modifier_shift()==true then
 		if affliction.rot.haunt()  then return end
@@ -1868,7 +1864,7 @@ local inCombat = function()
 	affliction.rot.Darkregeneration()
 	affliction.rot.items_healthstone()
 	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
-	-- if player:lostcontrol()  then return end 
+	-- if player:lostcontrol() then return end 
 	--delayed lifetap
 	if affliction.rot.lifetap_delayed() then return end
 	--exhale
@@ -1887,7 +1883,7 @@ local inCombat = function()
 	if affliction.rot.bloodhorrorremovalopti()  then return end
 	if affliction.rot.bloodhorror() then return end
 	if affliction.rot.ccfear() then return end	
-	if player:keybind("T") and affliction.rot.fearkeybind()  then return end
+	-- if player:keybind("T") and affliction.rot.fearkeybind()  then return end
 	if affliction.rot.ccstun()  then return end	
 	if affliction.rot.snare_curse()  then return end
 	-- Heal pet
