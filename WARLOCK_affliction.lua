@@ -1387,7 +1387,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
-							if  (player:SpellCooldown("Dark Soul: Misery")==0 or player:SpellCharges("Dark Soul: Misery")>=1) and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
+							if  player:SpellCharges("Dark Soul: Misery")>=1 and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
 								player:cast("Lifeblood")
 								player:useitem("Potion of the Jade Serpent")
 								player:cast("Dark Soul: Misery")
