@@ -850,7 +850,7 @@ local exeOnLoad = function()
 		ijustsoulswapped = false
 	end)
 	-- dots
-	_Y.internalcooldown = nil
+	_Y.internalcooldown = (GetTime() - 50)
 	_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			-------------- internal cooldown part
