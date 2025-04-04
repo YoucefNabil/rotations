@@ -258,8 +258,8 @@ local GUI = {
 local exeOnLoad = function()
 	_A.Interface:AddToggle({
 		key = "eye_demon", 
-		name = "Observer", 
-		text = "Observer pet",
+		name = "Observer pet", 
+		text = "ON : Observer pet (good for bgs) || OFF: Void pet (good against physical in arena for disarms)",
 		icon = select(3,GetSpellInfo(691)),
 	})
 	_A.Interface:AddToggle({
