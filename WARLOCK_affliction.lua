@@ -297,7 +297,7 @@ local exeOnLoad = function()
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		--print(slot)
-		local player = Object("player")
+		player = Object("player")
 		if player then
 			-- print(slot)
 			if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
@@ -365,7 +365,7 @@ local exeOnLoad = function()
 	-------------------------------------------------------
 	-------------------------------------------------------
 	function _A.IsPStr() --temporary method to get strafing.
-		local player = Object("player")
+		player = Object("player")
 		local isMoving = player:Moving()
 		local moveLeft = _A.IsKeyDown("a")
 		local moveRight = _A.IsKeyDown("z")
@@ -378,7 +378,7 @@ local exeOnLoad = function()
 		end
 	end
 	function _A.pSpeed(unit, maxDistance)
-		local player = Object("player")
+		player = Object("player")
 		local x, y, z = _A.ObjectPosition(unit)
 		local facing = _A.ObjectFacing(unit)
 		local speed = _A.GetUnitSpeed(unit)
@@ -406,7 +406,7 @@ local exeOnLoad = function()
 		return newX, newY, z
 	end
 	function _A.CastPredictedPos(unit, spell, distance)
-		local player = Object("player")
+		player = Object("player")
 		local px, py, pz = _A.pSpeed(unit, distance)
 		_A.CastSpellByName(spell)
 		if player:SpellIsTargeting() then
@@ -688,6 +688,25 @@ local exeOnLoad = function()
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) 
+				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+				and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					health = Obj:health(),
+					isplayer = Obj.isplayer and 1 or 0
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+		end
+		return tempTable[num] and tempTable[num].guid
+	end
+	)
+	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTARNOFACE', function(num, spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:spellRange(spell) and _A.notimmune(Obj) 
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -1553,8 +1572,8 @@ affliction.rot = {
 	end,
 	
 	bloodhorrorremovalopti = function() -- rework this
-		if _A.reflectcheck == true then
-			print("REMOVING REMOVING REMOVING")
+		if _A.reflectcheck == true and player:talent("Blood Horror") then
+			-- print("REMOVING REMOVING REMOVING")
 			_A.RunMacroText("/cancelaura Blood Horror")
 		end
 	end,
@@ -1756,9 +1775,9 @@ affliction.rot = {
 	
 	grasp = function()
 		if not player:isCastingAny() and not player:isChanneling("Malefic Grasp")  and not player:moving() and _A.enoughmana(103103)  then
-			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+			local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Corruption)")
 			if lowest and lowest:exists() and lowest:health()>20 then
-				return lowest:cast("Malefic Grasp", true)
+				return lowest:FaceCast("Malefic Grasp", true)
 			end
 		end
 	end,
@@ -1777,9 +1796,9 @@ affliction.rot = {
 			and not player:isChanneling("Drain Soul")
 			and _A.enoughmana(1120)
 			then
-			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+			local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Corruption)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
-				return lowest:cast("Drain Soul", true)
+				return lowest:FaceCast("Drain Soul", true)
 			end
 		end
 	end,
@@ -1790,9 +1809,9 @@ affliction.rot = {
 			and _A.enoughmana(1120)
 			-- and _A.shards<=1
 			then
-			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+			local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Corruption)")
 			if lowest and lowest:exists() then
-				return lowest:cast("Drain Soul", true)
+				return lowest:FaceCast("Drain Soul", true)
 			end
 		end
 	end,
