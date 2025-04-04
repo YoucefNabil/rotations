@@ -1735,8 +1735,8 @@ affliction.rot = {
 		end
 		if _A.temptabletbl[1] and not player:buff(74434) and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
 			if not player:moving() and not player:Iscasting("Unstable Affliction") 
-			-- and _A.shards==0 
-			then
+				-- and _A.shards==0 
+				then
 				return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
 			end
 		end
@@ -1851,10 +1851,13 @@ local inCombat = function()
 	affliction.rot.caching()
 	_Y.petengine_affli()
 	if player:Mounted() then return end
-	if _A.modifier_ctrl() and affliction.rot.drainsoul() then return end
-	-- if _A.modifier_ctrl() and affliction.rot.drainsoul_exec() then return end
-	if _A.modifier_ctrl() and affliction.rot.grasp()  then return end
-	-- shift
+	-- CTRL MODE (Beams)
+	if _A.modifier_ctrl() then
+		if affliction.rot.drainsoul() then return end
+		-- if affliction.rot.drainsoul_exec() then return end
+		if affliction.rot.grasp()  then return end
+	end
+	-- shift mode (haunt)
 	if modifier_shift()==true then
 		if affliction.rot.haunt()  then return end
 	end
@@ -1883,7 +1886,6 @@ local inCombat = function()
 	if affliction.rot.bloodhorrorremovalopti()  then return end
 	if affliction.rot.bloodhorror() then return end
 	if affliction.rot.ccfear() then return end	
-	-- if player:keybind("T") and affliction.rot.fearkeybind()  then return end
 	if affliction.rot.ccstun()  then return end	
 	if affliction.rot.snare_curse()  then return end
 	-- Heal pet
