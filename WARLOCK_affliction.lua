@@ -1380,7 +1380,7 @@ affliction.rot = {
 								player:useitem("Potion of the Jade Serpent") -- 3min
 								player:cast("Dark Soul: Misery") -- 2min x2
 							else
-							_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i]))) --1min
+							return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i]))) --1min
 							end
 						end
 					end
@@ -1708,7 +1708,7 @@ affliction.rot = {
 								player:useitem("Potion of the Jade Serpent")
 								player:cast("Dark Soul: Misery")
 								else
-								_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+								return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 							end
 						end
 					end
