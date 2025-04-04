@@ -1698,19 +1698,19 @@ affliction.rot = {
 			end)
 		end
 		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore and player:SpellCooldown("Unstable Affliction")<.3 then 
-			if _Y.proc_check() and player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
-				for i=1, #usableitems do
-					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
-						if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
-							if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
-								_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+			for i=1, #usableitems do
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and _Y.proc_check() then 
+							if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
+								player:cast("Lifeblood")
+								player:useitem("Potion of the Jade Serpent")
+								player:cast("Dark Soul: Misery")
 							end
+							_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 						end
 					end
 				end
-				player:cast("Lifeblood")
-				player:useitem("Potion of the Jade Serpent")
-				player:cast("Dark Soul: Misery")
 			end
 			--
 			if  _A.shards>=1 and not player:buff(74434) and player:SpellCooldown(74434)==0  and not IsCurrentSpell(74434)--or player:buff("Shadow Trance")
@@ -1735,7 +1735,9 @@ affliction.rot = {
 			end)
 		end
 		if _A.temptabletbl[1] and not player:buff(74434) and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
-			if not player:moving() and not player:Iscasting("Unstable Affliction") and _A.shards==0 then
+			if not player:moving() and not player:Iscasting("Unstable Affliction") 
+			-- and _A.shards==0 
+			then
 				return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
 			end
 		end
@@ -1892,10 +1894,9 @@ local inCombat = function()
 	-- Heal pet
 	if affliction.rot.healthfunnel() then return end
 	-- DOT DOT
-	if not _Y.proc_check() and affliction.rot.agonysnap()  then return end
+	if not _Y.proc_check() and affliction.rot.agonysnap()  then print("HEY") return end
 	if not _Y.proc_check() and affliction.rot.corruptionsnap()  then return end
-	-- if not _Y.proc_check() and affliction.rot.unstablesnap()  then return end
-	if not _Y.proc_check() and player:glyph("Glyph of Unstable Affliction") and affliction.rot.unstablesnap()  then return end
+	if not _Y.proc_check() and affliction.rot.unstablesnap()  then return end
 	if affliction.rot.unstablesnapinstant() then return end
 	if affliction.rot.agonysnap()  then return end
 	if affliction.rot.corruptionsnap()  then return end
