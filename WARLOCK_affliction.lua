@@ -645,8 +645,8 @@ local exeOnLoad = function()
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj.isplayer  and Obj:spellRange(spell) and Obj:Infront() and _A.isthisahealer(Obj) and _A.notimmune(Obj) 
-			and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
-			and Obj:los() then
+				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+				and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health()
@@ -663,14 +663,14 @@ local exeOnLoad = function()
 		local tempTable = {}
 		local target = Object("target")
 		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target) 
-		and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
-		and target:los() then
+			and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+			and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and Obj:Infront() and _A.notimmune(Obj) 
-			and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
-			and Obj:los() then
+				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+				and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -688,8 +688,8 @@ local exeOnLoad = function()
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) 
-			and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
-			and Obj:los() then
+				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+				and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -850,8 +850,12 @@ local exeOnLoad = function()
 		ijustsoulswapped = false
 	end)
 	-- dots
+	_Y.internalcooldown = nil
 	_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 		if guidsrc == UnitGUID("player") then -- only filter by me
+			-------------- internal cooldown part
+			if subevent == "SPELL_AURA_APPLIED" and spell_name(idd)=="Surge of Dominance" then _Y.internalcooldown = _A.GetTime() end -- 50 sec from the moment it procced
+			-------------- dots part
 			if (idd==146739) or (idd==172) then -- Corruption
 				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 					then
@@ -904,6 +908,11 @@ local exeOnLoad = function()
 		end
 	end
 	)
+	_Y.proc_check = function()
+		if player and player:BuffDuration("Surge of Dominance")>=3 then return true end
+		if _Y.internalcooldown and (_A.GetTime() - _Y.internalcooldown) >=45 then return true end
+		return false
+	end
 	_Y.exitedvehicleat = GetTime()
 	_A.Listener:Add("EXITING_VEHICLE", "UNIT_EXITING_VEHICLE", function(event, arg1)
 		if arg1=="player" then
@@ -1220,6 +1229,7 @@ timerframe:SetScript("OnUpdate", function(self,elapsed)
 end)
 local exeOnUnload = function()
 	Listener:Remove("lock_cleantbls")
+	Listener:Remove("Entering_timerPLZ")
 	Listener:Remove("EXITING_VEHICLE")
 	Listener:Remove("soulswaprelated")
 	Listener:Remove("delaycasts")
@@ -1246,9 +1256,9 @@ affliction.rot = {
 		_A.temptabletblexhale = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and not Obj:charmed()
-			and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
-			and Obj:los() 
-			then
+				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+				and Obj:los() 
+				then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
 				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then corruptiontbl[Obj.guid]=nil end
 				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then agonytbl[Obj.guid]=nil end
@@ -1372,11 +1382,17 @@ affliction.rot = {
 	end,
 	--============================================
 	activetrinket = function()
-		if player:combat() and player:buff("Surge of Dominance") then
+		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+		if player:combat() and _Y.proc_check() and lowest and lowest:exists() and lowest.isplayer then
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
+							if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
+								player:cast("Lifeblood")
+								player:useitem("Potion of the Jade Serpent")
+								player:cast("Dark Soul: Misery")
+							end
 							_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 						end
 					end
@@ -1682,16 +1698,7 @@ affliction.rot = {
 			end)
 		end
 		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore and player:SpellCooldown("Unstable Affliction")<.3 then 
-			-- if not player:isCastingAny() and player:ItemCooldown(76093) == 0
-				-- and player:ItemCount(76093) > 0
-				-- and player:ItemUsable(76093)
-				-- and player:combat()
-				-- then
-				-- if _A.pull_location=="pvp" then
-					-- player:useitem("Potion of the Jade Serpent")
-				-- end
-			-- end
-			if player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
+			if _Y.proc_check() and player:combat() and player:SpellCooldown("Dark Soul: Misery")==0 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
 				for i=1, #usableitems do
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 						if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -1706,11 +1713,11 @@ affliction.rot = {
 				player:cast("Dark Soul: Misery")
 			end
 			--
-			if player:buff(74434) then
-				return _A.temptabletbl[1].obj:Cast(119678)
-			end
 			if  _A.shards>=1 and not player:buff(74434) and player:SpellCooldown(74434)==0  and not IsCurrentSpell(74434)--or player:buff("Shadow Trance")
 				then player:cast(74434) -- shadowburn
+			end
+			if player:buff(74434) then
+				return _A.temptabletbl[1].obj:Cast(119678)
 			end
 		end -- improved soul swap (dots instead)
 	end,
@@ -1768,6 +1775,19 @@ affliction.rot = {
 			then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 			if lowest and lowest:exists() and lowest:health()<=20 then
+				return lowest:cast("Drain Soul", true)
+			end
+		end
+	end,
+	
+	drainsoul_exec = function()
+		if not player:moving() 
+			and not player:isChanneling("Drain Soul")
+			and _A.enoughmana(1120)
+			and _A.shards<=1
+			then
+			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+			if lowest and lowest:exists() and lowest:health()<=10 then
 				return lowest:cast("Drain Soul", true)
 			end
 		end
@@ -1834,9 +1854,14 @@ local inCombat = function()
 	affliction.rot.caching()
 	_Y.petengine_affli()
 	if player:Mounted() then return end
+	if _A.modifier_ctrl() and affliction.rot.drainsoul() then return end
+	if _A.modifier_ctrl() and affliction.rot.grasp()  then return end
+	-- shift
+	if modifier_shift()==true then
+		if affliction.rot.haunt()  then return end
+	end
 	--bursts
-	-- affliction.rot.activetrinket()
-	-- affliction.rot.hasteburst()
+	affliction.rot.activetrinket()
 	--HEALS
 	affliction.rot.Darkregeneration()
 	affliction.rot.items_healthstone()
@@ -1849,35 +1874,31 @@ local inCombat = function()
 	--stuff
 	if affliction.rot.Buffbuff()  then return end
 	affliction.rot.items_intflask()
-	-- affliction.rot.items_intpot()
 	if affliction.rot.petres()  then return end
 	-- if not toggle("eye_demon") and affliction.rot.petres_supremacy() then return end
 	if not toggle("eye_demon") and affliction.rot.petres_supremacy3() then return end
 	if toggle("eye_demon") and affliction.rot.petres_supremacy2() then return end
 	if affliction.rot.summ_healthstone() then return end
-	if _A.modifier_ctrl() and affliction.rot.drainsoul() then return end
-	if _A.modifier_ctrl() and affliction.rot.grasp()  then return end
 	if affliction.rot.CauterizeMaster()  then return end
 	if affliction.rot.MortalCoil()  then return end
 	if affliction.rot.twilightward()  then return end
-	--utility
+	--utility 
 	if affliction.rot.bloodhorrorremovalopti()  then return end
 	if affliction.rot.bloodhorror() then return end
 	if affliction.rot.ccfear() then return end	
 	if player:keybind("T") and affliction.rot.fearkeybind()  then return end
 	if affliction.rot.ccstun()  then return end	
 	if affliction.rot.snare_curse()  then return end
-	-- shift
-	if modifier_shift()==true then
-		if affliction.rot.haunt()  then return end
-	end
 	-- Heal pet
 	if affliction.rot.healthfunnel() then return end
 	-- DOT DOT
+	if not _Y.proc_check() and affliction.rot.agonysnap()  then return end
+	if not _Y.proc_check() and affliction.rot.corruptionsnap()  then return end
+	-- if not _Y.proc_check() and affliction.rot.unstablesnap()  then return end
+	if not _Y.proc_check() and player:glyph("Glyph of Unstable Affliction") and affliction.rot.unstablesnap()  then return end
 	if affliction.rot.unstablesnapinstant() then return end
 	if affliction.rot.agonysnap()  then return end
 	if affliction.rot.corruptionsnap()  then return end
-	-- if affliction.rot.sneedofcorruption()  then return end
 	if affliction.rot.unstablesnap()  then return end
 	-- SOUL SWAP
 	if affliction.rot.soulswapopti()  then return end
@@ -1886,7 +1907,6 @@ local inCombat = function()
 	--fills
 	if affliction.rot.lifetap()  then return end
 	if affliction.rot.drainsoul() then return end
-	-- if _A.pull_location=="arena" and affliction.rot.haunt() then return end
 	if affliction.rot.grasp()  then return end
 	if affliction.rot.felflame() then return end
 end 
