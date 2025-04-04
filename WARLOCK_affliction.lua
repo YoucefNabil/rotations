@@ -881,9 +881,9 @@ local exeOnLoad = function()
 				if (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS") then
 					_Y.chantarget = guiddest
 				end
-				if subevent == "SPELL_AURA_REMOVED" then
-					_Y.chantarget = nil
-				end
+				-- if subevent == "SPELL_AURA_REMOVED" then
+					-- _Y.chantarget = nil
+				-- end
 			end
 			-------------- dots part
 			if (idd==146739) or (idd==172) then -- Corruption
@@ -1391,6 +1391,7 @@ affliction.rot = {
 		if player:isChanneling("Drain Soul") or player:isChanneling("Malefic Grasp") then
 			if _Y.chantarget and _A.UnitIsDeadOrGhost(_Y.chantarget) then
 				_A.CallWowApi("RunMacroText", "/stopcasting")
+				_Y.chantarget = nil
 			end
 		end
 	end,
