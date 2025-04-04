@@ -1345,18 +1345,6 @@ affliction.rot = {
 		end
 	end,
 	
-	items_intpot = function()
-		if not player:isCastingAny() and player:ItemCooldown(76093) == 0
-			and player:ItemCount(76093) > 0
-			and player:ItemUsable(76093)
-			and player:Buff("Dark Soul: Misery")
-			then
-			if _A.pull_location=="pvp" then
-				player:useitem("Potion of the Jade Serpent")
-			end
-		end
-	end,
-	
 	items_strflask = function()
 		if not player:isCastingAny() and player:ItemCooldown(76088) == 0
 			and player:ItemCount(76088) > 0
@@ -1387,12 +1375,13 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
-							if  player:SpellCharges("Dark Soul: Misery")>=1 and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
-								player:cast("Lifeblood")
-								player:useitem("Potion of the Jade Serpent")
-								player:cast("Dark Soul: Misery")
+							if  player:SpellCharges("Dark Soul: Misery")>=1 and not IsCurrentSpell(113860) then
+								player:cast("Lifeblood") -- 2 min
+								player:useitem("Potion of the Jade Serpent") -- 3min
+								player:cast("Dark Soul: Misery") -- 2min x2
+							else
+							_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i]))) --1min
 							end
-							_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 						end
 					end
 				end
@@ -1401,13 +1390,26 @@ affliction.rot = {
 	end,
 	
 	hasteburst = function()
-		if player:SpellCharges("Dark Soul: Misery")>=1 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
+		if player:SpellCharges("Dark Soul: Misery")>=1 and not IsCurrentSpell(113860) then
 			if player:buff("Call of Dominance") then
 				player:cast("Lifeblood")
+				player:useitem("Potion of the Jade Serpent")
 				player:cast("Dark Soul: Misery")
 			end
 		end
 	end,
+	
+	items_intpot = function()
+		if not player:isCastingAny() and player:ItemCooldown(76093) == 0
+			and player:ItemCount(76093) > 0
+			and player:ItemUsable(76093)
+			and player:Buff("Dark Soul: Misery")
+			then
+			player:cast("Lifeblood")
+			player:useitem("Potion of the Jade Serpent")
+		end
+	end,
+	
 	--============================================
 	--============================================
 	--============================================
@@ -1701,12 +1703,13 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and _Y.proc_check() then 
-							if player:SpellCharges("Dark Soul: Misery")>=1 and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
+							if player:SpellCharges("Dark Soul: Misery")>=1 and not IsCurrentSpell(113860) then
 								player:cast("Lifeblood")
 								player:useitem("Potion of the Jade Serpent")
 								player:cast("Dark Soul: Misery")
+								else
+								_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 							end
-							_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 						end
 					end
 				end
@@ -1863,6 +1866,8 @@ local inCombat = function()
 	end
 	--bursts
 	affliction.rot.activetrinket()
+	affliction.rot.hasteburst()
+	affliction.rot.items_intpot()
 	--HEALS
 	affliction.rot.Darkregeneration()
 	affliction.rot.items_healthstone()
