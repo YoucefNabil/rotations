@@ -1892,7 +1892,7 @@ local inCombat = function()
 	affliction.rot.caching()
 	_Y.petengine_affli()
 	if player:Mounted() then return true end
-	stop_chan_on_dead()
+	affliction.rot.stop_chan_on_dead()
 	-- CTRL MODE (Beams)
 	if _A.modifier_ctrl() then
 		if affliction.rot.drainsoul() then return true end
