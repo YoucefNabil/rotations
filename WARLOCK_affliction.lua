@@ -911,7 +911,7 @@ local exeOnLoad = function()
 	_Y.proc_check = function()
 		-- if player and player:BuffDuration("Surge of Dominance")>=3 then return true end
 		if player and player:BuffAny("Surge of Dominance") then return true end
-		if _Y.internalcooldown and (_A.GetTime() - _Y.internalcooldown) >=45 then return true end
+		if _Y.internalcooldown and (_A.GetTime() - _Y.internalcooldown) >=50 then return true end
 		return false
 	end
 	_Y.exitedvehicleat = GetTime()
