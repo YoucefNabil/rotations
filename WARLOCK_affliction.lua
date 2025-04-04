@@ -1866,7 +1866,7 @@ local inCombat = function()
 	end
 	--bursts
 	affliction.rot.activetrinket()
-	affliction.rot.hasteburst()
+	-- affliction.rot.hasteburst()
 	affliction.rot.items_intpot()
 	--HEALS
 	affliction.rot.Darkregeneration()
