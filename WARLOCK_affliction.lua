@@ -706,7 +706,8 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTARNOFACE', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and _A.notimmune(Obj) 
+			if (Obj.isplayer or (_A.pull_location~="pvp" and _A.pull_location~="arena"))
+			and Obj:spellRange(spell) and _A.notimmune(Obj) 
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
