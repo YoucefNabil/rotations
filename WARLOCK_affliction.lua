@@ -1401,7 +1401,7 @@ affliction.rot = {
 	end,
 	
 	hasteburst = function()
-		if (player:SpellCooldown("Dark Soul: Misery")==0 or player:SpellCharges("Dark Soul: Misery")>=1) and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
+		if player:SpellCharges("Dark Soul: Misery")>=1 and not player:buff("Dark Soul: Misery") and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
 			if player:buff("Call of Dominance") then
 				player:cast("Lifeblood")
 				player:cast("Dark Soul: Misery")
@@ -1701,7 +1701,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and _Y.proc_check() then 
-							if (player:SpellCooldown("Dark Soul: Misery")==0 or player:SpellCharges("Dark Soul: Misery")>=1) and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
+							if player:SpellCharges("Dark Soul: Misery")>=1 and _A.enoughmana(113860) and not IsCurrentSpell(113860) then
 								player:cast("Lifeblood")
 								player:useitem("Potion of the Jade Serpent")
 								player:cast("Dark Soul: Misery")
