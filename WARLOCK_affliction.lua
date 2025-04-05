@@ -1139,7 +1139,7 @@ local exeOnLoad = function()
 				then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer and obj:range()<=80
-						and healerspecid[obj:spec()]
+						and _A.isthisahealer(obj)
 						and not obj:buffany("Bear Form")
 						and obj:caninterrupt()
 						and obj:isCastingAny()
@@ -1291,9 +1291,9 @@ affliction.rot = {
 				and Obj:los() 
 				then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then corruptiontbl[Obj.guid]=nil end
-				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then agonytbl[Obj.guid]=nil end
-				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then unstabletbl[Obj.guid]=nil end
+				-- if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then corruptiontbl[Obj.guid]=nil end
+				-- if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then agonytbl[Obj.guid]=nil end
+				-- if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then unstabletbl[Obj.guid]=nil end
 				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
 					obj = Obj,
