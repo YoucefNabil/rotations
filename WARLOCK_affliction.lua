@@ -1172,10 +1172,10 @@ local exeOnLoad = function()
 						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
 						and _A.notimmune(obj)
 						then
-						if (obj:caninterrupt()
-							and obj:isCastingAny()
-						and (obj:caststart()>=0.2 or obj:chanpercent()<=95))
-						or _Y.someoneisuperlow() then
+						if 
+						(obj:caninterrupt() and obj:isCastingAny() and (obj:caststart()>=0.2 or obj:chanpercent()<=95))
+						-- or _Y.someoneisuperlow() 
+						then
 						temptable[#temptable+1] = {
 							OBJ = obj,
 							GUID = obj.guid,
