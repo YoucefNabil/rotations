@@ -1331,17 +1331,18 @@ affliction.rot = {
 						rangedis = Obj:range(2) or 40,
 						isplayer = Obj.isplayer and 1 or 0,
 						health = Obj:HealthActual() or 0,
-						-- duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
+						-- duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
 						duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
 					}
 				end
 				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = {
 					obj = Obj,
 					isplayer = Obj.isplayer and 1 or 0,
-					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Corruption") or Obj:DebuffDuration("Agony") or 0
+					-- duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0 -- DEFAULT
+					duration = Obj:DebuffDuration("Unstable Affliction") or 0
 				}
 			end -- end of enemy filter
-			if warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
+			if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
 				_A.reflectcheck = true
 			end
 		end -- end of iteration
