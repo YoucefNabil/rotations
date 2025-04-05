@@ -505,6 +505,24 @@ local exeOnLoad = function()
 		return castsecond(unit)
 	end)
 	
+	local function caststart(unit)
+		local givetime = GetTime()
+		local tempvar = select(5, UnitCastingInfo(unit))
+		local timetimetime15687
+		if unit == nil
+			then 
+			unit = "target"
+		end
+		if UnitCastingInfo(unit)~=nil
+			then timetimetime15687 = abs(givetime - (tempvar/1000)) 
+		end
+		return timetimetime15687 or 0
+	end
+	
+	_A.DSL:Register('caststart', function(unit)
+		return caststart(unit)
+	end)
+	
 	local function chanpercent(unit)
 		local tempvar1, tempvar2 = select(5, UnitChannelInfo(unit))
 		local givetime = GetTime()
@@ -1143,6 +1161,7 @@ local exeOnLoad = function()
 						and not obj:buffany("Bear Form")
 						and obj:caninterrupt()
 						and obj:isCastingAny()
+						and (obj:caststart()>=0.2 or obj:chanpercent()<=95)
 						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
 						and _A.notimmune(obj)
 						then
