@@ -1338,8 +1338,8 @@ affliction.rot = {
 				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = {
 					obj = Obj,
 					isplayer = Obj.isplayer and 1 or 0,
-					-- duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0 -- DEFAULT
-					duration = Obj:DebuffDuration("Unstable Affliction") or 0
+					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0 -- DEFAULT
+					-- duration = Obj:DebuffDuration("Unstable Affliction") or 0
 				}
 			end -- end of enemy filter
 			if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
