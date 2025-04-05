@@ -292,6 +292,16 @@ local exeOnLoad = function()
 		end
 		return true
 	end
+	function _Y.someoneisuperlow()
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj.isplayer and Obj:range()<40  then
+				if Obj:Health()<35 then
+					return true
+				end
+			end
+		end
+		return false
+	end
 	--
 	_A.hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
@@ -900,7 +910,7 @@ local exeOnLoad = function()
 					_Y.chantarget = guiddest
 				end
 				-- if subevent == "SPELL_AURA_REMOVED" then
-					-- _Y.chantarget = nil
+				-- _Y.chantarget = nil
 				-- end
 			end
 			-------------- dots part
@@ -1159,17 +1169,19 @@ local exeOnLoad = function()
 					if obj.isplayer and obj:range()<=80
 						and _A.isthisahealer(obj)
 						and not obj:buffany("Bear Form")
-						and obj:caninterrupt()
-						and obj:isCastingAny()
-						and (obj:caststart()>=0.2 or obj:chanpercent()<=95)
 						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
 						and _A.notimmune(obj)
 						then
+						if (obj:caninterrupt()
+							and obj:isCastingAny()
+						and (obj:caststart()>=0.2 or obj:chanpercent()<=95))
+						or _Y.someoneisuperlow() then
 						temptable[#temptable+1] = {
 							OBJ = obj,
 							GUID = obj.guid,
 							range = obj:range()
 						}
+						end
 					end
 				end
 				if #temptable>1 then
@@ -1335,10 +1347,10 @@ affliction.rot = {
 						duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
 					}
 				end
-				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = {
+				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = { -- dictates who to copy dots from, doing all dots duration in a cascade like this is important (keeps soul swapping even if unstable affli drops)
 					obj = Obj,
 					isplayer = Obj.isplayer and 1 or 0,
-					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0 -- DEFAULT
+					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0 -- DEFAULT 
 					-- duration = Obj:DebuffDuration("Unstable Affliction") or 0
 				}
 			end -- end of enemy filter
