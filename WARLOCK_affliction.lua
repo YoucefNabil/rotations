@@ -19,7 +19,7 @@ local healerspecid = {
 	-- [266]="Lock Demono",
 	-- [267]="Lock Destro",
 	[105]="Druid Resto",
-	[102]="Druid Balance",
+	-- [102]="Druid Balance",
 	[270]="monk mistweaver",
 	[65]="Paladin Holy",
 	-- [66]="Paladin prot",
@@ -32,7 +32,7 @@ local healerspecid = {
 	-- [263]="Sham enh",
 	-- [62]="Mage Arcane",
 	-- [63]="Mage Fire",
-	[64]="Mage Frost",
+	-- [64]="Mage Frost",
 }
 local rootthisfuck = {
 	["Chi Torpedo"]=true,
