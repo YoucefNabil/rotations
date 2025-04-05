@@ -1174,7 +1174,7 @@ local exeOnLoad = function()
 						then
 						if 
 						(obj:caninterrupt() and obj:isCastingAny() and (obj:caststart()>=0.2 or obj:chanpercent()<=95))
-						-- or _Y.someoneisuperlow() 
+						or _Y.someoneisuperlow() 
 						then
 						temptable[#temptable+1] = {
 							OBJ = obj,
@@ -1322,9 +1322,9 @@ affliction.rot = {
 				and Obj:los() 
 				then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				-- if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then corruptiontbl[Obj.guid]=nil end
-				-- if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then agonytbl[Obj.guid]=nil end
-				-- if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then unstabletbl[Obj.guid]=nil end
+				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then corruptiontbl[Obj.guid]=nil end
+				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then agonytbl[Obj.guid]=nil end
+				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then unstabletbl[Obj.guid]=nil end
 				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
 					obj = Obj,
@@ -1952,7 +1952,7 @@ local inCombat = function()
 	if affliction.rot.petres()  then return true end
 	if not toggle("eye_demon") and affliction.rot.petres_supremacy3() then return true end
 	if toggle("eye_demon") and affliction.rot.petres_supremacy2() then return true end
-	if affliction.rot.summ_healthstone() then return true end
+	-- if affliction.rot.summ_healthstone() then return true end
 	if affliction.rot.CauterizeMaster()  then return true end
 	if affliction.rot.MortalCoil()  then return true end
 	if affliction.rot.twilightward()  then return true end
