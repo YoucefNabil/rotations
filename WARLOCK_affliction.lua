@@ -14,26 +14,6 @@ local enteredworldat
 local player
 local CallWowApi = _A.CallWowApi
 local affliction = {}
-local healerspecid = {
-	-- [265]="Lock Affli",
-	-- [266]="Lock Demono",
-	-- [267]="Lock Destro",
-	[105]="Druid Resto",
-	-- [102]="Druid Balance",
-	[270]="monk mistweaver",
-	[65]="Paladin Holy",
-	-- [66]="Paladin prot",
-	-- [70]="Paladin retri",
-	[257]="Priest Holy",
-	[256]="Priest discipline",
-	-- [258]="Priest shadow",
-	[264]="Sham Resto",
-	-- [262]="Sham Elem",
-	-- [263]="Sham enh",
-	-- [62]="Mage Arcane",
-	-- [63]="Mage Fire",
-	-- [64]="Mage Frost",
-}
 local rootthisfuck = {
 	["Chi Torpedo"]=true,
 	["Roll"]=true,
@@ -256,6 +236,26 @@ local ijustexhaledattime = 0
 local GUI = {
 }
 local exeOnLoad = function()
+local healerspecid = {
+	-- [265]="Lock Affli",
+	-- [266]="Lock Demono",
+	-- [267]="Lock Destro",
+	[105]="Druid Resto",
+	-- [102]="Druid Balance",
+	[270]="monk mistweaver",
+	[65]="Paladin Holy",
+	-- [66]="Paladin prot",
+	-- [70]="Paladin retri",
+	[257]="Priest Holy",
+	[256]="Priest discipline",
+	-- [258]="Priest shadow",
+	[264]="Sham Resto",
+	-- [262]="Sham Elem",
+	-- [263]="Sham enh",
+	-- [62]="Mage Arcane",
+	-- [63]="Mage Fire",
+	-- [64]="Mage Frost",
+}
 	_A.Interface:AddToggle({
 		key = "eye_demon", 
 		name = "Observer pet", 
@@ -586,32 +586,6 @@ local exeOnLoad = function()
 			end
 		end
 		return true
-	end
-	
-	function _A.someoneislow()
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if _A.isthishuman(Obj.guid) then
-				if Obj:Health()<65 then
-					if Obj:range()<40 then
-						return true
-					end
-				end
-			end
-		end
-		return false
-	end
-	
-	function _A.someoneisuperlow()
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if _A.isthishuman(Obj.guid) then
-				if Obj:Health()<35 then
-					if Obj:range()<40 then
-						return true
-					end
-				end
-			end
-		end
-		return false
 	end
 	
 	function _A.ceeceed(unit)
