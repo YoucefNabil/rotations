@@ -236,26 +236,26 @@ local ijustexhaledattime = 0
 local GUI = {
 }
 local exeOnLoad = function()
-local healerspecid = {
-	-- [265]="Lock Affli",
-	-- [266]="Lock Demono",
-	-- [267]="Lock Destro",
-	[105]="Druid Resto",
-	-- [102]="Druid Balance",
-	[270]="monk mistweaver",
-	[65]="Paladin Holy",
-	-- [66]="Paladin prot",
-	-- [70]="Paladin retri",
-	[257]="Priest Holy",
-	[256]="Priest discipline",
-	-- [258]="Priest shadow",
-	[264]="Sham Resto",
-	-- [262]="Sham Elem",
-	-- [263]="Sham enh",
-	-- [62]="Mage Arcane",
-	-- [63]="Mage Fire",
-	-- [64]="Mage Frost",
-}
+	local healerspecid = {
+		-- [265]="Lock Affli",
+		-- [266]="Lock Demono",
+		-- [267]="Lock Destro",
+		[105]="Druid Resto",
+		-- [102]="Druid Balance",
+		[270]="monk mistweaver",
+		[65]="Paladin Holy",
+		-- [66]="Paladin prot",
+		-- [70]="Paladin retri",
+		[257]="Priest Holy",
+		[256]="Priest discipline",
+		-- [258]="Priest shadow",
+		[264]="Sham Resto",
+		-- [262]="Sham Elem",
+		-- [263]="Sham enh",
+		-- [62]="Mage Arcane",
+		-- [63]="Mage Fire",
+		-- [64]="Mage Frost",
+	}
 	_A.Interface:AddToggle({
 		key = "eye_demon", 
 		name = "Observer pet", 
@@ -267,6 +267,12 @@ local healerspecid = {
 		name = "Do not dot or dps ccd healers", 
 		text = "so to not break their cc, useful with hunters and stuff",
 		icon = select(3,GetSpellInfo(5782)),
+	})
+	_A.Interface:AddToggle({
+		key = "petchasetarget", 
+		name = "send pet to target", 
+		text = "ON : pet goes to target if exists OFF : pet always goes to lowest enemy within 40y",
+		icon = select(3,GetSpellInfo(108482)),
 	})
 	_A.pull_location = pull_location()
 	Listener:Add("Entering_timerPLZ", "PLAYER_ENTERING_WORLD", function(event)
@@ -1069,8 +1075,8 @@ local healerspecid = {
 		if pet and not pet:alive() then return end
 		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
 		--
-		if target and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
-			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") and pet:losFrom(target) then
+		if toggle("petchasetarget") and target and target:enemy() and target:exists() and target:alive() and _A.notimmune(target)
+			and not target:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep") then
 			return target and target.guid -- this is good
 		end
 		local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
@@ -1126,14 +1132,14 @@ local healerspecid = {
 						and _A.notimmune(obj)
 						then
 						if 
-						(obj:caninterrupt() and obj:isCastingAny() and (obj:caststart()>=0.2 or obj:chanpercent()<=95))
-						or _Y.someoneisuperlow() 
-						then
-						temptable[#temptable+1] = {
-							OBJ = obj,
-							GUID = obj.guid,
-							range = obj:range()
-						}
+							(obj:caninterrupt() and obj:isCastingAny() and (obj:caststart()>=0.15 or obj:chanpercent()<=92))
+							or _Y.someoneisuperlow() 
+							then
+							temptable[#temptable+1] = {
+								OBJ = obj,
+								GUID = obj.guid,
+								range = obj:range()
+							}
 						end
 					end
 				end
@@ -1144,7 +1150,7 @@ local healerspecid = {
 					if pet
 						and pet:rangefrom(temptable[1].OBJ)<=20
 						and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5
-						-- and pet:losfrom(temptable[1].OBJ)
+						and pet:losfrom(temptable[1].OBJ)
 						then 
 						_A.CastSpellByName("Optical Blast(Special Ability)", temptable[1].GUID)
 						return true
@@ -1171,7 +1177,7 @@ local healerspecid = {
 				then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer and obj:range()<=80
-						and not healerspecid[obj:spec()]
+						and not _A.isthisahealer(obj)
 						and not obj:buffany("Bear Form")
 						and obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance")
 						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
@@ -1271,7 +1277,7 @@ affliction.rot = {
 		_A.temptabletblexhale = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and not Obj:charmed()
-				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not _A.isthisahealer(Obj)) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() 
 				then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
@@ -1679,9 +1685,11 @@ affliction.rot = {
 		if #_A.temptabletbl>1 then
 			table.sort(_A.temptabletbl, function(a,b)
 				if 	
-					a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
-					elseif 
 					a.score ~= b.score then return a.score > b.score
+					-- elseif 
+					-- a.range ~= b.range then return a.range < b.range
+					-- a.health ~= b.health then return a.health > b.health
+					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return 
 					a.range < b.range
 				end
@@ -1697,9 +1705,11 @@ affliction.rot = {
 		if #_A.temptabletbl>1 then
 			table.sort(_A.temptabletbl, function(a,b)
 				if 	
-					a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
-					elseif 
 					a.score ~= b.score then return a.score > b.score
+					-- elseif 
+					-- a.range ~= b.range then return a.range < b.range
+					-- a.health ~= b.health then return a.health > b.health
+					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return 
 					a.range < b.range
 				end
@@ -1714,9 +1724,11 @@ affliction.rot = {
 		if #_A.temptabletbl>1 then
 			table.sort(_A.temptabletbl, function(a,b)
 				if 	
-					a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
-					elseif 
 					a.score ~= b.score then return a.score > b.score
+					-- elseif 
+					-- a.range ~= b.range then return a.range < b.range
+					-- a.health ~= b.health then return a.health > b.health
+					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return 
 					a.range < b.range
 				end
@@ -1752,9 +1764,11 @@ affliction.rot = {
 		if #_A.temptabletbl>1 then
 			table.sort(_A.temptabletbl, function(a,b)
 				if 	
-					a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
-					elseif 
 					a.score ~= b.score then return a.score > b.score
+					-- elseif 
+					-- a.range ~= b.range then return a.range < b.range
+					-- a.health ~= b.health then return a.health > b.health
+					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return 
 					a.range < b.range
 				end
@@ -1875,10 +1889,12 @@ local inCombat = function()
 	if not player then return end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 1 then return true end
+	if player:Mounted() then return true end
+	--
 	affliction.rot.caching()
 	_Y.petengine_affli()
-	if player:Mounted() then return true end
 	affliction.rot.stop_chan_on_dead()
+	--
 	-- CTRL MODE (Beams)
 	if _A.modifier_ctrl() then
 		if affliction.rot.drainsoul() then return true end
@@ -1935,9 +1951,6 @@ local inCombat = function()
 	if affliction.rot.grasp()  then return true end
 	if affliction.rot.felflame() then return true end
 end 
-local outCombat = function()
-	return inCombat()
-end
 local spellIds_Loc = function()
 end
 local blacklist = function()
@@ -1945,7 +1958,7 @@ end
 _A.CR:Add(265, {
 	name = "Youcef's Affliction",
 	ic = inCombat,
-	ooc = outCombat,
+	ooc = inCombat,
 	use_lua_engine = true,
 	gui = GUI,
 	gui_st = {title="CR Settings", color="87CEFA", width="315", height="370"},
