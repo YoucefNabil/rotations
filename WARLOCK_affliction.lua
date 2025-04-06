@@ -274,6 +274,18 @@ local exeOnLoad = function()
 		text = "ON : pet goes to target if exists OFF : pet always goes to lowest enemy within 40y",
 		icon = select(3,GetSpellInfo(108482)),
 	})
+	_A.Interface:AddToggle({
+		key = "ccheals", 
+		name = "focus your stun talent on heals", 
+		text = "ON : CCs heals only OFF : CCs anyone",
+		icon = select(3,GetSpellInfo(1120)),
+	})
+	_A.Interface:AddToggle({
+		key = "exhaleplayers", 
+		name = "exhale players only", 
+		text = "ON : exhale players only as a prio OFF : exhale everything",
+		icon = select(3,GetSpellInfo(74434)),
+	})
 	_A.pull_location = pull_location()
 	Listener:Add("Entering_timerPLZ", "PLAYER_ENTERING_WORLD", function(event)
 		enteredworldat = _A.GetTime()
@@ -313,7 +325,7 @@ local exeOnLoad = function()
 		local slot, target, clickType = ...
 		local Type, id, subType, spellID
 		--print(slot)
-		player = Object("player")
+		local player = Object("player")
 		if player then
 			-- print(slot)
 			if slot ~= _A.STARTSLOT and slot ~= _A.STOPSLOT and clickType~=nil
@@ -381,7 +393,7 @@ local exeOnLoad = function()
 	-------------------------------------------------------
 	-------------------------------------------------------
 	function _A.IsPStr() --temporary method to get strafing.
-		player = Object("player")
+		local player = Object("player")
 		local isMoving = player:Moving()
 		local moveLeft = _A.IsKeyDown("a")
 		local moveRight = _A.IsKeyDown("z")
@@ -394,7 +406,7 @@ local exeOnLoad = function()
 		end
 	end
 	function _A.pSpeed(unit, maxDistance)
-		player = Object("player")
+		local player = Object("player")
 		local x, y, z = _A.ObjectPosition(unit)
 		local facing = _A.ObjectFacing(unit)
 		local speed = _A.GetUnitSpeed(unit)
@@ -422,7 +434,7 @@ local exeOnLoad = function()
 		return newX, newY, z
 	end
 	function _A.CastPredictedPos(unit, spell, distance)
-		player = Object("player")
+		local player = Object("player")
 		local px, py, pz = _A.pSpeed(unit, distance)
 		_A.CastSpellByName(spell)
 		if player:SpellIsTargeting() then
@@ -935,7 +947,7 @@ local exeOnLoad = function()
 	_A.Listener:Add("EXITING_VEHICLE", "UNIT_EXITING_VEHICLE", function(event, arg1)
 		if arg1=="player" then
 			_Y.exitedvehicleat = GetTime()
-			print(event, arg1)
+			-- print(event, arg1)
 		end
 	end)
 	-- Soul Swap
@@ -1400,7 +1412,7 @@ affliction.rot = {
 	--============================================
 	activetrinket = function()
 		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-		if _Y.proc_check() and lowest then
+		if _Y.proc_check() and lowest and not player:state("silence || disarm") then
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -1469,8 +1481,9 @@ affliction.rot = {
 					or not _A.HasPetUI()
 					or (petobj and petobj~="Fizrik")
 					then 
-					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:SpellCooldown(74434)==0 and _A.shards>=1 )
 						then player:cast(74434) -- shadowburn
+						return player:cast(112866)
 					end	
 					if player:buff(74434) or ( not player:moving() ) then
 						return player:cast(112866)
@@ -1492,6 +1505,7 @@ affliction.rot = {
 					then 
 					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
+						return player:cast(112869)
 					end	
 					if player:buff(74434) or ( not player:moving() ) then
 						return player:cast(112869)
@@ -1513,6 +1527,7 @@ affliction.rot = {
 					then 
 					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
+						return player:cast(112867)
 					end	
 					if player:buff(74434) or ( not player:moving() ) then
 						return player:cast(112867)
@@ -1627,9 +1642,11 @@ affliction.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=30
 					and obj:infront()
+					and (not toggle("ccheals") or toggle("ccheals") and _A.isthisahealer(obj))
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
 					and (obj:drState("Shadowfury") == 1 or obj:drState("Shadowfury") == -1)
 					and _A.notimmune(obj)
+					and not obj:immune("stun")
 					and obj:los() then
 					return _A.clickcastv2(obj, "Shadowfury")
 				end
@@ -1753,6 +1770,7 @@ affliction.rot = {
 			--
 			if  _A.shards>=1 and not player:buff(74434) and player:SpellCooldown(74434)==0  and not IsCurrentSpell(74434)--or player:buff("Shadow Trance")
 				then player:cast(74434) -- shadowburn
+				return _A.temptabletbl[1].obj:Cast(119678)
 			end
 			if player:buff(74434) then
 				return _A.temptabletbl[1].obj:Cast(119678)
@@ -1851,11 +1869,12 @@ affliction.rot = {
 			if #_A.temptabletblexhale > 1 then
 				table.sort(_A.temptabletblexhale, function(a,b)
 					if 	
-						a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- by default comes second
-						elseif 
+						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- by default comes second
+						elseif
 						a.duration ~= b.duration then return a.duration < b.duration
-						else return
-						a.health > b.health
+						--elseif
+						-- else return
+						-- a.health > b.health
 					end
 				end)
 				
