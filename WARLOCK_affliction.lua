@@ -1148,7 +1148,7 @@ local exeOnLoad = function()
 				end
 				if temptable[1] then 
 					if pet
-						and pet:rangefrom(temptable[1].OBJ)<=20
+						and pet:rangefrom(temptable[1].OBJ)<=40
 						and temptable[1].OBJ:stateduration("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")<1.5
 						and pet:losfrom(temptable[1].OBJ)
 						then 
