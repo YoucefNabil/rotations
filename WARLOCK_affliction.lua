@@ -1107,7 +1107,7 @@ local exeOnLoad = function()
 					elseif _A.UnitTarget(_A.PetGUID) and _A.UnitTarget(_A.PetGUID)==target.guid then
 					local pet = Object("pet")
 					-- XELETH SECTION
-					if pet and pet.name == "Xeleth" then
+					if pet and UnitCreatureFamily("pet") == "Observer" then
 						-- purge
 						if target:bufftype("Magic") and target:rangefrom(pet)<=30 and pet:losfrom(target) and UnitPower("pet")>=40 and player:spellcooldown("Clone Magic(Special Ability)")<1.5 then 
 						_A.CastSpellByName("Clone Magic(Special Ability)", target.guid) end
@@ -1133,7 +1133,7 @@ local exeOnLoad = function()
 		local pet = Object("pet")
 		local temptable = {}
 		local pettargetguid = _A.UnitTarget("pet") or nil
-		if pet and pet.name == "Xeleth" then
+		if pet and UnitCreatureFamily("pet") == "Observer" then
 			if player:SpellCooldown("Optical Blast(Special Ability)")==0 and UnitPower("pet")>=20
 				then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -1184,7 +1184,7 @@ local exeOnLoad = function()
 		local pet = Object("pet")
 		local temptable = {}
 		local pettargetguid = _A.UnitTarget("pet") or nil
-		if pet and pet.name == "Korronix" then
+		if pet and UnitCreatureFamily("pet") == "Voidlord" then
 			if player:SpellCooldown("Disarm(Special Ability)")==0 and UnitPower("pet")>=30
 				then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -1279,9 +1279,8 @@ affliction.rot = {
 	end,
 	
 	caching= function()
-		_A.reflectcheck = false
-		_A.shards = _A.UnitPower("player", 7)
-		_A.pull_location = pull_location()
+		-- _A.reflectcheck = false
+		_A.shards = player:SoulShards()
 		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
 		-- snapshot engine
 		_A.temptabletbl = {}
@@ -1325,15 +1324,26 @@ affliction.rot = {
 					-- duration = Obj:DebuffDuration("Unstable Affliction") or 0
 				}
 			end -- end of enemy filter
-			if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
-				_A.reflectcheck = true
-			end
+			-- if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
+			-- _A.reflectcheck = true
+			-- end
 		end -- end of iteration
 		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 	end,
 	
 	
-	
+	everyman = function()
+		if _A.pull_location ~= "arena" and not player:debuffany("Solar Beam") then
+			if player:BuffAny(86211) and player:state("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") then
+				if player:health()>=60 and player:talent("Unbound Will") and player:SpellCooldown("Unbound Will") == 0 and not player:IsCurrentSpell(108482)  then 
+					return player:cast("Unbound Will")
+				end
+				if player:SpellCooldown("Every Man for Himself") == 0 and not player:IsCurrentSpell(59752)  then 
+					return player:cast("Every Man for Himself")
+				end
+			end
+		end
+	end,
 	
 	
 	-- snare_curse = function() -- rework this
@@ -1474,12 +1484,12 @@ affliction.rot = {
 	petres_supremacy = function()
 		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
 			if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112866)<.3 and _A.castdelay(112866, 1.5) and not player:iscasting(112866) and _A.enoughmana(112866)  then
-				local petobj = UnitName("pet")
+				local petobj = UnitCreatureFamily("pet")
 				if 
 					not _A.UnitExists("pet")
 					or _A.UnitIsDeadOrGhost("pet")
 					or not _A.HasPetUI()
-					or (petobj and petobj~="Fizrik")
+					or (petobj and petobj~="Fel Imp")
 					then 
 					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:SpellCooldown(74434)==0 and _A.shards>=1 )
 						then player:cast(74434) -- shadowburn
@@ -1496,12 +1506,12 @@ affliction.rot = {
 	petres_supremacy2 = function()
 		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
 			if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112869)<.3 and _A.castdelay(112869, 1.5) and not player:iscasting(112869) and _A.enoughmana(112869)  then
-				local petobj = UnitName("pet") 
+				local petobj = UnitCreatureFamily("pet")
 				if 
 					not _A.UnitExists("pet")
 					or _A.UnitIsDeadOrGhost("pet")
 					or not _A.HasPetUI()
-					or (petobj and petobj~="Xeleth")
+					or (petobj and petobj~="Observer")
 					then 
 					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
@@ -1518,12 +1528,12 @@ affliction.rot = {
 	petres_supremacy3 = function()
 		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
 			if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112867)<.3 and _A.castdelay(112867, 1.5) and not player:iscasting(112867) and _A.enoughmana(112867)  then
-				local petobj = UnitName("pet") 
+				local petobj = UnitCreatureFamily("pet") 
 				if 
 					not _A.UnitExists("pet")
 					or _A.UnitIsDeadOrGhost("pet")
 					or not _A.HasPetUI()
-					or (petobj and petobj~="Korronix")
+					or (petobj and petobj~="Voidlord")
 					then 
 					if (not player:buff(74434) and not IsCurrentSpell(74434) and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
@@ -1908,11 +1918,11 @@ local inCombat = function()
 	if not player then return end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 1 then return true end
-	if player:Mounted() then return true end
-	--
 	affliction.rot.caching()
 	_Y.petengine_affli()
 	affliction.rot.stop_chan_on_dead()
+	if player:Mounted() then return true end
+	--
 	--
 	-- CTRL MODE (Beams)
 	if _A.modifier_ctrl() then
@@ -1923,6 +1933,7 @@ local inCombat = function()
 	if modifier_shift()==true then
 		if affliction.rot.haunt()  then return true end
 	end
+	if affliction.rot.everyman() then return true end
 	--bursts
 	affliction.rot.activetrinket()
 	--HEALS

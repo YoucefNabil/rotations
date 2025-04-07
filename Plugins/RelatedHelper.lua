@@ -1,4 +1,5 @@
 local mediaPath, _A, _R = ...
+local DSL = function(api) return _A.DSL:Get(api) end
 C_Timer = _A.C_Timer
 local player
 local Object = _A.Object
@@ -71,7 +72,7 @@ _A.BUTTONHOOK_RELATED = nil
 C_Timer.NewTicker(1, function() 
 	player = Object("player")
 	if player then _A.BUTTONHOOK_RELATED = RelatedHelper_GUI:F("hook_ActionBars")
-	-- print(RelatedHelper_GUI:F("hook_ActionBars"))
+		-- print(RelatedHelper_GUI:F("hook_ActionBars"))
 	end
 end, false, "updatevar")	
 
@@ -448,14 +449,14 @@ local function AutoAcceptLFG()
         if not player then return end
         -- Add flag clicking functionality
         ClickPVPFlags()
-        if RelatedHelper_GUI:F("enable_autoleave") then
-            local battlefieldstatus = GetBattlefieldWinner()
-            if battlefieldstatus ~= nil then
-                if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
-                    _A.FlashWow()
-				end
-                LeaveBattlefield()
+		local battlefieldstatus = GetBattlefieldWinner()
+		if battlefieldstatus ~= nil then
+			if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
+				_A.FlashWow()
 			end
+			if RelatedHelper_GUI:F("enable_autoleave") then 
+				if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then _A.Interface:toggleToggle("mastertoggle", false) end
+			LeaveBattlefield() end
 		end
 	end
     C_Timer.NewTicker(0.1, CheckBattlefieldLeave, false, "clickpvp")
@@ -464,22 +465,27 @@ local function AutoAcceptLFG()
         if not _A.Cache.Utils.PlayerInGame then return end
         local player = Object("player")
         if not player then return end
-        if not RelatedHelper_GUI:F("enable_autoaccept") then return end
+        -- if not RelatedHelper_GUI:F("enable_autoaccept") then return end
         C_Timer.After(RelatedHelper_GUI:F("bg_delay_spin"), function()
             if evt == "LFG_PROPOSAL_SHOW" then
                 if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
                     _A.FlashWow()
 				end
-                _A.AcceptProposal()
+				if RelatedHelper_GUI:F("enable_autoaccept") then 
+					if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then _A.Interface:toggleToggle("mastertoggle", false) end
+				_A.AcceptProposal() end
 				else
                 for i = 1, 3 do
                     local status, _, _ = _A.GetBattlefieldStatus(i)
                     if status == "confirm" then
                         if RelatedHelper_GUI:F("enable_flashwow") and not _A.IsForeground() then
-                            _A.FlashWow()
+							_A.FlashWow()
 						end
-                        _A.CallWowApi("AcceptBattlefieldPort", i, 1)
-                        _A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
+						if RelatedHelper_GUI:F("enable_autoaccept") then
+							if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then _A.Interface:toggleToggle("mastertoggle", false) end
+							_A.CallWowApi("AcceptBattlefieldPort", i, 1)
+							_A.StaticPopup_Hide("CONFIRM_BATTLEFIELD_ENTRY")
+						end
 					end
 				end
 			end
