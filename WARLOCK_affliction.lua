@@ -212,6 +212,10 @@ local corruptiontbl = {}
 local agonytbl = {}
 local unstabletbl = {}
 local seeds = {}
+local swap_seeds = {}
+local swap_unstabletbl = {}
+local swap_agonytbl = {}
+local swap_corruptiontbl = {}
 local soulswaporigin = nil
 local ijustsoulswapped = false
 local ijustsoulswappedattime = 0
@@ -936,7 +940,8 @@ local exeOnLoad = function()
 			end
 			-------------- dots part
 			if (idd==146739) or (idd==172) then -- Corruption
-				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				-- if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				if subevent =="SPELL_CAST_SUCCESS"
 					then
 					corruptiontbl[guiddest]=_A.myscore() 
 				end
@@ -946,7 +951,8 @@ local exeOnLoad = function()
 				end
 			end
 			if (idd==980) then -- AGONY
-				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				-- if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				if subevent =="SPELL_CAST_SUCCESS"
 					then
 					agonytbl[guiddest]=_A.myscore()
 				end
@@ -956,7 +962,8 @@ local exeOnLoad = function()
 				end
 			end
 			if (idd==30108) then -- Unstable Affli
-				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				-- if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				if subevent =="SPELL_CAST_SUCCESS"
 					then
 					unstabletbl[guiddest]=_A.myscore() 
 				end
@@ -966,7 +973,8 @@ local exeOnLoad = function()
 				end
 			end
 			if (idd==27243) then -- seed of corruption
-				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				-- if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				if subevent =="SPELL_CAST_SUCCESS"
 					then
 					seeds[guiddest]=_A.myscore() 
 				end
@@ -976,7 +984,8 @@ local exeOnLoad = function()
 				end
 			end
 			if (idd==119678) then -- Soulburn soul swap (applies all three)
-				if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				-- if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
+				if subevent =="SPELL_CAST_SUCCESS"
 					then
 					corruptiontbl[guiddest]=_A.myscore() 
 					unstabletbl[guiddest]=_A.myscore() 
@@ -1000,24 +1009,48 @@ local exeOnLoad = function()
 			-- print(event, arg1)
 		end
 	end)
+	local soulswaptimer = nil
 	-- Soul Swap
 	_A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
 		if guidsrc == UnitGUID("player") then -- only filter by me
-			if subevent =="SPELL_CAST_SUCCESS" then
+			if subevent =="SPELL_CAST_SUCCESS" then -- accuracy needs to improve
 				if idd==86121 then -- Soul Swap 86213
 					soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
 					ijustsoulswapped = true
 					ijustsoulswappedattime = GetTime() -- time at which I used soulswap
+					swap_unstabletbl[guiddest]=unstabletbl[guiddest]
+					swap_agonytbl[guiddest]=agonytbl[guiddest]
+					swap_corruptiontbl[guiddest]=corruptiontbl[guiddest]
+					swap_seeds[guiddest]=seeds[guiddest]
+					-- print(swap_unstabletbl[guiddest], swap_corruptiontbl[guiddest], swap_agonytbl[guiddest])
+					soulswaptimer = C_Timer.NewTimer(3, function()
+						if swap_unstabletbl[guiddest] then swap_unstabletbl[guiddest]=nil end
+						if swap_agonytbl[guiddest] then swap_agonytbl[guiddest]=nil end
+						if swap_corruptiontbl[guiddest] then swap_corruptiontbl[guiddest]=nil end
+						if swap_seeds[guiddest] then swap_seeds[guiddest]=nil end
+						if soulswaporigin then soulswaporigin = nil end
+						if ijustsoulswapped then ijustsoulswapped=false end
+						print("HEEEEEEEEEY")
+					end)
 				end
 				if idd==86213 then -- exhale
-					unstabletbl[guiddest]=unstabletbl[soulswaporigin]
-					agonytbl[guiddest]=agonytbl[soulswaporigin]
-					corruptiontbl[guiddest]=corruptiontbl[soulswaporigin]
-					seeds[guiddest]=seeds[soulswaporigin]
+					soulswaptimer:Cancel()
+					unstabletbl[guiddest] = swap_unstabletbl[soulswaporigin]
+					agonytbl[guiddest] = swap_agonytbl[soulswaporigin]
+					corruptiontbl[guiddest] = swap_corruptiontbl[soulswaporigin]
+					seeds[guiddest]=swap_seeds[soulswaporigin]
+					print(unstabletbl[guiddest], agonytbl[guiddest], corruptiontbl[guiddest])
 					ijustsoulswapped = false
 					ijustexhaled = true
 					ijustexhaledattime = _A.GetTime()
 					soulswaporigin = nil -- remove after 3 seconds or after exhaling
+					swap_unstabletbl[guiddest]=nil
+					swap_agonytbl[guiddest]=nil
+					swap_corruptiontbl[guiddest]=nil
+					swap_seeds[guiddest]=nil
+					C_Timer.After(.3, function()
+						if ijustexhaled then ijustexhaled =  false end
+					end)
 				end
 			end
 		end
@@ -1320,22 +1353,6 @@ local exeOnLoad = function()
 		if petfollow() then return end
 	end
 end
-local timerframe = CreateFrame("Frame")
-local timerframeinterval = 0.1 -- default
-timerframe.TimeSinceLastUpdate2 = 0
-timerframe:SetScript("OnUpdate", function(self,elapsed)
-	self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 + elapsed;
-	if self.TimeSinceLastUpdate2 >= timerframeinterval then
-		if ijustsoulswapped == true and GetTime()-ijustsoulswappedattime>=3 then
-			soulswaporigin = nil
-			ijustsoulswapped=false -- so I wouldn't overwrite stats wrongfully
-		end
-		if ijustexhaled == true and GetTime() - ijustexhaledattime >= .3 then
-			ijustexhaled = false
-		end
-		self.TimeSinceLastUpdate2 = self.TimeSinceLastUpdate2 - timerframeinterval
-	end
-end)
 local exeOnUnload = function()
 	Listener:Remove("Entering_timerPLZ")
 	Listener:Remove("lock_cleantbls")
