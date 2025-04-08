@@ -1705,6 +1705,7 @@ affliction.rot = {
 		if soulswaporigin ~= nil -- only lifetap when you can exhale, you benefit from exhaling late since you save the stats (including duration) the moment you soulswap (not when you exhale)
 			and player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
+			and player:BuffDuration("Soul Swap")>=player:gcd()
 			and player:Mana()<=80
 			and (_A.castdelay(1454, 35) or player:Mana()<=12)  -- 35sec delay
 			then
@@ -1787,12 +1788,12 @@ affliction.rot = {
 			table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
-					-- elseif 
+					elseif 
 					-- a.range ~= b.range then return a.range < b.range
-					-- a.health ~= b.health then return a.health > b.health
+					a.health ~= b.health then return a.health > b.health
 					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
-					else return 
-					a.range < b.range
+					-- else return 
+					-- a.range < b.range
 				end
 			end)
 		end
@@ -1807,12 +1808,12 @@ affliction.rot = {
 			table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
-					-- elseif 
+					elseif 
 					-- a.range ~= b.range then return a.range < b.range
-					-- a.health ~= b.health then return a.health > b.health
+					a.health ~= b.health then return a.health > b.health
 					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
-					else return 
-					a.range < b.range
+					-- else return 
+					-- a.range < b.range
 				end
 			end)
 		end
@@ -1826,12 +1827,12 @@ affliction.rot = {
 			table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
-					-- elseif 
+					elseif 
 					-- a.range ~= b.range then return a.range < b.range
-					-- a.health ~= b.health then return a.health > b.health
+					a.health ~= b.health then return a.health > b.health
 					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
-					else return 
-					a.range < b.range
+					-- else return 
+					-- a.range < b.range
 				end
 			end)
 		end
@@ -1867,12 +1868,12 @@ affliction.rot = {
 			table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
-					-- elseif 
+					elseif 
 					-- a.range ~= b.range then return a.range < b.range
-					-- a.health ~= b.health then return a.health > b.health
+					a.health ~= b.health then return a.health > b.health
 					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
-					else return 
-					a.range < b.range
+					-- else return 
+					-- a.range < b.range
 				end
 			end)
 		end
@@ -1963,10 +1964,10 @@ affliction.rot = {
 				table.sort(_A.temptabletblexhale, function(a,b)
 					if 	
 						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- by default comes second
-						-- elseif
-						-- a.duration ~= b.duration then return a.duration < b.duration -- DEFAULT
-						else return
-						a.health > b.health  -- NEW
+						elseif
+						a.duration ~= b.duration then return a.duration < b.duration -- DEFAULT
+						-- else return
+						-- a.health > b.health  -- NEW
 					end
 				end)
 				
