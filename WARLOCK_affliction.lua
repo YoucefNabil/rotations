@@ -1397,7 +1397,8 @@ affliction.rot = {
 					obj = Obj,
 					isplayer = Obj.isplayer and 1 or 0,
 					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0, -- DEFAULT 
-					durationSEED = Obj:DebuffDuration("Corruption") or 0, -- DEFAULT 
+					-- durationSEED = Obj:DebuffDuration("Corruption") or 0, -- DEFAULT 
+					durationSEED = Obj:DebuffDuration("Seed of Corruption") or 0, -- DEFAULT 
 				}
 			end -- end of enemy filter
 			-- if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
@@ -1824,6 +1825,25 @@ affliction.rot = {
 				end
 			end)
 		end
+		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+		if _Y.proc_check() and lowest and not player:state("silence || disarm") then
+			for i=1, #usableitems do
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and (player:spellcooldown("Mannoroth's Fury")==0 or not player:talent("Mannoroth's Fury")) then 
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not IsCurrentSpell(113860) then
+								player:cast("Lifeblood") -- 2 min
+								player:useitem("Potion of the Jade Serpent") -- 3min
+								player:cast("Dark Soul: Misery") -- 2min x2
+								else
+								player:cast(108508)
+								_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i]))) --1min
+							end
+						end
+					end
+				end
+			end
+		end
 		if _A.temptabletbl[1] and _A.enoughmana(172)  then 
 			if _A.myscore()>_A.temptabletbl[1].corruptionscore then return _A.temptabletbl[1].obj:Cast("Corruption")
 			end
@@ -1844,7 +1864,70 @@ affliction.rot = {
 				end
 			end)
 		end
-		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not player:buff(74434) and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") then
+		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+		if _Y.proc_check() and lowest and not player:state("silence || disarm") then
+			for i=1, #usableitems do
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and (player:spellcooldown("Mannoroth's Fury")==0 or not player:talent("Mannoroth's Fury")) then 
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not IsCurrentSpell(113860) then
+								player:cast("Lifeblood") -- 2 min
+								player:useitem("Potion of the Jade Serpent") -- 3min
+								player:cast("Dark Soul: Misery") -- 2min x2
+								else
+								player:cast(108508)
+								_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i]))) --1min
+							end
+						end
+					end
+				end
+			end
+		end
+		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not player:buff(74434) 
+		-- and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") 
+		then
+			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not player:IsCurrentSpell(108508) then player:cast(108508) end
+			return _A.temptabletbl[1].obj:cast("Seed of Corruption")
+		end
+	end,
+	
+	SneedofcorruptionHIGHPRIO = function()
+		if #_A.temptabletbl>1 then
+			table.sort(_A.temptabletbl, function(a,b)
+				if 	
+					a.corruptionscore ~= b.corruptionscore then return a.corruptionscore > b.corruptionscore
+					elseif 
+					-- a.range ~= b.range then return a.range < b.range
+					a.health ~= b.health then return a.health > b.health
+					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					-- else return 
+					-- a.range < b.range
+				end
+			end)
+		end
+		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+		if _Y.proc_check() and lowest and not player:state("silence || disarm") then
+			for i=1, #usableitems do
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and (player:spellcooldown("Mannoroth's Fury")==0 or not player:talent("Mannoroth's Fury")) then 
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not IsCurrentSpell(113860) then
+								player:cast("Lifeblood") -- 2 min
+								player:useitem("Potion of the Jade Serpent") -- 3min
+								player:cast("Dark Soul: Misery") -- 2min x2
+								else
+								player:cast(108508)
+								_A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i]))) --1min
+							end
+						end
+					end
+				end
+			end
+		end
+		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not player:buff(74434) 
+		and player:buff("Mannoroth's Fury") and _A.castdelay(27243, 12)
+		-- and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") 
+		then
 			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not player:IsCurrentSpell(108508) then player:cast(108508) end
 			return _A.temptabletbl[1].obj:cast("Seed of Corruption")
 		end
@@ -2076,7 +2159,6 @@ local inCombat = function()
 	end
 	if affliction.rot.everyman() then return true end
 	--bursts
-	-- affliction.rot.activetrinket()
 	-- shift mode (haunt)
 	--HEALS
 	affliction.rot.Darkregeneration()
@@ -2091,10 +2173,12 @@ local inCombat = function()
 		-- if affliction.rot.haunt()  then return true end
 		if affliction.rot.exhaleoptiSEED() then return true end
 		if affliction.rot.corruptionsSEED() then return true end
+		if affliction.rot.SneedofcorruptionHIGHPRIO() then return true end
 		if affliction.rot.soulswapoptiSEED() then return true end
 		if affliction.rot.Sneedofcorruption() then return true end
 		return true
 	end
+	affliction.rot.activetrinket()
 	if affliction.rot.exhaleopti()  then return true end
 	--stuff
 	if affliction.rot.Buffbuff()  then return true end
