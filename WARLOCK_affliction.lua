@@ -658,6 +658,34 @@ local exeOnLoad = function()
 		return tempTable[num] and tempTable[num].guid
 	end)
 	
+	_Y.seedtarget = {}
+	
+	Listener:Add("seedtargets", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+		if guidsrc == UnitGUID("player") then
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				_A.casttimers[spell_name(idd)] = _A.GetTime()
+				if spell_name(idd) == "Seed of Corruption"  then
+				-- print("HEY")
+					if not _Y.seedtarget[guiddest] then _Y.seedtarget[guiddest]=true end
+					C_Timer.After(5, function()
+						if _Y.seedtarget[guiddest] then
+							-- print("DELETE")
+							_Y.seedtarget[guiddest]=nil
+						end
+					end)
+				end
+			end
+			if subevent == "SPELL_AURA_APPLIED" then 
+				if spell_name(idd) == "Seed of Corruption" then
+					if _Y.seedtarget[guiddest] then
+						-- print("DELETE")
+						_Y.seedtarget[guiddest]=nil
+					end
+				end
+			end
+		end
+	end)
+	
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
@@ -681,6 +709,24 @@ local exeOnLoad = function()
 			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		return tempTable[num] and tempTable[num].guid
+	end
+	)
+	_A.FakeUnits:Add('lowestEnemyInSpellRangeSEED', function(num, spell)
+		local tempTable = {}
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj.isplayer and Obj:spellRange(spell) and _A.notimmune(Obj) and not Obj:Debuff("Seed of Corruption") and not _Y.seedtarget[Obj.guid] and Obj:Debuff("Unstable Affliction || Corruption || Agony")
+				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+				and Obj:los() then
+				tempTable[#tempTable+1] = {
+					guid = Obj.guid,
+					numtangos = Obj:AreaEnemies(10),
+				}
+			end
+		end
+		if #tempTable>1 then
+			table.sort( tempTable, function(a,b) return a.numtangos > b.numtangos end )
+		end
+		return tempTable[num] and tempTable[num].guid or nil
 	end
 	)
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
@@ -1293,6 +1339,7 @@ local exeOnUnload = function()
 	Listener:Remove("soulswaprelated")
 	Listener:Remove("delaycasts")
 	Listener:Remove("dotstables")
+	Listener:Remove("seedtargets")
 end
 local FLAGS = {["Horde Flag"] = true, ["Alliance Flag"] = true, ["Alliance Mine Cart"] = true, ["Horde Mine Cart"] = true, ["Huge Seaforium Bombs"] = true,}
 local usableitems= { -- item slots
@@ -1365,7 +1412,7 @@ affliction.rot = {
 					return player:cast("Unbound Will")
 				end
 				if player:SpellCooldown("Every Man for Himself") == 0 and not player:IsCurrentSpell(59752) 
-				and ((player:talent("Unbound Will") and player:SpellCooldown("Unbound Will") > 0 and player:SpellCooldown("Unbound Will") < 58) or not player:talent("Unbound Will"))   then 
+					and ((player:talent("Unbound Will") and player:SpellCooldown("Unbound Will") > 0 and player:SpellCooldown("Unbound Will") < 58) or not player:talent("Unbound Will"))   then 
 					return player:cast("Every Man for Himself")
 				end
 			end
@@ -1847,6 +1894,15 @@ affliction.rot = {
 		end
 	end,
 	
+	SeedofCorruption = function()
+		if not player:isCastingAny() and not player:moving() and not player:IsCurrentSpell(27243) and not player:buff(74434)  then
+			local lowest = Object("lowestEnemyInSpellRangeSEED(Corruption)")
+			if lowest and lowest:exists() then
+				return lowest:cast("Seed of Corruption")
+			end
+		end
+	end,
+	
 	grasp = function()
 		if not player:isCastingAny() and not player:isChanneling("Malefic Grasp")  and (not player:moving() or player:talent("Kil'jaeden's Cunning")) and _A.enoughmana(103103)  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Corruption)")
@@ -1907,11 +1963,10 @@ affliction.rot = {
 				table.sort(_A.temptabletblexhale, function(a,b)
 					if 	
 						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- by default comes second
-						elseif
-						a.duration ~= b.duration then return a.duration < b.duration
-						--elseif
-						-- else return
-						-- a.health > b.health
+						-- elseif
+						-- a.duration ~= b.duration then return a.duration < b.duration -- DEFAULT
+						else return
+						a.health > b.health  -- NEW
 					end
 				end)
 				
@@ -1957,7 +2012,8 @@ local inCombat = function()
 	end
 	-- shift mode (haunt)
 	if modifier_shift()==true then
-		if affliction.rot.haunt()  then return true end
+		-- if affliction.rot.haunt()  then return true end
+		if affliction.rot.SeedofCorruption()  then return true end
 	end
 	if affliction.rot.everyman() then return true end
 	--bursts
@@ -2026,4 +2082,4 @@ _A.CR:Add(265, {
 	-- pooling = false,
 	load = exeOnLoad,
 	unload = exeOnUnload
-})							
+})								
