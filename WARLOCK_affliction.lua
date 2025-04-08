@@ -922,7 +922,7 @@ local exeOnLoad = function()
 			-------------- dots part
 			if Ijustexhaled==false and IjustTriple == false then
 				if (idd==146739) or (idd==172) then -- Corruption
-					if subevent =="SPELL_CAST_SUCCESS"
+					if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS"
 						then
 						print("CORRUPTION")
 						corruptiontbl[guiddest]=_A.myscore() 
@@ -933,7 +933,7 @@ local exeOnLoad = function()
 					end
 				end
 				if (idd==980) then -- AGONY
-					if subevent =="SPELL_CAST_SUCCESS"
+					if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS"
 						then
 						print("AGONY")
 						agonytbl[guiddest]=_A.myscore()
@@ -944,7 +944,7 @@ local exeOnLoad = function()
 					end
 				end
 				if (idd==30108) then -- Unstable Affli
-					if subevent =="SPELL_CAST_SUCCESS"
+					if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS"
 						then
 						print("UNSABLE AFFLI")
 						unstabletbl[guiddest]=_A.myscore() 
@@ -956,7 +956,7 @@ local exeOnLoad = function()
 				end
 			end
 			if (idd==27243) then -- seed of corruption
-				if subevent =="SPELL_CAST_SUCCESS"
+				if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS"
 					then
 					print("SNEEDING")
 					seeds[guiddest]= _A.myscore()
@@ -967,11 +967,11 @@ local exeOnLoad = function()
 				end
 			end
 			if (idd==119678) then -- Soulburn soul swap (applies all three)
-				if subevent =="SPELL_CAST_SUCCESS"
+				if subevent == "SPELL_CAST_SUCCESS"
 					then
 					print("TRIPLE DOT")
 					IjustTriple = true
-					C_Timer.After(.3, function()
+					C_Timer.After(.2, function()
 						if IjustTriple then IjustTriple = false end
 					end)
 					corruptiontbl[guiddest]=_A.myscore() 
@@ -1022,7 +1022,7 @@ local exeOnLoad = function()
 				if idd==86213 then -- exhale
 					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					Ijustexhaled = true
-					C_Timer.After(.3, function()
+					C_Timer.After(.2, function()
 						if Ijustexhaled then Ijustexhaled = false end
 					end)
 					-- TEST PART
