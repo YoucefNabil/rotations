@@ -259,12 +259,12 @@ local exeOnLoad = function()
 		-- [63]="Mage Fire",
 		-- [64]="Mage Frost",
 	}
-	_A.Interface:AddToggle({
-		key = "aoetoggle", 
-		name = "AOE Seed of corruption swaps mode", 
-		text = "ON : Seed of corruption swapping || OFF: 3 dot swapping (agony unstable affli corrpution)",
-		icon = select(3,GetSpellInfo(27243)),
-	})
+	-- _A.Interface:AddToggle({
+		-- key = "aoetoggle", 
+		-- name = "AOE Seed of corruption swaps mode", 
+		-- text = "ON : Seed of corruption swapping || OFF: 3 dot swapping (agony unstable affli corrpution)",
+		-- icon = select(3,GetSpellInfo(27243)),
+	-- })
 	_A.Interface:AddToggle({
 		key = "eye_demon", 
 		name = "Observer pet", 
