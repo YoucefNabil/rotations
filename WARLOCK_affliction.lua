@@ -2169,7 +2169,7 @@ local inCombat = function()
 	if affliction.rot.lifetap_delayed() then return true end
 	--exhale
 	affliction.rot.caching()
-	if modifier_shift()==true or toggle("aoetoggle") then
+	if toggle("aoetoggle") then
 		-- if affliction.rot.haunt()  then return true end
 		if affliction.rot.exhaleoptiSEED() then return true end
 		if affliction.rot.corruptionsSEED() then return true end
