@@ -1398,14 +1398,14 @@ affliction.rot = {
 						isplayer = Obj.isplayer and 1 or 0,
 						health = Obj:HealthActual() or 0,
 						duration = Obj:DebuffDuration("Unstable Affliction") or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
-						durationSEED = Obj:DebuffDuration("Seed of Corruption") or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
+						-- durationSEED = Obj:DebuffDuration("Seed of Corruption") or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
 					}
 				end
 				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = { -- dictates who to copy dots from, doing all dots duration in a cascade like this is important (keeps soul swapping even if unstable affli drops)
 					obj = Obj,
 					isplayer = Obj.isplayer and 1 or 0,
 					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0, -- DEFAULT 
-					durationSEED = Obj:DebuffDuration("Seed of Corruption") or 0, -- DEFAULT 
+					-- durationSEED = Obj:DebuffDuration("Seed of Corruption") or 0, -- DEFAULT 
 				}
 			end -- end of enemy filter
 			-- if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
