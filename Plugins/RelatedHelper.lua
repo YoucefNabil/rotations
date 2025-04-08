@@ -3,13 +3,16 @@ local DSL = function(api) return _A.DSL:Get(api) end
 C_Timer = _A.C_Timer
 local player
 local Object = _A.Object
+local drawnTraps = {}
+local trapCooldowns = {}
+local foundTraps = {}
 _A.AutoLogin(false)
 
 -- Create GUI
 local RelatedHelper_GUI = _A.Interface:BuildGUI({
     key = "RelatedHelper",
     width = 380,
-    height = 560,
+    height = 620,
     title = "|cFFffd000Related Helper Settings|r",
     config = {
         { type = 'ruler' },
@@ -166,7 +169,6 @@ local function drawFarmNodes()
                 drawn[key] = node.color
 			end
 			
-			
             -- Draw circle
             Draw:Circle3D(
                 { node.position[1], node.position[2], node.position[3] }, -- position
@@ -255,9 +257,13 @@ end
 
 -- autofarm table
 local lastInteractTime = {}
+local farmableinrange = false
 
 -- autofarm
 local function autofarm()
+    -- Reset farmableinrange to false at the start of each check
+    farmableinrange = false
+
     if RelatedHelper_GUI:F("enable_autofarm") or RelatedHelper_GUI:F("enable_glitch") then
         player = player or Object("player")
         if not player then
@@ -286,12 +292,13 @@ local function autofarm()
         if _A.GetNumLootItems() > 0 then
             return
 		end
-		
+	
         -- autoFarm (ore / herbs / container)
         local tempTable = {}
         for _, farm in pairs(_A.OM:Get('GameObject')) do
             -- Check if it's a valid node first
             if (interactIdList(farm, _A.related.Ores)) or (interactIdList(farm, _A.related.Herbs)) and farm:distance() <= 5 then
+                farmableinrange = true
                 tempTable[#tempTable + 1] = {
                     guid = farm.guid,
                     distance = farm:distance()
@@ -339,7 +346,7 @@ local function ClickFarm()
         return
 	end
 	
-    if player then
+    if player and farmableinrange then
         _A.AutoLogin(true)
         player:Macro("/logout")
 	end
@@ -359,6 +366,123 @@ C_Timer.After(5, function()
     _A.LibDraw:Sync(drawFarmNodes)
     _A.LibDraw:Enable(RelatedHelper_GUI:F("update_freq_spin"))
 end)
+
+local drawTraps = function()
+    if not RelatedHelper_GUI:F("draw_traps") then
+        drawnTraps = {}
+        foundTraps = {}
+        return
+    end
+
+    local player = Object("player")
+    if not player then return end
+
+    local currentTime = GetTime()
+
+    -- Define trap data with color, radius, and duration information
+    local trapData = {
+        [60192] = { color = 0xC042d7f5, radius = 2, duration = 60 }, -- Ice Trap
+        [82941] = { color = 0xC0003a9e, radius = 2, duration = 60 }, -- Frost Trap
+        [82948] = { color = 0xC0009e3d, radius = 2, duration = 60 }, -- Snake Trap
+        [82939] = { color = 0xC09e5c00, radius = 2, duration = 60 }, -- Explosive Trap
+        [1543] = { color = 0xC09e5c00, radius = 10, duration = 20 }  -- Flare
+    }
+
+    -- Process new missiles/traps
+    local missiles = _A.GetMissiles()
+    for _, missile in ipairs(missiles) do
+        local spellid, _, _, _, caster, _, _, _, _, ix, iy, iz = unpack(missile)
+        local casterObj = Object(caster)
+
+        -- Check if it's a valid trap spell
+        if trapData[spellid] then
+            if casterObj and not casterObj:friend() and casterObj:Class("HUNTER") then
+                local posKey = string.format("%.1f,%.1f,%.1f", ix, iy, iz)
+                local cooldownKey = caster .. "_" .. spellid
+
+                -- Check cooldown and existing traps
+                if not trapCooldowns[cooldownKey] or (currentTime - trapCooldowns[cooldownKey] > 28) then
+                    -- Check if we already have a trap at these coordinates
+                    local tooClose = false
+                    for _, trap in pairs(foundTraps) do
+                        local existingKey = string.format("%.1f,%.1f,%.1f",
+                            trap.position[1], trap.position[2], trap.position[3])
+                        if existingKey == posKey then
+                            tooClose = true
+                            break
+                        end
+                    end
+
+                    if not tooClose then
+                        foundTraps[posKey] = {
+                            position = { ix, iy, iz },
+                            time = currentTime,
+                            color = trapData[spellid].color,
+                            radius = trapData[spellid].radius,
+                            duration = trapData[spellid].duration, -- Store the duration
+                            id = spellid,
+                            caster = caster
+                        }
+                        trapCooldowns[cooldownKey] = currentTime
+                    end
+                end
+            end
+        end
+    end
+
+    -- Check existing traps and remove expired ones
+    for posKey, trapInfo in pairs(drawnTraps) do
+        local casterObj = Object(trapInfo.caster)
+        -- Use the trap's specific duration
+        if not (casterObj and casterObj:exists()) or (currentTime - trapInfo.time > trapInfo.duration) then
+            drawnTraps[posKey] = nil
+            foundTraps[posKey] = nil
+        else
+            foundTraps[posKey] = trapInfo
+        end
+    end
+
+    -- Clean expired cooldowns
+    for cooldownKey, cooldownTime in pairs(trapCooldowns) do
+        if currentTime - cooldownTime > 28 then
+            trapCooldowns[cooldownKey] = nil
+        end
+    end
+
+    -- Update our stored traps
+    drawnTraps = foundTraps
+
+    -- Draw the traps
+    DrawTick:UnRender("trapDraw")
+    DrawTick:Render("trapDraw", function()
+        for posKey, trap in pairs(drawnTraps) do
+            local timeRemaining = trap.duration - (currentTime - trap.time)
+            if timeRemaining <= 0 then
+                drawnTraps[posKey] = nil
+                foundTraps[posKey] = nil
+            elseif timeRemaining > 0 then
+                local alpha = timeRemaining <= 5 and (timeRemaining / 5) or 1
+                local alphaHex = math.floor(alpha * 192) * 16777216
+                local baseColor = trap.color % 16777216
+                local color = alphaHex + baseColor
+
+                Draw:Circle3D(
+                    trap.position,
+                    trap.radius,
+                    color,
+                    1,
+                    0,
+                    true,
+                    1.5,
+                    { 0, 0, 0 },
+                    -1
+                )
+            end
+        end
+    end)
+end
+
+C_Timer.NewTicker(0.1, drawTraps, false, "RelatedHelper_DrawTraps")
 
 -- Chase Back variables
 _A.FaceAlways = true

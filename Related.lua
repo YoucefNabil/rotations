@@ -312,7 +312,7 @@ related.ignoreByCasting = {
     GetSpellInfo(138763)
 }
 
-function _A.Queuer:Add(id, target, type)
+function Queuer:Add(id, target, type)
     local spellName = GetSpellInfo(id)
     table.insert(self.Queue, {
         id = id,
@@ -323,7 +323,7 @@ function _A.Queuer:Add(id, target, type)
 	})
 end
 
-function _A.Queuer:Add2(id, target, type)
+function Queuer:Add2(id, target, type)
     local spellName = GetSpellInfo(id)
 	for k,_ in ipairs(self.Queue) do
 		if k > 1 then
@@ -341,12 +341,24 @@ end
 
 function _A.Queuer:Spell(_, data)
 	-- local ready = _A.DSL:Get("spell.ready")(_, data.id)
-	local player_spell = Object("player")
-	local ready = player_spell and data.id~=119996 and ( player_spell:spellcooldown(data.id)<.24 and player_spell:spellusable(data.id))
+	local player = Object("player")
+	local ready = player and data.id~=119996 and ( player:spellcooldown(data.id)<.24 and player:spellusable(data.id))
 	return data and ready
 end
 
-function _A.Queuer:Execute()
+function Queuer:Queued(spell)
+    if spell then
+        for _, v in pairs(self.Queue) do
+            if v.id == spell or v.spellName == spell then
+                return true
+            else
+                return false
+            end
+        end
+    end
+end
+
+function Queuer:Execute()
 	-- Process first item in queue (FIFO)
 	local data = self.Queue[1]
 	if not data then return end
@@ -373,11 +385,15 @@ function _A.Queuer:Execute()
 end
 
 _A.DSL:Register("queue", function(unit, spell)
-	return _A.Queuer:Add(spell, unit, "spell")
+	return Queuer:Add(spell, unit, "spell")
 end)
 
 _A.DSL:Register("queueGround", function(unit, spell)
-	return _A.Queuer:Add(spell, unit, "ground")
+	return Queuer:Add(spell, unit, "ground")
+end)
+
+_A.DSL:Register("queued", function(unit, spell)
+    return Queuer:Queued(spell)
 end)
 
 -- Add this near the other initialization code
