@@ -719,23 +719,6 @@ local exeOnLoad = function()
 		return tempTable[num] and tempTable[num].guid
 	end
 	)
-	_A.FakeUnits:Add('lowestEnemyInSpellRangeSEED', function(num, spell)
-		local tempTable = {}
-		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and _A.notimmune(Obj) and not Obj:Debuff("Seed of Corruption") and not _Y.seedtarget[Obj.guid] 
-				and Obj:los() then
-				tempTable[#tempTable+1] = {
-					guid = Obj.guid,
-					numtangos = player:buff("Mannoroth's Fury") and Obj:AreaEnemies(50) or Obj:AreaEnemies(10),
-				}
-			end
-		end
-		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.numtangos > b.numtangos end )
-		end
-		return tempTable[num] and tempTable[num].guid or nil
-	end
-	)
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
@@ -1037,17 +1020,17 @@ local exeOnLoad = function()
 					end)
 				end
 				if idd==86213 then -- exhale
+					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					Ijustexhaled = true
 					C_Timer.After(.3, function()
 						if Ijustexhaled then Ijustexhaled = false end
 					end)
-					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					-- TEST PART
 					unstabletbl[guiddest] = swap_unstabletbl[soulswaporigin]
 					agonytbl[guiddest] = swap_agonytbl[soulswaporigin]
 					corruptiontbl[guiddest] = swap_corruptiontbl[soulswaporigin]
 					seeds[guiddest]=swap_seeds[soulswaporigin]
-					-- print(unstabletbl[guiddest], agonytbl[guiddest], corruptiontbl[guiddest])
+					print(unstabletbl[guiddest], agonytbl[guiddest], corruptiontbl[guiddest])
 					swap_unstabletbl[guiddest]=nil
 					swap_agonytbl[guiddest]=nil
 					swap_corruptiontbl[guiddest]=nil
@@ -2176,7 +2159,7 @@ local inCombat = function()
 	--
 	--
 	_Y.petengine_affli()
-	affliction.rot.stop_chan_on_dead()
+	-- affliction.rot.stop_chan_on_dead()
 	-- CTRL MODE (Beams)
 	if _A.modifier_ctrl() then
 		if affliction.rot.drainsoul() then return true end
@@ -2194,16 +2177,17 @@ local inCombat = function()
 	if affliction.rot.lifetap_delayed() then return true end
 	--exhale
 	affliction.rot.caching()
-	if toggle("aoetoggle") then
-		-- if affliction.rot.haunt()  then return true end
-		if affliction.rot.exhaleoptiSEED() then return true end
-		if affliction.rot.corruptionsSEED() then return true end
-		if affliction.rot.SneedofcorruptionHIGHPRIO() then return true end
-		if affliction.rot.soulswapoptiSEED() then return true end
-		if affliction.rot.Sneedofcorruption() then return true end
-		return true
-	end
+	if player:spellcooldown("Corruption")>cdcd*2 then return true end
 	affliction.rot.activetrinket()
+	-- if toggle("aoetoggle") then
+		-- if affliction.rot.haunt()  then return true end
+		-- if affliction.rot.exhaleoptiSEED() then return true end
+		-- if affliction.rot.corruptionsSEED() then return true end
+		-- if affliction.rot.SneedofcorruptionHIGHPRIO() then return true end
+		-- if affliction.rot.soulswapoptiSEED() then return true end
+		-- if affliction.rot.Sneedofcorruption() then return true end
+		-- return true
+	-- end
 	if affliction.rot.exhaleopti()  then return true end
 	--stuff
 	if affliction.rot.Buffbuff()  then return true end
