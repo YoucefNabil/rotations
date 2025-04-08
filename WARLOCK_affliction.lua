@@ -257,6 +257,12 @@ local exeOnLoad = function()
 		-- [64]="Mage Frost",
 	}
 	_A.Interface:AddToggle({
+		key = "aoetoggle", 
+		name = "AOE Seed of corruption swaps mode", 
+		text = "ON : Seed of corruption swapping || OFF: 3 dot swapping (agony unstable affli corrpution)",
+		icon = select(3,GetSpellInfo(27243)),
+	})
+	_A.Interface:AddToggle({
 		key = "eye_demon", 
 		name = "Observer pet", 
 		text = "ON : Observer pet (good for bgs) || OFF: Void pet (good against physical in arena for disarms)",
@@ -663,9 +669,8 @@ local exeOnLoad = function()
 	Listener:Add("seedtargets", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
 		if guidsrc == UnitGUID("player") then
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-				_A.casttimers[spell_name(idd)] = _A.GetTime()
 				if spell_name(idd) == "Seed of Corruption"  then
-				-- print("HEY")
+					-- print(subevent, guiddest)
 					if not _Y.seedtarget[guiddest] then _Y.seedtarget[guiddest]=true end
 					C_Timer.After(5, function()
 						if _Y.seedtarget[guiddest] then
@@ -714,12 +719,11 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeSEED', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer and Obj:spellRange(spell) and _A.notimmune(Obj) and not Obj:Debuff("Seed of Corruption") and not _Y.seedtarget[Obj.guid] and Obj:Debuff("Unstable Affliction || Corruption || Agony")
-				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
+			if Obj:spellRange(spell) and _A.notimmune(Obj) and not Obj:Debuff("Seed of Corruption") and not _Y.seedtarget[Obj.guid] 
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
-					numtangos = Obj:AreaEnemies(10),
+					numtangos = player:buff("Mannoroth's Fury") and Obj:AreaEnemies(50) or Obj:AreaEnemies(10),
 				}
 			end
 		end
@@ -1375,7 +1379,6 @@ affliction.rot = {
 					agonyscore = (agonytbl[Obj.guid] or 0),
 					unstablescore = (unstabletbl[Obj.guid] or 0),
 					corruptionscore = (corruptiontbl[Obj.guid] or 0),
-					-- seedscore = (seeds[Obj.guid] or 0),
 					range = Obj:range(2) or 40,
 					health = Obj:HealthActual() or 0,
 					isplayer = Obj.isplayer and 1 or 0
@@ -1386,15 +1389,15 @@ affliction.rot = {
 						rangedis = Obj:range(2) or 40,
 						isplayer = Obj.isplayer and 1 or 0,
 						health = Obj:HealthActual() or 0,
-						-- duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
-						duration = Obj:DebuffDuration("Unstable Affliction") or 0 -- duration, best solution to spread it to as many units as possible, always order by this first
+						duration = Obj:DebuffDuration("Unstable Affliction") or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
+						durationSEED = Obj:DebuffDuration("Corruption") or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
 					}
 				end
 				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = { -- dictates who to copy dots from, doing all dots duration in a cascade like this is important (keeps soul swapping even if unstable affli drops)
 					obj = Obj,
 					isplayer = Obj.isplayer and 1 or 0,
-					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0 -- DEFAULT 
-					-- duration = Obj:DebuffDuration("Unstable Affliction") or 0
+					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0, -- DEFAULT 
+					durationSEED = Obj:DebuffDuration("Corruption") or 0, -- DEFAULT 
 				}
 			end -- end of enemy filter
 			-- if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
@@ -1701,21 +1704,16 @@ affliction.rot = {
 	end,
 	
 	lifetap_delayed = function()
-		-- if soulswaporigin == nil 
-		if soulswaporigin ~= nil -- only lifetap when you can exhale, you benefit from exhaling late since you save the stats (including duration) the moment you soulswap (not when you exhale)
-			and player:SpellCooldown("life tap")<=.3 
-			and player:health()>=35
-			and player:BuffDuration("Soul Swap")>player:gcd()+.2
+		if player:health()>=35
 			and player:Mana()<=80
-			and (_A.castdelay(1454, 35) or player:Mana()<=12)  -- 35sec delay
-			then
-			return player:cast("life tap")
+			and soulswaporigin ~= nil
+			and (_A.castdelay(1454, 30) or player:Mana()<=12)  -- 35sec delay
+			then return player:cast("Life Tap")
 		end
 	end,
 	
 	lifetap= function()
-		if player:SpellCooldown("life tap")<=.3 
-			and player:health()>=35
+		if 	player:health()>=35
 			and player:Mana()<=80
 			then
 			return player:cast("life tap")
@@ -1782,6 +1780,78 @@ affliction.rot = {
 			end
 		end
 	end,
+	--- SEEEEEEEEEEEEEED
+	soulswapoptiSEED = function()
+		if  #_A.temptabletbl>1 and soulswaporigin == nil and _A.enoughmana(86121) then
+			if #_A.temptabletblsoulswap > 1 then
+				table.sort(_A.temptabletblsoulswap, function(a,b)
+					return a.durationSEED > b.durationSEED -- always by highest duration
+				end)
+			end
+			return _A.temptabletblsoulswap[1] and _A.temptabletblsoulswap[1].obj:debuff("Seed of Corruption") and _A.temptabletblsoulswap[1].obj:Cast(86121)
+		end
+	end,
+	
+	exhaleoptiSEED = function()
+		if soulswaporigin ~= nil then
+			if #_A.temptabletblexhale > 1 then
+				table.sort(_A.temptabletblexhale, function(a,b)
+					if 	
+						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- Never change these
+						elseif
+						a.durationSEED ~= b.durationSEED then return a.durationSEED < b.durationSEED
+						else return
+						a.health > b.health
+					end
+				end)
+				
+			end
+			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
+		end
+	end,
+	
+	corruptionsSEED = function()
+		if #_A.temptabletbl>1 then
+			table.sort(_A.temptabletbl, function(a,b)
+				if 	
+					a.corruptionscore ~= b.corruptionscore then return a.corruptionscore > b.corruptionscore
+					elseif 
+					-- a.range ~= b.range then return a.range < b.range
+					a.health ~= b.health then return a.health > b.health
+					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					-- else return 
+					-- a.range < b.range
+				end
+			end)
+		end
+		if _A.temptabletbl[1] and _A.enoughmana(172)  then 
+			if _A.myscore()>_A.temptabletbl[1].corruptionscore then return _A.temptabletbl[1].obj:Cast("Corruption")
+			end
+		end
+	end,
+	
+	Sneedofcorruption = function()
+		if #_A.temptabletbl>1 then
+			table.sort(_A.temptabletbl, function(a,b)
+				if 	
+					a.corruptionscore ~= b.corruptionscore then return a.corruptionscore > b.corruptionscore
+					elseif 
+					-- a.range ~= b.range then return a.range < b.range
+					a.health ~= b.health then return a.health > b.health
+					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					-- else return 
+					-- a.range < b.range
+				end
+			end)
+		end
+		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not player:buff(74434) and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") then
+			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not player:IsCurrentSpell(108508) then player:cast(108508) end
+			return _A.temptabletbl[1].obj:cast("Seed of Corruption")
+		end
+	end,
+	
+	------------------
+	
 	
 	corruptionsnap = function()
 		if #_A.temptabletbl>1 then
@@ -1802,6 +1872,8 @@ affliction.rot = {
 			end
 		end
 	end,
+	
+	
 	
 	agonysnap = function()
 		if #_A.temptabletbl>1 then
@@ -1895,15 +1967,6 @@ affliction.rot = {
 		end
 	end,
 	
-	SeedofCorruption = function()
-		if not player:isCastingAny() and not player:moving() and not player:IsCurrentSpell(27243) and not player:buff(74434)  then
-			local lowest = Object("lowestEnemyInSpellRangeSEED(Corruption)")
-			if lowest and lowest:exists() then
-				return lowest:cast("Seed of Corruption")
-			end
-		end
-	end,
-	
 	grasp = function()
 		if not player:isCastingAny() and not player:isChanneling("Malefic Grasp")  and (not player:moving() or player:talent("Kil'jaeden's Cunning")) and _A.enoughmana(103103)  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Corruption)")
@@ -1963,9 +2026,9 @@ affliction.rot = {
 			if #_A.temptabletblexhale > 1 then
 				table.sort(_A.temptabletblexhale, function(a,b)
 					if 	
-						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- by default comes second
+						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- Never change these
 						elseif
-						a.duration ~= b.duration then return a.duration < b.duration -- DEFAULT
+						a.duration ~= b.duration then return a.duration < b.duration
 						else return
 						a.health > b.health
 					end
@@ -2011,14 +2074,10 @@ local inCombat = function()
 		if affliction.rot.drainsoul() then return true end
 		if affliction.rot.grasp()  then return true end
 	end
-	-- shift mode (haunt)
-	if modifier_shift()==true then
-		-- if affliction.rot.haunt()  then return true end
-		if affliction.rot.SeedofCorruption()  then return true end
-	end
 	if affliction.rot.everyman() then return true end
 	--bursts
-	affliction.rot.activetrinket()
+	-- affliction.rot.activetrinket()
+	-- shift mode (haunt)
 	--HEALS
 	affliction.rot.Darkregeneration()
 	affliction.rot.items_healthstone()
@@ -2028,6 +2087,14 @@ local inCombat = function()
 	if affliction.rot.lifetap_delayed() then return true end
 	--exhale
 	affliction.rot.caching()
+	if modifier_shift()==true or toggle("aoetoggle") then
+		-- if affliction.rot.haunt()  then return true end
+		if affliction.rot.exhaleoptiSEED() then return true end
+		if affliction.rot.corruptionsSEED() then return true end
+		if affliction.rot.soulswapoptiSEED() then return true end
+		if affliction.rot.Sneedofcorruption() then return true end
+		return true
+	end
 	if affliction.rot.exhaleopti()  then return true end
 	--stuff
 	if affliction.rot.Buffbuff()  then return true end
