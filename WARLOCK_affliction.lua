@@ -10,6 +10,7 @@ local cdcd = .3
 local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 local enteredworldat
+local proccing
 -- top of the CR
 local player
 local CallWowApi = _A.CallWowApi
@@ -217,10 +218,8 @@ local swap_unstabletbl = {}
 local swap_agonytbl = {}
 local swap_corruptiontbl = {}
 local soulswaporigin = nil
-local ijustsoulswapped = false
-local ijustsoulswappedattime = 0
-local ijustexhaled = false
-local ijustexhaledattime = 0
+local Ijustexhaled = false
+local IjustTriple = false
 --============================================
 --============================================
 --============================================
@@ -920,7 +919,6 @@ local exeOnLoad = function()
 			end
 		end
 		soulswaporigin = nil
-		ijustsoulswapped = false
 	end)
 	-- dots
 	_Y.internalcooldown = (GetTime() - 50)
@@ -939,44 +937,46 @@ local exeOnLoad = function()
 				-- end
 			end
 			-------------- dots part
-			if (idd==146739) or (idd==172) then -- Corruption
-				-- if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				if subevent =="SPELL_CAST_SUCCESS"
-					then
-					corruptiontbl[guiddest]=_A.myscore() 
+			if Ijustexhaled==false and IjustTriple == false then
+				if (idd==146739) or (idd==172) then -- Corruption
+					if subevent =="SPELL_CAST_SUCCESS"
+						then
+						print("CORRUPTION")
+						corruptiontbl[guiddest]=_A.myscore() 
+					end
+					if subevent=="SPELL_AURA_REMOVED" 
+						then
+						corruptiontbl[guiddest]=nil
+					end
 				end
-				if subevent=="SPELL_AURA_REMOVED" 
-					then
-					corruptiontbl[guiddest]=nil
+				if (idd==980) then -- AGONY
+					if subevent =="SPELL_CAST_SUCCESS"
+						then
+						print("AGONY")
+						agonytbl[guiddest]=_A.myscore()
+					end
+					if subevent=="SPELL_AURA_REMOVED" 
+						then
+						agonytbl[guiddest]=nil
+					end
 				end
-			end
-			if (idd==980) then -- AGONY
-				-- if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				if subevent =="SPELL_CAST_SUCCESS"
-					then
-					agonytbl[guiddest]=_A.myscore()
-				end
-				if subevent=="SPELL_AURA_REMOVED" 
-					then
-					agonytbl[guiddest]=nil
-				end
-			end
-			if (idd==30108) then -- Unstable Affli
-				-- if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
-				if subevent =="SPELL_CAST_SUCCESS"
-					then
-					unstabletbl[guiddest]=_A.myscore() 
-				end
-				if subevent=="SPELL_AURA_REMOVED" 
-					then
-					unstabletbl[guiddest]=nil
+				if (idd==30108) then -- Unstable Affli
+					if subevent =="SPELL_CAST_SUCCESS"
+						then
+						print("UNSABLE AFFLI")
+						unstabletbl[guiddest]=_A.myscore() 
+					end
+					if subevent=="SPELL_AURA_REMOVED" 
+						then
+						unstabletbl[guiddest]=nil
+					end
 				end
 			end
 			if (idd==27243) then -- seed of corruption
-				-- if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				if subevent =="SPELL_CAST_SUCCESS"
 					then
-					seeds[guiddest]=_A.myscore() 
+					print("SNEEDING")
+					seeds[guiddest]= _A.myscore()
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
 					then
@@ -984,9 +984,13 @@ local exeOnLoad = function()
 				end
 			end
 			if (idd==119678) then -- Soulburn soul swap (applies all three)
-				-- if subevent=="SPELL_AURA_APPLIED" or subevent =="SPELL_CAST_SUCCESS"
 				if subevent =="SPELL_CAST_SUCCESS"
 					then
+					print("TRIPLE DOT")
+					IjustTriple = true
+					C_Timer.After(.3, function()
+						if IjustTriple then IjustTriple = false end
+					end)
 					corruptiontbl[guiddest]=_A.myscore() 
 					unstabletbl[guiddest]=_A.myscore() 
 					agonytbl[guiddest]=_A.myscore()
@@ -998,7 +1002,7 @@ local exeOnLoad = function()
 	)
 	_Y.proc_check = function()
 		-- if player and player:BuffDuration("Surge of Dominance")>=3 then return true end
-		if player and player:BuffAny("Surge of Dominance") then return true end
+		if player and player:Buff("Surge of Dominance") then return true end
 		if _Y.internalcooldown and (_A.GetTime() - _Y.internalcooldown) >=50 then return true end
 		return false
 	end
@@ -1015,42 +1019,45 @@ local exeOnLoad = function()
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			if subevent =="SPELL_CAST_SUCCESS" then -- accuracy needs to improve
 				if idd==86121 then -- Soul Swap 86213
+					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
-					ijustsoulswapped = true
-					ijustsoulswappedattime = GetTime() -- time at which I used soulswap
 					swap_unstabletbl[guiddest]=unstabletbl[guiddest]
 					swap_agonytbl[guiddest]=agonytbl[guiddest]
 					swap_corruptiontbl[guiddest]=corruptiontbl[guiddest]
 					swap_seeds[guiddest]=seeds[guiddest]
-					-- print(swap_unstabletbl[guiddest], swap_corruptiontbl[guiddest], swap_agonytbl[guiddest])
 					soulswaptimer = C_Timer.NewTimer(3, function()
-						if swap_unstabletbl[guiddest] then swap_unstabletbl[guiddest]=nil end
-						if swap_agonytbl[guiddest] then swap_agonytbl[guiddest]=nil end
-						if swap_corruptiontbl[guiddest] then swap_corruptiontbl[guiddest]=nil end
-						if swap_seeds[guiddest] then swap_seeds[guiddest]=nil end
-						if soulswaporigin then soulswaporigin = nil end
-						if ijustsoulswapped then ijustsoulswapped=false end
-						print("HEEEEEEEEEY")
+						if not player:buff("Soul Swap") then
+							if swap_unstabletbl[guiddest] then swap_unstabletbl[guiddest]=nil end
+							if swap_agonytbl[guiddest] then swap_agonytbl[guiddest]=nil end
+							if swap_corruptiontbl[guiddest] then swap_corruptiontbl[guiddest]=nil end
+							if swap_seeds[guiddest] then swap_seeds[guiddest]=nil end
+							if soulswaporigin  then soulswaporigin = nil end
+							print("HEEEEEEEEEEEEEEEEEEEEEEEEEEY")
+						end
 					end)
 				end
 				if idd==86213 then -- exhale
-					soulswaptimer:Cancel()
+					Ijustexhaled = true
+					C_Timer.After(.3, function()
+						if Ijustexhaled then Ijustexhaled = false end
+					end)
+					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
+					-- TEST PART
 					unstabletbl[guiddest] = swap_unstabletbl[soulswaporigin]
 					agonytbl[guiddest] = swap_agonytbl[soulswaporigin]
 					corruptiontbl[guiddest] = swap_corruptiontbl[soulswaporigin]
 					seeds[guiddest]=swap_seeds[soulswaporigin]
-					print(unstabletbl[guiddest], agonytbl[guiddest], corruptiontbl[guiddest])
-					ijustsoulswapped = false
-					ijustexhaled = true
-					ijustexhaledattime = _A.GetTime()
-					soulswaporigin = nil -- remove after 3 seconds or after exhaling
+					-- print(unstabletbl[guiddest], agonytbl[guiddest], corruptiontbl[guiddest])
 					swap_unstabletbl[guiddest]=nil
 					swap_agonytbl[guiddest]=nil
 					swap_corruptiontbl[guiddest]=nil
 					swap_seeds[guiddest]=nil
-					C_Timer.After(.3, function()
-						if ijustexhaled then ijustexhaled =  false end
-					end)
+					-- CLASSIC PART
+					-- unstabletbl[guiddest]=unstabletbl[soulswaporigin]
+					-- agonytbl[guiddest]=agonytbl[soulswaporigin]
+					-- corruptiontbl[guiddest]=corruptiontbl[soulswaporigin]
+					-- seeds[guiddest]=seeds[soulswaporigin]
+					soulswaporigin = nil
 				end
 			end
 		end
@@ -1396,6 +1403,7 @@ affliction.rot = {
 					agonyscore = (agonytbl[Obj.guid] or 0),
 					unstablescore = (unstabletbl[Obj.guid] or 0),
 					corruptionscore = (corruptiontbl[Obj.guid] or 0),
+					seedscore = (seeds[Obj.guid] or 0),
 					range = Obj:range(2) or 40,
 					health = Obj:HealthActual() or 0,
 					isplayer = Obj.isplayer and 1 or 0
@@ -1407,14 +1415,13 @@ affliction.rot = {
 						isplayer = Obj.isplayer and 1 or 0,
 						health = Obj:HealthActual() or 0,
 						duration = Obj:DebuffDuration("Unstable Affliction") or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
-						durationSEED = Obj:DebuffDuration("Corruption") or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
+						durationSEED = Obj:DebuffDuration("Seed of Corruption") or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
 					}
 				end
 				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = { -- dictates who to copy dots from, doing all dots duration in a cascade like this is important (keeps soul swapping even if unstable affli drops)
 					obj = Obj,
 					isplayer = Obj.isplayer and 1 or 0,
 					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0, -- DEFAULT 
-					-- durationSEED = Obj:DebuffDuration("Corruption") or 0, -- DEFAULT 
 					durationSEED = Obj:DebuffDuration("Seed of Corruption") or 0, -- DEFAULT 
 				}
 			end -- end of enemy filter
@@ -1517,7 +1524,7 @@ affliction.rot = {
 	--============================================
 	activetrinket = function()
 		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-		if _Y.proc_check() and lowest and not player:state("silence || disarm") then
+		if proccing and lowest and not player:state("silence || disarm") then
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -1843,7 +1850,7 @@ affliction.rot = {
 			end)
 		end
 		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-		if _Y.proc_check() and lowest and not player:state("silence || disarm") then
+		if proccing and lowest and not player:state("silence || disarm") then
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -1871,7 +1878,7 @@ affliction.rot = {
 		if #_A.temptabletbl>1 then
 			table.sort(_A.temptabletbl, function(a,b)
 				if 	
-					a.corruptionscore ~= b.corruptionscore then return a.corruptionscore > b.corruptionscore
+					a.seedscore ~= b.seedscore then return a.seedscore > b.seedscore
 					elseif 
 					-- a.range ~= b.range then return a.range < b.range
 					a.health ~= b.health then return a.health > b.health
@@ -1882,7 +1889,7 @@ affliction.rot = {
 			end)
 		end
 		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-		if _Y.proc_check() and lowest and not player:state("silence || disarm") then
+		if proccing and lowest and not player:state("silence || disarm") then
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -1901,10 +1908,10 @@ affliction.rot = {
 			end
 		end
 		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not player:buff(74434) 
-		-- and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") 
-		then
+			-- and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") 
+			then
 			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not player:IsCurrentSpell(108508) then player:cast(108508) end
-			return _A.temptabletbl[1].obj:cast("Seed of Corruption")
+			if _A.myscore()>_A.temptabletbl[1].seedscore then return _A.temptabletbl[1].obj:cast("Seed of Corruption") end
 		end
 	end,
 	
@@ -1923,7 +1930,7 @@ affliction.rot = {
 			end)
 		end
 		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-		if _Y.proc_check() and lowest and not player:state("silence || disarm") then
+		if proccing and lowest and not player:state("silence || disarm") then
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -1942,9 +1949,9 @@ affliction.rot = {
 			end
 		end
 		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not player:buff(74434) 
-		and player:buff("Mannoroth's Fury") and _A.castdelay(27243, 12)
-		-- and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") 
-		then
+			and player:buff("Mannoroth's Fury") and _A.castdelay(27243, 12)
+			-- and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") 
+			then
 			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not player:IsCurrentSpell(108508) then player:cast(108508) end
 			return _A.temptabletbl[1].obj:cast("Seed of Corruption")
 		end
@@ -2012,7 +2019,7 @@ affliction.rot = {
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
-						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and _Y.proc_check() then 
+						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and proccing then 
 							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not IsCurrentSpell(113860) then
 								player:cast("Lifeblood")
 								player:useitem("Potion of the Jade Serpent")
@@ -2165,6 +2172,7 @@ local inCombat = function()
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 1 then return true end
 	if player:Mounted() then return true end
+	proccing = _Y.proc_check()
 	--
 	--
 	_Y.petengine_affli()
@@ -2216,9 +2224,11 @@ local inCombat = function()
 	-- Heal pet
 	if affliction.rot.healthfunnel() then return true end
 	-- DOT DOT
-	if not _Y.proc_check() and affliction.rot.agonysnap()  then return true end
-	if not _Y.proc_check() and affliction.rot.corruptionsnap()  then return true end
-	if not _Y.proc_check() and affliction.rot.unstablesnap()  then return true end
+	if not proccing then
+		if affliction.rot.agonysnap()  then return true end
+		if affliction.rot.corruptionsnap()  then return true end
+		if affliction.rot.unstablesnap()  then return true end
+	end
 	if affliction.rot.unstablesnapinstant() then return true end
 	if affliction.rot.agonysnap()  then return true end
 	if affliction.rot.corruptionsnap()  then return true end
