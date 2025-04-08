@@ -1705,7 +1705,7 @@ affliction.rot = {
 		if soulswaporigin ~= nil -- only lifetap when you can exhale, you benefit from exhaling late since you save the stats (including duration) the moment you soulswap (not when you exhale)
 			and player:SpellCooldown("life tap")<=.3 
 			and player:health()>=35
-			and player:BuffDuration("Soul Swap")>=player:gcd()
+			and player:BuffDuration("Soul Swap")>player:gcd()+.2
 			and player:Mana()<=80
 			and (_A.castdelay(1454, 35) or player:Mana()<=12)  -- 35sec delay
 			then
@@ -1966,8 +1966,8 @@ affliction.rot = {
 						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- by default comes second
 						elseif
 						a.duration ~= b.duration then return a.duration < b.duration -- DEFAULT
-						-- else return
-						-- a.health > b.health  -- NEW
+						else return
+						a.health > b.health
 					end
 				end)
 				
