@@ -920,9 +920,8 @@ local exeOnLoad = function()
 				-- end
 			end
 			-------------- dots part
-			if Ijustexhaled==false and IjustTriple == false then -- very important, exhale procs these too
 				if (idd==146739) or (idd==172) then -- Corruption
-					if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS"
+					if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS")
 						then
 						print("CORRUPTION")
 						corruptiontbl[guiddest]=_A.myscore() 
@@ -933,7 +932,7 @@ local exeOnLoad = function()
 					end
 				end
 				if (idd==980) then -- AGONY
-					if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS"
+					if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS")
 						then
 						print("AGONY")
 						agonytbl[guiddest]=_A.myscore()
@@ -944,7 +943,7 @@ local exeOnLoad = function()
 					end
 				end
 				if (idd==30108) then -- Unstable Affli
-					if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS"
+					if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS")
 						then
 						print("UNSABLE AFFLI")
 						unstabletbl[guiddest]=_A.myscore() 
@@ -954,9 +953,9 @@ local exeOnLoad = function()
 						unstabletbl[guiddest]=nil
 					end
 				end
-			end
+
 			if (idd==27243) then -- seed of corruption
-				if subevent == "SPELL_CAST_SUCCESS"
+				if (Ijustexhaled==false and IjustTriple == false) and subevent == "SPELL_CAST_SUCCESS"
 					then
 					print("SNEEDING")
 					seeds[guiddest]= player:buff("Mannoroth's Fury") and _A.myscore()*5 or _A.myscore()
