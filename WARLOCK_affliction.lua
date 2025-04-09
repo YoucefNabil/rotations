@@ -920,7 +920,7 @@ local exeOnLoad = function()
 				-- end
 			end
 			-------------- dots part
-			if Ijustexhaled==false and IjustTriple == false then
+			if Ijustexhaled==false and IjustTriple == false then -- very important, exhale procs these too
 				if (idd==146739) or (idd==172) then -- Corruption
 					if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS"
 						then
@@ -1381,7 +1381,7 @@ affliction.rot = {
 				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then corruptiontbl[Obj.guid]=nil end
 				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then agonytbl[Obj.guid]=nil end
 				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then unstabletbl[Obj.guid]=nil end
-				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
+				-- if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
 				local unstabledur, corruptiondur, agonydur, seedsdur, range_cache, healthraww =  Obj:DebuffDuration("Unstable Affliction"), Obj:DebuffDuration("Corruption"), Obj:DebuffDuration("Agony"), Obj:DebuffDuration("Seed of Corruption"), Obj:range(2) or 40, Obj:HealthActual() or 0
 				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
@@ -1412,9 +1412,9 @@ affliction.rot = {
 					durationSEED = seedsdur or 0, -- DEFAULT 
 				}
 			end -- end of enemy filter
-			-- if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
-			-- _A.reflectcheck = true
-			-- end
+			if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
+				_A.reflectcheck = true
+			end
 		end -- end of iteration
 		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 	end,
@@ -2162,7 +2162,7 @@ local inCombat = function()
 	--
 	--
 	_Y.petengine_affli()
-	-- affliction.rot.stop_chan_on_dead()
+	affliction.rot.stop_chan_on_dead()
 	-- CTRL MODE (Beams)
 	if _A.modifier_ctrl() then
 		if affliction.rot.drainsoul() then return true end
