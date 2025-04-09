@@ -2248,7 +2248,8 @@ local inCombat = function()
 		if affliction.rot.MortalCoil()  then return true end
 		if affliction.rot.twilightward()  then return true end
 		if affliction.rot.ccfear() then return true end	
-		if affliction.rot.ccstun()  then return true end	
+		if affliction.rot.ccstun()  then return true end
+		if affliction.rot.snare_curse()  then return true end
 		-- if affliction.rot.felflame() then return true end
 	end
 	-------------------- Normal Swaps (Agony/unstable/corruption based)
@@ -2260,6 +2261,7 @@ local inCombat = function()
 	if toggle("eye_demon") and affliction.rot.petres_supremacy2() then return true end
 	if affliction.rot.Buffbuff()  then return true end
 	if affliction.rot.snare_curse()  then return true end
+	if affliction.rot.ccfear() then return true end	
 	-- DOT SNAPSHOTING
 	if not proccing then
 		if affliction.rot.agonysnap()  then return true end
@@ -2276,7 +2278,6 @@ local inCombat = function()
 	if affliction.rot.CauterizeMaster()  then return true end
 	if affliction.rot.MortalCoil()  then return true end
 	if affliction.rot.twilightward()  then return true end
-	if affliction.rot.ccfear() then return true end	
 	if affliction.rot.ccstun()  then return true end	
 	if affliction.rot.snare_curse()  then return true end
 	-- Heal pet
