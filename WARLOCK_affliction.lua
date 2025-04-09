@@ -956,10 +956,10 @@ local exeOnLoad = function()
 				end
 			end
 			if (idd==27243) then -- seed of corruption
-				if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS"
+				if subevent == "SPELL_CAST_SUCCESS"
 					then
 					print("SNEEDING")
-					seeds[guiddest]= _A.myscore()
+					seeds[guiddest]= player:buff("Mannoroth's Fury") and _A.myscore()*5 or _A.myscore()
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
 					then
@@ -1002,6 +1002,7 @@ local exeOnLoad = function()
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			if subevent =="SPELL_CAST_SUCCESS" then -- accuracy needs to improve
 				if idd==86121 then -- Soul Swap 86213
+					print("SOULSWAP")
 					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
 					swap_unstabletbl[guiddest]=unstabletbl[guiddest]
@@ -1015,11 +1016,12 @@ local exeOnLoad = function()
 							if swap_corruptiontbl[guiddest] then swap_corruptiontbl[guiddest]=nil end
 							if swap_seeds[guiddest] then swap_seeds[guiddest]=nil end
 							if soulswaporigin  then soulswaporigin = nil end
-							print("HEEEEEEEEEEEEEEEEEEEEEEEEEEY")
+							print("DELETED DATA (ran out of time)")
 						end
 					end)
 				end
 				if idd==86213 then -- exhale
+					print("EXHALE!!")
 					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					Ijustexhaled = true
 					C_Timer.After(.2, function()
