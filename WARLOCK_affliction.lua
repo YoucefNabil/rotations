@@ -259,12 +259,12 @@ local exeOnLoad = function()
 		-- [63]="Mage Fire",
 		-- [64]="Mage Frost",
 	}
-	-- _A.Interface:AddToggle({
-		-- key = "aoetoggle", 
-		-- name = "AOE Seed of corruption swaps mode", 
-		-- text = "ON : Seed of corruption swapping || OFF: 3 dot swapping (agony unstable affli corrpution)",
-		-- icon = select(3,GetSpellInfo(27243)),
-	-- })
+	_A.Interface:AddToggle({
+		key = "aoetoggle", 
+		name = "AOE Seed of corruption swaps mode", 
+		text = "ON : Seed of corruption swapping || OFF: 3 dot swapping (agony unstable affli corrpution)",
+		icon = select(3,GetSpellInfo(27243)),
+	})
 	_A.Interface:AddToggle({
 		key = "eye_demon", 
 		name = "Observer pet", 
@@ -1663,7 +1663,7 @@ affliction.rot = {
 		if player:health() <= 85 then
 			if player:Talent("Mortal Coil") and player:SpellCooldown("Mortal Coil")<.3  then
 				local lowest = Object("lowestEnemyInSpellRangeNOTAR(Mortal Coil)")
-				if lowest and lowest:exists() then
+				if lowest then
 					return lowest:cast("Mortal Coil")
 				end
 			end
@@ -1935,10 +1935,9 @@ affliction.rot = {
 		end
 		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not player:buff(74434) 
 			and player:buff("Mannoroth's Fury") and _A.castdelay(27243, 12)
-			-- and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") 
 			then
 			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not player:IsCurrentSpell(108508) then player:cast(108508) end
-			return _A.temptabletbl[1].obj:cast("Seed of Corruption")
+			if _A.myscore()>_A.temptabletbl[1].seedscore then return _A.temptabletbl[1].obj:cast("Seed of Corruption") end
 		end
 	end,
 	
@@ -2181,15 +2180,17 @@ local inCombat = function()
 	affliction.rot.caching()
 	if player:spellcooldown("Corruption")>cdcd*2 then return true end
 	affliction.rot.activetrinket()
-	-- if toggle("aoetoggle") then
-		-- if affliction.rot.haunt()  then return true end
-		-- if affliction.rot.exhaleoptiSEED() then return true end
-		-- if affliction.rot.corruptionsSEED() then return true end
-		-- if affliction.rot.SneedofcorruptionHIGHPRIO() then return true end
-		-- if affliction.rot.soulswapoptiSEED() then return true end
-		-- if affliction.rot.Sneedofcorruption() then return true end
-		-- return true
-	-- end
+	if _A.modifier_shift() then
+		if affliction.rot.haunt()  then return true end
+	end
+	if toggle("aoetoggle") then
+		if affliction.rot.exhaleoptiSEED() then return true end
+		if affliction.rot.corruptionsSEED() then return true end
+		if affliction.rot.SneedofcorruptionHIGHPRIO() then return true end
+		if affliction.rot.soulswapoptiSEED() then return true end
+		if affliction.rot.Sneedofcorruption() then return true end
+		return true
+	end
 	if affliction.rot.exhaleopti()  then return true end
 	--stuff
 	if affliction.rot.Buffbuff()  then return true end
