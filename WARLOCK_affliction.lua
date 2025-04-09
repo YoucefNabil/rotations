@@ -1036,11 +1036,6 @@ local exeOnLoad = function()
 					swap_agonytbl[guiddest]=nil
 					swap_corruptiontbl[guiddest]=nil
 					swap_seeds[guiddest]=nil
-					-- CLASSIC PART
-					-- unstabletbl[guiddest]=unstabletbl[soulswaporigin]
-					-- agonytbl[guiddest]=agonytbl[soulswaporigin]
-					-- corruptiontbl[guiddest]=corruptiontbl[soulswaporigin]
-					-- seeds[guiddest]=seeds[soulswaporigin]
 					soulswaporigin = nil
 				end
 			end
