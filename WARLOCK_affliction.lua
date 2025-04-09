@@ -652,7 +652,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('EnemyHealer', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer  and Obj:spellRange(spell) and Obj:Infront() and _A.isthisahealer(Obj) and _A.notimmune(Obj) 
+			if Obj.isplayer  and Obj:spellRange(spell) and Obj:InConeOf(player, 170)  and _A.isthisahealer(Obj) and _A.notimmune(Obj) 
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -668,10 +668,36 @@ local exeOnLoad = function()
 	end)
 	
 	_Y.seedtarget = {}
+	_Y.imIswapping = false
+	_Y.swap_intercasts = 0
+	local inbetweentimer = nil
 	
 	Listener:Add("seedtargets", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
+		if guiddest == UnitGUID("player") then
+			if subevent == "SPELL_AURA_APPLIED" then
+				if spell_name(idd)=="Soul Swap" then
+					_Y.imIswapping = true
+					if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
+					inbetweentimer = C_Timer.NewTimer(player:gcd() or 1.5, function() _Y.imIswapping = false end)
+				end
+			end
+			if subevent == "SPELL_AURA_REMOVED" then
+				if spell_name(idd)=="Soul Swap" then
+					_Y.imIswapping = false
+					_Y.swap_intercasts = 0
+					if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
+				end
+			end
+		end
+		if guidsrc == UnitGUID("player") then
+			if (subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START") and _Y.imIswapping == true and spell_name(idd)~="Soul Swap" then
+				_Y.swap_intercasts = _Y.swap_intercasts + 1
+			end
+		end
 		if guidsrc == UnitGUID("player") then
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				----------------------------------- exhale counter
+				-----------------------------------
 				if spell_name(idd) == "Seed of Corruption"  then
 					-- print(subevent, guiddest)
 					if not _Y.seedtarget[guiddest] then _Y.seedtarget[guiddest]=true end
@@ -697,13 +723,13 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target) 
+		if target and target:enemy() and target:spellRange(spell) and target:InConeOf(player, 170)  and _A.attackable and _A.notimmune(target) 
 			and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 			and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and Obj:Infront() and _A.notimmune(Obj) 
+			if Obj:spellRange(spell) and Obj:InConeOf(player, 170)  and _A.notimmune(Obj) 
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -722,7 +748,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) 
+			if Obj:spellRange(spell) and Obj:InConeOf(player, 170)  and  _A.notimmune(Obj) 
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -774,7 +800,7 @@ local exeOnLoad = function()
 		range = tonumber(range) or 10
 		threshhold = tonumber(threshhold) or 1
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170)  and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
 				tempTable[Obj.guid] = 1
 				for _, Obj2 in pairs(_A.OM:Get('Enemy')) do
 					if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
@@ -920,44 +946,44 @@ local exeOnLoad = function()
 				-- end
 			end
 			-------------- dots part
-				if (idd==146739) or (idd==172) then -- Corruption
-					if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS")
-						then
-						print("CORRUPTION")
-						corruptiontbl[guiddest]=_A.myscore() 
-					end
-					if subevent=="SPELL_AURA_REMOVED" 
-						then
-						corruptiontbl[guiddest]=nil
-					end
+			if (idd==146739) or (idd==172) then -- Corruption
+				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS")
+					then
+					-- print("CORRUPTION")
+					corruptiontbl[guiddest]=_A.myscore() 
 				end
-				if (idd==980) then -- AGONY
-					if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS")
-						then
-						print("AGONY")
-						agonytbl[guiddest]=_A.myscore()
-					end
-					if subevent=="SPELL_AURA_REMOVED" 
-						then
-						agonytbl[guiddest]=nil
-					end
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					corruptiontbl[guiddest]=nil
 				end
-				if (idd==30108) then -- Unstable Affli
-					if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS")
-						then
-						print("UNSABLE AFFLI")
-						unstabletbl[guiddest]=_A.myscore() 
-					end
-					if subevent=="SPELL_AURA_REMOVED" 
-						then
-						unstabletbl[guiddest]=nil
-					end
+			end
+			if (idd==980) then -- AGONY
+				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS")
+					then
+					-- print("AGONY")
+					agonytbl[guiddest]=_A.myscore()
 				end
-
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					agonytbl[guiddest]=nil
+				end
+			end
+			if (idd==30108) then -- Unstable Affli
+				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_CAST_SUCCESS")
+					then
+					-- print("UNSABLE AFFLI")
+					unstabletbl[guiddest]=_A.myscore() 
+				end
+				if subevent=="SPELL_AURA_REMOVED" 
+					then
+					unstabletbl[guiddest]=nil
+				end
+			end
+			
 			if (idd==27243) then -- seed of corruption
 				if (Ijustexhaled==false and IjustTriple == false) and subevent == "SPELL_CAST_SUCCESS"
 					then
-					print("SNEEDING")
+					-- print("SNEEDING")
 					seeds[guiddest]= player:buff("Mannoroth's Fury") and _A.myscore()*5 or _A.myscore()
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
@@ -1008,7 +1034,7 @@ local exeOnLoad = function()
 					swap_agonytbl[guiddest]=agonytbl[guiddest]
 					swap_corruptiontbl[guiddest]=corruptiontbl[guiddest]
 					swap_seeds[guiddest]=seeds[guiddest]
-					soulswaptimer = C_Timer.NewTimer(3, function()
+					soulswaptimer = C_Timer.NewTimer(3.2, function()
 						if not player:buff("Soul Swap") then
 							if swap_unstabletbl[guiddest] then swap_unstabletbl[guiddest]=nil end
 							if swap_agonytbl[guiddest] then swap_agonytbl[guiddest]=nil end
@@ -1387,6 +1413,7 @@ affliction.rot = {
 					seedscore = (seeds[Obj.guid] or 0),
 					range = range_cache,
 					health = healthraww,
+					front = Obj:InConeOf(player, 170) and 1 or 0,
 					isplayer = Obj.isplayer and 1 or 0
 				}
 				if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
@@ -1709,14 +1736,47 @@ affliction.rot = {
 		end
 	end,
 	
+	-------------------------------------
+	
+	haunt_between = function()
+		if not player:moving() and not player:IsCurrentSpell(48181) and _A.shards>=1 then
+			if #_A.temptabletbl>1 then
+				table.sort(_A.temptabletbl, function(a,b)
+					if 	a.front ~= b.front then return a.front > b.front
+						elseif
+						a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+						elseif
+						a.score ~= b.score then return a.score > b.score
+						elseif 
+						a.health ~= b.health then return a.health > b.health
+					end
+				end)
+			end
+			if _A.temptabletbl[1] and _A.temptabletbl[1].isplayer==1 then 
+				return _A.temptabletbl[1].obj:Cast("Haunt")
+			end
+		end
+	end,
+	
 	lifetap_delayed = function()
 		if player:health()>=35
 			and player:Mana()<=80
-			and soulswaporigin ~= nil
-			and (_A.castdelay(1454, 30) or player:Mana()<=12)  -- 35sec delay
+			and (_A.castdelay(1454, 20) or player:Mana()<=20)  -- 35sec delay
 			then return player:cast("Life Tap")
 		end
 	end,
+	
+	
+	haunt = function()
+		if _A.castdelay(48181, 1.5) and _A.shards>=1 and not player:isCastingAny() and not player:moving()  then
+			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
+			if lowest and lowest:exists() and not lowest:debuff(48181) then
+				return lowest:cast("haunt")
+			end
+		end
+	end,
+	
+	----------------------------------
 	
 	lifetap= function()
 		if 	player:health()>=35
@@ -1730,7 +1790,7 @@ affliction.rot = {
 		if player:talent("Shadowfury") and player:SpellCooldown("Shadowfury") < cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=30
-					and obj:infront()
+					and obj:InConeOf(player, 170) 
 					and (not toggle("ccheals") or toggle("ccheals") and _A.isthisahealer(obj))
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
 					and (obj:drState("Shadowfury") == 1 or obj:drState("Shadowfury") == -1)
@@ -2045,15 +2105,6 @@ affliction.rot = {
 		end
 	end,
 	
-	haunt = function()
-		if _A.castdelay(48181, 1.5) and _A.shards>=1 and not player:isCastingAny() and not player:moving()  then
-			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
-			if lowest and lowest:exists() and not lowest:debuff(48181) then
-				return lowest:cast("haunt")
-			end
-		end
-	end,
-	
 	grasp = function()
 		if not player:isCastingAny() and not player:isChanneling("Malefic Grasp")  and (not player:moving() or player:talent("Kil'jaeden's Cunning")) and _A.enoughmana(103103)  then
 			local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Corruption)")
@@ -2065,9 +2116,9 @@ affliction.rot = {
 	
 	felflame = function()
 		if not player:isCastingAny() and _A.enoughmana(77799) then
-			local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Conflagrate)")
-			if lowest and lowest:exists() then
-				return lowest:FaceCast("fel flame")
+			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Fel Flame)")
+			if lowest then
+				return lowest:Cast("fel flame")
 			end
 		end
 	end,
@@ -2157,11 +2208,7 @@ local inCombat = function()
 	--
 	_Y.petengine_affli()
 	affliction.rot.stop_chan_on_dead()
-	-- CTRL MODE (Beams)
-	if _A.modifier_ctrl() then
-		if affliction.rot.drainsoul() then return true end
-		if affliction.rot.grasp()  then return true end
-	end
+
 	if affliction.rot.everyman() then return true end
 	--bursts
 	-- shift mode (haunt)
@@ -2170,15 +2217,19 @@ local inCombat = function()
 	affliction.rot.items_healthstone()
 	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
 	-- if player:lostcontrol() then return end 
-	--delayed lifetap
-	if affliction.rot.lifetap_delayed() then return true end
-	--exhale
 	affliction.rot.caching()
 	if player:spellcooldown("Corruption")>cdcd*2 then return true end
+	--------=================
+	--------================= START
+	--------=================
 	affliction.rot.activetrinket()
-	if _A.modifier_shift() then
-		if affliction.rot.haunt()  then return true end
+	-------------------- inbetween swaps system
+	-- CTRL MODE (Beams)
+	if _A.modifier_ctrl() then
+		if affliction.rot.drainsoul() then return true end
+		if affliction.rot.grasp()  then return true end
 	end
+	-------------------- AOE swaps (seed based)
 	if toggle("aoetoggle") then
 		if affliction.rot.exhaleoptiSEED() then return true end
 		if affliction.rot.corruptionsSEED() then return true end
@@ -2187,26 +2238,29 @@ local inCombat = function()
 		if affliction.rot.Sneedofcorruption() then return true end
 		return true
 	end
+	if _Y.imIswapping == true and _Y.swap_intercasts ==0  then
+		-- SHIFT MODE (HAUNTS)
+		if _A.modifier_shift() then
+			if affliction.rot.haunt_between()  then return true end
+		end
+		if affliction.rot.lifetap_delayed() then return true end
+		if affliction.rot.CauterizeMaster()  then return true end
+		if affliction.rot.MortalCoil()  then return true end
+		if affliction.rot.twilightward()  then return true end
+		if affliction.rot.ccfear() then return true end	
+		if affliction.rot.ccstun()  then return true end	
+		-- if affliction.rot.felflame() then return true end
+	end
+	-------------------- Normal Swaps (Agony/unstable/corruption based)
 	if affliction.rot.exhaleopti()  then return true end
-	--stuff
-	if affliction.rot.Buffbuff()  then return true end
 	affliction.rot.items_intflask()
+	-- High prio
 	if affliction.rot.petres()  then return true end
 	if not toggle("eye_demon") and affliction.rot.petres_supremacy3() then return true end
 	if toggle("eye_demon") and affliction.rot.petres_supremacy2() then return true end
-	-- if affliction.rot.summ_healthstone() then return true end
-	if affliction.rot.CauterizeMaster()  then return true end
-	if affliction.rot.MortalCoil()  then return true end
-	if affliction.rot.twilightward()  then return true end
-	--utility 
-	if affliction.rot.bloodhorrorremovalopti()  then return true end
-	if affliction.rot.bloodhorror() then return true end
-	if affliction.rot.ccfear() then return true end	
-	if affliction.rot.ccstun()  then return true end	
+	if affliction.rot.Buffbuff()  then return true end
 	if affliction.rot.snare_curse()  then return true end
-	-- Heal pet
-	if affliction.rot.healthfunnel() then return true end
-	-- DOT DOT
+	-- DOT SNAPSHOTING
 	if not proccing then
 		if affliction.rot.agonysnap()  then return true end
 		if affliction.rot.corruptionsnap()  then return true end
@@ -2218,12 +2272,21 @@ local inCombat = function()
 	if affliction.rot.unstablesnap()  then return true end
 	-- SOUL SWAP
 	if affliction.rot.soulswapopti()  then return true end
-	--buff
+	----------------------------------------------------------
+	if affliction.rot.CauterizeMaster()  then return true end
+	if affliction.rot.MortalCoil()  then return true end
+	if affliction.rot.twilightward()  then return true end
+	if affliction.rot.ccfear() then return true end	
+	if affliction.rot.ccstun()  then return true end	
+	if affliction.rot.snare_curse()  then return true end
+	-- Heal pet
+	if affliction.rot.healthfunnel() then return true end
+	-- buff
 	if affliction.rot.darkintent() then return true end
-	--fills
+	-- fills
 	if affliction.rot.lifetap()  then return true end
 	if affliction.rot.drainsoul() then return true end
-	if affliction.rot.grasp()  then return true end
+	-- if affliction.rot.grasp()  then return true end
 	if affliction.rot.felflame() then return true end
 end 
 local spellIds_Loc = function()
