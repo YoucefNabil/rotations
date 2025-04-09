@@ -1379,6 +1379,8 @@ affliction.rot = {
 				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then corruptiontbl[Obj.guid]=nil end
 				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then agonytbl[Obj.guid]=nil end
 				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then unstabletbl[Obj.guid]=nil end
+				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
+				local unstabledur, corruptiondur, agonydur, seedsdur, range_cache, healthraww =  Obj:DebuffDuration("Unstable Affliction"), Obj:DebuffDuration("Corruption"), Obj:DebuffDuration("Agony"), Obj:DebuffDuration("Seed of Corruption"), Obj:range(2) or 40, Obj:HealthActual() or 0
 				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
 					obj = Obj,
@@ -1387,25 +1389,25 @@ affliction.rot = {
 					unstablescore = (unstabletbl[Obj.guid] or 0),
 					corruptionscore = (corruptiontbl[Obj.guid] or 0),
 					seedscore = (seeds[Obj.guid] or 0),
-					range = Obj:range(2) or 40,
-					health = Obj:HealthActual() or 0,
+					range = range_cache,
+					health = healthraww,
 					isplayer = Obj.isplayer and 1 or 0
 				}
 				if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
 					_A.temptabletblexhale[#_A.temptabletblexhale+1] = {
 						obj = Obj,
-						rangedis = Obj:range(2) or 40,
+						rangedis = range_cache,
 						isplayer = Obj.isplayer and 1 or 0,
-						health = Obj:HealthActual() or 0,
-						duration = Obj:DebuffDuration("Unstable Affliction") or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
-						-- durationSEED = Obj:DebuffDuration("Seed of Corruption") or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
+						health = healthraww,
+						duration = unstabledur or 0, -- duration for unstable only, best solution to spread it to as many units as possible, always order by this first
+						durationSEED = seedsdur or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
 					}
 				end
 				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = { -- dictates who to copy dots from, doing all dots duration in a cascade like this is important (keeps soul swapping even if unstable affli drops)
 					obj = Obj,
 					isplayer = Obj.isplayer and 1 or 0,
-					duration = Obj:DebuffDuration("Unstable Affliction") or Obj:DebuffDuration("Agony") or Obj:DebuffDuration("Corruption") or 0, -- DEFAULT 
-					-- durationSEED = Obj:DebuffDuration("Seed of Corruption") or 0, -- DEFAULT 
+					duration = unstabledur or agonydur or corruptiondur or 0, -- DEFAULT 
+					durationSEED = seedsdur or 0, -- DEFAULT 
 				}
 			end -- end of enemy filter
 			-- if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
