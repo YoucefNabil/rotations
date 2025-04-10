@@ -383,6 +383,7 @@ local exeOnLoad = function()
 	function _A.attackable(unit)
 		if _A.pull_location and _A.pull_location ~= "arena" and _A.pull_location ~= "pvp" then return true end
 		if unit then 
+			if unit.isplayer then return true end
 			if unit:CreatureType()==nil then return false end
 			if types_i_dont_need[unit:CreatureType()] then return false end
 			return true
@@ -1753,11 +1754,23 @@ affliction.rot = {
 		local flagcarry = nil
 		if _A.pull_location == "pvp" and not player:buff(74434) then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.attackable(Obj) and (Obj:BuffAny("Alliance Flag") or Obj:BuffAny("Horde Flag")) and not Obj:Debuff("Curse of Exhaustion") and _A.notimmune(Obj) and Obj:los() then
+				if Obj:spellRange(172) and _A.attackable(Obj) and (Obj:BuffAny("Alliance Flag") or Obj:BuffAny("Horde Flag")) and not Obj:Debuff("Curse of Exhaustion") and not Obj:immune("snare") 
+					and not Obj:state("snare") and _A.notimmune(Obj) and Obj:los() then
 					flagcarry = Obj
 				end
 			end
 			return flagcarry and flagcarry:cast("Curse of Exhaustion")
+		end
+	end,
+	
+	snare_curse_target = function() -- rework this
+		local target = Object("target")
+		if _A.pull_location == "pvp" and not player:buff(74434) then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and target and Obj:is(target) and Obj:spellRange(172) and _A.attackable(Obj) and not Obj:Debuff("Curse of Exhaustion") and not Obj:immune("snare") and not Obj:state("snare") and _A.notimmune(Obj) and Obj:los() then
+					return Obj:cast("Curse of Exhaustion")
+				end
+			end
 		end
 	end,
 	
@@ -2276,6 +2289,7 @@ local inCombat = function()
 		if affliction.rot.ccfear() then return true end	
 		if affliction.rot.ccstun()  then return true end
 		if affliction.rot.snare_curse()  then return true end
+		if affliction.rot.snare_curse_target()  then return true end
 		-- if affliction.rot.felflame() then return true end
 	end
 	-------------------- Normal Swaps (Agony/unstable/corruption based)
@@ -2300,6 +2314,9 @@ local inCombat = function()
 	-- SOUL SWAP
 	if affliction.rot.soulswapopti()  then return true end
 	----------------------------------------------------------
+	if _A.modifier_shift() then
+		if affliction.rot.haunt_between()  then return true end
+	end
 	if affliction.rot.CauterizeMaster()  then return true end
 	if affliction.rot.MortalCoil()  then return true end
 	if affliction.rot.twilightward()  then return true end
