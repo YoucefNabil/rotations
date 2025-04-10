@@ -670,6 +670,16 @@ local exeOnLoad = function()
 	_Y.seedtarget = {}
 	_Y.imIswapping = false
 	_Y.swap_intercasts = 0
+	local validintercasts = {
+		["Life Tap"] = true,
+		["Cauterize Master"] = true,
+		["Twilight Ward"] = true,
+		["Howl of Terror"] = true,
+		["Shadowfury"] = true,
+		["Curse of Exhaustion"] = true,
+		["Haunt"] = true,
+		["Fel Flame"] = true,
+	}
 	local inbetweentimer = nil
 	
 	Listener:Add("seedtargets", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
@@ -690,8 +700,10 @@ local exeOnLoad = function()
 			end
 		end
 		if guidsrc == UnitGUID("player") then
-			if (subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START") and _Y.imIswapping == true and spell_name(idd)~="Soul Swap" then
+			if (subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START") and _Y.imIswapping == true and validintercasts[spell_name(idd)]
+				then
 				_Y.swap_intercasts = _Y.swap_intercasts + 1
+				print("INTERCASTED", spell_name(idd))
 			end
 		end
 		if guidsrc == UnitGUID("player") then
