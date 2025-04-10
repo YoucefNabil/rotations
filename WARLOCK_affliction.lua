@@ -2248,6 +2248,7 @@ local inCombat = function()
 	--------================= START
 	--------=================
 	affliction.rot.activetrinket()
+	affliction.rot.items_intflask()
 	-------------------- inbetween swaps system
 	-- CTRL MODE (Beams)
 	if _A.modifier_ctrl() then
@@ -2279,7 +2280,6 @@ local inCombat = function()
 	end
 	-------------------- Normal Swaps (Agony/unstable/corruption based)
 	if affliction.rot.exhaleopti()  then return true end
-	affliction.rot.items_intflask()
 	-- High prio
 	if affliction.rot.petres()  then return true end
 	if not toggle("eye_demon") and affliction.rot.petres_supremacy3() then return true end
