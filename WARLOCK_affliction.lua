@@ -1761,7 +1761,7 @@ affliction.rot = {
 	lifetap_delayed = function()
 		if player:health()>=35
 			and player:Mana()<=80
-			and (_A.castdelay(1454, 20) or player:Mana()<=20)  -- 35sec delay
+			and (_A.castdelay(1454, 30) or player:Mana()<=20)  -- 35sec delay
 			then return player:cast("Life Tap")
 		end
 	end,
@@ -2279,7 +2279,6 @@ local inCombat = function()
 	if affliction.rot.MortalCoil()  then return true end
 	if affliction.rot.twilightward()  then return true end
 	if affliction.rot.ccstun()  then return true end	
-	if affliction.rot.snare_curse()  then return true end
 	-- Heal pet
 	if affliction.rot.healthfunnel() then return true end
 	-- buff
