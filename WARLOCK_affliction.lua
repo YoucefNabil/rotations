@@ -213,10 +213,10 @@ local corruptiontbl = {}
 local agonytbl = {}
 local unstabletbl = {}
 local seeds = {}
-local swap_seeds = {}
-local swap_unstabletbl = {}
-local swap_agonytbl = {}
-local swap_corruptiontbl = {}
+local swap_seeds = nil
+local swap_unstabletbl = nil
+local swap_agonytbl = nil
+local swap_corruptiontbl = nil
 local soulswaporigin = nil
 local Ijustexhaled = false
 local IjustTriple = false
@@ -678,7 +678,7 @@ local exeOnLoad = function()
 				if spell_name(idd)=="Soul Swap" then
 					_Y.imIswapping = true
 					if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
-					inbetweentimer = C_Timer.NewTimer(player:gcd() or 1.5, function() _Y.imIswapping = false end)
+					inbetweentimer = C_Timer.NewTimer(player:gcd()+.3, function() _Y.imIswapping = false end)
 				end
 			end
 			if subevent == "SPELL_AURA_REMOVED" then
@@ -1030,19 +1030,19 @@ local exeOnLoad = function()
 					print("SOULSWAP")
 					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
-					swap_unstabletbl[guiddest]=unstabletbl[guiddest]
-					swap_agonytbl[guiddest]=agonytbl[guiddest]
-					swap_corruptiontbl[guiddest]=corruptiontbl[guiddest]
-					swap_seeds[guiddest]=seeds[guiddest]
+					swap_unstabletbl=unstabletbl[guiddest]
+					swap_agonytbl=agonytbl[guiddest]
+					swap_corruptiontbl=corruptiontbl[guiddest]
+					swap_seeds=seeds[guiddest]
 					soulswaptimer = C_Timer.NewTimer(3.2, function()
-						if not player:buff("Soul Swap") then
-							if swap_unstabletbl[guiddest] then swap_unstabletbl[guiddest]=nil end
-							if swap_agonytbl[guiddest] then swap_agonytbl[guiddest]=nil end
-							if swap_corruptiontbl[guiddest] then swap_corruptiontbl[guiddest]=nil end
-							if swap_seeds[guiddest] then swap_seeds[guiddest]=nil end
-							if soulswaporigin  then soulswaporigin = nil end
-							print("DELETED DATA (ran out of time)")
-						end
+						-- if not player:buff("Soul Swap") then
+						if swap_unstabletbl then swap_unstabletbl=nil end
+						if swap_agonytbl then swap_agonytbl=nil end
+						if swap_corruptiontbl then swap_corruptiontbl=nil end
+						if swap_seeds then swap_seeds=nil end
+						if soulswaporigin  then soulswaporigin=nil end
+						print("DELETED DATA (ran out of time)")
+						-- end
 					end)
 				end
 				if idd==86213 then -- exhale
@@ -1053,16 +1053,29 @@ local exeOnLoad = function()
 						if Ijustexhaled then Ijustexhaled = false end
 					end)
 					-- TEST PART
-					unstabletbl[guiddest] = swap_unstabletbl[soulswaporigin]
-					agonytbl[guiddest] = swap_agonytbl[soulswaporigin]
-					corruptiontbl[guiddest] = swap_corruptiontbl[soulswaporigin]
-					seeds[guiddest]=swap_seeds[soulswaporigin]
-					print(unstabletbl[guiddest], agonytbl[guiddest], corruptiontbl[guiddest])
-					swap_unstabletbl[guiddest]=nil
-					swap_agonytbl[guiddest]=nil
-					swap_corruptiontbl[guiddest]=nil
-					swap_seeds[guiddest]=nil
+					unstabletbl[guiddest] = swap_unstabletbl
+					agonytbl[guiddest] = swap_agonytbl
+					corruptiontbl[guiddest] = swap_corruptiontbl
+					seeds[guiddest]=swap_seeds
+					print(swap_unstabletbl, swap_agonytbl, swap_corruptiontbl, swap_seeds)
+					swap_unstabletbl=nil
+					swap_agonytbl=nil
+					swap_corruptiontbl=nil
+					swap_seeds=nil
 					soulswaporigin = nil
+				end
+			end
+		end
+		-- is it necessary?
+		if guiddest == UnitGUID("player") then
+			if subevent == "SPELL_AURA_REMOVED" then
+				if spell_name(idd)=="Soul Swap" then
+					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
+					if swap_unstabletbl then print("DELETED SOMETHING") swap_unstabletbl=nil end
+					if swap_agonytbl then swap_agonytbl=nil end
+					if swap_corruptiontbl then swap_corruptiontbl=nil end
+					if swap_seeds then swap_seeds=nil end
+					if soulswaporigin  then soulswaporigin=nil end
 				end
 			end
 		end
@@ -2208,7 +2221,7 @@ local inCombat = function()
 	--
 	_Y.petengine_affli()
 	affliction.rot.stop_chan_on_dead()
-
+	
 	if affliction.rot.everyman() then return true end
 	--bursts
 	-- shift mode (haunt)
