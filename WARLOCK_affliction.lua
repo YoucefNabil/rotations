@@ -1473,7 +1473,7 @@ affliction.rot = {
 				if player:health()>=60 and player:talent("Unbound Will") and player:SpellCooldown("Unbound Will") == 0 and not player:IsCurrentSpell(108482)  then 
 					return player:cast("Unbound Will")
 				end
-				if player:SpellCooldown("Every Man for Himself") == 0 and not player:IsCurrentSpell(59752) 
+				if player:SpellUsable("Every Man for Himself") and player:SpellCooldown("Every Man for Himself") == 0 and not player:IsCurrentSpell(59752) 
 					and ((player:talent("Unbound Will") and player:SpellCooldown("Unbound Will") > 0 and player:SpellCooldown("Unbound Will") < 58) or not player:talent("Unbound Will"))   then 
 					return player:cast("Every Man for Himself")
 				end
@@ -1566,6 +1566,7 @@ affliction.rot = {
 							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not player:IsCurrentSpell(113860) then
 								player:cast("Lifeblood") -- 2 min
 								player:useitem("Potion of the Jade Serpent") -- 3min
+								player:cast("Berserking") -- 2 min
 								player:cast("Dark Soul: Misery") -- 2min x2
 								else
 								return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i]))) --1min
@@ -1937,6 +1938,7 @@ affliction.rot = {
 							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not player:IsCurrentSpell(113860) then
 								player:cast("Lifeblood") -- 2 min
 								player:useitem("Potion of the Jade Serpent") -- 3min
+								player:cast("Berserking")
 								player:cast("Dark Soul: Misery") -- 2min x2
 								else
 								player:cast(108508)
@@ -2247,7 +2249,7 @@ local inCombat = function()
 	_Y.petengine_affli()
 	affliction.rot.stop_chan_on_dead()
 	
-	if affliction.rot.everyman() then return true end
+	affliction.rot.everyman()
 	--bursts
 	-- shift mode (haunt)
 	--HEALS
