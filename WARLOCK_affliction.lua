@@ -1041,14 +1041,14 @@ local exeOnLoad = function()
 			if subevent =="SPELL_CAST_SUCCESS" then -- accuracy needs to improve
 				if idd==86121 then -- Soul Swap 86213
 					-- print("SOULSWAP")
-					-- if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
-					soulswaporigin = guiddest -- remove after 3 seconds or after exhalings
+					soulswaporigin = guiddest
 					swap_unstabletbl=unstabletbl[guiddest]
 					swap_agonytbl=agonytbl[guiddest]
 					swap_corruptiontbl=corruptiontbl[guiddest]
 					swap_seeds=seeds[guiddest]
 					print("SWAP SCORE:", swap_unstabletbl, swap_agonytbl, swap_corruptiontbl, swap_seeds)
-					-- I don't think cleaning is necessary
+					-- I don't think cleaning is necessary since they get overwritten anyway everytime I soulswap
+					-- if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					-- soulswaptimer = C_Timer.NewTimer(4, function()
 						-- if swap_unstabletbl then swap_unstabletbl=nil end
 						-- if swap_agonytbl then swap_agonytbl=nil end
@@ -1062,16 +1062,15 @@ local exeOnLoad = function()
 					-- print("EXHALE!!")
 					-- if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					Ijustexhaled = true
-					-- TEST PART
 					unstabletbl[guiddest] = swap_unstabletbl
 					agonytbl[guiddest] = swap_agonytbl
 					corruptiontbl[guiddest] = swap_corruptiontbl
 					seeds[guiddest]=swap_seeds
 					print("EXHALE SCORE:", swap_unstabletbl, swap_agonytbl, swap_corruptiontbl, swap_seeds)
-					swap_unstabletbl=nil
-					swap_agonytbl=nil
-					swap_corruptiontbl=nil
-					swap_seeds=nil
+					-- swap_unstabletbl=nil
+					-- swap_agonytbl=nil
+					-- swap_corruptiontbl=nil
+					-- swap_seeds=nil
 					soulswaporigin = nil
 					C_Timer.After(.2, function()
 						if Ijustexhaled then Ijustexhaled = false end
@@ -1079,19 +1078,6 @@ local exeOnLoad = function()
 				end
 			end
 		end
-		-- is it necessary? Don't think so
-		-- if guiddest == UnitGUID("player") then
-			-- if subevent == "SPELL_AURA_REMOVED" then
-				-- if spell_name(idd)=="Soul Swap" then
-					-- if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
-					-- if swap_unstabletbl then print("DELETED SOMETHING") swap_unstabletbl=nil end
-					-- if swap_agonytbl then swap_agonytbl=nil end
-					-- if swap_corruptiontbl then swap_corruptiontbl=nil end
-					-- if swap_seeds then swap_seeds=nil end
-					-- if soulswaporigin  then soulswaporigin=nil end
-				-- end
-			-- end
-		-- end
 	end)
 	_A.casttimers = {} -- doesnt work with channeled spells
 	_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
