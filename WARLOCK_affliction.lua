@@ -260,6 +260,12 @@ local exeOnLoad = function()
 		-- [64]="Mage Frost",
 	}
 	_A.Interface:AddToggle({
+		key = "inbetweencasts", 
+		name = "Cast once inbetween soulswap and exhale", 
+		text = "ON : slower soul swap exhale || OFF: faster soulswap exhale",
+		icon = select(3,GetSpellInfo(1490)),
+	})
+	_A.Interface:AddToggle({
 		key = "aoetoggle", 
 		name = "AOE Seed of corruption swaps mode", 
 		text = "ON : Seed of corruption swapping || OFF: 3 dot swapping (agony unstable affli corrpution)",
@@ -322,7 +328,7 @@ local exeOnLoad = function()
 	function _Y.someoneisuperlow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj.isplayer and Obj:range()<40  then
-				if Obj:Health()<35 then
+				if Obj:Health()<15 or (_A.pull_location=="pvp" and Obj:Health()<35) then
 					return true
 				end
 			end
@@ -1215,7 +1221,7 @@ local exeOnLoad = function()
 				if _A.PetGUID and (not _A.UnitTarget(_A.PetGUID) or _A.UnitTarget(_A.PetGUID)~=target.guid) then
 					_A.PetAttack(target.guid)
 					return true
-					elseif _A.UnitTarget(_A.PetGUID) and _A.UnitTarget(_A.PetGUID)==target.guid then
+					elseif _A.PetGUID and _A.UnitTarget(_A.PetGUID) and _A.UnitTarget(_A.PetGUID)==target.guid then
 					local pet = Object("pet")
 					-- XELETH SECTION
 					if pet and UnitCreatureFamily("pet") == "Observer" then
@@ -1233,7 +1239,8 @@ local exeOnLoad = function()
 	end
 	local function petfollow() -- when pet target has a breakable cc
 		if _A.PetGUID and _A.UnitTarget(_A.PetGUID)~=nil then
-			local target = Object(_A.UnitTarget(_A.PetGUID))
+			local pettarget = _Y.Existscheck and _A.UnitTarget(_A.PetGUID) or nil
+			local target = pettarget and Object(pettarget)
 			if target and target:alive() and target:enemy() and target:exists() and target:stateYOUCEF("incapacitate || disorient || charm || misc || sleep ||fear") then
 				_A.CallWowApi("RunMacroText", "/petfollow")
 				return true
@@ -1243,7 +1250,7 @@ local exeOnLoad = function()
 	local function petsilencesnipe()
 		local pet = Object("pet")
 		local temptable = {}
-		local pettargetguid = _A.UnitTarget("pet") or nil
+		local pettargetguid = _Y.Existscheck and _A.UnitTarget("pet") or nil
 		if pet and UnitCreatureFamily("pet") == "Observer" then
 			if player:SpellCooldown("Optical Blast(Special Ability)")==0 and UnitPower("pet")>=20
 				then
@@ -1294,7 +1301,7 @@ local exeOnLoad = function()
 	local function petdisarmsnipe()
 		local pet = Object("pet")
 		local temptable = {}
-		local pettargetguid = _A.UnitTarget("pet") or nil
+		local pettargetguid = _Y.Existscheck and _A.UnitTarget("pet") or nil
 		if pet and UnitCreatureFamily("pet") == "Voidlord" then
 			if player:SpellCooldown("Disarm(Special Ability)")==0 and UnitPower("pet")>=30
 				then
@@ -1370,8 +1377,9 @@ local exeOnLoad = function()
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
 		if player:mounted() then return end
 		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
-		if not _A.UnitExists("pet") or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
-		_A.PetGUID = _A.PetGUID or _A.UnitGUID("pet")
+		_Y.Existscheck = _A.UnitExists("pet") or false
+		if not _Y.Existscheck or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
+		_A.PetGUID = _Y.Existscheck and (_A.PetGUID or _A.UnitGUID("pet")) or nil
 		if _A.PetGUID == nil then return end
 		-- Pet Rotation
 		if petpassive() then return end
@@ -2269,7 +2277,7 @@ local inCombat = function()
 		if affliction.rot.Sneedofcorruption() then return true end
 		return true
 	end
-	if _Y.imIswapping == true and _Y.swap_intercasts ==0  then
+	if _Y.imIswapping == true and _Y.swap_intercasts ==0 and toggle("inbetweencasts") then
 		-- SHIFT MODE (HAUNTS)
 		if _A.modifier_shift() then
 			if affliction.rot.haunt_between()  then return true end
@@ -2320,9 +2328,8 @@ local inCombat = function()
 	-- fills
 	if affliction.rot.lifetap()  then return true end
 	if affliction.rot.drainsoul() then return true end
-	-- if affliction.rot.grasp()  then return true end
 	if affliction.rot.felflame() then return true end
-end 
+end
 local spellIds_Loc = function()
 end
 local blacklist = function()
