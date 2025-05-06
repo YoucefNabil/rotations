@@ -244,7 +244,7 @@ local exeOnLoad = function()
 		-- [266]="Lock Demono",
 		-- [267]="Lock Destro",
 		[105]="Druid Resto",
-		-- [102]="Druid Balance",
+		[102]="Druid Balance",
 		[270]="monk mistweaver",
 		[65]="Paladin Holy",
 		-- [66]="Paladin prot",
@@ -669,7 +669,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>=1 then
-			table.sort( tempTable, function(a,b) return a.health < b.health end )
+			_A.table.sort( tempTable, function(a,b) return a.health < b.health end )
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
@@ -759,7 +759,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		return tempTable[num] and tempTable[num].guid
 	end
@@ -778,7 +778,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		return tempTable[num] and tempTable[num].guid
 	end
@@ -798,7 +798,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		return tempTable[num] and tempTable[num].guid
 	end
@@ -1138,7 +1138,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1157,7 +1157,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1178,7 +1178,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1274,7 +1274,7 @@ local exeOnLoad = function()
 					end
 				end
 				if #temptable>1 then
-					table.sort(temptable, function(a,b) return a.range < b.range end )
+					_A.table.sort(temptable, function(a,b) return a.range < b.range end )
 				end
 				if temptable[1] then 
 					if pet
@@ -1322,7 +1322,7 @@ local exeOnLoad = function()
 					end
 				end
 				if #temptable>1 then
-					table.sort(temptable, function(a,b) return a.range < b.range end )
+					_A.table.sort(temptable, function(a,b) return a.range < b.range end )
 				end
 				if temptable[1] then 
 					if pet
@@ -1461,7 +1461,7 @@ affliction.rot = {
 				_A.reflectcheck = true
 			end
 		end -- end of iteration
-		-- table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
+		-- _A.table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
 	end,
 	
 	
@@ -1778,7 +1778,7 @@ affliction.rot = {
 	haunt_between = function()
 		if not player:moving() and not player:IsCurrentSpell(48181) and _A.shards>=1 then
 			if #_A.temptabletbl>1 then
-				table.sort(_A.temptabletbl, function(a,b)
+				_A.table.sort(_A.temptabletbl, function(a,b)
 					if 	a.front ~= b.front then return a.front > b.front
 						elseif
 						a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
@@ -1887,7 +1887,7 @@ affliction.rot = {
 	soulswapoptiSEED = function()
 		if  #_A.temptabletbl>1 and soulswaporigin == nil and _A.enoughmana(86121) then
 			if #_A.temptabletblsoulswap > 1 then
-				table.sort(_A.temptabletblsoulswap, function(a,b)
+				_A.table.sort(_A.temptabletblsoulswap, function(a,b)
 					return a.durationSEED > b.durationSEED -- always by highest duration
 				end)
 			end
@@ -1898,7 +1898,7 @@ affliction.rot = {
 	exhaleoptiSEED = function()
 		if soulswaporigin ~= nil then
 			if #_A.temptabletblexhale > 1 then
-				table.sort(_A.temptabletblexhale, function(a,b)
+				_A.table.sort(_A.temptabletblexhale, function(a,b)
 					if 	
 						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- Never change these
 						elseif
@@ -1915,7 +1915,7 @@ affliction.rot = {
 	
 	corruptionsSEED = function()
 		if #_A.temptabletbl>1 then
-			table.sort(_A.temptabletbl, function(a,b)
+			_A.table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.corruptionscore ~= b.corruptionscore then return a.corruptionscore > b.corruptionscore
 					elseif 
@@ -1955,7 +1955,7 @@ affliction.rot = {
 	
 	Sneedofcorruption = function()
 		if #_A.temptabletbl>1 then
-			table.sort(_A.temptabletbl, function(a,b)
+			_A.table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.seedscore ~= b.seedscore then return a.seedscore > b.seedscore
 					elseif 
@@ -1996,7 +1996,7 @@ affliction.rot = {
 	
 	SneedofcorruptionHIGHPRIO = function()
 		if #_A.temptabletbl>1 then
-			table.sort(_A.temptabletbl, function(a,b)
+			_A.table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.corruptionscore ~= b.corruptionscore then return a.corruptionscore > b.corruptionscore
 					elseif 
@@ -2040,7 +2040,7 @@ affliction.rot = {
 	
 	corruptionsnap = function()
 		if #_A.temptabletbl>1 then
-			table.sort(_A.temptabletbl, function(a,b)
+			_A.table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
 					elseif 
@@ -2062,7 +2062,7 @@ affliction.rot = {
 	
 	agonysnap = function()
 		if #_A.temptabletbl>1 then
-			table.sort(_A.temptabletbl, function(a,b)
+			_A.table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
 					elseif 
@@ -2081,7 +2081,7 @@ affliction.rot = {
 	
 	unstablesnapinstant = function()
 		if #_A.temptabletbl>1 then
-			table.sort(_A.temptabletbl, function(a,b)
+			_A.table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
 					elseif 
@@ -2122,7 +2122,7 @@ affliction.rot = {
 	
 	unstablesnap = function()
 		if #_A.temptabletbl>1 then
-			table.sort(_A.temptabletbl, function(a,b)
+			_A.table.sort(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
 					elseif 
@@ -2189,7 +2189,7 @@ affliction.rot = {
 	soulswapopti = function()
 		if  #_A.temptabletbl>1 and soulswaporigin == nil and _A.enoughmana(86121) then
 			if #_A.temptabletblsoulswap > 1 then
-				table.sort(_A.temptabletblsoulswap, function(a,b)
+				_A.table.sort(_A.temptabletblsoulswap, function(a,b)
 					return a.duration > b.duration -- always by highest duration
 				end)
 			end
@@ -2200,7 +2200,7 @@ affliction.rot = {
 	exhaleopti = function()
 		if soulswaporigin ~= nil then
 			if #_A.temptabletblexhale > 1 then
-				table.sort(_A.temptabletblexhale, function(a,b)
+				_A.table.sort(_A.temptabletblexhale, function(a,b)
 					if 	
 						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- Never change these
 						elseif

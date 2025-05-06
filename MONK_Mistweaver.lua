@@ -586,7 +586,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable > 1 then
-			table.sort(tempTable, function(a, b) return (a.HP < b.HP) end)
+			_A.table.sort(tempTable, function(a, b) return (a.HP < b.HP) end)
 		end
 		if #tempTable >= 1 then
 			return tempTable[1] and tempTable[1].guid
@@ -614,7 +614,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable > 1 then
-			table.sort(tempTable, function(a, b) return (a.HP < b.HP) end)
+			_A.table.sort(tempTable, function(a, b) return (a.HP < b.HP) end)
 		end
 		if #tempTable >= 1 then
 			return tempTable[1] and tempTable[1].guid
@@ -637,7 +637,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable > 1 then
-			table.sort(tempTable, function(a, b) return (a.HP < b.HP) end)
+			_A.table.sort(tempTable, function(a, b) return (a.HP < b.HP) end)
 		end
 		if #tempTable >= 1 then
 			return tempTable[1] and tempTable[1].guid
@@ -657,7 +657,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable > 1 then
-			table.sort(tempTable,
+			_A.table.sort(tempTable,
 			function(a, b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end)
 		end
 		if #tempTable >= 1 then
@@ -688,7 +688,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable > 1 then
-			table.sort(tempTable,
+			_A.table.sort(tempTable,
 			function(a, b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end)
 		end
 		if #tempTable >= 1 then
@@ -712,7 +712,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort(tempTable, function(a,b)
+			_A.table.sort(tempTable, function(a,b)
 				if a.isplayer ~= b.isplayer then return a.isplayer < b.isplayer
 					else return a.health < b.health
 				end
@@ -1059,7 +1059,7 @@ local exeOnLoad = function()
 						end
 					end
 					if #tempTable > 1 then
-						table.sort(tempTable, function(a, b) return a.delta < b.delta end)
+						_A.table.sort(tempTable, function(a, b) return a.delta < b.delta end)
 					end
 					for i = 1,3 do
 						if tempTable[i] then
@@ -1476,7 +1476,7 @@ local exeOnLoad = function()
 					end
 				end
 				if #tempTable > 1 then
-					table.sort(tempTable, function(a, b) return a.range < b.range end)
+					_A.table.sort(tempTable, function(a, b) return a.range < b.range end)
 				end
 				if #tempTable >= 1 then
 					return tempTable[num] and tempTable[num].guid
@@ -1495,7 +1495,7 @@ local exeOnLoad = function()
 					end
 				end
 				if #tempTable > 1 then
-					table.sort(tempTable, function(a, b) return a.range < b.range end)
+					_A.table.sort(tempTable, function(a, b) return a.range < b.range end)
 				end
 				if #tempTable >= 1 then
 					return tempTable[num] and tempTable[num].guid
@@ -1661,6 +1661,7 @@ local dangerousdebuffs = {
 	"Soul Reaper",
 	"Paralytic Poison",
 	"Deep Freeze",
+	"Black Arrow",
 	"Ring of Frost",
 	"Freeze",
 	"Denounce",
@@ -2010,7 +2011,7 @@ local mw_rot = {
 	kick_spear = function()
 		if player:SpellCooldown("Spear Hand Strik") == 0 and not IsCurrentSpell(116705) then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj:isCastingAny()
+				if (obj.isplayer or (_A.pull_location~="arena" and _A.pull_location~="pvp")) and obj:isCastingAny()
 					and obj:SpellRange("Blackout Kick")
 					-- and obj:InConeOf(player, 170)
 					and not obj:State("silence")
@@ -2455,7 +2456,7 @@ local mw_rot = {
 					end
 				end
 				if #temptabletbl2 > 1 then
-					table.sort(temptabletbl2, function(a, b) return (a.HP < b.HP) end)
+					_A.table.sort(temptabletbl2, function(a, b) return (a.HP < b.HP) end)
 				end
 				return temptabletbl2[1] and temptabletbl2[1].obj:Cast("Detox")
 			end
@@ -2495,7 +2496,7 @@ local mw_rot = {
 				end
 			end
 			if #temptabletbl1 > 1 then
-				table.sort(temptabletbl1, function(a, b) return (a.count > b.count) end)
+				_A.table.sort(temptabletbl1, function(a, b) return (a.count > b.count) end)
 			end
 			return temptabletbl1[1] and temptabletbl1[1].count >= 1 and temptabletbl1[1].obj:Cast("Detox")
 		end
@@ -3055,14 +3056,15 @@ local mw_rot = {
 			then 
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:SpellRange("Disable") 
-					and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep || root || snare") 
-					and not obj:immune("snare") 
+					-- and not obj:state("stun || incapacitate || fear || disorient || charm || misc || sleep || root || snare") 
+					and not obj:state("snare") 
+					and not obj:immune("snare || all") 
 					and not obj:buffany(48707)							
 					and not obj:buffany("Hand of Freedom")							
 					and not obj:buffany(1044)
 					and not obj:buffany("Bladestorm")
 					and _A.notimmune(obj)
-					and (obj:spec()==102 or obj:spec()==105)
+					and ((obj:spec()==102 or obj:spec()==105) or _A.pull_location=="arena")
 					and obj:los() 
 					then
 					return obj:FaceCast("Disable")
@@ -3156,6 +3158,7 @@ local inCombat = function()
 	--------------------- dispells and root freedom
 	if mylevel >= 20 then
 		if mw_rot.dispellunCC() then return true end
+		-- if mw_rot.dispellplzany() then return true end
 		if mw_rot.dispellDANGEROUS() then return true end
 		-- if mw_rot.dispellunSLOW() then return end
 	end
