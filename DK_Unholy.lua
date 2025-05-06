@@ -697,7 +697,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>=1 then
-			table.sort( tempTable, function(a,b) return a.health < b.health end )
+			_A.table.sort( tempTable, function(a,b) return a.health < b.health end )
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
@@ -719,7 +719,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort(tempTable, function(a,b)
+			_A.table.sort(tempTable, function(a,b)
 				if a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
 				end
@@ -742,7 +742,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort(tempTable, function(a,b)
+			_A.table.sort(tempTable, function(a,b)
 				return a.range < b.range
 			end)
 		end
@@ -766,7 +766,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort(tempTable, function(a,b)
+			_A.table.sort(tempTable, function(a,b)
 				if a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
 				end
@@ -795,7 +795,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort(tempTable, function(a,b)
+			_A.table.sort(tempTable, function(a,b)
 				if a.target ~= b.target then return a.target > b.target
 					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
@@ -828,7 +828,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort(tempTable, function(a,b)
+			_A.table.sort(tempTable, function(a,b)
 				if a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
 				end
@@ -852,7 +852,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort(tempTable, function(a,b)
+			_A.table.sort(tempTable, function(a,b)
 				if a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
 				end
@@ -1004,7 +1004,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1023,7 +1023,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1119,7 +1119,7 @@ local exeOnLoad = function()
 				end
 			end
 			if #temptable>1 then
-				table.sort(temptable, function(a,b) return a.range < b.range end )
+				_A.table.sort(temptable, function(a,b) return a.range < b.range end )
 			end
 			if temptable[1] then 
 				local pet = Object("pet")
@@ -1171,7 +1171,7 @@ local exeOnLoad = function()
 				end
 			end
 			if #temptable>1 then
-				table.sort(temptable, function(a,b) return a.range < b.range end )
+				_A.table.sort(temptable, function(a,b) return a.range < b.range end )
 			end
 			if temptable[1] then 
 				local pet = Object("pet")

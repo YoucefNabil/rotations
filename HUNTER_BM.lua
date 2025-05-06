@@ -597,7 +597,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort(tempTable, function(a,b)
+			_A.table.sort(tempTable, function(a,b)
 				if a.target ~= b.target then return a.target > b.target
 					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
@@ -629,7 +629,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -702,7 +702,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.range < b.range) end )
+			_A.table.sort( tempTable, function(a,b) return (a.range < b.range) end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -722,7 +722,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.range < b.range) end )
+			_A.table.sort( tempTable, function(a,b) return (a.range < b.range) end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -751,7 +751,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -777,7 +777,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health > b.health) end )
+			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health > b.health) end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -876,7 +876,7 @@ local exeOnLoad = function()
 		
 		-- Sort spells by cooldown (shortest first)
 		if #spells>1 then
-			table.sort(spells, function(a, b)
+			_A.table.sort(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
 			end)
 		end
@@ -931,7 +931,7 @@ local exeOnLoad = function()
 		}
 		-- Sort spells by cooldown (shortest first)
 		if #spells>1 then
-			table.sort(spells, function(a, b)
+			_A.table.sort(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
 			end)
 		end
@@ -975,7 +975,7 @@ local exeOnLoad = function()
 		}
 		-- Sort spells by cooldown (shortest first)
 		if #spells>1 then
-			table.sort(spells, function(a, b)
+			_A.table.sort(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
 			end)
 		end
@@ -1016,7 +1016,7 @@ local exeOnLoad = function()
 		
 		-- Sort spells by cooldown (shortest first)
 		if #spells>1 then
-			table.sort(spells, function(a, b)
+			_A.table.sort(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
 			end)
 		end
@@ -1240,7 +1240,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1261,7 +1261,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1282,7 +1282,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
