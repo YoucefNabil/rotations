@@ -604,7 +604,7 @@ local exeOnLoad = function()
 				if unit_event and unit_event.isplayer and unit_event:enemy() and rootthisfuck[spell_name(idd)] then
 					-- print("HEY IM WORKING")
 					C_Timer.NewTicker(.1, function()
-						if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
+						if player and (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
 							then 
 							if unit_event:SpellRange("Chains of Ice") 
 								and not unit_event:state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
