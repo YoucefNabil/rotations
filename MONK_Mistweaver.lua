@@ -16,6 +16,7 @@ local CalculatePath = _A.CalculatePath
 local FaceDirection = _A.FaceDirection
 local UnitCanCooperate, UnitHealthMax, GetTime, UnitIsPlayer, string_find = UnitCanCooperate, UnitHealthMax, GetTime,
 UnitIsPlayer, string.find
+local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
 local manamodifier = 1
 local ENEMY_OM = {}
 local cdcd = .3
@@ -351,6 +352,21 @@ local GUI = {
 }
 
 local exeOnLoad = function()
+	_A.Interface:ShowToggle("cooldowns", false)
+	_A.Interface:ShowToggle("interrupts", false)
+	_A.Interface:ShowToggle("aoe", false)
+	_A.Interface:AddToggle({
+		key = "detox_all", 
+		name = "Detox everything", 
+		text = "ON = Detox Everything | OFF = Detox CC or dangerous",
+		icon = select(3,GetSpellInfo("Detox")),
+	})
+	_A.Interface:AddToggle({
+		key = "disable_all", 
+		name = "disable all players", 
+		text = "ON = disable all | OFF = only in arena",
+		icon = select(3,GetSpellInfo("Disable")),
+	})
 	_A.Listener:Add("Entering_timerPLZ2", "PLAYER_ENTERING_WORLD", function(event)
 		enteredworldat = _A.GetTime()
 		local stuffsds = pull_location()
@@ -3064,7 +3080,7 @@ local mw_rot = {
 					and not obj:buffany(1044)
 					and not obj:buffany("Bladestorm")
 					and _A.notimmune(obj)
-					and ((obj:spec()==102 or obj:spec()==105) or _A.pull_location=="arena")
+					and ((obj:spec()==102 or obj:spec()==105) or _A.pull_location=="arena" or toggle("disable_all"))
 					and obj:los() 
 					then
 					return obj:FaceCast("Disable")
@@ -3158,7 +3174,7 @@ local inCombat = function()
 	--------------------- dispells and root freedom
 	if mylevel >= 20 then
 		if mw_rot.dispellunCC() then return true end
-		-- if mw_rot.dispellplzany() then return true end
+		if toggle("detox_all") and mw_rot.dispellplzany() then return true end
 		if mw_rot.dispellDANGEROUS() then return true end
 		-- if mw_rot.dispellunSLOW() then return end
 	end
