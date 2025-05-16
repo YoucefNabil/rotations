@@ -11,6 +11,34 @@ local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 local enteredworldat
 local proccing
+local function table_sortoptimized(arr, comp, k)
+	local n = #arr  -- Cache table size
+    k = k or n
+    
+    if k > 5 or k >= n then
+        table.sort(arr, comp)
+        return
+    end
+    for i = 1, k do
+        local best_idx = i
+        local best_val = arr[i]  -- Cache initial value
+        local current_val
+        
+        -- Search remaining elements
+        for j = i + 1, n do
+            current_val = arr[j]  -- Single table access per element
+            if comp(current_val, best_val) then
+                best_idx = j
+                best_val = current_val  -- Update cached best value
+            end
+        end
+
+        -- Only swap if necessary
+        if best_idx ~= i then
+            arr[i], arr[best_idx] = best_val, arr[i]
+        end
+    end
+end
 -- top of the CR
 local player
 local CallWowApi = _A.CallWowApi
@@ -669,7 +697,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>=1 then
-			_A.table.sort( tempTable, function(a,b) return a.health < b.health end )
+			table_sortoptimized( tempTable, function(a,b) return a.health < b.health end, 1)
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
@@ -759,7 +787,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			table_sortoptimized( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end , 1)
 		end
 		return tempTable[num] and tempTable[num].guid
 	end
@@ -778,7 +806,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			table_sortoptimized( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end , 1)
 		end
 		return tempTable[num] and tempTable[num].guid
 	end
@@ -798,7 +826,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			table_sortoptimized( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end , 1)
 		end
 		return tempTable[num] and tempTable[num].guid
 	end
@@ -1138,7 +1166,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1157,7 +1185,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1178,7 +1206,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1274,7 +1302,7 @@ local exeOnLoad = function()
 					end
 				end
 				if #temptable>1 then
-					_A.table.sort(temptable, function(a,b) return a.range < b.range end )
+					table_sortoptimized(temptable, function(a,b) return a.range < b.range end , 1)
 				end
 				if temptable[1] then 
 					if pet
@@ -1322,7 +1350,7 @@ local exeOnLoad = function()
 					end
 				end
 				if #temptable>1 then
-					_A.table.sort(temptable, function(a,b) return a.range < b.range end )
+					table_sortoptimized(temptable, function(a,b) return a.range < b.range end , 1)
 				end
 				if temptable[1] then 
 					if pet
@@ -1461,7 +1489,7 @@ affliction.rot = {
 				_A.reflectcheck = true
 			end
 		end -- end of iteration
-		-- _A.table.sort( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end )
+		-- table_sortoptimized( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end , 1)
 	end,
 	
 	
@@ -1778,7 +1806,7 @@ affliction.rot = {
 	haunt_between = function()
 		if not player:moving() and not player:IsCurrentSpell(48181) and _A.shards>=1 then
 			if #_A.temptabletbl>1 then
-				_A.table.sort(_A.temptabletbl, function(a,b)
+				table_sortoptimized(_A.temptabletbl, function(a,b)
 					if 	a.front ~= b.front then return a.front > b.front
 						elseif
 						a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
@@ -1787,7 +1815,7 @@ affliction.rot = {
 						elseif 
 						a.health ~= b.health then return a.health > b.health
 					end
-				end)
+				end, 1)
 			end
 			if _A.temptabletbl[1] and _A.temptabletbl[1].isplayer==1 then 
 				return _A.temptabletbl[1].obj:Cast("Haunt")
@@ -1887,9 +1915,9 @@ affliction.rot = {
 	soulswapoptiSEED = function()
 		if  #_A.temptabletbl>1 and soulswaporigin == nil and _A.enoughmana(86121) then
 			if #_A.temptabletblsoulswap > 1 then
-				_A.table.sort(_A.temptabletblsoulswap, function(a,b)
+				table_sortoptimized(_A.temptabletblsoulswap, function(a,b)
 					return a.durationSEED > b.durationSEED -- always by highest duration
-				end)
+				end, 1)
 			end
 			return _A.temptabletblsoulswap[1] and _A.temptabletblsoulswap[1].obj:debuff("Seed of Corruption") and _A.temptabletblsoulswap[1].obj:Cast(86121)
 		end
@@ -1898,7 +1926,7 @@ affliction.rot = {
 	exhaleoptiSEED = function()
 		if soulswaporigin ~= nil then
 			if #_A.temptabletblexhale > 1 then
-				_A.table.sort(_A.temptabletblexhale, function(a,b)
+				table_sortoptimized(_A.temptabletblexhale, function(a,b)
 					if 	
 						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- Never change these
 						elseif
@@ -1906,7 +1934,7 @@ affliction.rot = {
 						else return
 						a.health > b.health
 					end
-				end)
+				end, 1)
 				
 			end
 			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
@@ -1915,7 +1943,7 @@ affliction.rot = {
 	
 	corruptionsSEED = function()
 		if #_A.temptabletbl>1 then
-			_A.table.sort(_A.temptabletbl, function(a,b)
+			table_sortoptimized(_A.temptabletbl, function(a,b)
 				if 	
 					a.corruptionscore ~= b.corruptionscore then return a.corruptionscore > b.corruptionscore
 					elseif 
@@ -1925,7 +1953,7 @@ affliction.rot = {
 					-- else return 
 					-- a.range < b.range
 				end
-			end)
+			end, 1)
 		end
 		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 		if proccing and lowest and not player:state("silence || disarm") then
@@ -1955,7 +1983,7 @@ affliction.rot = {
 	
 	Sneedofcorruption = function()
 		if #_A.temptabletbl>1 then
-			_A.table.sort(_A.temptabletbl, function(a,b)
+			table_sortoptimized(_A.temptabletbl, function(a,b)
 				if 	
 					a.seedscore ~= b.seedscore then return a.seedscore > b.seedscore
 					elseif 
@@ -1965,7 +1993,7 @@ affliction.rot = {
 					-- else return 
 					-- a.range < b.range
 				end
-			end)
+			end, 1)
 		end
 		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 		if proccing and lowest and not player:state("silence || disarm") then
@@ -1996,7 +2024,7 @@ affliction.rot = {
 	
 	SneedofcorruptionHIGHPRIO = function()
 		if #_A.temptabletbl>1 then
-			_A.table.sort(_A.temptabletbl, function(a,b)
+			table_sortoptimized(_A.temptabletbl, function(a,b)
 				if 	
 					a.corruptionscore ~= b.corruptionscore then return a.corruptionscore > b.corruptionscore
 					elseif 
@@ -2006,7 +2034,7 @@ affliction.rot = {
 					-- else return 
 					-- a.range < b.range
 				end
-			end)
+			end, 1)
 		end
 		local lowest = Object("lowestEnemyInSpellRangeNOTAR(Corruption)")
 		if proccing and lowest and not player:state("silence || disarm") then
@@ -2040,7 +2068,7 @@ affliction.rot = {
 	
 	corruptionsnap = function()
 		if #_A.temptabletbl>1 then
-			_A.table.sort(_A.temptabletbl, function(a,b)
+			table_sortoptimized(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
 					elseif 
@@ -2050,7 +2078,7 @@ affliction.rot = {
 					-- else return 
 					-- a.range < b.range
 				end
-			end)
+			end, 1)
 		end
 		if _A.temptabletbl[1] and _A.enoughmana(172)  then 
 			if _A.myscore()>_A.temptabletbl[1].corruptionscore then return _A.temptabletbl[1].obj:Cast("Corruption")
@@ -2062,7 +2090,7 @@ affliction.rot = {
 	
 	agonysnap = function()
 		if #_A.temptabletbl>1 then
-			_A.table.sort(_A.temptabletbl, function(a,b)
+			table_sortoptimized(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
 					elseif 
@@ -2072,7 +2100,7 @@ affliction.rot = {
 					-- else return 
 					-- a.range < b.range
 				end
-			end)
+			end, 1)
 		end
 		if _A.temptabletbl[1] and _A.myscore()>_A.temptabletbl[1].agonyscore and _A.enoughmana(980) 
 			then return _A.temptabletbl[1].obj:Cast("Agony")
@@ -2081,7 +2109,7 @@ affliction.rot = {
 	
 	unstablesnapinstant = function()
 		if #_A.temptabletbl>1 then
-			_A.table.sort(_A.temptabletbl, function(a,b)
+			table_sortoptimized(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
 					elseif 
@@ -2091,7 +2119,7 @@ affliction.rot = {
 					-- else return 
 					-- a.range < b.range
 				end
-			end)
+			end, 1)
 		end
 		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore and player:SpellCooldown("Unstable Affliction")<.3 then 
 			for i=1, #usableitems do
@@ -2122,7 +2150,7 @@ affliction.rot = {
 	
 	unstablesnap = function()
 		if #_A.temptabletbl>1 then
-			_A.table.sort(_A.temptabletbl, function(a,b)
+			table_sortoptimized(_A.temptabletbl, function(a,b)
 				if 	
 					a.score ~= b.score then return a.score > b.score
 					elseif 
@@ -2132,7 +2160,7 @@ affliction.rot = {
 					-- else return 
 					-- a.range < b.range
 				end
-			end)
+			end, 1)
 		end
 		if _A.temptabletbl[1] and not player:buff(74434) and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
 			if not player:moving() and not player:Iscasting("Unstable Affliction") 
@@ -2173,6 +2201,18 @@ affliction.rot = {
 		end
 	end,
 	
+	drainsoul_ctrl = function()
+		if not player:moving() 
+			and not player:isChanneling("Drain Soul")
+			and _A.enoughmana(1120)
+			then
+			local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Corruption)")
+			if lowest and lowest:exists() then
+				return lowest:FaceCast("Drain Soul", true)
+			end
+		end
+	end,
+	
 	drainsoul_exec = function()
 		if not player:moving() 
 			and not player:isChanneling("Drain Soul")
@@ -2189,9 +2229,9 @@ affliction.rot = {
 	soulswapopti = function()
 		if  #_A.temptabletbl>1 and soulswaporigin == nil and _A.enoughmana(86121) then
 			if #_A.temptabletblsoulswap > 1 then
-				_A.table.sort(_A.temptabletblsoulswap, function(a,b)
+				table_sortoptimized(_A.temptabletblsoulswap, function(a,b)
 					return a.duration > b.duration -- always by highest duration
-				end)
+				end, 1)
 			end
 			return _A.temptabletblsoulswap[1] and _A.temptabletblsoulswap[1].obj:Cast(86121)
 		end
@@ -2200,7 +2240,7 @@ affliction.rot = {
 	exhaleopti = function()
 		if soulswaporigin ~= nil then
 			if #_A.temptabletblexhale > 1 then
-				_A.table.sort(_A.temptabletblexhale, function(a,b)
+				table_sortoptimized(_A.temptabletblexhale, function(a,b)
 					if 	
 						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- Never change these
 						elseif
@@ -2208,7 +2248,7 @@ affliction.rot = {
 						else return
 						a.health > b.health
 					end
-				end)
+				end, 1)
 				
 			end
 			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
@@ -2265,8 +2305,8 @@ local inCombat = function()
 	-------------------- inbetween swaps system
 	-- CTRL MODE (Beams)
 	if _A.modifier_ctrl() then
-		if affliction.rot.drainsoul() then return true end
-		if affliction.rot.grasp()  then return true end
+		if affliction.rot.drainsoul_ctrl() then return true end
+		-- if affliction.rot.grasp()  then return true end
 	end
 	-------------------- AOE swaps (seed based)
 	if toggle("aoetoggle") then

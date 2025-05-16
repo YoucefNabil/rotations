@@ -602,7 +602,7 @@ local exeOnLoad = function()
 					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
 				end
-			end)
+			end, 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -629,7 +629,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -702,7 +702,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.range < b.range) end )
+			_A.table.sort( tempTable, function(a,b) return (a.range < b.range) end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -722,7 +722,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.range < b.range) end )
+			_A.table.sort( tempTable, function(a,b) return (a.range < b.range) end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -751,7 +751,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -777,7 +777,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health > b.health) end )
+			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health > b.health) end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -878,7 +878,7 @@ local exeOnLoad = function()
 		if #spells>1 then
 			_A.table.sort(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
-			end)
+			end, 1)
 		end
 		
 		-- Track elapsed time and current focus
@@ -933,7 +933,7 @@ local exeOnLoad = function()
 		if #spells>1 then
 			_A.table.sort(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
-			end)
+			end, 1)
 		end
 		-- Track elapsed time and current focus
 		local time_elapsed = 0
@@ -977,7 +977,7 @@ local exeOnLoad = function()
 		if #spells>1 then
 			_A.table.sort(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
-			end)
+			end, 1)
 		end
 		-- Track elapsed time and current focus
 		local time_elapsed = 0
@@ -1018,7 +1018,7 @@ local exeOnLoad = function()
 		if #spells>1 then
 			_A.table.sort(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
-			end)
+			end, 1)
 		end
 		
 		
@@ -1240,7 +1240,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1261,7 +1261,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1282,7 +1282,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
+			_A.table.sort( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid

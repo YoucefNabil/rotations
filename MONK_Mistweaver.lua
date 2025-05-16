@@ -23,6 +23,34 @@ local cdcd = .3
 local FRIEND_OM = {}
 local tlp = _A.Tooltip
 local UnitBuff = UnitBuff
+local function table_sortoptimized(arr, comp, k)
+	local n = #arr  -- Cache table size
+    k = k or n
+    
+    if k > 5 or k >= n then
+        table.sort(arr, comp)
+        return
+    end
+    for i = 1, k do
+        local best_idx = i
+        local best_val = arr[i]  -- Cache initial value
+        local current_val
+        
+        -- Search remaining elements
+        for j = i + 1, n do
+            current_val = arr[j]  -- Single table access per element
+            if comp(current_val, best_val) then
+                best_idx = j
+                best_val = current_val  -- Update cached best value
+            end
+        end
+
+        -- Only swap if necessary
+        if best_idx ~= i then
+            arr[i], arr[best_idx] = best_val, arr[i]
+        end
+    end
+end
 local function blank()
 end
 local function runthese(...)
@@ -602,7 +630,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable > 1 then
-			_A.table.sort(tempTable, function(a, b) return (a.HP < b.HP) end)
+			table_sortoptimized(tempTable, function(a, b) return (a.HP < b.HP) end, 1)
 		end
 		if #tempTable >= 1 then
 			return tempTable[1] and tempTable[1].guid
@@ -630,7 +658,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable > 1 then
-			_A.table.sort(tempTable, function(a, b) return (a.HP < b.HP) end)
+			table_sortoptimized(tempTable, function(a, b) return (a.HP < b.HP) end, 1)
 		end
 		if #tempTable >= 1 then
 			return tempTable[1] and tempTable[1].guid
@@ -653,7 +681,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable > 1 then
-			_A.table.sort(tempTable, function(a, b) return (a.HP < b.HP) end)
+			table_sortoptimized(tempTable, function(a, b) return (a.HP < b.HP) end, 1)
 		end
 		if #tempTable >= 1 then
 			return tempTable[1] and tempTable[1].guid
@@ -673,8 +701,8 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable > 1 then
-			_A.table.sort(tempTable,
-			function(a, b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end)
+			table_sortoptimized(tempTable,
+			function(a, b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end, 1)
 		end
 		if #tempTable >= 1 then
 			return tempTable[num] and tempTable[num].guid
@@ -704,8 +732,8 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable > 1 then
-			_A.table.sort(tempTable,
-			function(a, b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end)
+			table_sortoptimized(tempTable,
+			function(a, b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end, 1)
 		end
 		if #tempTable >= 1 then
 			return tempTable[num] and tempTable[num].guid
@@ -728,11 +756,11 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort(tempTable, function(a,b)
+			table_sortoptimized(tempTable, function(a,b)
 				if a.isplayer ~= b.isplayer then return a.isplayer < b.isplayer
 					else return a.health < b.health
 				end
-			end)
+			end, 1)
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
@@ -1075,7 +1103,7 @@ local exeOnLoad = function()
 						end
 					end
 					if #tempTable > 1 then
-						_A.table.sort(tempTable, function(a, b) return a.delta < b.delta end)
+						table_sortoptimized(tempTable, function(a, b) return a.delta < b.delta end, 1)
 					end
 					for i = 1,3 do
 						if tempTable[i] then
@@ -1492,7 +1520,7 @@ local exeOnLoad = function()
 					end
 				end
 				if #tempTable > 1 then
-					_A.table.sort(tempTable, function(a, b) return a.range < b.range end)
+					table_sortoptimized(tempTable, function(a, b) return a.range < b.range end, 1)
 				end
 				if #tempTable >= 1 then
 					return tempTable[num] and tempTable[num].guid
@@ -1511,7 +1539,7 @@ local exeOnLoad = function()
 					end
 				end
 				if #tempTable > 1 then
-					_A.table.sort(tempTable, function(a, b) return a.range < b.range end)
+					table_sortoptimized(tempTable, function(a, b) return a.range < b.range end, 1)
 				end
 				if #tempTable >= 1 then
 					return tempTable[num] and tempTable[num].guid
@@ -2472,7 +2500,7 @@ local mw_rot = {
 					end
 				end
 				if #temptabletbl2 > 1 then
-					_A.table.sort(temptabletbl2, function(a, b) return (a.HP < b.HP) end)
+					table_sortoptimized(temptabletbl2, function(a, b) return (a.HP < b.HP) end, 1)
 				end
 				return temptabletbl2[1] and temptabletbl2[1].obj:Cast("Detox")
 			end
@@ -2512,7 +2540,7 @@ local mw_rot = {
 				end
 			end
 			if #temptabletbl1 > 1 then
-				_A.table.sort(temptabletbl1, function(a, b) return (a.count > b.count) end)
+				table_sortoptimized(temptabletbl1, function(a, b) return (a.count > b.count) end, 1)
 			end
 			return temptabletbl1[1] and temptabletbl1[1].count >= 1 and temptabletbl1[1].obj:Cast("Detox")
 		end
