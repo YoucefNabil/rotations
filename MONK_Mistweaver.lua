@@ -24,32 +24,32 @@ local FRIEND_OM = {}
 local tlp = _A.Tooltip
 local UnitBuff = UnitBuff
 local function table_sortoptimized(arr, comp, k)
-	local n = #arr  -- Cache table size
-    k = k or n
-    
+    local n = #arr
+	local best_idx = nil
+    local best_val = nil
+	local current_val = nil
+    k = k or 1  -- Default to find top 1 element
     if k > 5 or k >= n then
         table.sort(arr, comp)
         return
-    end
+	end
+	
     for i = 1, k do
-        local best_idx = i
-        local best_val = arr[i]  -- Cache initial value
-        local current_val
+        best_idx = i
+        best_val = arr[i]
         
-        -- Search remaining elements
+        -- Single pass with cached values and reduced table accesses
         for j = i + 1, n do
-            current_val = arr[j]  -- Single table access per element
+            current_val = arr[j]
             if comp(current_val, best_val) then
-                best_idx = j
-                best_val = current_val  -- Update cached best value
-            end
-        end
-
-        -- Only swap if necessary
+                best_idx, best_val = j, current_val  -- Update in one step
+			end
+		end
+		
         if best_idx ~= i then
             arr[i], arr[best_idx] = best_val, arr[i]
-        end
-    end
+		end
+	end
 end
 local function blank()
 end
@@ -1198,7 +1198,7 @@ local exeOnLoad = function()
 				local manaBudget = _A.avgDeltaPercent
 				local delta = averageHPv2_RJW_3only()
 				if delta and delta~="NaN" then
-					return ((manaBudget - delta) >= (player:ui("highprio_treshhold_spin")-.5))
+					return ((manaBudget - delta) >= (player:ui("highprio_treshhold")-.5))
 				end
 				return false
 			end
@@ -1217,7 +1217,7 @@ local exeOnLoad = function()
 					hpDelta = maxHPv2()
 				end
 				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
-				return (manaBudget - hpDelta > player:ui("highprio_treshhold_spin"))
+				return (manaBudget - hpDelta > player:ui("highprio_treshhold"))
 			end
 			
 			function _A.manaengine_highprio_pot()
@@ -1234,7 +1234,7 @@ local exeOnLoad = function()
 				end
 				local manaBudget = _A.avgDeltaPercent + effectivemanaregen()
 				if lowest and lowest:health()<=60 then
-					return (manaBudget - maxHPv2() > (player:ui("highprio_treshhold_spin") + .75))
+					return (manaBudget - maxHPv2() > (player:ui("highprio_treshhold") + .75))
 				end
 				return false
 			end

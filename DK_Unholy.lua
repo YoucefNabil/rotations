@@ -12,6 +12,34 @@ _A.FaceAlways = true
 local player
 local enteredworldat
 local unholy = {}
+local function table_sortoptimized(arr, comp, k)
+    local n = #arr
+	local best_idx = nil
+    local best_val = nil
+	local current_val = nil
+    k = k or 1  -- Default to find top 1 element
+    if k > 5 or k >= n then
+        table.sort(arr, comp)
+        return
+	end
+	
+    for i = 1, k do
+        best_idx = i
+        best_val = arr[i]
+        
+        -- Single pass with cached values and reduced table accesses
+        for j = i + 1, n do
+            current_val = arr[j]
+            if comp(current_val, best_val) then
+                best_idx, best_val = j, current_val  -- Update in one step
+			end
+		end
+		
+        if best_idx ~= i then
+            arr[i], arr[best_idx] = best_val, arr[i]
+		end
+	end
+end
 local healerspecid = {
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",
@@ -697,7 +725,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>=1 then
-			_A.table.sort( tempTable, function(a,b) return a.health < b.health end )
+			table_sortoptimized( tempTable, function(a,b) return a.health < b.health end )
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
@@ -719,7 +747,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort(tempTable, function(a,b)
+			table_sortoptimized(tempTable, function(a,b)
 				if a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
 				end
@@ -742,7 +770,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort(tempTable, function(a,b)
+			table_sortoptimized(tempTable, function(a,b)
 				return a.range < b.range
 			end)
 		end
@@ -766,7 +794,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort(tempTable, function(a,b)
+			table_sortoptimized(tempTable, function(a,b)
 				if a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
 				end
@@ -795,7 +823,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort(tempTable, function(a,b)
+			table_sortoptimized(tempTable, function(a,b)
 				if a.target ~= b.target then return a.target > b.target
 					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
@@ -828,7 +856,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort(tempTable, function(a,b)
+			table_sortoptimized(tempTable, function(a,b)
 				if a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
 				end
@@ -852,7 +880,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort(tempTable, function(a,b)
+			table_sortoptimized(tempTable, function(a,b)
 				if a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
 				end
@@ -1004,7 +1032,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1023,7 +1051,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end )
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1119,7 +1147,7 @@ local exeOnLoad = function()
 				end
 			end
 			if #temptable>1 then
-				_A.table.sort(temptable, function(a,b) return a.range < b.range end )
+				table_sortoptimized(temptable, function(a,b) return a.range < b.range end )
 			end
 			if temptable[1] then 
 				local pet = Object("pet")
@@ -1171,7 +1199,7 @@ local exeOnLoad = function()
 				end
 			end
 			if #temptable>1 then
-				_A.table.sort(temptable, function(a,b) return a.range < b.range end )
+				table_sortoptimized(temptable, function(a,b) return a.range < b.range end )
 			end
 			if temptable[1] then 
 				local pet = Object("pet")

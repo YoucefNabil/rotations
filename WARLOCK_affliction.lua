@@ -12,32 +12,32 @@ local Listener = _A.Listener
 local enteredworldat
 local proccing
 local function table_sortoptimized(arr, comp, k)
-	local n = #arr  -- Cache table size
-    k = k or n
-    
+    local n = #arr
+	local best_idx = nil
+    local best_val = nil
+	local current_val = nil
+    k = k or 1  -- Default to find top 1 element
     if k > 5 or k >= n then
         table.sort(arr, comp)
         return
-    end
+	end
+	
     for i = 1, k do
-        local best_idx = i
-        local best_val = arr[i]  -- Cache initial value
-        local current_val
+        best_idx = i
+        best_val = arr[i]
         
-        -- Search remaining elements
+        -- Single pass with cached values and reduced table accesses
         for j = i + 1, n do
-            current_val = arr[j]  -- Single table access per element
+            current_val = arr[j]
             if comp(current_val, best_val) then
-                best_idx = j
-                best_val = current_val  -- Update cached best value
-            end
-        end
-
-        -- Only swap if necessary
+                best_idx, best_val = j, current_val  -- Update in one step
+			end
+		end
+		
         if best_idx ~= i then
             arr[i], arr[best_idx] = best_val, arr[i]
-        end
-    end
+		end
+	end
 end
 -- top of the CR
 local player
@@ -272,7 +272,7 @@ local exeOnLoad = function()
 		-- [266]="Lock Demono",
 		-- [267]="Lock Destro",
 		[105]="Druid Resto",
-		[102]="Druid Balance",
+		-- [102]="Druid Balance",
 		[270]="monk mistweaver",
 		[65]="Paladin Holy",
 		-- [66]="Paladin prot",
@@ -393,7 +393,7 @@ local exeOnLoad = function()
 		end
 		if slot==_A.STOPSLOT then
 			-- local target = Object("target")
-			-- if target and target:exists() then print(target:creatureType()) end
+			if target and target:exists() then print(target:creatureType()) end
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
 				_A.print("OFF")
@@ -412,7 +412,8 @@ local exeOnLoad = function()
 		[10] = true, -- not specified
 		[11] = true, -- totems
 		[12] = true, -- non combat pets
-		[13] = true -- gas cloud
+		[13] = true, -- gas cloud
+		-- [13] = true -- demos?
 	}
 	function _A.attackable(unit)
 		if _A.pull_location and _A.pull_location ~= "arena" and _A.pull_location ~= "pvp" then return true end
@@ -515,6 +516,15 @@ local exeOnLoad = function()
 	
 	function _A.modifier_ctrl()
 		local modkeyb = IsControlKeyDown()
+		if modkeyb then
+			return true
+			else
+			return false
+		end
+	end
+	
+	function _A.modifier_alt()
+		local modkeyb = IsAltKeyDown()
 		if modkeyb then
 			return true
 			else
@@ -738,7 +748,7 @@ local exeOnLoad = function()
 			if (subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START") and _Y.imIswapping == true and validintercasts[spell_name(idd)]
 				then
 				_Y.swap_intercasts = _Y.swap_intercasts + 1
-				print("INTERCASTED", spell_name(idd))
+				-- print("INTERCASTED", spell_name(idd))
 			end
 		end
 		if guidsrc == UnitGUID("player") then
@@ -995,9 +1005,9 @@ local exeOnLoad = function()
 			-------------- dots part
 			if spell_name(idd)=="Corruption" then -- Corruption
 				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
-				and (not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore())
+					and (not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore())
 					then
-					print("CORRUPTION")
+					-- print("CORRUPTION")
 					corruptiontbl[guiddest]=_A.myscore() 
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
@@ -1009,7 +1019,7 @@ local exeOnLoad = function()
 				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
 					and (not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore())
 					then
-					print("AGONY")
+					-- print("AGONY")
 					agonytbl[guiddest]=_A.myscore()
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
@@ -1021,7 +1031,7 @@ local exeOnLoad = function()
 				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
 					and (not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore())
 					then
-					print("UNSABLE AFFLI")
+					-- print("UNSABLE AFFLI")
 					unstabletbl[guiddest]=_A.myscore() 
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
@@ -1033,7 +1043,7 @@ local exeOnLoad = function()
 			if (idd==27243) then -- seed of corruption
 				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
 					then
-					print("SNEEDING")
+					-- print("SNEEDING")
 					seeds[guiddest]= player:buff("Mannoroth's Fury") and _A.myscore()*5 or _A.myscore()
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
@@ -1045,7 +1055,7 @@ local exeOnLoad = function()
 				if subevent == "SPELL_CAST_SUCCESS"
 					and Ijustexhaled==false
 					then
-					print("TRIPLE DOT")
+					-- print("TRIPLE DOT")
 					if not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore() then corruptiontbl[guiddest]=_A.myscore() end
 					if not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore() then unstabletbl[guiddest]=_A.myscore() end
 					if not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore() then agonytbl[guiddest]=_A.myscore() end
@@ -1084,16 +1094,16 @@ local exeOnLoad = function()
 					swap_agonytbl=agonytbl[guiddest]
 					swap_corruptiontbl=corruptiontbl[guiddest]
 					swap_seeds=seeds[guiddest]
-					print("SWAP SCORE:", swap_unstabletbl, swap_agonytbl, swap_corruptiontbl, swap_seeds)
+					-- print("SWAP SCORE:", swap_unstabletbl, swap_agonytbl, swap_corruptiontbl, swap_seeds)
 					-- I don't think cleaning is necessary since they get overwritten anyway everytime I soulswap
 					-- if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					-- soulswaptimer = C_Timer.NewTimer(4, function()
-						-- if swap_unstabletbl then swap_unstabletbl=nil end
-						-- if swap_agonytbl then swap_agonytbl=nil end
-						-- if swap_corruptiontbl then swap_corruptiontbl=nil end
-						-- if swap_seeds then swap_seeds=nil end
-						-- if soulswaporigin  then soulswaporigin=nil end
-						-- print("DELETED DATA (ran out of time)")
+					-- if swap_unstabletbl then swap_unstabletbl=nil end
+					-- if swap_agonytbl then swap_agonytbl=nil end
+					-- if swap_corruptiontbl then swap_corruptiontbl=nil end
+					-- if swap_seeds then swap_seeds=nil end
+					-- if soulswaporigin  then soulswaporigin=nil end
+					-- print("DELETED DATA (ran out of time)")
 					-- end)
 				end
 				if idd==86213 then -- exhale
@@ -1104,7 +1114,7 @@ local exeOnLoad = function()
 					agonytbl[guiddest] = swap_agonytbl
 					corruptiontbl[guiddest] = swap_corruptiontbl
 					seeds[guiddest]=swap_seeds
-					print("EXHALE SCORE:", swap_unstabletbl, swap_agonytbl, swap_corruptiontbl, swap_seeds)
+					-- print("EXHALE SCORE:", swap_unstabletbl, swap_agonytbl, swap_corruptiontbl, swap_seeds)
 					-- swap_unstabletbl=nil
 					-- swap_agonytbl=nil
 					-- swap_corruptiontbl=nil
@@ -1450,9 +1460,14 @@ affliction.rot = {
 				and Obj:los() 
 				then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then  print("BACKUP DELETE HAPPENED", print(Obj:spec())) corruptiontbl[Obj.guid]=nil end
-				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then print("BACKUP DELETE HAPPENED", print(Obj:spec())) agonytbl[Obj.guid]=nil end
-				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then  print("BACKUP DELETE HAPPENED", print(Obj:spec())) unstabletbl[Obj.guid]=nil end
+				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then --  print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
+				corruptiontbl[Obj.guid]=nil end
+				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then 
+					-- print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
+				agonytbl[Obj.guid]=nil end
+				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then 
+					-- print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
+				unstabletbl[Obj.guid]=nil end
 				-- if seeds[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
 				local unstabledur, corruptiondur, agonydur, seedsdur, range_cache, healthraww =  Obj:DebuffDuration("Unstable Affliction"), Obj:DebuffDuration("Corruption"), Obj:DebuffDuration("Agony"), Obj:DebuffDuration("Seed of Corruption"), Obj:range(2) or 40, Obj:HealthActual() or 0
 				--
@@ -2180,6 +2195,18 @@ affliction.rot = {
 		end
 	end,
 	
+	grasp_alt = function()
+		if modifier_alt() then
+			if not player:isChanneling("Malefic Grasp")  and (not player:moving() or player:talent("Kil'jaeden's Cunning")) and _A.enoughmana(103103)  then
+				local lowest = Object("lowestEnemyInSpellRangeNOTARNOFACE(Corruption)")
+				if lowest and lowest:exists() then
+					return lowest:FaceCast("Malefic Grasp", true)
+				end
+			end
+			elseif player:isChanneling("Malefic Grasp") then _A.CallWowApi("RunMacroText", "/stopcasting")
+		end
+	end,
+	
 	felflame = function()
 		if not player:isCastingAny() and _A.enoughmana(77799) then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Fel Flame)")
@@ -2308,6 +2335,7 @@ local inCombat = function()
 		if affliction.rot.drainsoul_ctrl() then return true end
 		-- if affliction.rot.grasp()  then return true end
 	end
+	if affliction.rot.grasp_alt() then return true end
 	-------------------- AOE swaps (seed based)
 	if toggle("aoetoggle") then
 		if affliction.rot.exhaleoptiSEED() then return true end
@@ -2367,7 +2395,7 @@ local inCombat = function()
 	if affliction.rot.darkintent() then return true end
 	-- fills
 	if affliction.rot.lifetap()  then return true end
-	if affliction.rot.drainsoul() then return true end
+	if not _A.modifier_alt() and not _A.modifier_ctrl() and affliction.rot.drainsoul() then return true end
 	if affliction.rot.felflame() then return true end
 end
 local spellIds_Loc = function()

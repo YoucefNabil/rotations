@@ -11,6 +11,34 @@ local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
 local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
 local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
+local function table_sortoptimized(arr, comp, k)
+    local n = #arr
+	local best_idx = nil
+    local best_val = nil
+	local current_val = nil
+    k = k or 1  -- Default to find top 1 element
+    if k > 5 or k >= n then
+        table.sort(arr, comp)
+        return
+	end
+	
+    for i = 1, k do
+        best_idx = i
+        best_val = arr[i]
+        
+        -- Single pass with cached values and reduced table accesses
+        for j = i + 1, n do
+            current_val = arr[j]
+            if comp(current_val, best_val) then
+                best_idx, best_val = j, current_val  -- Update in one step
+			end
+		end
+		
+        if best_idx ~= i then
+            arr[i], arr[best_idx] = best_val, arr[i]
+		end
+	end
+end
 -- top of the CR
 local player
 local enemytreshhold = 6
@@ -597,7 +625,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort(tempTable, function(a,b)
+			table_sortoptimized(tempTable, function(a,b)
 				if a.target ~= b.target then return a.target > b.target
 					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
 					else return a.health < b.health
@@ -629,7 +657,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end , 1)
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -702,7 +730,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.range < b.range) end , 1)
+			table_sortoptimized( tempTable, function(a,b) return (a.range < b.range) end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -722,7 +750,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.range < b.range) end , 1)
+			table_sortoptimized( tempTable, function(a,b) return (a.range < b.range) end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -751,7 +779,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end , 1)
+			table_sortoptimized( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -777,7 +805,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health > b.health) end , 1)
+			table_sortoptimized( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health > b.health) end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -876,7 +904,7 @@ local exeOnLoad = function()
 		
 		-- Sort spells by cooldown (shortest first)
 		if #spells>1 then
-			_A.table.sort(spells, function(a, b)
+			table_sortoptimized(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
 			end, 1)
 		end
@@ -931,7 +959,7 @@ local exeOnLoad = function()
 		}
 		-- Sort spells by cooldown (shortest first)
 		if #spells>1 then
-			_A.table.sort(spells, function(a, b)
+			table_sortoptimized(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
 			end, 1)
 		end
@@ -975,7 +1003,7 @@ local exeOnLoad = function()
 		}
 		-- Sort spells by cooldown (shortest first)
 		if #spells>1 then
-			_A.table.sort(spells, function(a, b)
+			table_sortoptimized(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
 			end, 1)
 		end
@@ -1016,7 +1044,7 @@ local exeOnLoad = function()
 		
 		-- Sort spells by cooldown (shortest first)
 		if #spells>1 then
-			_A.table.sort(spells, function(a, b)
+			table_sortoptimized(spells, function(a, b)
 				return player:SpellCooldown(a.name) < player:SpellCooldown(b.name)
 			end, 1)
 		end
@@ -1240,7 +1268,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end , 1)
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1261,7 +1289,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end , 1)
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -1282,7 +1310,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			_A.table.sort( tempTable, function(a,b) return a.range < b.range end , 1)
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end , 1)
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
