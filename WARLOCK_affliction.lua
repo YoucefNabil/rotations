@@ -1095,15 +1095,14 @@ local exeOnLoad = function()
 		return false
 	end
 	_Y.exitedvehicleat = nil
-	_A.Listener:Add("EXITING_VEHICLE", "UNIT_EXITING_VEHICLE", function(event, arg1)
-		if arg1=="player" then
-			_Y.exitedvehicleat = GetTime()
-			-- print(event, arg1)
-			C_Timer.After(2, function()
-				if _Y.exitedvehicleat then _Y.exitedvehicleat = nil end
-			end)
-		end
-	end)
+	-- _A.Listener:Add("EXITING_VEHICLE", {"UNIT_EXITING_VEHICLE", "COMPANION_UPDATE"}, function(event, arg1)
+		-- if (event == "UNIT_EXITING_VEHICLE" and arg1=="player") or (event == "COMPANION_UPDATE" and arg1=="MOUNT") then
+			-- if not _Y.exitedvehicleat and not IsMounted() then print(event, arg1) _Y.exitedvehicleat = GetTime() end
+			-- C_Timer.After(0.5, function()
+				-- if _Y.exitedvehicleat then _Y.exitedvehicleat = nil end
+			-- end)
+		-- end
+	-- end)
 	local soulswaptimer = nil
 	-- Soul Swap
 	_A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
@@ -2317,6 +2316,19 @@ affliction.rot = {
 ---========================
 ---========================
 ---========================
+local wasMounted = IsMounted()
+local function CheckMountStatus()
+    local isMounted = IsMounted()
+    if wasMounted and not isMounted then
+        -- print("Dismounted detected!")
+		_Y.exitedvehicleat = GetTime()
+    end
+    wasMounted = isMounted
+	-- print("HEY")
+    C_Timer.After(_A.Parser.frequency/2, CheckMountStatus)  -- Check every 0.5 seconds
+end
+-- Start the recurring check
+CheckMountStatus()
 local inCombat = function()	
 	if not _A.Cache.Utils.PlayerInGame then return true end
 	if not enteredworldat then return true end
@@ -2324,8 +2336,8 @@ local inCombat = function()
 	player = Object("player")
 	if not player then return end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
-	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 2 then return true end
 	if player:Mounted() then return true end
+	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<=0.5 then return true end
 	proccing = _Y.proc_check()
 	--
 	--
@@ -2388,7 +2400,7 @@ local inCombat = function()
 	if affliction.rot.Buffbuff()  then return true end
 	if affliction.rot.snare_curse()  then return true end
 	if affliction.rot.ccfear() then return true end	
-	if affliction.rot.healthfunnel() then return true end
+	-- if affliction.rot.healthfunnel() then return true end
 	-- DOT SNAPSHOTING
 	if not proccing then
 		if affliction.rot.agonysnap()  then return true end
