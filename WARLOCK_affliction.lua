@@ -625,6 +625,25 @@ local exeOnLoad = function()
 		return chanpercent(unit)
 	end)
 	
+	
+	local function chanstart(unit)
+		local tempvar1 = select(5, UnitChannelInfo(unit))
+		local givetime = GetTime()
+		if unit == nil
+			then 
+			unit = "target"
+		end	
+		if UnitChannelInfo(unit)~=nil
+			then local timetimetime15687 = abs(givetime - (tempvar1/1000)) 
+			return timetimetime15687
+		end
+		return 999
+	end
+	
+	_A.DSL:Register('chanstart', function(unit)
+		return chanstart(unit)
+	end)
+	
 	_A.DSL:Register('unitisimmobile', function()
 		return GetUnitSpeed(unit)==0 
 	end)
@@ -1075,11 +1094,14 @@ local exeOnLoad = function()
 		if _Y.internalcooldown and (_A.GetTime() - _Y.internalcooldown) >=50 then return true end
 		return false
 	end
-	_Y.exitedvehicleat = GetTime()
+	_Y.exitedvehicleat = nil
 	_A.Listener:Add("EXITING_VEHICLE", "UNIT_EXITING_VEHICLE", function(event, arg1)
 		if arg1=="player" then
 			_Y.exitedvehicleat = GetTime()
 			-- print(event, arg1)
+			C_Timer.After(2, function()
+				if _Y.exitedvehicleat then _Y.exitedvehicleat = nil end
+			end)
 		end
 	end)
 	local soulswaptimer = nil
@@ -1264,7 +1286,7 @@ local exeOnLoad = function()
 					-- XELETH SECTION
 					if pet and UnitCreatureFamily("pet") == "Observer" then
 						-- purge
-						if target:bufftype("Magic") and target:rangefrom(pet)<=30 and pet:losfrom(target) and UnitPower("pet")>=40 and player:spellcooldown("Clone Magic(Special Ability)")<1.5 then 
+						if target:bufftype("Magic") and target:rangefrom(pet)<=30 and pet:losfrom(target) and UnitPower("pet")>=20 and player:spellcooldown("Clone Magic(Special Ability)")<1.5 then 
 						_A.CastSpellByName("Clone Magic(Special Ability)", target.guid) end
 						-- lick
 						if target:rangefrom(pet)<=6 and pet:losfrom(target) and UnitPower("pet")>=100 then _A.CastSpellByName("Tongue Lash(Basic Attack)", target.guid) end
@@ -1300,7 +1322,7 @@ local exeOnLoad = function()
 						and _A.notimmune(obj)
 						then
 						if 
-							(obj:caninterrupt() and obj:isCastingAny() and (obj:caststart()>=0.15 or obj:chanpercent()<=92))
+							(obj:caninterrupt() and obj:isCastingAny() and (obj:caststart()>=0.5 or obj:chanstart()>0.3))
 							or _Y.someoneisuperlow() 
 							then
 							temptable[#temptable+1] = {
@@ -1660,83 +1682,79 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy = function()
-		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
-			if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112866)<.3 and _A.castdelay(112866, 1.5) and not player:iscasting(112866) and _A.enoughmana(112866)  then
-				local petobj = UnitCreatureFamily("pet")
-				if 
-					not _A.UnitExists("pet")
-					or _A.UnitIsDeadOrGhost("pet")
-					or not _A.HasPetUI()
-					or (petobj and petobj~="Fel Imp")
-					then 
-					if (not player:buff(74434) and not player:IsCurrentSpell(74434) and player:SpellCooldown(74434)==0 and _A.shards>=1 )
-						then player:cast(74434) -- shadowburn
-						return player:cast(112866)
-					end	
-					if player:buff(74434) or ( not player:moving() ) then
-						return player:cast(112866)
-					end
+		if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112866)<.3 and _A.enoughmana(112866)  then
+			local petobj = UnitCreatureFamily("pet")
+			if 
+				not _A.UnitExists("pet")
+				or _A.UnitIsDeadOrGhost("pet")
+				or not _A.HasPetUI()
+				or (petobj and petobj~="Fel Imp")
+				then 
+				if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 )
+					then player:cast(74434) -- shadowburn
+					return player:cast(112866)
+				end	
+				if player:buff(74434) or ( not player:moving() ) then
+					return player:cast(112866)
 				end
 			end
 		end
 	end,
 	
 	petres_supremacy2 = function()
-		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
-			if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112869)<.3 and _A.castdelay(112869, 1.5) and not player:iscasting(112869) and _A.enoughmana(112869)  then
-				local petobj = UnitCreatureFamily("pet")
-				if 
-					not _A.UnitExists("pet")
-					or _A.UnitIsDeadOrGhost("pet")
-					or not _A.HasPetUI()
-					or (petobj and petobj~="Observer")
-					then 
-					if (not player:buff(74434) and not player:IsCurrentSpell(74434) and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
-						then player:cast(74434) -- shadowburn
-						return player:cast(112869)
-					end	
-					if player:buff(74434) or ( not player:moving() ) then
-						return player:cast(112869)
-					end
+		if player:talent("Grimoire of Supremacy") and not player:iscasting(112869) and _A.enoughmana(112869)  then
+			local petobj = UnitCreatureFamily("pet")
+			if 
+				not _A.UnitExists("pet")
+				or _A.UnitIsDeadOrGhost("pet")
+				or not _A.HasPetUI()
+				or (petobj and petobj~="Observer")
+				then 
+				if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+					then player:cast(74434) -- shadowburn
+					return player:cast(112869)
+				end	
+				if player:buff(74434) or ( not player:moving() ) then
+					return player:cast(112869)
 				end
 			end
 		end
 	end,
 	
 	petres_supremacy3 = function()
-		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
-			if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112867)<.3 and _A.castdelay(112867, 1.5) and not player:iscasting(112867) and _A.enoughmana(112867)  then
-				local petobj = UnitCreatureFamily("pet") 
-				if 
-					not _A.UnitExists("pet")
-					or _A.UnitIsDeadOrGhost("pet")
-					or not _A.HasPetUI()
-					or (petobj and petobj~="Voidlord")
-					then 
-					if (not player:buff(74434) and not player:IsCurrentSpell(74434) and player:SpellCooldown(74434)==0 and _A.shards>=1 ) --or player:buff("Shadow Trance") 
-						then player:cast(74434) -- shadowburn
-						return player:cast(112867)
-					end	
-					if player:buff(74434) or ( not player:moving() ) then
-						return player:cast(112867)
-					end
+		if player:talent("Grimoire of Supremacy") and not player:iscasting(112867) and _A.enoughmana(112867)  then
+			local petobj = UnitCreatureFamily("pet") 
+			if 
+				not _A.UnitExists("pet")
+				or _A.UnitIsDeadOrGhost("pet")
+				or not _A.HasPetUI()
+				or (petobj and petobj~="Voidlord")
+				then 
+				if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+					then player:cast(74434) -- shadowburn
+					return player:cast(112867)
+				end	
+				if player:buff(74434) or ( not player:moving() ) then
+					return player:cast(112867)
 				end
 			end
 		end
 	end,
 	
 	healthfunnel = function()
-		if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat>= 2 then
-			if player:talent("Grimoire of Supremacy") then
-				if 
-					_A.UnitExists("pet")
-					and not _A.UnitIsDeadOrGhost("pet")
-					and _A.HasPetUI()
-					then
-					local pet = Object("pet")
-					if  player:glyph("Glyph of Health Funnel") and player:SpellCooldown("Health Funnel")<.3 and player:SpellUsable("Health Funnel") and pet and pet:health()<85 and pet:los() then
+		if player:talent("Grimoire of Supremacy") then
+			if 
+				_A.UnitExists("pet")
+				and not _A.UnitIsDeadOrGhost("pet")
+				and _A.HasPetUI()
+				then
+				local pet = Object("pet")
+				if  player:glyph("Glyph of Health Funnel") and player:SpellCooldown("Health Funnel")<.3 and player:SpellUsable("Health Funnel") and pet and pet:health()<85 and pet:range()<=45 and pet:los() then
+					if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=3) --or player:buff("Shadow Trance") 
+						then player:cast(74434) -- shadowburn
 						return player:cast("Health Funnel")
-					end
+					end	
+					return player:cast("Health Funnel")
 				end
 			end
 		end
@@ -2306,7 +2324,7 @@ local inCombat = function()
 	player = Object("player")
 	if not player then return end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
-	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 1 then return true end
+	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 2 then return true end
 	if player:Mounted() then return true end
 	proccing = _Y.proc_check()
 	--
@@ -2358,6 +2376,7 @@ local inCombat = function()
 		if affliction.rot.ccstun()  then return true end
 		if affliction.rot.snare_curse()  then return true end
 		if affliction.rot.snare_curse_target()  then return true end
+		if affliction.rot.healthfunnel() then return true end
 		-- if affliction.rot.felflame() then return true end
 	end
 	-------------------- Normal Swaps (Agony/unstable/corruption based)
@@ -2369,6 +2388,7 @@ local inCombat = function()
 	if affliction.rot.Buffbuff()  then return true end
 	if affliction.rot.snare_curse()  then return true end
 	if affliction.rot.ccfear() then return true end	
+	if affliction.rot.healthfunnel() then return true end
 	-- DOT SNAPSHOTING
 	if not proccing then
 		if affliction.rot.agonysnap()  then return true end
