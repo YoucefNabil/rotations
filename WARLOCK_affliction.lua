@@ -1105,8 +1105,8 @@ local exeOnLoad = function()
 		return false
 	end
 	_Y.exitedvehicleat = nil
-	-- _A.Listener:Add("EXITING_VEHICLE", {"UNIT_EXITING_VEHICLE", "COMPANION_UPDATE"}, function(event, arg1)
-		-- if (event == "UNIT_EXITING_VEHICLE" and arg1=="player") or (event == "COMPANION_UPDATE" and arg1=="MOUNT") then
+	-- _A.Listener:Add("EXITING_VEHICLE", "UNIT_FLAGS", function(event, arg1)
+		-- if (event == "UNIT_FLAGS" and arg1=="player") then
 			-- if not _Y.exitedvehicleat and not IsMounted() then print(event, arg1) _Y.exitedvehicleat = GetTime() end
 			-- C_Timer.After(0.5, function()
 				-- if _Y.exitedvehicleat then _Y.exitedvehicleat = nil end
@@ -1900,7 +1900,7 @@ affliction.rot = {
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=30
 					and obj:InConeOf(player, 170) 
-					and (not toggle("ccheals") or toggle("ccheals") and _A.isthisahealer(obj))
+					and (not toggle("ccheals") or (toggle("ccheals") and _A.isthisahealer(obj) and _Y.someoneislow()))
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
 					and (obj:drState("Shadowfury") == 1 or obj:drState("Shadowfury") == -1)
 					and _A.notimmune(obj)
@@ -2332,24 +2332,22 @@ local wasMounted = IsMounted()
 local function CheckMountStatus()
     local isMounted = IsMounted()
     if wasMounted and not isMounted then
-        -- print("Dismounted detected!")
 		_Y.exitedvehicleat = GetTime()
+		-- print("EXITED MOUNT")
     end
     wasMounted = isMounted
-	-- print("HEY")
     C_Timer.After(_A.Parser.frequency/2, CheckMountStatus)  -- Check every 0.5 seconds
 end
--- Start the recurring check
 CheckMountStatus()
 local inCombat = function()	
-	if not _A.Cache.Utils.PlayerInGame then return true end
+	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<=1 then return true end
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
+	if not _A.Cache.Utils.PlayerInGame then return true end
 	player = Object("player")
 	if not player then return end
-	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if player:Mounted() then return true end
-	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<=0.5 then return true end
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	proccing = _Y.proc_check()
 	--
 	--
