@@ -363,6 +363,16 @@ local exeOnLoad = function()
 		end
 		return false
 	end
+	function _Y.someoneislow()
+		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj.isplayer and Obj:range()<40  then
+				if Obj:Health()<80 then
+					return true
+				end
+			end
+		end
+		return false
+	end
 	--
 	_A.hooksecurefunc("UseAction", function(...)
 		local slot, target, clickType = ...
@@ -1310,7 +1320,9 @@ local exeOnLoad = function()
 		local pet = Object("pet")
 		local temptable = {}
 		local pettargetguid = _Y.Existscheck and _A.UnitTarget("pet") or nil
-		if pet and UnitCreatureFamily("pet") == "Observer" then
+		if pet and UnitCreatureFamily("pet") == "Observer" 
+		and ((_A.pull_location=="pvp" and _Y.someoneislow()) or (_A.pull_location~="pvp")) -- new safety check
+		then
 			if player:SpellCooldown("Optical Blast(Special Ability)")==0 and UnitPower("pet")>=20
 				then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
