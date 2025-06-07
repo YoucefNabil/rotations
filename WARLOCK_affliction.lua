@@ -246,6 +246,7 @@ local swap_unstabletbl = nil
 local swap_agonytbl = nil
 local swap_corruptiontbl = nil
 local soulswaporigin = nil
+local soulswaporigin_check = true
 local Ijustexhaled = false
 local IjustTriple = false
 --============================================
@@ -1106,12 +1107,12 @@ local exeOnLoad = function()
 	end
 	_Y.exitedvehicleat = nil
 	-- _A.Listener:Add("EXITING_VEHICLE", "UNIT_FLAGS", function(event, arg1)
-		-- if (event == "UNIT_FLAGS" and arg1=="player") then
-			-- if not _Y.exitedvehicleat and not IsMounted() then print(event, arg1) _Y.exitedvehicleat = GetTime() end
-			-- C_Timer.After(0.5, function()
-				-- if _Y.exitedvehicleat then _Y.exitedvehicleat = nil end
-			-- end)
-		-- end
+	-- if (event == "UNIT_FLAGS" and arg1=="player") then
+	-- if not _Y.exitedvehicleat and not IsMounted() then print(event, arg1) _Y.exitedvehicleat = GetTime() end
+	-- C_Timer.After(0.5, function()
+	-- if _Y.exitedvehicleat then _Y.exitedvehicleat = nil end
+	-- end)
+	-- end
 	-- end)
 	local soulswaptimer = nil
 	-- Soul Swap
@@ -1125,21 +1126,25 @@ local exeOnLoad = function()
 					swap_agonytbl=agonytbl[guiddest]
 					swap_corruptiontbl=corruptiontbl[guiddest]
 					swap_seeds=seeds[guiddest]
+					soulswaporigin_check = false
+					C_Timer.After(0.1, function()
+						soulswaporigin_check = true
+					end)
 					-- print("SWAP SCORE:", swap_unstabletbl, swap_agonytbl, swap_corruptiontbl, swap_seeds)
 					-- I don't think cleaning is necessary since they get overwritten anyway everytime I soulswap
-					-- if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
-					-- soulswaptimer = C_Timer.NewTimer(4, function()
-					-- if swap_unstabletbl then swap_unstabletbl=nil end
-					-- if swap_agonytbl then swap_agonytbl=nil end
-					-- if swap_corruptiontbl then swap_corruptiontbl=nil end
-					-- if swap_seeds then swap_seeds=nil end
-					-- if soulswaporigin  then soulswaporigin=nil end
-					-- print("DELETED DATA (ran out of time)")
-					-- end)
+					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
+					soulswaptimer = C_Timer.NewTimer(4, function()
+						-- if swap_unstabletbl then swap_unstabletbl=nil end
+						-- if swap_agonytbl then swap_agonytbl=nil end
+						-- if swap_corruptiontbl then swap_corruptiontbl=nil end
+						-- if swap_seeds then swap_seeds=nil end
+						if soulswaporigin  then soulswaporigin=nil end
+						print("DELETED DATA (ran out of time)")
+					end)
 				end
 				if idd==86213 then -- exhale
 					-- print("EXHALE!!")
-					-- if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
+					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					Ijustexhaled = true
 					unstabletbl[guiddest] = swap_unstabletbl
 					agonytbl[guiddest] = swap_agonytbl
@@ -1321,8 +1326,8 @@ local exeOnLoad = function()
 		local temptable = {}
 		local pettargetguid = _Y.Existscheck and _A.UnitTarget("pet") or nil
 		if pet and UnitCreatureFamily("pet") == "Observer" 
-		and ((_A.pull_location=="pvp" and _Y.someoneislow()) or (_A.pull_location~="pvp")) -- new safety check
-		then
+			and ((_A.pull_location=="pvp" and _Y.someoneislow()) or (_A.pull_location~="pvp")) -- new safety check
+			then
 			if player:SpellCooldown("Optical Blast(Special Ability)")==0 and UnitPower("pet")>=20
 				then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
@@ -1482,7 +1487,7 @@ affliction.rot = {
 	caching= function()
 		-- _A.reflectcheck = false
 		_A.shards = player:SoulShards()
-		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
+		-- if soulswaporigin_check and not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
 		-- snapshot engine
 		_A.temptabletbl = {}
 		_A.temptabletblsoulswap = {}
@@ -1493,15 +1498,19 @@ affliction.rot = {
 				and Obj:los() 
 				then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then --  print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
-				corruptiontbl[Obj.guid]=nil end
-				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then 
-					-- print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
-				agonytbl[Obj.guid]=nil end
-				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then 
-					-- print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
-				unstabletbl[Obj.guid]=nil end
-				-- if seeds[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
+				-- TO FIX THIS YOU CAN ADD TIMERS EVERYWHERE (with obj.guid as keys) PERTAINING TO EACH DOT (or just not use this contingency thing and hope nothing breaks lol)
+				--[[
+					if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then 
+					print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
+					corruptiontbl[Obj.guid]=nil end
+					if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then 
+					print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
+					agonytbl[Obj.guid]=nil end
+					if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then 
+					print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
+					unstabletbl[Obj.guid]=nil end
+					-- if seeds[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
+				--]]
 				local unstabledur, corruptiondur, agonydur, seedsdur, range_cache, healthraww =  Obj:DebuffDuration("Unstable Affliction"), Obj:DebuffDuration("Corruption"), Obj:DebuffDuration("Agony"), Obj:DebuffDuration("Seed of Corruption"), Obj:range(2) or 40, Obj:HealthActual() or 0
 				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
@@ -2334,7 +2343,7 @@ local function CheckMountStatus()
     if wasMounted and not isMounted then
 		_Y.exitedvehicleat = GetTime()
 		-- print("EXITED MOUNT")
-    end
+	end
     wasMounted = isMounted
     C_Timer.After(_A.Parser.frequency/2, CheckMountStatus)  -- Check every 0.5 seconds
 end
