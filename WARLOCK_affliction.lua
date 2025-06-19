@@ -1070,8 +1070,8 @@ local exeOnLoad = function()
 					then
 					C_Timer.After(.1, function()
 						corruptiontbl[guiddest]=_A.myscore() 
-						local TESTOBJ = Object(guiddest)
-						print("CORRUPTION", pullbuffme(TESTOBJ.guid, "Corruption"))
+						-- local TESTOBJ = Object(guiddest)
+						-- print("CORRUPTION", pullbuffme(TESTOBJ.guid, "Corruption"))
 					end)
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
@@ -1085,8 +1085,8 @@ local exeOnLoad = function()
 					then
 					C_Timer.After(.1, function()
 						agonytbl[guiddest]=_A.myscore()
-						local TESTOBJ = Object(guiddest)
-						print("Agony", pullbuffme(TESTOBJ.guid, "Agony"))
+						-- local TESTOBJ = Object(guiddest)
+						-- print("Agony", pullbuffme(TESTOBJ.guid, "Agony"))
 					end)
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
@@ -1100,8 +1100,8 @@ local exeOnLoad = function()
 					then
 					C_Timer.After(.1, function()
 						unstabletbl[guiddest]=_A.myscore() 
-						local TESTOBJ = Object(guiddest)
-						print("Unstable Affli", pullbuffme(TESTOBJ.guid, "Unstable Affliction"))
+						-- local TESTOBJ = Object(guiddest)
+						-- print("Unstable Affli", pullbuffme(TESTOBJ.guid, "Unstable Affliction"))
 					end)
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
@@ -1129,8 +1129,8 @@ local exeOnLoad = function()
 						if not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore() then corruptiontbl[guiddest]=_A.myscore() end
 						if not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore() then unstabletbl[guiddest]=_A.myscore() end
 						if not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore() then agonytbl[guiddest]=_A.myscore() end
-						local TESTOBJ = Object(guiddest)
-						print("Triple", pullbuffme(TESTOBJ.guid, "Unstable Affliction"))
+						-- local TESTOBJ = Object(guiddest)
+						-- print("Triple", pullbuffme(TESTOBJ.guid, "Unstable Affliction"))
 					end)
 					IjustTriple = true
 					C_Timer.After(.2, function()
@@ -1164,7 +1164,7 @@ local exeOnLoad = function()
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			if subevent =="SPELL_CAST_SUCCESS" then -- accuracy needs to improve
 				if idd==86121 then -- Soul Swap 86213
-					C_Timer.After(.2, function()
+					C_Timer.After(.1, function()
 						-- print("WOW API", UnitBuff("player", "Soul Swap"))
 						-- print("WOW DSL", player:buffany("Soul Swap"))
 						soulswaporigin = guiddest
@@ -1524,13 +1524,13 @@ affliction.rot = {
 				then
 				--
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				if corruptiontbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Corruption") and corruptiontbl[Obj.guid] then print("CORRUPTION DELETE", print(Obj:spec())) 
+				if corruptiontbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Corruption") and corruptiontbl[Obj.guid] then -- print("CORRUPTION DELETE", print(Obj:spec())) 
 				corruptiontbl[Obj.guid]=nil end
 				if agonytbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Agony") and agonytbl[Obj.guid] then 
-					print("AGONY DELETE", print(Obj:spec())) 
+					-- print("AGONY DELETE", print(Obj:spec())) 
 				agonytbl[Obj.guid]=nil end
 				if unstabletbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Unstable Affliction") and unstabletbl[Obj.guid] then 
-					print("UNSTABLE DELETE", print(Obj:spec())) 
+					-- print("UNSTABLE DELETE", print(Obj:spec())) 
 				unstabletbl[Obj.guid]=nil end
 				--]]
 				-- if seeds[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
