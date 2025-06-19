@@ -11,16 +11,35 @@ local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 local enteredworldat
 local proccing
-	function pullbuffme(unit, aura)
-		for i = 1, 40 do
-			local spellname,_,_,_,_,_,_,_,_,_,spellid = UnitDebuff(unit, i, "PLAYER")
-			local spellname1,_,_,_,_,_,_,_,_,_,spellid1 = UnitBuff(unit, i, "PLAYER")
-			if not tonumber(aura) then
-				if (aura == spellname)  or (aura == spellname1)  then return true end
-				elseif (aura == spellid) or (aura == spellid1)  then return true
-			end
-		end
-	end	
+function pullbuffme(unit, aura)
+    local isNumber = type(aura) == "number"
+    
+    -- Check debuffs first
+    for i = 1, 40 do
+        local name, _, _, _, _, _, _, _, _, _, id = UnitDebuff(unit, i, "PLAYER")
+        if name then
+            if (isNumber and aura == id) or (not isNumber and aura == name) then
+                return true
+            end
+        else
+            break -- No more debuffs, exit loop
+        end
+    end
+    
+    -- Check buffs only if not found in debuffs
+    for i = 1, 40 do
+        local name, _, _, _, _, _, _, _, _, _, id = UnitBuff(unit, i, "PLAYER")
+        if name then
+            if (isNumber and aura == id) or (not isNumber and aura == name) then
+                return true
+            end
+        else
+            break -- No more buffs, exit loop
+        end
+    end
+    
+    return false
+end
 local function table_sortoptimized(arr, comp, k)
     local n = #arr
 	local best_idx = nil
