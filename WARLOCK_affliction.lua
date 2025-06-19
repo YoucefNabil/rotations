@@ -246,7 +246,6 @@ local swap_unstabletbl = nil
 local swap_agonytbl = nil
 local swap_corruptiontbl = nil
 local soulswaporigin = nil
-local soulswaporigin_check = true
 local Ijustexhaled = false
 local IjustTriple = false
 --============================================
@@ -758,53 +757,55 @@ local exeOnLoad = function()
 	local inbetweentimer = nil
 	
 	Listener:Add("seedtargets", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
-		if guiddest == UnitGUID("player") then
-			if subevent == "SPELL_AURA_APPLIED" then
-				if spell_name(idd)=="Soul Swap" then
-					_Y.imIswapping = true
-					if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
-					inbetweentimer = C_Timer.NewTimer(player:gcd()+.3, function() _Y.imIswapping = false end)
+		C_Timer.After(.2, function()
+			if guiddest == UnitGUID("player") then
+				if subevent == "SPELL_AURA_APPLIED" then
+					if spell_name(idd)=="Soul Swap" then
+						_Y.imIswapping = true
+						if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
+						inbetweentimer = C_Timer.NewTimer(player:gcd()+.3, function() _Y.imIswapping = false end)
+					end
+				end
+				if subevent == "SPELL_AURA_REMOVED" then
+					if spell_name(idd)=="Soul Swap" then
+						_Y.imIswapping = false
+						_Y.swap_intercasts = 0
+						if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
+					end
 				end
 			end
-			if subevent == "SPELL_AURA_REMOVED" then
-				if spell_name(idd)=="Soul Swap" then
-					_Y.imIswapping = false
-					_Y.swap_intercasts = 0
-					if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
+			if guidsrc == UnitGUID("player") then
+				if (subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START") and _Y.imIswapping == true and validintercasts[spell_name(idd)]
+					then
+					_Y.swap_intercasts = _Y.swap_intercasts + 1
+					-- print("INTERCASTED", spell_name(idd))
 				end
 			end
-		end
-		if guidsrc == UnitGUID("player") then
-			if (subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START") and _Y.imIswapping == true and validintercasts[spell_name(idd)]
-				then
-				_Y.swap_intercasts = _Y.swap_intercasts + 1
-				-- print("INTERCASTED", spell_name(idd))
-			end
-		end
-		if guidsrc == UnitGUID("player") then
-			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-				----------------------------------- exhale counter
-				-----------------------------------
-				if spell_name(idd) == "Seed of Corruption"  then
-					-- print(subevent, guiddest)
-					if not _Y.seedtarget[guiddest] then _Y.seedtarget[guiddest]=true end
-					C_Timer.After(5, function()
+			if guidsrc == UnitGUID("player") then
+				if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+					----------------------------------- exhale counter
+					-----------------------------------
+					if spell_name(idd) == "Seed of Corruption"  then
+						-- print(subevent, guiddest)
+						if not _Y.seedtarget[guiddest] then _Y.seedtarget[guiddest]=true end
+						C_Timer.After(5, function()
+							if _Y.seedtarget[guiddest] then
+								-- print("DELETE")
+								_Y.seedtarget[guiddest]=nil
+							end
+						end)
+					end
+				end
+				if subevent == "SPELL_AURA_APPLIED" then 
+					if spell_name(idd) == "Seed of Corruption" then
 						if _Y.seedtarget[guiddest] then
 							-- print("DELETE")
 							_Y.seedtarget[guiddest]=nil
 						end
-					end)
-				end
-			end
-			if subevent == "SPELL_AURA_APPLIED" then 
-				if spell_name(idd) == "Seed of Corruption" then
-					if _Y.seedtarget[guiddest] then
-						-- print("DELETE")
-						_Y.seedtarget[guiddest]=nil
 					end
 				end
 			end
-		end
+		end)
 	end)
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
@@ -1021,81 +1022,95 @@ local exeOnLoad = function()
 	_Y.chantarget = nil
 	_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 		if guidsrc == UnitGUID("player") then -- only filter by me
-			-------------- internal cooldown part
-			if subevent == "SPELL_AURA_APPLIED" and spell_name(idd)=="Surge of Dominance" then _Y.internalcooldown = _A.GetTime() end -- 50 sec from the moment it procced
-			-------------- STUFF
-			if (spell_name(idd)=="Malefic Grasp" or spell_name(idd)=="Drain Soul") then 
-				if (subevent == "SPELL_AURA_APPLIED") then
-					_Y.chantarget = guiddest
+			-- C_Timer.After(.2, function()
+				-------------- internal cooldown part
+				if subevent == "SPELL_AURA_APPLIED" and spell_name(idd)=="Surge of Dominance" then _Y.internalcooldown = _A.GetTime() end -- 50 sec from the moment it procced
+				-------------- STUFF
+				if (spell_name(idd)=="Malefic Grasp" or spell_name(idd)=="Drain Soul") then 
+					if (subevent == "SPELL_AURA_APPLIED") then
+						_Y.chantarget = guiddest
+					end
+					-- if subevent == "SPELL_AURA_REMOVED" then
+					-- _Y.chantarget = nil
+					-- end
 				end
-				-- if subevent == "SPELL_AURA_REMOVED" then
-				-- _Y.chantarget = nil
-				-- end
-			end
-			-------------- dots part
-			if spell_name(idd)=="Corruption" then -- Corruption
-				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
-					and (not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore())
-					then
-					-- print("CORRUPTION")
-					corruptiontbl[guiddest]=_A.myscore() 
+				-------------- dots part
+				if spell_name(idd)=="Corruption" then -- Corruption
+					if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
+						and (not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore())
+						then
+						C_Timer.After(.2, function()
+						corruptiontbl[guiddest]=_A.myscore() 
+						local TESTOBJ = Object(guiddest)
+						print("CORRUPTION", TESTOBJ:debuff("Corruption"))
+						end)
+					end
+					if subevent=="SPELL_AURA_REMOVED" 
+						then
+						corruptiontbl[guiddest]=nil
+					end
 				end
-				if subevent=="SPELL_AURA_REMOVED" 
-					then
-					corruptiontbl[guiddest]=nil
+				if spell_name(idd)=="Agony" then -- AGONY
+					if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
+						and (not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore())
+						then
+						C_Timer.After(.2, function()
+						agonytbl[guiddest]=_A.myscore()
+						local TESTOBJ = Object(guiddest)
+						print("AGONY", TESTOBJ:debuff("Agony"))
+						end)
+					end
+					if subevent=="SPELL_AURA_REMOVED" 
+						then
+						agonytbl[guiddest]=nil
+					end
 				end
-			end
-			if spell_name(idd)=="Agony" then -- AGONY
-				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
-					and (not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore())
-					then
-					-- print("AGONY")
-					agonytbl[guiddest]=_A.myscore()
+				if spell_name(idd)=="Unstable Affliction" then -- Unstable Affli
+					if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
+						and (not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore())
+						then
+						C_Timer.After(.2, function()
+						unstabletbl[guiddest]=_A.myscore() 
+						local TESTOBJ = Object(guiddest)
+						print("UNSTABLE AFFLI", TESTOBJ:debuff("Unstable Affliction"))
+						end)
+					end
+					if subevent=="SPELL_AURA_REMOVED" 
+						then
+						unstabletbl[guiddest]=nil
+					end
 				end
-				if subevent=="SPELL_AURA_REMOVED" 
-					then
-					agonytbl[guiddest]=nil
+				
+				if (idd==27243) then -- seed of corruption
+					if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
+						then
+						seeds[guiddest]= player:buff("Mannoroth's Fury") and _A.myscore()*5 or _A.myscore()
+					end
+					if subevent=="SPELL_AURA_REMOVED" 
+						then
+						seeds[guiddest]=nil
+					end
 				end
-			end
-			if spell_name(idd)=="Unstable Affliction" then -- Unstable Affli
-				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
-					and (not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore())
-					then
-					-- print("UNSABLE AFFLI")
-					unstabletbl[guiddest]=_A.myscore() 
+				if (idd==119678) then -- Soulburn soul swap (applies all three) -- NEED SPECIFIC ID (don't use names!)
+					if subevent == "SPELL_CAST_SUCCESS"
+						and Ijustexhaled==false
+						then
+						-- print("TRIPLE DOT")
+						C_Timer.After(.2, function()
+						if not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore() then corruptiontbl[guiddest]=_A.myscore() end
+						if not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore() then unstabletbl[guiddest]=_A.myscore() end
+						if not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore() then agonytbl[guiddest]=_A.myscore() end
+						local TESTOBJ = Object(guiddest)
+						print("TRIPLE", TESTOBJ:debuff("Unstable Affliction"))
+						end)
+						IjustTriple = true
+						C_Timer.After(.3, function()
+							if IjustTriple then IjustTriple = false end
+						end)
+						-- ONLY APPLIES THESE 3 (and nothing else)
+					end
 				end
-				if subevent=="SPELL_AURA_REMOVED" 
-					then
-					unstabletbl[guiddest]=nil
-				end
-			end
-			
-			if (idd==27243) then -- seed of corruption
-				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
-					then
-					-- print("SNEEDING")
-					seeds[guiddest]= player:buff("Mannoroth's Fury") and _A.myscore()*5 or _A.myscore()
-				end
-				if subevent=="SPELL_AURA_REMOVED" 
-					then
-					seeds[guiddest]=nil
-				end
-			end
-			if (idd==119678) then -- Soulburn soul swap (applies all three) -- NEED SPECIFIC ID (don't use names!)
-				if subevent == "SPELL_CAST_SUCCESS"
-					and Ijustexhaled==false
-					then
-					-- print("TRIPLE DOT")
-					if not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore() then corruptiontbl[guiddest]=_A.myscore() end
-					if not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore() then unstabletbl[guiddest]=_A.myscore() end
-					if not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore() then agonytbl[guiddest]=_A.myscore() end
-					IjustTriple = true
-					C_Timer.After(.1, function()
-						if IjustTriple then IjustTriple = false end
-					end)
-					-- ONLY APPLIES THESE 3 (and nothing else)
-				end
-			end
+			-- end)
 		end
 	end
 	)
@@ -1120,43 +1135,24 @@ local exeOnLoad = function()
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			if subevent =="SPELL_CAST_SUCCESS" then -- accuracy needs to improve
 				if idd==86121 then -- Soul Swap 86213
-					-- print("SOULSWAP")
-					soulswaporigin = guiddest
-					swap_unstabletbl=unstabletbl[guiddest]
-					swap_agonytbl=agonytbl[guiddest]
-					swap_corruptiontbl=corruptiontbl[guiddest]
-					swap_seeds=seeds[guiddest]
-					soulswaporigin_check = false
-					C_Timer.After(0.1, function()
-						soulswaporigin_check = true
-					end)
-					-- print("SWAP SCORE:", swap_unstabletbl, swap_agonytbl, swap_corruptiontbl, swap_seeds)
-					-- I don't think cleaning is necessary since they get overwritten anyway everytime I soulswap
-					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
-					soulswaptimer = C_Timer.NewTimer(4, function()
-						-- if swap_unstabletbl then swap_unstabletbl=nil end
-						-- if swap_agonytbl then swap_agonytbl=nil end
-						-- if swap_corruptiontbl then swap_corruptiontbl=nil end
-						-- if swap_seeds then swap_seeds=nil end
-						if soulswaporigin  then soulswaporigin=nil end
-						print("DELETED DATA (ran out of time)")
+					C_Timer.After(.2, function()
+						-- print("WOW API", UnitBuff("player", "Soul Swap"))
+						-- print("WOW DSL", player:buffany("Soul Swap"))
+						soulswaporigin = guiddest
+						swap_unstabletbl=unstabletbl[guiddest]
+						swap_agonytbl=agonytbl[guiddest]
+						swap_corruptiontbl=corruptiontbl[guiddest]
+						swap_seeds=seeds[guiddest]
 					end)
 				end
 				if idd==86213 then -- exhale
-					-- print("EXHALE!!")
-					if soulswaptimer then soulswaptimer:Cancel() soulswaptimer = nil end
 					Ijustexhaled = true
 					unstabletbl[guiddest] = swap_unstabletbl
 					agonytbl[guiddest] = swap_agonytbl
 					corruptiontbl[guiddest] = swap_corruptiontbl
 					seeds[guiddest]=swap_seeds
-					-- print("EXHALE SCORE:", swap_unstabletbl, swap_agonytbl, swap_corruptiontbl, swap_seeds)
-					-- swap_unstabletbl=nil
-					-- swap_agonytbl=nil
-					-- swap_corruptiontbl=nil
-					-- swap_seeds=nil
 					soulswaporigin = nil
-					C_Timer.After(.1, function()
+					C_Timer.After(.2, function()
 						if Ijustexhaled then Ijustexhaled = false end
 					end)
 				end
@@ -1487,7 +1483,7 @@ affliction.rot = {
 	caching= function()
 		-- _A.reflectcheck = false
 		_A.shards = player:SoulShards()
-		-- if soulswaporigin_check and not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
+		if not player:BuffAny(86211) and soulswaporigin ~= nil then soulswaporigin = nil end
 		-- snapshot engine
 		_A.temptabletbl = {}
 		_A.temptabletblsoulswap = {}
@@ -1497,20 +1493,18 @@ affliction.rot = {
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not _A.isthisahealer(Obj)) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() 
 				then
-				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				-- TO FIX THIS YOU CAN ADD TIMERS EVERYWHERE (with obj.guid as keys) PERTAINING TO EACH DOT (or just not use this contingency thing and hope nothing breaks lol)
 				--[[
-					if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then 
-					print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
-					corruptiontbl[Obj.guid]=nil end
-					if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then 
-					print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
-					agonytbl[Obj.guid]=nil end
-					if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then 
-					print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
-					unstabletbl[Obj.guid]=nil end
-					-- if seeds[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
+				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
+				if corruptiontbl[Obj.guid]~=nil and not Obj:Debuff("Corruption") and corruptiontbl[Obj.guid] then print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
+				corruptiontbl[Obj.guid]=nil end
+				if agonytbl[Obj.guid]~=nil and not Obj:Debuff("Agony") and agonytbl[Obj.guid] then 
+				print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
+				agonytbl[Obj.guid]=nil end
+				if unstabletbl[Obj.guid]~=nil and not Obj:Debuff("Unstable Affliction") and unstabletbl[Obj.guid] then 
+				print("BACKUP DELETE HAPPENED", print(Obj:spec())) 
+				unstabletbl[Obj.guid]=nil end
 				--]]
+				-- if seeds[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
 				local unstabledur, corruptiondur, agonydur, seedsdur, range_cache, healthraww =  Obj:DebuffDuration("Unstable Affliction"), Obj:DebuffDuration("Corruption"), Obj:DebuffDuration("Agony"), Obj:DebuffDuration("Seed of Corruption"), Obj:range(2) or 40, Obj:HealthActual() or 0
 				--
 				_A.temptabletbl[#_A.temptabletbl+1] = {
