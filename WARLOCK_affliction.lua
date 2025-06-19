@@ -13,31 +13,48 @@ local enteredworldat
 local proccing
 function pullbuffme(unit, aura)
     local isNumber = type(aura) == "number"
-    
-    -- Check debuffs first
     for i = 1, 40 do
         local name, _, _, _, _, _, _, _, _, _, id = UnitDebuff(unit, i, "PLAYER")
         if name then
             if (isNumber and aura == id) or (not isNumber and aura == name) then
                 return true
             end
-        else
-            break -- No more debuffs, exit loop
+        else break
         end
     end
     
-    -- Check buffs only if not found in debuffs
     for i = 1, 40 do
         local name, _, _, _, _, _, _, _, _, _, id = UnitBuff(unit, i, "PLAYER")
         if name then
             if (isNumber and aura == id) or (not isNumber and aura == name) then
                 return true
             end
-        else
-            break -- No more buffs, exit loop
+        else break
+        end
+    end
+    return false
+end
+function pullbuff(unit, aura)
+    local isNumber = type(aura) == "number"
+    for i = 1, 40 do
+        local name, _, _, _, _, _, _, _, _, _, id = UnitDebuff(unit, i)
+        if name then
+            if (isNumber and aura == id) or (not isNumber and aura == name) then
+                return true
+            end
+        else break
         end
     end
     
+    for i = 1, 40 do
+        local name, _, _, _, _, _, _, _, _, _, id = UnitBuff(unit, i)
+        if name then
+            if (isNumber and aura == id) or (not isNumber and aura == name) then
+                return true
+            end
+        else break
+        end
+    end
     return false
 end
 local function table_sortoptimized(arr, comp, k)
