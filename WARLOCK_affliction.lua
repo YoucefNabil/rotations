@@ -1541,13 +1541,13 @@ affliction.rot = {
 				then
 				--
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				if corruptiontbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Corruption") and corruptiontbl[Obj.guid] then -- print("CORRUPTION DELETE", print(Obj:spec())) 
+				if corruptiontbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Corruption") and corruptiontbl[Obj.guid] then print("CORRUPTION DELETE", print(Obj:spec())) 
 				corruptiontbl[Obj.guid]=nil end
 				if agonytbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Agony") and agonytbl[Obj.guid] then 
-					-- print("AGONY DELETE", print(Obj:spec())) 
+					print("AGONY DELETE", print(Obj:spec())) 
 				agonytbl[Obj.guid]=nil end
 				if unstabletbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Unstable Affliction") and unstabletbl[Obj.guid] then 
-					-- print("UNSTABLE DELETE", print(Obj:spec())) 
+					print("UNSTABLE DELETE", print(Obj:spec())) 
 				unstabletbl[Obj.guid]=nil end
 				--]]
 				-- if seeds[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
