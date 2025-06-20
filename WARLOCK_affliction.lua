@@ -1084,11 +1084,11 @@ local exeOnLoad = function()
 				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
 					and (not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore())
 					then
-					C_Timer.After(.1, function()
+					-- C_Timer.After(.1, function()
 						corruptiontbl[guiddest]=_A.myscore() 
 						-- local TESTOBJ = Object(guiddest)
 						-- print("CORRUPTION", pullbuffme(TESTOBJ.guid, "Corruption"))
-					end)
+					-- end)
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
 					then
@@ -1099,11 +1099,11 @@ local exeOnLoad = function()
 				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
 					and (not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore())
 					then
-					C_Timer.After(.1, function()
+					-- C_Timer.After(.1, function()
 						agonytbl[guiddest]=_A.myscore()
 						-- local TESTOBJ = Object(guiddest)
 						-- print("Agony", pullbuffme(TESTOBJ.guid, "Agony"))
-					end)
+					-- end)
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
 					then
@@ -1114,11 +1114,11 @@ local exeOnLoad = function()
 				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
 					and (not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore())
 					then
-					C_Timer.After(.1, function()
+					-- C_Timer.After(.1, function()
 						unstabletbl[guiddest]=_A.myscore() 
 						-- local TESTOBJ = Object(guiddest)
 						-- print("Unstable Affli", pullbuffme(TESTOBJ.guid, "Unstable Affliction"))
-					end)
+					-- end)
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
 					then
@@ -1141,13 +1141,13 @@ local exeOnLoad = function()
 					and Ijustexhaled==false
 					then
 					-- print("TRIPLE DOT")
-					C_Timer.After(.1, function()
+					-- C_Timer.After(.1, function()
 						if not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore() then corruptiontbl[guiddest]=_A.myscore() end
 						if not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore() then unstabletbl[guiddest]=_A.myscore() end
 						if not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore() then agonytbl[guiddest]=_A.myscore() end
 						-- local TESTOBJ = Object(guiddest)
 						-- print("Triple", pullbuffme(TESTOBJ.guid, "Unstable Affliction"))
-					end)
+					-- end)
 					IjustTriple = true
 					C_Timer.After(.2, function()
 						if IjustTriple then IjustTriple = false end
@@ -1179,7 +1179,7 @@ local exeOnLoad = function()
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			if subevent =="SPELL_CAST_SUCCESS" then -- accuracy needs to improve
 				if idd==86121 then -- Soul Swap 86213
-					C_Timer.After(.1, function()
+					-- C_Timer.After(.1, function()
 						-- print("WOW API", UnitBuff("player", "Soul Swap"))
 						-- print("WOW DSL", player:buffany("Soul Swap"))
 						soulswaporigin = guiddest
@@ -1187,7 +1187,7 @@ local exeOnLoad = function()
 						swap_agonytbl=agonytbl[guiddest]
 						swap_corruptiontbl=corruptiontbl[guiddest]
 						swap_seeds=seeds[guiddest]
-					end)
+					-- end)
 				end
 				if idd==86213 then -- exhale
 					Ijustexhaled = true
