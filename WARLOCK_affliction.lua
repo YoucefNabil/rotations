@@ -803,7 +803,7 @@ local exeOnLoad = function()
 	local inbetweentimer = nil
 	
 	Listener:Add("seedtargets", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
-		C_Timer.After(.2, function()
+		-- C_Timer.After(.2, function()
 			if guiddest == UnitGUID("player") then
 				if subevent == "SPELL_AURA_APPLIED" then
 					if spell_name(idd)=="Soul Swap" then
@@ -851,7 +851,7 @@ local exeOnLoad = function()
 					end
 				end
 			end
-		end)
+		-- end)
 	end)
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
@@ -1068,7 +1068,6 @@ local exeOnLoad = function()
 	_Y.chantarget = nil
 	_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
 		if guidsrc == UnitGUID("player") then -- only filter by me
-			-- C_Timer.After(.2, function()
 			-------------- internal cooldown part
 			if subevent == "SPELL_AURA_APPLIED" and spell_name(idd)=="Surge of Dominance" then _Y.internalcooldown = _A.GetTime() end -- 50 sec from the moment it procced
 			-------------- STUFF
@@ -1156,7 +1155,6 @@ local exeOnLoad = function()
 					-- ONLY APPLIES THESE 3 (and nothing else)
 				end
 			end
-			-- end)
 		end
 	end
 	)
@@ -1541,12 +1539,12 @@ affliction.rot = {
 				then
 				--
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				if corruptiontbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Corruption") and corruptiontbl[Obj.guid] then print("CORRUPTION DELETE", print(Obj:spec())) 
+				if corruptiontbl[Obj.guid]~=nil and not UnitDebuff(Obj.guid, "Corruption","","PLAYER") and corruptiontbl[Obj.guid] then print("CORRUPTION DELETE", print(Obj:spec())) 
 				corruptiontbl[Obj.guid]=nil end
-				if agonytbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Agony") and agonytbl[Obj.guid] then 
+				if agonytbl[Obj.guid]~=nil and not UnitDebuff(Obj.guid, "Agony","","PLAYER") and agonytbl[Obj.guid] then 
 					print("AGONY DELETE", print(Obj:spec())) 
 				agonytbl[Obj.guid]=nil end
-				if unstabletbl[Obj.guid]~=nil and not pullbuffme(Obj.guid, "Unstable Affliction") and unstabletbl[Obj.guid] then 
+				if unstabletbl[Obj.guid]~=nil and not UnitDebuff(Obj.guid, "Unstable Affliction","","PLAYER") and unstabletbl[Obj.guid] then 
 					print("UNSTABLE DELETE", print(Obj:spec())) 
 				unstabletbl[Obj.guid]=nil end
 				--]]
