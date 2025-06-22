@@ -1526,7 +1526,6 @@ affliction.rot = {
 	
 	caching= function()
 		-- _A.reflectcheck = false
-		_A.shards = player:SoulShards()
 		if not UnitBuff("player", "Soul Swap") and soulswaporigin ~= nil then soulswaporigin = nil end
 		-- snapshot engine
 		_A.temptabletbl = {}
@@ -2500,6 +2499,7 @@ local inCombat = function()
 	proccing = _Y.proc_check()
 	--
 	--
+	_A.shards = player:SoulShards()
 	_Y.petengine_affli()
 	affliction.rot.stop_chan_on_dead()
 	
@@ -2511,8 +2511,8 @@ local inCombat = function()
 	affliction.rot.items_healthstone()
 	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
 	-- if player:lostcontrol() then return end 
-	affliction.rot.caching()
 	if player:spellcooldown("Corruption")>cdcd*2 then return true end
+	affliction.rot.caching()
 	--------=================
 	--------================= START
 	--------=================
