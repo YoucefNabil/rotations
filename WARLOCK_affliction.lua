@@ -1084,11 +1084,11 @@ local exeOnLoad = function()
 				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
 					and (not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore())
 					then
-					-- C_Timer.After(.1, function()
+					C_Timer.After(.1, function()
 						corruptiontbl[guiddest]=_A.myscore() 
 						-- local TESTOBJ = Object(guiddest)
 						-- print("CORRUPTION", pullbuffme(TESTOBJ.guid, "Corruption"))
-					-- end)
+					end)
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
 					then
@@ -1099,11 +1099,11 @@ local exeOnLoad = function()
 				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
 					and (not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore())
 					then
-					-- C_Timer.After(.1, function()
+					C_Timer.After(.1, function()
 						agonytbl[guiddest]=_A.myscore()
 						-- local TESTOBJ = Object(guiddest)
 						-- print("Agony", pullbuffme(TESTOBJ.guid, "Agony"))
-					-- end)
+					end)
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
 					then
@@ -1114,11 +1114,11 @@ local exeOnLoad = function()
 				if (Ijustexhaled==false and IjustTriple == false) and (subevent == "SPELL_CAST_SUCCESS")
 					and (not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore())
 					then
-					-- C_Timer.After(.1, function()
+					C_Timer.After(.1, function()
 						unstabletbl[guiddest]=_A.myscore() 
 						-- local TESTOBJ = Object(guiddest)
 						-- print("Unstable Affli", pullbuffme(TESTOBJ.guid, "Unstable Affliction"))
-					-- end)
+					end)
 				end
 				if subevent=="SPELL_AURA_REMOVED" 
 					then
@@ -1141,13 +1141,13 @@ local exeOnLoad = function()
 					and Ijustexhaled==false
 					then
 					-- print("TRIPLE DOT")
-					-- C_Timer.After(.1, function()
+					C_Timer.After(.1, function()
 						if not corruptiontbl[guiddest] or corruptiontbl[guiddest]~=_A.myscore() then corruptiontbl[guiddest]=_A.myscore() end
 						if not unstabletbl[guiddest] or unstabletbl[guiddest]~=_A.myscore() then unstabletbl[guiddest]=_A.myscore() end
 						if not agonytbl[guiddest] or agonytbl[guiddest]~=_A.myscore() then agonytbl[guiddest]=_A.myscore() end
 						-- local TESTOBJ = Object(guiddest)
 						-- print("Triple", pullbuffme(TESTOBJ.guid, "Unstable Affliction"))
-					-- end)
+					end)
 					IjustTriple = true
 					C_Timer.After(.2, function()
 						if IjustTriple then IjustTriple = false end
@@ -1179,7 +1179,7 @@ local exeOnLoad = function()
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			if subevent =="SPELL_CAST_SUCCESS" then -- accuracy needs to improve
 				if idd==86121 then -- Soul Swap 86213
-					-- C_Timer.After(.1, function()
+					C_Timer.After(.1, function()
 						-- print("WOW API", UnitBuff("player", "Soul Swap"))
 						-- print("WOW DSL", player:buffany("Soul Swap"))
 						soulswaporigin = guiddest
@@ -1187,7 +1187,7 @@ local exeOnLoad = function()
 						swap_agonytbl=agonytbl[guiddest]
 						swap_corruptiontbl=corruptiontbl[guiddest]
 						swap_seeds=seeds[guiddest]
-					-- end)
+					end)
 				end
 				if idd==86213 then -- exhale
 					Ijustexhaled = true
@@ -1752,9 +1752,9 @@ affliction.rot = {
 					then player:cast(74434) -- shadowburn
 					return player:cast(112866)
 				end	
-				if player:buff(74434) or ( not player:moving() ) then
-					return player:cast(112866)
-				end
+				-- if player:buff(74434) or ( not player:moving() ) then
+					-- return player:cast(112866)
+				-- end
 			end
 		end
 	end,
@@ -1772,9 +1772,9 @@ affliction.rot = {
 					then player:cast(74434) -- shadowburn
 					return player:cast(112869)
 				end	
-				if player:buff(74434) or ( not player:moving() ) then
-					return player:cast(112869)
-				end
+				-- if player:buff(74434) or ( not player:moving() ) then
+					-- return player:cast(112869)
+				-- end
 			end
 		end
 	end,
@@ -1792,6 +1792,66 @@ affliction.rot = {
 					then player:cast(74434) -- shadowburn
 					return player:cast(112867)
 				end	
+				-- if player:buff(74434) or ( not player:moving() ) then
+					-- return player:cast(112867)
+				-- end
+			end
+		end
+	end,
+	
+	petres_supremacy_SHARD = function()
+		if player:talent("Grimoire of Supremacy")  and player:SpellCooldown(112866)<.3 and _A.enoughmana(112866)  then
+			local petobj = UnitCreatureFamily("pet")
+			if 
+				not _A.UnitExists("pet")
+				or _A.UnitIsDeadOrGhost("pet")
+				or not _A.HasPetUI()
+				or (petobj and petobj~="Fel Imp")
+				then 
+				-- if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 )
+					-- then player:cast(74434) -- shadowburn
+					-- return player:cast(112866)
+				-- end	
+				if player:buff(74434) or ( not player:moving() ) then
+					return player:cast(112866)
+				end
+			end
+		end
+	end,
+	
+	petres_supremacy2_SHARD = function()
+		if player:talent("Grimoire of Supremacy") and not player:iscasting(112869) and _A.enoughmana(112869)  then
+			local petobj = UnitCreatureFamily("pet")
+			if 
+				not _A.UnitExists("pet")
+				or _A.UnitIsDeadOrGhost("pet")
+				or not _A.HasPetUI()
+				or (petobj and petobj~="Observer")
+				then 
+				-- if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+					-- then player:cast(74434) -- shadowburn
+					-- return player:cast(112869)
+				-- end	
+				if player:buff(74434) or ( not player:moving() ) then
+					return player:cast(112869)
+				end
+			end
+		end
+	end,
+	
+	petres_supremacy3_SHARD = function()
+		if player:talent("Grimoire of Supremacy") and not player:iscasting(112867) and _A.enoughmana(112867)  then
+			local petobj = UnitCreatureFamily("pet") 
+			if 
+				not _A.UnitExists("pet")
+				or _A.UnitIsDeadOrGhost("pet")
+				or not _A.HasPetUI()
+				or (petobj and petobj~="Voidlord")
+				then 
+				-- if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+					-- then player:cast(74434) -- shadowburn
+					-- return player:cast(112867)
+				-- end	
 				if player:buff(74434) or ( not player:moving() ) then
 					return player:cast(112867)
 				end
@@ -1817,7 +1877,7 @@ affliction.rot = {
 			end
 		end
 	end,
-	
+
 	CauterizeMaster = function()
 		if player:health() <= 85 then
 			if player:SpellUsable("Cauterize Master") and player:SpellCooldown("Cauterize Master") == 0  then
@@ -2233,6 +2293,48 @@ affliction.rot = {
 				then player:cast(74434) -- shadowburn
 				return _A.temptabletbl[1].obj:Cast(119678)
 			end
+			-- if player:buff(74434) then
+				-- return _A.temptabletbl[1].obj:Cast(119678)
+			-- end
+		end -- improved soul swap (dots instead)
+	end,
+	
+	unstablesnapinstant_SHARD = function()
+		if #_A.temptabletbl>1 then
+			table_sortoptimized(_A.temptabletbl, function(a,b)
+				if 	
+					a.score ~= b.score then return a.score > b.score
+					elseif 
+					-- a.range ~= b.range then return a.range < b.range
+					a.health ~= b.health then return a.health > b.health
+					-- a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer
+					-- else return 
+					-- a.range < b.range
+				end
+			end, 1)
+		end
+		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore and player:SpellCooldown("Unstable Affliction")<.3 then 
+			for i=1, #usableitems do
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
+						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and proccing then 
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not player:IsCurrentSpell(113860) then
+								player:cast("Lifeblood")
+								player:useitem("Potion of the Jade Serpent")
+								player:cast("Dark Soul: Misery")
+								else
+								return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+							end
+						end
+					end
+				end
+			end
+			--
+			-- if  _A.shards>=1 and not player:buff(74434) and player:SpellCooldown(74434)==0  and not player:IsCurrentSpell(74434)--or player:buff("Shadow Trance")
+				-- then player:cast(74434) -- shadowburn
+				-- return _A.temptabletbl[1].obj:Cast(119678)
+			-- end
+			-- SHARD
 			if player:buff(74434) then
 				return _A.temptabletbl[1].obj:Cast(119678)
 			end
@@ -2286,7 +2388,7 @@ affliction.rot = {
 	felflame = function()
 		if not player:isCastingAny() and _A.enoughmana(77799) then
 			local lowest = Object("lowestEnemyInSpellRangeNOTAR(Fel Flame)")
-			if lowest then
+			if lowest and not UnitBuff("player", "Soul Swap") then
 				return lowest:Cast("fel flame")
 			end
 		end
@@ -2416,6 +2518,11 @@ local inCombat = function()
 	--------=================
 	affliction.rot.activetrinket()
 	affliction.rot.items_intflask()
+	--------------------
+	--SHARD PRIO
+	if not toggle("eye_demon") and affliction.rot.petres_supremacy3_SHARD() then return true end
+	if toggle("eye_demon") and affliction.rot.petres_supremacy2_SHARD() then return true end
+	if affliction.rot.unstablesnapinstant_SHARD() then return true end
 	-------------------- inbetween swaps system
 	-- CTRL MODE (Beams)
 	if _A.modifier_ctrl() then
@@ -2445,7 +2552,7 @@ local inCombat = function()
 		if affliction.rot.ccstun()  then return true end
 		if affliction.rot.snare_curse()  then return true end
 		if affliction.rot.snare_curse_target()  then return true end
-		if affliction.rot.healthfunnel() then return true end
+		-- if affliction.rot.healthfunnel() then return true end
 		-- if affliction.rot.felflame() then return true end
 	end
 	-------------------- Normal Swaps (Agony/unstable/corruption based)
@@ -2479,7 +2586,7 @@ local inCombat = function()
 	if affliction.rot.twilightward()  then return true end
 	if affliction.rot.ccstun()  then return true end	
 	-- Heal pet
-	if affliction.rot.healthfunnel() then return true end
+	-- if affliction.rot.healthfunnel() then return true end
 	-- buff
 	if affliction.rot.darkintent() then return true end
 	-- fills

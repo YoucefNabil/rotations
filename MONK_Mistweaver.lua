@@ -3174,9 +3174,6 @@ local inCombat = function()
 	------------------ High Prio
 	-- KEYBINDS
 	-- OH SHIT ORBS
-	if mw_rot.root_buff() then return true end
-	if mw_rot.root_buff2() then return true end
-	if mw_rot.root_buff3() then return true end
 	-- if player then return _A.clickcast(player, "Healing Sphere") end
 	if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
 	if mylevel >= 64 and mw_rot.tsulongHealing() then return true end -- SUPER PRIO
@@ -3199,6 +3196,9 @@ local inCombat = function()
 	--old spot
 	if _A.manaengine_RJW_highprio() and (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.rushingjadewind() then return true end
 	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
+	if mw_rot.root_buff() then return true end
+	if mw_rot.root_buff2() then return true end
+	if mw_rot.root_buff3() then return true end
 	--------------------- dispells and root freedom
 	if mylevel >= 20 then
 		if mw_rot.dispellunCC() then return true end
