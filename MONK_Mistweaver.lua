@@ -3108,7 +3108,7 @@ local mw_rot = {
 					and not obj:buffany(1044)
 					and not obj:buffany("Bladestorm")
 					and _A.notimmune(obj)
-					and ((obj:spec()==102 or obj:spec()==105) or _A.pull_location=="arena" or toggle("disable_all"))
+					and ((obj:spec()==102 or obj:spec()==105) or _A.pull_location=="arena" or (toggle("disable_all") and _A.UnitTarget(obj.guid)==player.guid))
 					and obj:los() 
 					then
 					return obj:FaceCast("Disable")

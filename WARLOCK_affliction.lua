@@ -453,6 +453,8 @@ local exeOnLoad = function()
 			if _A.DSL:Get("toggle")(_,"MasterToggle")~=false then
 				_A.Interface:toggleToggle("mastertoggle", false)
 				_A.print("OFF")
+				local target = Object("target")
+				if target then print(target.guid) end
 				return true
 			end
 		end
@@ -1378,7 +1380,7 @@ local exeOnLoad = function()
 						and _A.notimmune(obj)
 						then
 						if 
-							(obj:caninterrupt() and obj:isCastingAny() and (obj:caststart()>=0.5 or obj:chanstart()>0.3))
+							(obj:caninterrupt() and obj:isCastingAny() and (obj:caststart()>=0.5 or obj:chanstart()>0.5))
 							or _Y.someoneisuperlow() 
 							then
 							temptable[#temptable+1] = {
@@ -1604,7 +1606,7 @@ affliction.rot = {
 	
 	-- snare_curse = function() -- rework this
 	-- if _A.flagcarrier ~=nil then 
-	-- if not player:buff(74434) and not _A.flagcarrier:DebuffAny("Curse of Exhaustion") then
+	-- if not UnitBuff("player", "Soulburn") and not _A.flagcarrier:DebuffAny("Curse of Exhaustion") then
 	-- return _A.flagcarrier:cast("Curse of Exhaustion")
 	-- end
 	-- end
@@ -1747,11 +1749,11 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Fel Imp")
 				then 
-				if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 )
+				if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 )
 					then player:cast(74434) -- shadowburn
 					return player:cast(112866)
 				end	
-				-- if player:buff(74434) or ( not player:moving() ) then
+				-- if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
 					-- return player:cast(112866)
 				-- end
 			end
@@ -1759,7 +1761,7 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy2 = function()
-		if player:talent("Grimoire of Supremacy") and not player:iscasting(112869) and _A.enoughmana(112869)  then
+		if player:talent("Grimoire of Supremacy") and not player:iscasting(112869) and _A.enoughmana(112869) and player:spellcooldown(112869)<.3  then
 			local petobj = UnitCreatureFamily("pet")
 			if 
 				not _A.UnitExists("pet")
@@ -1767,11 +1769,11 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Observer")
 				then 
-				if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+				if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
 					return player:cast(112869)
 				end	
-				-- if player:buff(74434) or ( not player:moving() ) then
+				-- if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
 					-- return player:cast(112869)
 				-- end
 			end
@@ -1779,7 +1781,7 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy3 = function()
-		if player:talent("Grimoire of Supremacy") and not player:iscasting(112867) and _A.enoughmana(112867)  then
+		if player:talent("Grimoire of Supremacy") and not player:iscasting(112867) and _A.enoughmana(112867) and player:spellcooldown(112867)<.3 then
 			local petobj = UnitCreatureFamily("pet") 
 			if 
 				not _A.UnitExists("pet")
@@ -1787,11 +1789,11 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Voidlord")
 				then 
-				if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+				if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
 					return player:cast(112867)
 				end	
-				-- if player:buff(74434) or ( not player:moving() ) then
+				-- if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
 					-- return player:cast(112867)
 				-- end
 			end
@@ -1807,11 +1809,11 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Fel Imp")
 				then 
-				-- if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 )
+				-- if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 )
 					-- then player:cast(74434) -- shadowburn
 					-- return player:cast(112866)
 				-- end	
-				if player:buff(74434) or ( not player:moving() ) then
+				if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
 					return player:cast(112866)
 				end
 			end
@@ -1819,7 +1821,7 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy2_SHARD = function()
-		if player:talent("Grimoire of Supremacy") and not player:iscasting(112869) and _A.enoughmana(112869)  then
+		if player:talent("Grimoire of Supremacy") and not player:iscasting(112869) and _A.enoughmana(112869) and player:spellcooldown(112869)<.3  then
 			local petobj = UnitCreatureFamily("pet")
 			if 
 				not _A.UnitExists("pet")
@@ -1827,11 +1829,11 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Observer")
 				then 
-				-- if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+				-- if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					-- then player:cast(74434) -- shadowburn
 					-- return player:cast(112869)
 				-- end	
-				if player:buff(74434) or ( not player:moving() ) then
+				if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
 					return player:cast(112869)
 				end
 			end
@@ -1839,7 +1841,7 @@ affliction.rot = {
 	end,
 	
 	petres_supremacy3_SHARD = function()
-		if player:talent("Grimoire of Supremacy") and not player:iscasting(112867) and _A.enoughmana(112867)  then
+		if player:talent("Grimoire of Supremacy") and not player:iscasting(112867) and _A.enoughmana(112867) and player:spellcooldown(112867)<.3 then
 			local petobj = UnitCreatureFamily("pet") 
 			if 
 				not _A.UnitExists("pet")
@@ -1847,11 +1849,11 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Voidlord")
 				then 
-				-- if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+				-- if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					-- then player:cast(74434) -- shadowburn
 					-- return player:cast(112867)
 				-- end	
-				if player:buff(74434) or ( not player:moving() ) then
+				if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
 					return player:cast(112867)
 				end
 			end
@@ -1867,7 +1869,7 @@ affliction.rot = {
 				then
 				local pet = Object("pet")
 				if  player:glyph("Glyph of Health Funnel") and player:SpellCooldown("Health Funnel")<.3 and player:SpellUsable("Health Funnel") and pet and pet:health()<85 and pet:range()<=45 and pet:los() then
-					if (not player:buff(74434) and not player:IsCurrentSpell(74434) and _A.shards>=3) --or player:buff("Shadow Trance") 
+					if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=3) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
 						return player:cast("Health Funnel")
 					end	
@@ -1929,7 +1931,7 @@ affliction.rot = {
 	
 	snare_curse = function() -- rework this
 		local flagcarry = nil
-		if _A.pull_location == "pvp" and not player:buff(74434) then
+		if _A.pull_location == "pvp" and not UnitBuff("player", "Soulburn") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj:spellRange(172) and _A.attackable(Obj) and (Obj:BuffAny("Alliance Flag") or Obj:BuffAny("Horde Flag")) and not Obj:Debuff("Curse of Exhaustion") and not Obj:immune("snare") 
 					and not Obj:state("snare") and _A.notimmune(Obj) and Obj:los() then
@@ -1942,7 +1944,7 @@ affliction.rot = {
 	
 	snare_curse_target = function() -- rework this
 		local target = Object("target")
-		if _A.pull_location == "pvp" and not player:buff(74434) then
+		if _A.pull_location == "pvp" and not UnitBuff("player", "Soulburn") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and target and Obj:is(target) and Obj:spellRange(172) and _A.attackable(Obj) and not Obj:Debuff("Curse of Exhaustion") and not Obj:immune("snare") and not Obj:state("snare") and _A.notimmune(Obj) and Obj:los() then
 					return Obj:cast("Curse of Exhaustion")
@@ -2164,7 +2166,7 @@ affliction.rot = {
 				end
 			end
 		end
-		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not player:buff(74434) 
+		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not UnitBuff("player", "Soulburn") 
 			-- and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") 
 			then
 			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not player:IsCurrentSpell(108508) then player:cast(108508) end
@@ -2205,7 +2207,7 @@ affliction.rot = {
 				end
 			end
 		end
-		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not player:buff(74434) 
+		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not UnitBuff("player", "Soulburn") 
 			and player:buff("Mannoroth's Fury") and _A.castdelay(27243, 12)
 			then
 			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not player:IsCurrentSpell(108508) then player:cast(108508) end
@@ -2288,11 +2290,11 @@ affliction.rot = {
 				end
 			end
 			--
-			if  _A.shards>=1 and not player:buff(74434) and player:SpellCooldown(74434)==0  and not player:IsCurrentSpell(74434)--or player:buff("Shadow Trance")
+			if  _A.shards>=1 and not UnitBuff("player", "Soulburn") and player:SpellCooldown(74434)==0  and not player:IsCurrentSpell(74434)--or player:buff("Shadow Trance")
 				then player:cast(74434) -- shadowburn
 				return _A.temptabletbl[1].obj:Cast(119678)
 			end
-			-- if player:buff(74434) then
+			-- if UnitBuff("player", "Soulburn") then
 				-- return _A.temptabletbl[1].obj:Cast(119678)
 			-- end
 		end -- improved soul swap (dots instead)
@@ -2312,7 +2314,9 @@ affliction.rot = {
 				end
 			end, 1)
 		end
-		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore and player:SpellCooldown("Unstable Affliction")<.3 then 
+		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore 
+		-- and player:SpellCooldown("Unstable Affliction")<.3 
+		then 
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -2329,12 +2333,12 @@ affliction.rot = {
 				end
 			end
 			--
-			-- if  _A.shards>=1 and not player:buff(74434) and player:SpellCooldown(74434)==0  and not player:IsCurrentSpell(74434)--or player:buff("Shadow Trance")
+			-- if  _A.shards>=1 and not UnitBuff("player", "Soulburn") and player:SpellCooldown(74434)==0  and not player:IsCurrentSpell(74434)--or player:buff("Shadow Trance")
 				-- then player:cast(74434) -- shadowburn
 				-- return _A.temptabletbl[1].obj:Cast(119678)
 			-- end
 			-- SHARD
-			if player:buff(74434) then
+			if UnitBuff("player", "Soulburn") then
 				return _A.temptabletbl[1].obj:Cast(119678)
 			end
 		end -- improved soul swap (dots instead)
@@ -2354,8 +2358,8 @@ affliction.rot = {
 				end
 			end, 1)
 		end
-		if _A.temptabletbl[1] and not player:buff(74434) and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
-			if not player:moving() and not player:Iscasting("Unstable Affliction") 
+		if _A.temptabletbl[1] and not UnitBuff("player", "Soulburn") and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
+			if not player:moving() and not player:Iscasting("Unstable Affliction") and not player:IsCurrentSpell(30108)
 				-- and _A.shards==0 
 				then
 				return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
@@ -2551,7 +2555,7 @@ local inCombat = function()
 		if affliction.rot.ccfear() then return true end	
 		if affliction.rot.ccstun()  then return true end
 		if affliction.rot.snare_curse()  then return true end
-		if affliction.rot.snare_curse_target()  then return true end
+		-- if affliction.rot.snare_curse_target()  then return true end
 		-- if affliction.rot.healthfunnel() then return true end
 		-- if affliction.rot.felflame() then return true end
 	end

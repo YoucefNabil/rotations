@@ -12,6 +12,34 @@ local lowestaoe
 local reflectcheck = false
 local numbads = 0
 local destro = {}
+local function table_sortoptimized(arr, comp, k)
+    local n = #arr
+	local best_idx = nil
+    local best_val = nil
+	local current_val = nil
+    k = k or 1  -- Default to find top 1 element
+    if k > 5 or k >= n then
+        table.sort(arr, comp)
+        return
+	end
+	
+    for i = 1, k do
+        best_idx = i
+        best_val = arr[i]
+        
+        -- Single pass with cached values and reduced table accesses
+        for j = i + 1, n do
+            current_val = arr[j]
+            if comp(current_val, best_val) then
+                best_idx, best_val = j, current_val  -- Update in one step
+			end
+		end
+		
+        if best_idx ~= i then
+            arr[i], arr[best_idx] = best_val, arr[i]
+		end
+	end
+end
 local warriorspecs = {
 	[71]=true,
 	[72]=true,
@@ -502,7 +530,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>=1 then
-			table.sort( tempTable, function(a,b) return a.health < b.health end )
+			table_sortoptimized( tempTable, function(a,b) return a.health < b.health end )
 		end
 		return tempTable[num] and tempTable[num].guid
 	end)
@@ -523,7 +551,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			table_sortoptimized( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		return tempTable[num] and tempTable[num].guid
 	end
@@ -540,7 +568,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
+			table_sortoptimized( tempTable, function(a,b) return (a.isplayer > b.isplayer) or (a.isplayer == b.isplayer and a.health < b.health) end )
 		end
 		return tempTable[num] and tempTable[num].guid
 	end
@@ -718,58 +746,62 @@ local exeOnLoad = function()
 	--============================================
 	--============================================
 	_A.FakeUnits:Add('mostgroupedenemyDESTRO', function(num, radius_min)
-		local radius, min = _A.StrExplode(radius_min)
-		min = tonumber(min) or 3
-		local radius = Radius and (tonumber(Radius) + 1.5) or 10
-		local range = Range or 40
-		local most, mostGuid = 0, nil
-		local radiusSq = radius * radius
-		-- Phase 1: Directly collect into arrays (no temp table)
-		local guids, x, y = {}, {}, {}
-		local count = {}
+		local radius_str, min_str = _A.StrExplode(radius_min)
+		local min_val = tonumber(min_str) or 3
+		local radius_val = tonumber(radius_str) or 10
+		local range_val = 40  -- Define locally (no global 'Range')
+		local radiusSq = radius_val * radius_val
+		
+		-- Collect valid units + precompute grid cells
+		local units = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:range() < range
-				and Obj:InConeOf(player, 170) and _A.notimmune(Obj) and Obj:los() then
-				local X, Y = _A.ObjectPosition(Obj.guid)
-				guids[#guids + 1] = Obj.guid
-				x[#x + 1] = X
-				y[#y + 1] = Y
-				count[Obj.guid] = 1
+			if Obj:range() < range_val and Obj:InConeOf(player, 170) and _A.notimmune(Obj) and Obj:los() then
+				local x, y = _A.ObjectPosition(Obj.guid)
+				local cx, cy = math.floor(x / radius_val), math.floor(y / radius_val)
+				table.insert(units, {guid=Obj.guid, x=x, y=y, cx=cx, cy=cy})
 			end
 		end
-		local numEntries = #guids
-		-- Phase 2: Spatial grid with cell size = radius
+		
+		-- Short-circuit edge cases
+		local n = #units
+		if n == 0 then return nil end
+		if n == 1 then return min_val <= 1 and units[1].guid or nil end
+		if min_val > n then return nil end  -- Impossible cluster
+		
+		-- Build spatial grid
 		local grid = {}
-		for i = 1, numEntries do
-			local cx = math.floor(x[i] / radius)
-			local cy = math.floor(y[i] / radius)
+		for i, unit in ipairs(units) do
+			local cx, cy = unit.cx, unit.cy
 			grid[cx] = grid[cx] or {}
 			grid[cx][cy] = grid[cx][cy] or {}
 			table.insert(grid[cx][cy], i)
 		end
-		-- Phase 3: Optimized neighbor checking with early exits
-		for i = 1, numEntries do
-			local xi, yi = x[i], y[i]
-			local cx, cy = math.floor(xi / radius), math.floor(yi / radius)
-			local guid_i = guids[i]
-			
-			-- Check 3x3 grid cells around current position
+		
+		-- Count neighbors
+		local count = {}
+		for i, unit in ipairs(units) do
+			count[unit.guid] = 1  -- Include self
+		end
+		
+		for i, unit_i in ipairs(units) do
+			local xi, yi, cxi, cyi = unit_i.x, unit_i.y, unit_i.cx, unit_i.cy
 			for dx = -1, 1 do
-				local cell_x = grid[cx + dx]
+				local cell_x = grid[cxi + dx]
 				if cell_x then
 					for dy = -1, 1 do
-						local cell = cell_x[cy + dy]
+						local cell = cell_x[cyi + dy]
 						if cell then
 							for _, j in ipairs(cell) do
-								-- Ensure j > i to avoid duplicate checks
-								if j > i then
-									local dx_val = x[j] - xi
-									if abs(dx_val) <= radius then
-										local dy_val = y[j] - yi
-										if abs(dy_val) <= radius then
-											if (dx_val*dx_val + dy_val*dy_val) <= radiusSq then
-												count[guid_i] = count[guid_i] + 1
-												count[guids[j]] = count[guids[j]] + 1
+								if j > i then  -- Avoid duplicate pairs
+									local unit_j = units[j]
+									local dx_val = unit_j.x - xi
+									if math.abs(dx_val) <= radius_val then
+										local dy_val = unit_j.y - yi
+										if math.abs(dy_val) <= radius_val then
+											local distSq = dx_val*dx_val + dy_val*dy_val
+											if distSq <= radiusSq then
+												count[unit_i.guid] = count[unit_i.guid] + 1
+												count[unit_j.guid] = count[unit_j.guid] + 1
 											end
 										end
 									end
@@ -780,13 +812,15 @@ local exeOnLoad = function()
 				end
 			end
 		end
-		-- Phase 4: Find maximum cluster
-		for guid, num in pairs(count) do
-			if num > most then
-				most, mostGuid = num, guid
+		
+		-- Find max cluster
+		local most, mostGuid = 0, nil
+		for guid, cnt in pairs(count) do
+			if cnt > most then
+				most, mostGuid = cnt, guid
 			end
 		end
-		return most and most>=min and mostGuid
+		return (most >= min_val) and mostGuid or nil
 	end)
 	local badtotems = {
 		"Mana Tide",
@@ -818,7 +852,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -837,7 +871,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -858,7 +892,7 @@ local exeOnLoad = function()
 			end
 		end
 		if #tempTable>1 then
-			table.sort( tempTable, function(a,b) return a.range < b.range end )
+			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end )
 		end
 		if #tempTable>=1 then
 			return tempTable[num] and tempTable[num].guid
@@ -981,7 +1015,7 @@ destro.rot = {
 	numenemiesaround = function()
 		local num = 0
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+			if Obj:Infront() and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() and Obj:spellRange("Conflagrate") then
 				num = num + 1
 			end
 		end
@@ -1092,7 +1126,7 @@ destro.rot = {
 	--============================================
 	MortalCoil = function()
 		if #_A.targetless>1 then
-			table.sort( _A.targetless, function(a,b) return 
+			table_sortoptimized( _A.targetless, function(a,b) return 
 				( a.health < b.health ) -- if same score and same isplayer, order by health
 			end )
 		end
@@ -1217,9 +1251,11 @@ destro.rot = {
 	--======================================
 	immolate = function()
 		if #_A.targetless>1 then
-			table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
-				or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
-				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+			table_sortoptimized( _A.targetless, function(a,b)
+				if a.havoc ~= b.havoc then return a.havoc > b.havoc 
+					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer 
+					elseif a.health ~= b.health then return a.health < b.health 
+				end
 			end )
 		end
 		if _A.targetless[1] then
@@ -1229,11 +1265,13 @@ destro.rot = {
 		end
 	end,
 	
-	havoc = function()
+	havoccast = function()
 		if #_A.targetless>1 then
-			table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
-				or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
-				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+			table_sortoptimized( _A.targetless, function(a,b)
+				if a.havoc ~= b.havoc then return a.havoc > b.havoc 
+					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer 
+					elseif a.health ~= b.health then return a.health < b.health 
+				end
 			end )
 		end
 		if _A.targetless[1] and not player:isCastingAny() then
@@ -1245,9 +1283,11 @@ destro.rot = {
 	
 	conflagrate = function()
 		if #_A.targetless>1 then
-			table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
-				or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
-				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+			table_sortoptimized( _A.targetless, function(a,b)
+				if a.havoc ~= b.havoc then return a.havoc > b.havoc 
+					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer 
+					elseif a.health ~= b.health then return a.health < b.health 
+				end
 			end )
 		end
 		if _A.targetless[1] and not player:isCastingAny() and not IsCurrentSpell(17962) then
@@ -1262,9 +1302,10 @@ destro.rot = {
 		if _A.BurningEmbers >= 1
 			then
 			if #_A.targetless>1 then
-				table.sort( _A.targetless, function(a,b) return  -- order by havoc check
-					( a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
-					or (a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+				table_sortoptimized( _A.targetless, function(a,b)
+					if a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer 
+						elseif a.health ~= b.health then return a.health < b.health 
+					end
 				end )
 			end
 			if _A.targetless[1] and _A.targetless[1].health<=20 then
@@ -1272,7 +1313,7 @@ destro.rot = {
 					-- player:cast("Dark Soul: Instability")
 					return _A.targetless[1].obj:cast("Shadowburn", true)
 				end
-				if player:isCastingAny() then
+				if player:isCastingAny() and _A.targetless[1].isplayer==1 then
 					print("stop casting")	
 					_A.CallWowApi("SpellStopCasting")
 				end
@@ -1284,12 +1325,14 @@ destro.rot = {
 		if 
 			-- _A.BurningEmbers >= 3 or 
 			-- (_A.BurningEmbers >= 1 and player:Buff("Dark Soul: Instability")) or
-			(_A.BurningEmbers >= 1 and modifier_ctrl())
+			(_A.BurningEmbers >= 1)
 			then
 			if #_A.targetless>1 then
-				table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
-					or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
-					or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+				table_sortoptimized( _A.targetless, function(a,b)
+					if a.havoc ~= b.havoc then return a.havoc > b.havoc 
+						elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer 
+						elseif a.health ~= b.health then return a.health < b.health 
+					end
 				end )
 			end
 			if _A.targetless[1] and _A.targetless[1].health>20 then
@@ -1302,9 +1345,11 @@ destro.rot = {
 	
 	incinerate = function()
 		if #_A.targetless>1 then
-			table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
-				or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
-				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+			table_sortoptimized( _A.targetless, function(a,b)
+				if a.havoc ~= b.havoc then return a.havoc > b.havoc 
+					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer 
+					elseif a.health ~= b.health then return a.health < b.health 
+				end
 			end )
 		end
 		if _A.targetless[1] and (_A.targetless[1].health>20 or _A.BurningEmbers<1) and not player:isCastingAny()  then
@@ -1316,9 +1361,11 @@ destro.rot = {
 	
 	felflame = function()
 		if #_A.targetless>1 then
-			table.sort( _A.targetless, function(a,b) return ( a.havoc > b.havoc ) -- order by havoc check
-				or ( a.havoc == b.havoc and a.isplayer > b.isplayer ) -- if same havoc status order by isplayer
-				or ( a.havoc == b.havoc and a.isplayer == b.isplayer and a.health < b.health ) -- if same score and same isplayer, order by health
+			table_sortoptimized( _A.targetless, function(a,b)
+				if a.havoc ~= b.havoc then return a.havoc > b.havoc 
+					elseif a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer 
+					elseif a.health ~= b.health then return a.health < b.health 
+				end
 			end )
 		end
 		if player:moving() and not player:isCastingAny() then
@@ -1371,37 +1418,36 @@ local inCombat = function()
 	destro.rot.Buffbuff()
 	destro.rot.petres()
 	-- HEALS AND DEFS
-	destro.rot.summ_healthstone()
 	destro.rot.items_intpot()
 	destro.rot.Darkregeneration() -- And Dark Regen
-	destro.rot.twilightward() -- And Dark Regen
 	destro.rot.items_healthstone() -- And Dark Regen
+	destro.rot.twilightward()
 	destro.rot.MortalCoil() -- And Dark Regen
 	destro.rot.embertap() -- And Dark Regen
 	--buff
 	destro.rot.activetrinket()
 	destro.rot.critburst()
-	destro.rot.shadowburn()
+	if destro.rot.shadowburn() then return true end
 	--utility
 	destro.rot.lifetap()
-	destro.rot.bloodhorrorremoval()
-	destro.rot.bloodhorror()
+	-- destro.rot.bloodhorrorremoval()
+	-- destro.rot.bloodhorror()
 	--rotation
 	--AOE
 	lowestaoe = Object("mostgroupedenemyDESTRO(10, 3)")
 	destro.rot.brimstone()
-	destro.rot.incinerateaoe()
+	if destro.rot.incinerateaoe() then return true end
 	
 	-- destro.rot.immolate()
-	destro.rot.havoc()
-	destro.rot.chaosbolt()
+	-- if destro.rot.havoccast() then return true end -- bugged
+	if modifier_ctrl() and destro.rot.chaosbolt() then return true end
 	-- if _A.pull_location ~="pvp" then
 	-- destro.rot.conflagrate_tar()
 	-- destro.rot.incinerate_tar()
 	-- end
-	destro.rot.conflagrate()
-	destro.rot.incinerate()
-	destro.rot.felflame()
+	if destro.rot.conflagrate() then return true end
+	if destro.rot.incinerate() then return true end
+	if destro.rot.felflame() then return true end
 	-- soul swap
 end
 local outCombat = function()
