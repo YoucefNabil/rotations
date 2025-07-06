@@ -538,7 +538,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
 		local target = Object("target")
-		if target and target:enemy() and target:spellRange(spell) and target:Infront() and _A.attackable and _A.notimmune(target)  and target:los() then
+		if target and target:enemy() and target:range()<=40 and target:Infront() and _A.attackable(target) and _A.notimmune(target)  and target:los() then
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
@@ -559,7 +559,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
+			if Obj:range()<=40 and Obj:Infront() and  _A.notimmune(Obj) and Obj:los() then
 				tempTable[#tempTable+1] = {
 					guid = Obj.guid,
 					health = Obj:health(),
@@ -975,7 +975,6 @@ destro.rot = {
 	caching= function()
 		_A.targetless = {}
 		_A.target = nil
-		_A.BurningEmbers = _A.UnitPower("player", 14)
 		numbads = destro.rot.numenemiesaround()
 		local target = Object("target")
 		if target and target:enemy() and target:spellRange("Conflagrate") and target:Infront() and ((not target:Debuff(80240)) or (numbads==1)) and _A.attackable(target) and _A.notimmune(target)  and target:los() then
@@ -1124,20 +1123,6 @@ destro.rot = {
 	--============================================
 	--============================================
 	--============================================
-	MortalCoil = function()
-		if #_A.targetless>1 then
-			table_sortoptimized( _A.targetless, function(a,b) return 
-				( a.health < b.health ) -- if same score and same isplayer, order by health
-			end )
-		end
-		if _A.targetless[1] then
-			if player:health() <= 85 then
-				if player:Talent("Mortal Coil") and player:SpellCooldown("Mortal Coil")<.3  and not player:isCastingAny() then
-					return _A.targetless[1].obj:cast("Mortal Coil")
-				end
-			end
-		end
-	end,
 	
 	embertap = function()
 		if (_A.BurningEmbers > 2 ) and not player:isCastingAny() then
@@ -1183,6 +1168,7 @@ destro.rot = {
 	--======================================
 	--AOE REWORK
 	brimstone = function()
+		local lowestaoe = Object("mostgroupedenemyDESTRO(10, 3)")
 		if _A.BurningEmbers>=2 and lowestaoe  then
 			if not player:buff("Fire and Brimstone") and not IsCurrentSpell(108683) then
 				return player:cast("Fire and Brimstone")
@@ -1228,6 +1214,7 @@ destro.rot = {
 	end,
 	
 	incinerateaoe = function()
+		local lowestaoe = Object("mostgroupedenemyDESTRO(10, 3)")
 		if player:buff("Fire and Brimstone") then
 			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
 				if lowestaoe then
@@ -1342,7 +1329,6 @@ destro.rot = {
 			end
 		end
 	end,
-	
 	incinerate = function()
 		if #_A.targetless>1 then
 			table_sortoptimized( _A.targetless, function(a,b)
@@ -1371,6 +1357,62 @@ destro.rot = {
 		if player:moving() and not player:isCastingAny() then
 			if _A.targetless[1] then
 				return _A.targetless[1].obj:cast("fel flame")
+			end
+		end
+	end,
+	----------------------
+	
+	shadowburn_normal = function()
+		if _A.BurningEmbers >= 1
+			then
+			local targetless = Object("lowestEnemyInSpellRangeNOTAR(Incinerate)")
+			if targetless and targetless:health()<=20 then
+				if not player:isCastingAny() then
+					-- player:cast("Dark Soul: Instability")
+					return targetless:cast("Shadowburn", true)
+				end
+				if player:isCastingAny() and targetless.isplayer then
+					print("stop casting")	
+					_A.CallWowApi("SpellStopCasting")
+				end
+			end
+		end
+	end,
+	
+	incinerate_normal = function()
+		local targetless = Object("lowestEnemyInSpellRangeNOTAR(Incinerate)")
+		if targetless and (targetless:health()>20 or _A.BurningEmbers<1) and not player:isCastingAny()  then
+			if (not player:moving() or player:buff("Backlash") or player:talent("Kil'jaeden's Cunning")) and not player:Iscasting("Incinerate") then
+				return targetless:cast("Incinerate")
+			end
+		end
+	end,
+	
+	felflame_normal = function()
+		local targetless = Object("lowestEnemyInSpellRangeNOTAR(Incinerate)")
+		if player:moving() and not player:isCastingAny() then
+			if targetless then
+				return targetless:cast("fel flame")
+			end
+		end
+	end,
+	
+	conflagrate_normal = function()
+		local targetless = Object("lowestEnemyInSpellRangeNOTAR(Incinerate)")
+		if targetless and not player:isCastingAny() and not IsCurrentSpell(17962) then
+			if player:SpellCooldown("Conflagrate") == 0 or player:spellcount("Conflagrate")>=1 then
+				return targetless:cast("Conflagrate")
+			end
+		end
+	end,
+	
+	MortalCoil = function()
+		local targetless = Object("lowestEnemyInSpellRangeNOTAR(Incinerate)")
+		if targetless then
+			if player:health() <= 85 then
+				if player:Talent("Mortal Coil") and player:SpellCooldown("Mortal Coil")<.3  and not player:isCastingAny() then
+					return targetless:cast("Mortal Coil")
+				end
 			end
 		end
 	end,
@@ -1410,11 +1452,9 @@ local inCombat = function()
 	if not player then return end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if _Y.exitedvehicleat and GetTime()-_Y.exitedvehicleat<= 1 then return true end
-	destro.rot.caching()
-	destro.rot.rainoffire() 
 	if player:mounted() then return end
-	-- if _A.buttondelayfunc()  then return end
-	-- if player:isCastingAny() then return end
+	_A.BurningEmbers = _A.UnitPower("player", 14)
+	-- if not _A.BurningEmbers then return true end
 	destro.rot.Buffbuff()
 	destro.rot.petres()
 	-- HEALS AND DEFS
@@ -1427,27 +1467,14 @@ local inCombat = function()
 	--buff
 	destro.rot.activetrinket()
 	destro.rot.critburst()
-	if destro.rot.shadowburn() then return true end
+	if destro.rot.shadowburn_normal() then return true end
 	--utility
 	destro.rot.lifetap()
-	-- destro.rot.bloodhorrorremoval()
-	-- destro.rot.bloodhorror()
-	--rotation
-	--AOE
-	lowestaoe = Object("mostgroupedenemyDESTRO(10, 3)")
 	destro.rot.brimstone()
-	if destro.rot.incinerateaoe() then return true end
-	
-	-- destro.rot.immolate()
-	-- if destro.rot.havoccast() then return true end -- bugged
-	if modifier_ctrl() and destro.rot.chaosbolt() then return true end
-	-- if _A.pull_location ~="pvp" then
-	-- destro.rot.conflagrate_tar()
-	-- destro.rot.incinerate_tar()
-	-- end
-	if destro.rot.conflagrate() then return true end
-	if destro.rot.incinerate() then return true end
-	if destro.rot.felflame() then return true end
+	if destro.rot.incinerateaoe() then return true end	
+	if destro.rot.conflagrate_normal() then return true end
+	if destro.rot.incinerate_normal() then return true end
+	if destro.rot.felflame_normal() then return true end
 	-- soul swap
 end
 local outCombat = function()

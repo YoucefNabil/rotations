@@ -1592,10 +1592,10 @@ affliction.rot = {
 	everyman = function()
 		if _A.pull_location ~= "arena" and not player:debuffany("Solar Beam") then
 			if player:BuffAny(86211) and player:state("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") then
-				if player:health()>=60 and player:talent("Unbound Will") and player:SpellCooldown("Unbound Will") == 0 and not player:IsCurrentSpell(108482)  then 
+				if player:health()>=60 and player:talent("Unbound Will") and player:SpellCooldown("Unbound Will") == 0 and not _A.IsCurrentSpell(108482)  then 
 					return player:cast("Unbound Will")
 				end
-				if player:SpellUsable("Every Man for Himself") and player:SpellCooldown("Every Man for Himself") == 0 and not player:IsCurrentSpell(59752) 
+				if player:SpellUsable("Every Man for Himself") and player:SpellCooldown("Every Man for Himself") == 0 and not _A.IsCurrentSpell(59752) 
 					and ((player:talent("Unbound Will") and player:SpellCooldown("Unbound Will") > 0 and player:SpellCooldown("Unbound Will") < 58) or not player:talent("Unbound Will"))   then 
 					return player:cast("Every Man for Himself")
 				end
@@ -1626,7 +1626,7 @@ affliction.rot = {
 	
 	Darkregeneration = function()
 		if player:health() <= 55 and player:talent("Dark Regeneration") then
-			if player:SpellCooldown("Dark Regeneration") == 0 and not player:IsCurrentSpell(108359)
+			if player:SpellCooldown("Dark Regeneration") == 0 and not _A.IsCurrentSpell(108359)
 				then
 				player:cast("Dark Regeneration")
 				player:useitem("Healthstone")
@@ -1685,7 +1685,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 then 
-							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not player:IsCurrentSpell(113860) then
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not _A.IsCurrentSpell(113860) then
 								player:cast("Lifeblood") -- 2 min
 								player:useitem("Potion of the Jade Serpent") -- 3min
 								player:cast("Berserking") -- 2 min
@@ -1701,7 +1701,7 @@ affliction.rot = {
 	end,
 	
 	hasteburst = function()
-		if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not player:IsCurrentSpell(113860) then
+		if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not _A.IsCurrentSpell(113860) then
 			if player:buff("Call of Dominance") then
 				player:cast("Lifeblood")
 				player:useitem("Potion of the Jade Serpent")
@@ -1749,7 +1749,7 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Fel Imp")
 				then 
-				if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 )
+				if (not UnitBuff("player", "Soulburn") and not _A.IsCurrentSpell(74434) and _A.shards>=1 )
 					then player:cast(74434) -- shadowburn
 					return player:cast(112866)
 				end	
@@ -1769,7 +1769,7 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Observer")
 				then 
-				if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+				if (not UnitBuff("player", "Soulburn") and not _A.IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
 					return player:cast(112869)
 				end	
@@ -1789,7 +1789,7 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Voidlord")
 				then 
-				if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+				if (not UnitBuff("player", "Soulburn") and not _A.IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					then player:cast(74434) -- shadowburn
 					return player:cast(112867)
 				end	
@@ -1809,7 +1809,7 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Fel Imp")
 				then 
-				-- if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 )
+				-- if (not UnitBuff("player", "Soulburn") and not _A.IsCurrentSpell(74434) and _A.shards>=1 )
 					-- then player:cast(74434) -- shadowburn
 					-- return player:cast(112866)
 				-- end	
@@ -1829,7 +1829,7 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Observer")
 				then 
-				-- if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+				-- if (not UnitBuff("player", "Soulburn") and not _A.IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					-- then player:cast(74434) -- shadowburn
 					-- return player:cast(112869)
 				-- end	
@@ -1849,7 +1849,7 @@ affliction.rot = {
 				or not _A.HasPetUI()
 				or (petobj and petobj~="Voidlord")
 				then 
-				-- if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
+				-- if (not UnitBuff("player", "Soulburn") and not _A.IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
 					-- then player:cast(74434) -- shadowburn
 					-- return player:cast(112867)
 				-- end	
@@ -1869,7 +1869,7 @@ affliction.rot = {
 				then
 				local pet = Object("pet")
 				if  player:glyph("Glyph of Health Funnel") and player:SpellCooldown("Health Funnel")<.3 and player:SpellUsable("Health Funnel") and pet and pet:health()<85 and pet:range()<=45 and pet:los() then
-					if (not UnitBuff("player", "Soulburn") and not player:IsCurrentSpell(74434) and _A.shards>=3) --or player:buff("Shadow Trance") 
+					if (not UnitBuff("player", "Soulburn") and not _A.IsCurrentSpell(74434) and _A.shards>=3) --or player:buff("Shadow Trance") 
 						then player:cast(74434) -- shadowburn
 						return player:cast("Health Funnel")
 					end	
@@ -1956,7 +1956,7 @@ affliction.rot = {
 	-------------------------------------
 	
 	haunt_between = function()
-		if not player:moving() and not player:IsCurrentSpell(48181) and _A.shards>=1 then
+		if not player:moving() and not _A.IsCurrentSpell(48181) and _A.shards>=1 then
 			if #_A.temptabletbl>1 then
 				table_sortoptimized(_A.temptabletbl, function(a,b)
 					if 	a.front ~= b.front then return a.front > b.front
@@ -2113,7 +2113,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and (player:spellcooldown("Mannoroth's Fury")==0 or not player:talent("Mannoroth's Fury")) then 
-							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not player:IsCurrentSpell(113860) then
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not _A.IsCurrentSpell(113860) then
 								player:cast("Lifeblood") -- 2 min
 								player:useitem("Potion of the Jade Serpent") -- 3min
 								player:cast("Berserking")
@@ -2153,7 +2153,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and (player:spellcooldown("Mannoroth's Fury")==0 or not player:talent("Mannoroth's Fury")) then 
-							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not player:IsCurrentSpell(113860) then
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not _A.IsCurrentSpell(113860) then
 								player:cast("Lifeblood") -- 2 min
 								player:useitem("Potion of the Jade Serpent") -- 3min
 								player:cast("Dark Soul: Misery") -- 2min x2
@@ -2169,7 +2169,7 @@ affliction.rot = {
 		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not UnitBuff("player", "Soulburn") 
 			-- and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") 
 			then
-			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not player:IsCurrentSpell(108508) then player:cast(108508) end
+			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not _A.IsCurrentSpell(108508) then player:cast(108508) end
 			if _A.myscore()>_A.temptabletbl[1].seedscore then return _A.temptabletbl[1].obj:cast("Seed of Corruption") end
 		end
 	end,
@@ -2194,7 +2194,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and (player:spellcooldown("Mannoroth's Fury")==0 or not player:talent("Mannoroth's Fury")) then 
-							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not player:IsCurrentSpell(113860) then
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not _A.IsCurrentSpell(113860) then
 								player:cast("Lifeblood") -- 2 min
 								player:useitem("Potion of the Jade Serpent") -- 3min
 								player:cast("Dark Soul: Misery") -- 2min x2
@@ -2210,7 +2210,7 @@ affliction.rot = {
 		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not UnitBuff("player", "Soulburn") 
 			and player:buff("Mannoroth's Fury") and _A.castdelay(27243, 12)
 			then
-			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not player:IsCurrentSpell(108508) then player:cast(108508) end
+			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not _A.IsCurrentSpell(108508) then player:cast(108508) end
 			if _A.myscore()>_A.temptabletbl[1].seedscore then return _A.temptabletbl[1].obj:cast("Seed of Corruption") end
 		end
 	end,
@@ -2278,7 +2278,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and proccing then 
-							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not player:IsCurrentSpell(113860) then
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not _A.IsCurrentSpell(113860) then
 								player:cast("Lifeblood")
 								player:useitem("Potion of the Jade Serpent")
 								player:cast("Dark Soul: Misery")
@@ -2290,7 +2290,7 @@ affliction.rot = {
 				end
 			end
 			--
-			if  _A.shards>=1 and not UnitBuff("player", "Soulburn") and player:SpellCooldown(74434)==0  and not player:IsCurrentSpell(74434)--or player:buff("Shadow Trance")
+			if  _A.shards>=1 and not UnitBuff("player", "Soulburn") and player:SpellCooldown(74434)==0  and not _A.IsCurrentSpell(74434)--or player:buff("Shadow Trance")
 				then player:cast(74434) -- shadowburn
 				return _A.temptabletbl[1].obj:Cast(119678)
 			end
@@ -2321,7 +2321,7 @@ affliction.rot = {
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i]))==0 and proccing then 
-							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not player:IsCurrentSpell(113860) then
+							if (player:SpellCharges("Dark Soul: Misery")>=1 or player:SpellCooldown("Dark Soul: Misery")==0) and not _A.IsCurrentSpell(113860) then
 								player:cast("Lifeblood")
 								player:useitem("Potion of the Jade Serpent")
 								player:cast("Dark Soul: Misery")
@@ -2333,7 +2333,7 @@ affliction.rot = {
 				end
 			end
 			--
-			-- if  _A.shards>=1 and not UnitBuff("player", "Soulburn") and player:SpellCooldown(74434)==0  and not player:IsCurrentSpell(74434)--or player:buff("Shadow Trance")
+			-- if  _A.shards>=1 and not UnitBuff("player", "Soulburn") and player:SpellCooldown(74434)==0  and not _A.IsCurrentSpell(74434)--or player:buff("Shadow Trance")
 				-- then player:cast(74434) -- shadowburn
 				-- return _A.temptabletbl[1].obj:Cast(119678)
 			-- end
@@ -2359,7 +2359,7 @@ affliction.rot = {
 			end, 1)
 		end
 		if _A.temptabletbl[1] and not UnitBuff("player", "Soulburn") and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
-			if not player:moving() and not player:Iscasting("Unstable Affliction") and not player:IsCurrentSpell(30108)
+			if not player:moving() and not player:Iscasting("Unstable Affliction") and not _A.IsCurrentSpell(30108) and not player:isCastingAny()
 				-- and _A.shards==0 
 				then
 				return _A.temptabletbl[1].obj:Cast("Unstable Affliction")
