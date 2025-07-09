@@ -1539,6 +1539,7 @@ affliction.rot = {
 				and Obj:los() 
 				then
 				--
+				if toggle("exhaleplayers") or (Obj.name~="Army of the Dead") then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
 				if corruptiontbl[Obj.guid]~=nil and not UnitDebuff(Obj.guid, "Corruption","","PLAYER") and corruptiontbl[Obj.guid] then print("CORRUPTION DELETE", print(Obj:spec())) 
 				corruptiontbl[Obj.guid]=nil end
@@ -1570,7 +1571,7 @@ affliction.rot = {
 						rangedis = range_cache,
 						isplayer = Obj.isplayer and 1 or 0,
 						health = healthraww,
-						duration = unstabledur or 0, -- duration for unstable only, best solution to spread it to as many units as possible, always order by this first
+						duration = unstabledur or 0, -- duration for unstable only, best solution to spread it to as many units as possible, always order by this first -- AGONYDUR IS NEW
 						durationSEED = seedsdur or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
 					}
 				end
@@ -1583,6 +1584,7 @@ affliction.rot = {
 			end -- end of enemy filter
 			if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
 				_A.reflectcheck = true
+			end
 			end
 		end -- end of iteration
 		-- table_sortoptimized( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end , 1)
