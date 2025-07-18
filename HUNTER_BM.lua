@@ -2178,6 +2178,7 @@ local inCombat = function()
 	if not player then return true end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*2 or .3
 	_A.pull_location = _A.pull_location or pull_location()
+	if not player:combat() and not (_A.pull_location=="pvp" or _A.pull_location=="arena") then _A.CallWowApi("RunMacroText", "/petfollow") return true end
 	_Y.petengine()
 	-- _Y.clumpnumber, _Y.clumpguid = _Y.mostclumpedenemy(40,8)
 	local focus = Object("focus")

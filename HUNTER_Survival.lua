@@ -2213,6 +2213,7 @@ local inCombat = function()
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	local focus = Object("focus")
 	_A.pull_location = _A.pull_location or pull_location()
+	if not player:combat() and not (_A.pull_location=="pvp" or _A.pull_location=="arena") then _A.CallWowApi("RunMacroText", "/petfollow") return true end
 	_Y.petengine_Surv()
 	--debug
 	-- print(_A.MissileExists("Arcane Shot"))
