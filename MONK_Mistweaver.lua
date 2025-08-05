@@ -30,7 +30,7 @@ local function table_sortoptimized(arr, comp, k)
     if k > 5 or k >= n then
         table.sort(arr, comp)
         return
-    end
+	end
     for i = 1, k do
         local best_idx = i
         local best_val = arr[i]  -- Cache initial value
@@ -42,14 +42,14 @@ local function table_sortoptimized(arr, comp, k)
             if comp(current_val, best_val) then
                 best_idx = j
                 best_val = current_val  -- Update cached best value
-            end
-        end
-
+			end
+		end
+		
         -- Only swap if necessary
         if best_idx ~= i then
             arr[i], arr[best_idx] = best_val, arr[i]
-        end
-    end
+		end
+	end
 end
 local function blank()
 end
@@ -1760,9 +1760,24 @@ local mw_rot = {
 			then
 			for i = 1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) ~= nil then
-					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) ~= "PvP Trinket" then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) == "Call of Dominance" then
 						if cditemRemains(GetInventoryItemID("player", usableitems[i])) == 0 then
 							player:useitem("Potion of the Jade Serpent")
+							return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+						end
+					end
+				end
+			end
+		end
+	end,
+	deftrinket = function()
+		if player:combat()  
+			-- and player:buff("Surge of Dominance") 
+			then
+			for i = 1, #usableitems do
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) ~= nil then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) == "Tremendous Fortitude" then
+						if cditemRemains(GetInventoryItemID("player", usableitems[i])) == 0 then
 							return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 						end
 					end
@@ -2429,13 +2444,22 @@ local mw_rot = {
 	end,
 	
 	fortifyingbrew = function()
-		if player:Stance() == 1 then
+		if player:Stance() == 1
+			and player:health() < 40
+			then
 			if player:SpellCooldown("Fortifying Brew") == 0
-				and not IsCurrentSpell(115203)
-				and player:health() < 40
-				then
+				and not IsCurrentSpell(115203) then
 				player:Cast("Fortifying Brew")
 			end
+		end
+	end,
+	
+	defbrew = function()
+		if not player:buff("Fortifying Brew")
+			and player:health() < 40
+			and player:SpellCooldown("Fortifying Brew") > 0
+			then
+			deftrinket()
 		end
 	end,
 	
@@ -3165,6 +3189,7 @@ local inCombat = function()
 	_Y.cancelbuff(16593)
 	mw_rot.items_healthstone()
 	mw_rot.fortifyingbrew()
+	mw_rot.defbrew()
 	mw_rot.cancel_badnoggen()
 	mw_rot.items_noggenfogger()
 	mw_rot.items_intflask()
