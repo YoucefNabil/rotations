@@ -395,6 +395,12 @@ local exeOnLoad = function()
 		text = "ON = disable all | OFF = only in arena",
 		icon = select(3,GetSpellInfo("Disable")),
 	})
+	_A.Interface:AddToggle({
+		key = "NO_CHI", 
+		name = "do not spend chi (reserve it for ctrl mode or something)", 
+		text = "ON = Does not use chi | OFF = uses chi (default)",
+		icon = select(3,GetSpellInfo("Dematerialize")),
+	})
 	_A.Listener:Add("Entering_timerPLZ2", "PLAYER_ENTERING_WORLD", function(event)
 		enteredworldat = _A.GetTime()
 		local stuffsds = pull_location()
@@ -2459,7 +2465,7 @@ local mw_rot = {
 			and player:health() < 40
 			and player:SpellCooldown("Fortifying Brew") > 0
 			then
-			deftrinket()
+			mw_rot.deftrinket()
 		end
 	end,
 	
@@ -3235,16 +3241,16 @@ local inCombat = function()
 	--------------------- high prio
 	if mw_rot.Xuen() then return true end
 	if mylevel >= 26 and player:health()<=80 and mw_rot.expelharm() then return true end
-	if not player:ui("use_blackout") and mw_rot.tigerpalm_mm() then return true end
+	if (not player:ui("use_blackout") or toggle("NO_CHI")) and mw_rot.tigerpalm_mm() then return true end
 	if player:ui("use_blackout") and not player:buff("Muscle Memory") and mw_rot.tp_buff() then return true end
 	if mylevel >= 34 and mw_rot.surgingmist() then return true end
 	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
-	if (player:ui("use_blackout") or _A.pull_location=="arena") and player:buffany("Muscle Memory") and mw_rot.blackoutkick_always() then return true end    -- really important
+	if (player:ui("use_blackout") or _A.pull_location=="arena") and player:buffany("Muscle Memory") and not toggle("NO_CHI") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if  mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
-	if (player:ui("use_blackout") or _A.pull_location=="arena") and mw_rot.blackoutkick_always() then return true end    -- really important
-	if mylevel >= 62 and mw_rot.uplift() then return true end    -- really important
-	if mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
+	if (player:ui("use_blackout") or _A.pull_location=="arena") and not toggle("NO_CHI") and mw_rot.blackoutkick_always() then return true end    -- really important
+	if mylevel >= 62 and not toggle("NO_CHI") and mw_rot.uplift() then return true end    -- really important
+	if not toggle("NO_CHI") and mw_rot.blackoutkick_always() then return true end    -- when uplift isn't possible
 	if mw_rot.tigerpalm_mm() then return true end
 	--------------------- CC
 	if mw_rot.ringofpeacev3() then return true end
