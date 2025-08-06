@@ -401,6 +401,12 @@ local exeOnLoad = function()
 		text = "ON = Does not use chi | OFF = uses chi (default)",
 		icon = select(3,GetSpellInfo("Dematerialize")),
 	})
+	_A.Interface:AddToggle({
+		key = "FLASK_TYPE", 
+		name = "Toggle between int and spirit", 
+		text = "ON = SPIRIT FLASK | OFF = INT FLASK (default)",
+		icon = select(3,GetSpellInfo("Mana Tea")),
+	})
 	_A.Listener:Add("Entering_timerPLZ2", "PLAYER_ENTERING_WORLD", function(event)
 		enteredworldat = _A.GetTime()
 		local stuffsds = pull_location()
@@ -828,7 +834,7 @@ local exeOnLoad = function()
 			if guidsrc == UnitGUID("player")
 				then
 				if subevent =="SPELL_CAST_SUCCESS" and idd==124682 then
-					_A.CallWowApi("SpellStopCasting")
+					-- _A.CallWowApi("SpellStopCasting")
 				end
 				-- DEBUG
 				if subevent == "SPELL_CAST_SUCCESS" then
@@ -1143,7 +1149,7 @@ local exeOnLoad = function()
 				return maxx
 			end
 			
-			function minHPv2()
+			function minHPv2() -- fastest dying unit
 				local maxx = 999
 				local GUID = nil
 				if next(MW_HealthUsedData) == nil then
@@ -1720,6 +1726,21 @@ local dangerousdebuffs = {
 	-- "Corruption",
 	"Touch of Karma"
 }
+	local deftrinket = function()
+		if player:combat()  
+			-- and player:buff("Surge of Dominance") 
+			then
+			for i = 1, #usableitems do
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) ~= nil then
+					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) == "Tremendous Fortitude" then
+						if cditemRemains(GetInventoryItemID("player", usableitems[i])) == 0 then
+							return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
+						end
+					end
+				end
+			end
+		end
+	end
 local mw_rot = {
 	turtletoss = function()
 		local castName, _, _, _, castStartTime, castEndTime, _, _, castInterruptable = UnitCastingInfo("boss1");
@@ -1776,21 +1797,6 @@ local mw_rot = {
 			end
 		end
 	end,
-	deftrinket = function()
-		if player:combat()  
-			-- and player:buff("Surge of Dominance") 
-			then
-			for i = 1, #usableitems do
-				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) ~= nil then
-					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) == "Tremendous Fortitude" then
-						if cditemRemains(GetInventoryItemID("player", usableitems[i])) == 0 then
-							return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
-						end
-					end
-				end
-			end
-		end
-	end,
 	Xuen = function()
 		if player:combat() and player:talent("Invoke Xuen, the White Tiger") and player:SpellCooldown("Invoke Xuen, the White Tiger") == 0 then
 			if player:buff("Call of Dominance") then
@@ -1813,6 +1819,18 @@ local mw_rot = {
 			then
 			if pull_location() == "pvp" and player:combat() then
 				return player:useitem("Flask of the Warm Sun")
+			end
+		end
+	end,
+	items_spiritflask = function()
+		if player:ItemCooldown(76086) == 0
+			and player:ItemCount(76086) > 0
+			and player:ItemUsable(76086)
+			and not IsCurrentItem(76086)
+			and not player:Buff(105693)
+			then
+			if pull_location() == "pvp" and player:combat() then
+				return player:useitem("Flask of Falling Leaves")
 			end
 		end
 	end,
@@ -2042,7 +2060,7 @@ local mw_rot = {
 				if player:isChanneling("Soothing Mist") then
 					_Y.SMobj = _A.SMguid and _A.Object(_A.SMguid)
 					if player:level()>=16 and player:chi()>=3 then return player:cast("Enveloping Mist", true) end -- true) means casts while channeling stuff
-					if _Y.SMobj  and _Y.SMobj:SpellRange("Renewing Mist") and player:level()>=34 and player:chi()<3 and _Y.SMobj:los() then return _Y.SMobj:cast("Surging Mist", true) end -- true) means casts while channeling stuff
+					if _Y.SMobj  and _Y.SMobj:SpellRange("Renewing Mist") and player:level()>=34 and player:chi()<3 and not _Y.SMobj:buff("Enveloping Mist") and _Y.SMobj:los() then return _Y.SMobj:cast("Surging Mist", true) end -- true) means casts while channeling stuff
 				end
 				if player:level()>=10 and not player:isChanneling("Soothing Mist") and player:SpellUsable(115175) and lowest then
 					return lowest:cast("Soothing Mist")
@@ -2461,11 +2479,11 @@ local mw_rot = {
 	end,
 	
 	defbrew = function()
-		if not player:buff("Fortifying Brew")
+		if (not player:buff("Fortifying Brew") or player:health()<20)
 			and player:health() < 40
 			and player:SpellCooldown("Fortifying Brew") > 0
 			then
-			mw_rot.deftrinket()
+			deftrinket()
 		end
 	end,
 	
@@ -3198,7 +3216,7 @@ local inCombat = function()
 	mw_rot.defbrew()
 	mw_rot.cancel_badnoggen()
 	mw_rot.items_noggenfogger()
-	mw_rot.items_intflask()
+	if not toggle("FLASK_TYPE") then mw_rot.items_intflask() else mw_rot.items_spiritflask() end
 	if _A.manaengine_highprio_pot() then mw_rot.activetrinket() end
 	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
 	------------------------------------------------ Rotation Proper
