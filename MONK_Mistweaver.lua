@@ -100,10 +100,11 @@ local function CalculateHP(t)
 	return 100 * (CalculateHPRAW(t)) / CalculateHPRAWMAX(t)
 end
 local blacklistSS = {
-	-- ["Kimpackabowl"] = true,
-	-- ["Rauteeins"] = true,
-	-- ["Jimmyiwnl"] = true,
-	-- ["Tdot"] = true,
+	["Kimpackabowl"] = true,
+	["Rauteeins"] = true,
+	["Jimmyiwnl"] = true,
+	["Tdot"] = true,
+	["Gdofwar"] = true,
 	-- [] = true,
 	-- [] = true,
 	-- [] = true,
@@ -633,6 +634,7 @@ local exeOnLoad = function()
 				or fr.name == "Overlord Agmar"
 				or (location == "arena" and fr:ispet()) then
 				if fr:SpellRange("Renewing Mist")
+					-- and not blacklistSS[fr.name]
 					and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable + 1] = {
 						HP = fr:health(),
@@ -661,6 +663,7 @@ local exeOnLoad = function()
 				-- or (location == "arena" and fr:ispet()) 
 				then
 				if fr:SpellRange("Renewing Mist")
+					-- and not blacklistSS[fr.name]
 					and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable + 1] = {
 						HP = fr:health(),
@@ -684,6 +687,7 @@ local exeOnLoad = function()
 		for _, fr in pairs(_A.OM:Get('Friendly')) do
 			if fr.isplayer or string.lower(fr.name) == "ebon gargoyle" or (location == "arena" and fr:ispet()) then
 				if not fr:Buff(132120)
+					-- and not blacklistSS[fr.name]
 					and fr:SpellRange("Renewing Mist") and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable + 1] = {
 						HP = fr:health(),
@@ -1726,21 +1730,21 @@ local dangerousdebuffs = {
 	-- "Corruption",
 	"Touch of Karma"
 }
-	local deftrinket = function()
-		if player:combat()  
-			-- and player:buff("Surge of Dominance") 
-			then
-			for i = 1, #usableitems do
-				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) ~= nil then
-					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) == "Tremendous Fortitude" then
-						if cditemRemains(GetInventoryItemID("player", usableitems[i])) == 0 then
-							return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
-						end
+local deftrinket = function()
+	if player:combat()  
+		-- and player:buff("Surge of Dominance") 
+		then
+		for i = 1, #usableitems do
+			if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) ~= nil then
+				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i]))) == "Tremendous Fortitude" then
+					if cditemRemains(GetInventoryItemID("player", usableitems[i])) == 0 then
+						return _A.CallWowApi("RunMacroText", (string.format(("/use %s "), usableitems[i])))
 					end
 				end
 			end
 		end
 	end
+end
 local mw_rot = {
 	turtletoss = function()
 		local castName, _, _, _, castStartTime, castEndTime, _, _, castInterruptable = UnitCastingInfo("boss1");
@@ -2218,7 +2222,7 @@ local mw_rot = {
 					local tguid = UnitTarget(enemy.guid)
 					if tguid then
 						local tobj = Object(tguid)
-						if tobj and _A.nothealimmune(tobj) and tobj:Distancefrom(enemy) < 7 and _A.nothealimmune(tobj) then
+						if tobj and _A.nothealimmune(tobj) and tobj:Distancefrom(enemy) < 7 and _A.nothealimmune(tobj) and tobj:los() then
 							targets[tguid] = targets[tguid] and targets[tguid] + 1 or 1
 						end
 					end
@@ -2237,16 +2241,14 @@ local mw_rot = {
 				if peacetarget then
 					if peacetarget:SpellRange("Ring of Peace") and not peacetarget:BuffAny("Ring of Peace") then
 						if (most >= 2) or (most >= 1 and (peacetarget:health() < 45 or (_A.pull_location == "arena" and peacetarget:health() < 65))) then
-							if peacetarget:los() then
-								return peacetarget:Cast("Ring of Peace")
-							end
+							return peacetarget:Cast("Ring of Peace")
 						end
 					end
 				end
 			end
 			-- Version 2: All valid enemies in range
 			for _, friend in pairs(_A.OM:Get('Friendly')) do
-				if friend.isplayer and _A.nothealimmune(friend) then
+				if friend.isplayer and _A.nothealimmune(friend) and friend:los() then
 					for _, enemy in pairs(_A.OM:Get('Enemy')) do
 						if enemy.isplayer and friend:Distancefrom(enemy) < 7 and not enemy:BuffAny("Bladestorm || Divine Shield || Deterrence") and _A.notimmune(enemy)
 							and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep")
@@ -2269,20 +2271,18 @@ local mw_rot = {
 				if peacetarget then
 					if peacetarget:SpellRange("Ring of Peace") and not peacetarget:BuffAny("Ring of Peace") then
 						if (mostall >= 3) then
-							if peacetarget:los() then
-								return peacetarget:Cast("Ring of Peace")
-							end
+							return peacetarget:Cast("Ring of Peace")
 						end
 					end
 				end
 			end
 			-- version 3: interrupt high prio casts
 			for _, friend in pairs(_A.OM:Get('Friendly')) do
-				if friend and friend.isplayer and _A.nothealimmune(friend) then
+				if friend and friend.isplayer and _A.nothealimmune(friend) and friend:los() then
 					for _, enemy in pairs(_A.OM:Get('Enemy')) do
 						if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and kickcheck_highprio(enemy)
 							and (player:SpellCooldown("Spear Hand Strike") > _A.interrupttreshhold or not enemy:caninterrupt() or not enemy:SpellRange("Blackout Kick"))
-							and _A.notimmune(enemy) and friend:los() then
+							and _A.notimmune(enemy) then
 							return friend:Cast("Ring of Peace")
 						end
 					end
@@ -2293,12 +2293,11 @@ local mw_rot = {
 			-- if _A.pull_location and _A.pull_location=="arena" then
 			if _A.someoneislow() then -- iterates through enemy players to find if a low hp enemy player exists
 				for _, friend in pairs(_A.OM:Get('Friendly')) do
-					if friend and friend.isplayer and _A.nothealimmune(friend) then
+					if friend and friend.isplayer and _A.nothealimmune(friend) and friend:los() then
 						for _, enemy in pairs(_A.OM:Get('Enemy')) do
 							if enemy and enemy.isplayer and friend:Distancefrom(enemy) < 7 and healerspecid[enemy:spec()] and _A.notimmune(enemy) and not enemy:state("silence")
 								and (enemy:drState(137460) == 1 or enemy:drState(137460) == -1)
-								and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep || silence")
-								and friend:los() then
+								and not enemy:state("stun || incapacitate || fear || disorient || charm || misc || sleep || silence") then
 								return friend:Cast("Ring of Peace")
 							end
 						end
@@ -2316,7 +2315,7 @@ local mw_rot = {
 		local friendlies = {}
 		local friendlyPositions = {}
 		for _, f in pairs(_A.OM:Get('Friendly')) do
-			if f.isplayer and _A.nothealimmune(f) then
+			if f.isplayer and _A.nothealimmune(f) and f:los() then
 				local x, y, z = _A.ObjectPosition(f.guid)
 				friendlies[#friendlies+1] = f
 				friendlyPositions[f.guid] = {x, y, z}
@@ -2366,7 +2365,9 @@ local mw_rot = {
 					end
 				end
 			end
-			if count > 0 and f:SpellRange("Ring of Peace") and not f:BuffAny("Ring of Peace") and f:los() then
+			if count > 0 and f:SpellRange("Ring of Peace") and not f:BuffAny("Ring of Peace") 
+			-- and f:los() 
+			then
 				if count >= 2 or (count >= 1 and f:health() < lowHP) then
 					return f:Cast("Ring of Peace")
 				end
@@ -2382,7 +2383,9 @@ local mw_rot = {
 					count = count + 1
 				end
 			end
-			if count >= 3 and f:SpellRange("Ring of Peace") and not f:BuffAny("Ring of Peace") and f:los() then
+			if count >= 3 and f:SpellRange("Ring of Peace") and not f:BuffAny("Ring of Peace") 
+			-- and f:los() 
+			then
 				return f:Cast("Ring of Peace")
 			end
 		end
@@ -2391,7 +2394,9 @@ local mw_rot = {
 		for _, e in ipairs(enemies) do
 			if kickcheck_highprio(e.obj) and (player:SpellCooldown("Spear Hand Strike") > _A.interrupttreshhold or not e.state.canInterrupt) then
 				for _, f in ipairs(friendlies) do
-					if withinRange(e.pos, friendlyPositions[f.guid], 7) and f:los() then
+					if withinRange(e.pos, friendlyPositions[f.guid], 7) 
+					-- and f:los() 
+					then
 						return f:Cast("Ring of Peace")
 					end
 				end
