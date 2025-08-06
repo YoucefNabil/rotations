@@ -637,7 +637,7 @@ local exeOnLoad = function()
 					-- and not blacklistSS[fr.name]
 					and _A.nothealimmune(fr) and fr:los() then
 					tempTable[#tempTable + 1] = {
-						HP = fr:health(),
+						HP = (location == "arena" and fr:ispet() and (fr:health()+20)) or fr:health(),
 						guid = fr.guid
 					}
 				end
