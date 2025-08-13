@@ -908,10 +908,10 @@ local exeOnLoad = function()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			if Obj.isplayer and Obj:range()<40 then
 				if Obj:Health()<65 then
-						return true
-					end
+					return true
 				end
 			end
+		end
 		return false
 	end
 	
@@ -1393,7 +1393,7 @@ unholy.rot = {
 				if ( obj.isplayer or _A.pull_location == "party" or _A.pull_location == "raid" ) and obj:isCastingAny() and obj:SpellRange("Death Strike") 
 					and obj:caninterrupt() 
 					and (obj:castsecond() < _A.interrupttreshhold or obj:chanpercent()<=90
-					or (obj:spec()==270 and obj:chi()>=3)
+						or (obj:spec()==270 and obj:chi()>=3)
 					)
 					and _Y.notimmune(obj)
 					then
@@ -1850,6 +1850,19 @@ unholy.rot = {
 		end
 	end,
 	
+	icytouch_hop = function()
+		if player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1 then
+			for _, Obj in pairs(_A.OM:Get('Enemy')) do
+				if Obj.isplayer and Obj:spellRange("Icy Touch")
+					-- and Obj:BuffAny("Hand of Protection || Fear Ward")
+					and Obj:BuffAny("Hand of Protection")
+					and Obj:los() then
+					return Obj:Cast("Icy Touch")
+				end
+			end
+		end
+	end,
+	
 	icytouchdispell = function() -- BAD IDEA
 		if player:RuneCount("Frost")>=1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
@@ -2027,6 +2040,7 @@ local inCombat = function()
 	-- DEFS
 	if unholy.rot.petres() then return true end
 	-- rotation
+	if unholy.rot.icytouch_hop() then return true end
 	if unholy.rot.DeathcoilDump() then return true end
 	if unholy.rot.dkuhaoe() then return true end
 	if mylevel>=81 and unholy.rot.outbreak() then return true end
