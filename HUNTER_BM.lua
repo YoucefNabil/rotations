@@ -644,7 +644,7 @@ local exeOnLoad = function()
 		local pet = Object("pet")
 		if not pet then return end
 		if pet and not pet:alive() then return end
-		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun") then return end
+		if pet:stateYOUCEF("incapacitate || fear || disorient || charm || misc || sleep || stun || root") then return end
 		--
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
 			for _,totems in ipairs(badtotems) do
