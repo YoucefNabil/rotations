@@ -45,7 +45,7 @@ local healerspecid = {
 	-- [266]="Lock Demono",
 	-- [267]="Lock Destro",
 	[105]="Druid Resto",
-	-- [102]="Druid Balance",
+	[102]="Druid Balance",
 	[270]="monk mistweaver",
 	[65]="Paladin Holy",
 	-- [66]="Paladin prot",
@@ -1523,13 +1523,11 @@ unholy.rot = {
 	AsphyxiateBurst = function()
 		if player:talent("Asphyxiate") and player:SpellCooldown("Asphyxiate")<cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer  and not _A.isthisahealer(obj)  and obj:SpellRange("Asphyxiate")  
+				if obj.isplayer  and not highdamagespecs[obj:spec()]  and obj:SpellRange("Asphyxiate")  
 					and (obj:BuffAny("Call of Victory") or obj:BuffAny("Call of Conquest"))
-					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep") 
-					and not obj:DebuffAny("Asphyxiate")
+					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep || silence") 
 					and not obj:BuffAny("bladestorm")
 					and not obj:BuffAny("Anti-Magic Shell")
-					and not obj:State("silence")
 					and (obj:drState("Asphyxiate") == 1 or obj:drState("Asphyxiate")==-1)
 					and _Y.notimmune(obj)
 					and obj:los() then
@@ -1566,12 +1564,14 @@ unholy.rot = {
 			then 
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:SpellRange("Chains of Ice") 
-					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root || snare") 
+					and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
+					-- and not obj: state("stun || incapacitate || fear || disorient || charm || misc || sleep || root || snare") 
 					and not obj:Debuffany("Chains of Ice")
 					and not obj:buffany("Hand of Freedom")
 					and not obj:buffany(45524)
 					and not obj:buffany(48707)							
 					and not obj:buffany(50435)	
+					and not obj:buffany("Master's Call")	
 					and not obj:buffany("Bladestorm")
 					and _Y.notimmune(obj)
 					and not obj:buffany(1044)
@@ -1854,8 +1854,8 @@ unholy.rot = {
 		if player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1 then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Icy Touch")
-					-- and Obj:BuffAny("Hand of Protection || Fear Ward")
-					and Obj:BuffAny("Hand of Protection")
+					and Obj:BuffAny("Hand of Protection || Fear Ward")
+					-- and Obj:BuffAny("Hand of Protection")
 					and Obj:los() then
 					return Obj:Cast("Icy Touch")
 				end
