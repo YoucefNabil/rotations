@@ -1583,7 +1583,8 @@ survival.rot = {
 			and player:spellusable("Mend Pet")
 			then
 			local pet = Object("pet")
-			if pet and pet:range()<=40 and pet:health()<90 and pet:combat() and not pet:buffany("Mend Pet") and pet:los() then 
+			-- if pet and pet:range()<=40 and pet:health()<90 and pet:combat() and not pet:buffany("Mend Pet") and pet:los() then 
+			if pet and pet:range()<=40 and pet:combat() and not pet:buffany("Mend Pet") and pet:los() then 
 				return player:cast("Mend Pet") 
 			end
 		end
