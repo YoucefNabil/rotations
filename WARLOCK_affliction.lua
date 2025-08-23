@@ -383,6 +383,12 @@ local exeOnLoad = function()
 		-- print("HEY HEY HEY HEY")
 	end
 	)
+	_A.Interface:AddToggle({
+		key = "enable_silence", 
+		name = "silence with pet", 
+		text = "ON : Silence | OFF : No Silence",
+		icon = select(3,GetSpellInfo(1120)),
+	})
 	enteredworldat = enteredworldat or _A.GetTime()
 	_A.pressedbuttonat = 0
 	_A.buttondelay = 0.5
@@ -1501,8 +1507,8 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return end
 		-- Pet Rotation
 		if petpassive() then return end
-		if petsilencesnipe() then return end
-		if petdisarmsnipe() then return end
+		if toggle("enable_silence") and petsilencesnipe() then return end
+		if toggle("enable_silence") and  petdisarmsnipe() then return end
 		if attacklowest() then return end
 		if petfollow() then return end
 	end
@@ -2545,11 +2551,11 @@ local inCombat = function()
 		if affliction.rot.Sneedofcorruption() then return true end
 		return true
 	end
-	if _Y.imIswapping == true and _Y.swap_intercasts ==0 and toggle("inbetweencasts") then
+	if _Y.imIswapping == true and _Y.swap_intercasts ==0 and (toggle("inbetweencasts") or _A.modifier_shift()) then
 		-- SHIFT MODE (HAUNTS)
-		if _A.modifier_shift() then
-			if affliction.rot.haunt_between()  then return true end
-		end
+		-- if _A.modifier_shift() then
+			-- if affliction.rot.haunt_between()  then return true end
+		-- end
 		if affliction.rot.lifetap_delayed() then return true end
 		if affliction.rot.CauterizeMaster()  then return true end
 		if affliction.rot.MortalCoil()  then return true end
@@ -2584,9 +2590,9 @@ local inCombat = function()
 	-- SOUL SWAP
 	if affliction.rot.soulswapopti()  then return true end
 	----------------------------------------------------------
-	if _A.modifier_shift() then
-		if affliction.rot.haunt_between()  then return true end
-	end
+	-- if _A.modifier_shift() then
+		-- if affliction.rot.haunt_between()  then return true end
+	-- end
 	if affliction.rot.CauterizeMaster()  then return true end
 	if affliction.rot.MortalCoil()  then return true end
 	if affliction.rot.twilightward()  then return true end
