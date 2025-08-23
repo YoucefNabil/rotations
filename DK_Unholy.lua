@@ -469,7 +469,19 @@ local exeOnLoad = function()
 		key = "dispell_hots", 
 		name = "DISPELL HOTS before using necro strikes", 
 		text = "ON = dispells hots higher prio than necro | OFF = normal prio (default)",
-		icon = select(3,GetSpellInfo("Strangulate")),
+		icon = select(3,GetSpellInfo("Icy Touch")),
+	})
+	_A.Interface:AddToggle({
+		key = "Festering_Strikes", 
+		name = "Use Festering Strike", 
+		text = "ON = Use Festering Strike (faster death runes) | OFF = Use Icy Touch + Blood Boil (slower death runes but maybe more dps?)",
+		icon = select(3,GetSpellInfo("Festering Strike")),
+	})
+	_A.Interface:AddToggle({
+		key = "grab_hunt", 
+		name = "Use grab on h unts", 
+		text = "ON = | OFF",
+		icon = select(3,GetSpellInfo("Festering Strike")),
 	})
 	function _A.enoughmana(id)
 		local cost,_,powertype = select(4, _A.GetSpellInfo(id))
@@ -1880,14 +1892,12 @@ unholy.rot = {
 	end,
 	
 	icytouchdispellv2 = function()
-		if player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
 			if lowestmelee then 
-			if lowestmelee:BuffAny("Earth Shield || Riptide || Eternal Flame || Enveloping Mist") then
-				return lowestmelee:Cast("Icy Touch")
+				if lowestmelee:BuffAny("Earth Shield || Riptide || Eternal Flame || Enveloping Mist") then
+					return lowestmelee:Cast("Icy Touch")
+				end
 			end
-		end
-		end
 	end,
 	
 	icytouch = function()
@@ -1917,6 +1927,13 @@ unholy.rot = {
 					return lowestmelee:Cast("Festering Strike")
 				end
 			end
+		end
+	end,
+	
+	festeringstrikev2 = function()
+		local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+		if lowestmelee then
+			return lowestmelee:Cast("Festering Strike")
 		end
 	end,
 	
@@ -2022,7 +2039,7 @@ local inCombat = function()
 	---------------------- NON GCD SPELLS
 	-- Grabs
 	unholy.rot.GrabGrab()
-	unholy.rot.GrabGrabHunter()
+	if toggle("grab_hunt") then unholy.rot.GrabGrabHunter() end
 	-- pet
 	unholy.rot.pet_cower()
 	-- Bursts
@@ -2030,7 +2047,7 @@ local inCombat = function()
 	unholy.rot.items_strflask()
 	unholy.rot.hasteburst()
 	-- utility
-	unholy.rot.icbf()
+	if _A.pull_location~="arena" then unholy.rot.icbf() end
 	unholy.rot.items_healthstone()
 	unholy.rot.activetrinket()
 	unholy.rot.Frenzy()
@@ -2075,9 +2092,8 @@ local inCombat = function()
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		-- this always keeps one rune of each type regenning all the time
-		-- if mylevel>=62 and unholy.rot.festeringstrike() then return true end
-		if toggle("dispell_hots") and unholy.rot.icytouchdispellv2() then return true end
+		if toggle("dispell_hots") and (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1) and unholy.rot.icytouchdispellv2() then return true end
+		if toggle("Festering_Strikes") and player:RuneCount("Blood") >= 1 and player:RuneCount("Frost")>= 1 and unholy.rot.festeringstrikev2() then return true end
 		if player:RuneCount("Blood")>= 2 and unholy.rot.bloodboil_blood() then return true end
 		if player:RuneCount("Frost")>=2 and unholy.rot.icytouch() then return true end
 		if player:RuneCount("Unholy")>=2 and mylevel>=58 and unholy.rot.scourgestrike() then return true end
