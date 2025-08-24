@@ -387,7 +387,7 @@ local exeOnLoad = function()
 		key = "enable_silence", 
 		name = "silence with pet", 
 		text = "ON : Silence | OFF : No Silence",
-		icon = select(3,GetSpellInfo(1120)),
+		icon = select(3,GetSpellInfo(119911)),
 	})
 	enteredworldat = enteredworldat or _A.GetTime()
 	_A.pressedbuttonat = 0
