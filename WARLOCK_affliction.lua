@@ -812,6 +812,7 @@ local exeOnLoad = function()
 	
 	Listener:Add("seedtargets", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
 		-- C_Timer.After(.2, function()
+		if not _A.Cache.Utils.PlayerInGame then return true end
 			if guiddest == UnitGUID("player") then
 				if subevent == "SPELL_AURA_APPLIED" then
 					if spell_name(idd)=="Soul Swap" then
@@ -1049,6 +1050,7 @@ local exeOnLoad = function()
 	--Cleaning
 	_A.Listener:Add("lock_cleantbls", {"PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD"}, function(event)
 		-- _A.Listener:Add("lock_cleantbls", "PLAYER_ENTERING_WORLD", function(event) -- better for testing, combat checks breaks with dummies
+		if not _A.Cache.Utils.PlayerInGame then return true end
 		if next(corruptiontbl)~=nil then
 			for k in pairs(corruptiontbl) do
 				corruptiontbl[k]=nil
@@ -1075,6 +1077,7 @@ local exeOnLoad = function()
 	_Y.internalcooldown = (GetTime() - 50)
 	_Y.chantarget = nil
 	_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
+	if not _A.Cache.Utils.PlayerInGame then return true end
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			-------------- internal cooldown part
 			if subevent == "SPELL_AURA_APPLIED" and spell_name(idd)=="Surge of Dominance" then _Y.internalcooldown = _A.GetTime() end -- 50 sec from the moment it procced
@@ -1184,6 +1187,7 @@ local exeOnLoad = function()
 	local soulswaptimer = nil
 	-- Soul Swap
 	_A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+	if not _A.Cache.Utils.PlayerInGame then return true end
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			if subevent =="SPELL_CAST_SUCCESS" then -- accuracy needs to improve
 				if idd==86121 then -- Soul Swap 86213
@@ -1213,6 +1217,7 @@ local exeOnLoad = function()
 	end)
 	_A.casttimers = {} -- doesnt work with channeled spells
 	_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
+	if not _A.Cache.Utils.PlayerInGame then return true end
 		if guidsrc == UnitGUID("player") then
 			-- print(subevent.." "..idd)
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
@@ -1496,21 +1501,21 @@ local exeOnLoad = function()
 		end
 	end
 	function _Y.petengine_affli() -- REQUIRES RELOAD WHEN SWITCHING SPECS
-		if not _A.Cache.Utils.PlayerInGame then return end
+		if not _A.Cache.Utils.PlayerInGame then return true end
 		if not player then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
-		if player:mounted() then return end
-		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return end
+		if player:mounted() then return true end
+		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return true end
 		_Y.Existscheck = _A.UnitExists("pet") or false
 		if not _Y.Existscheck or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _Y.Existscheck and (_A.PetGUID or _A.UnitGUID("pet")) or nil
-		if _A.PetGUID == nil then return end
+		if _A.PetGUID == nil then return true end
 		-- Pet Rotation
-		if petpassive() then return end
-		if toggle("enable_silence") and petsilencesnipe() then return end
-		if toggle("enable_silence") and  petdisarmsnipe() then return end
-		if attacklowest() then return end
-		if petfollow() then return end
+		if petpassive() then return true end
+		if toggle("enable_silence") and petsilencesnipe() then return true end
+		if toggle("enable_silence") and  petdisarmsnipe() then return true end
+		if attacklowest() then return true end
+		if petfollow() then return true end
 	end
 end
 local exeOnUnload = function()
@@ -1534,25 +1539,25 @@ affliction.rot = {
 	
 	caching= function()
 		-- _A.reflectcheck = false
-		if not UnitBuff("player", "Soul Swap") and soulswaporigin ~= nil then soulswaporigin = nil end
+		if not _A.UnitBuff("player", "Soul Swap") and soulswaporigin ~= nil then soulswaporigin = nil end
 		-- snapshot engine
 		_A.temptabletbl = {}
 		_A.temptabletblsoulswap = {}
 		_A.temptabletblexhale = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and not Obj:charmed()
+			if Obj and Obj:exists() and Obj:spellRange(172) and _A.attackable(Obj) and _A.notimmune(Obj) and not Obj:charmed()
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not _A.isthisahealer(Obj)) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() 
 				then
 				--
 				if toggle("exhaleplayers") or (Obj.name~="Army of the Dead") then
 				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				if corruptiontbl[Obj.guid]~=nil and not UnitDebuff(Obj.guid, "Corruption","","PLAYER") and corruptiontbl[Obj.guid] then print("CORRUPTION DELETE", print(Obj:spec())) 
+				if corruptiontbl[Obj.guid]~=nil and not _A.UnitDebuff(Obj.guid, "Corruption","","PLAYER") and corruptiontbl[Obj.guid] then print("CORRUPTION DELETE", print(Obj:spec())) 
 				corruptiontbl[Obj.guid]=nil end
-				if agonytbl[Obj.guid]~=nil and not UnitDebuff(Obj.guid, "Agony","","PLAYER") and agonytbl[Obj.guid] then 
+				if agonytbl[Obj.guid]~=nil and not _A.UnitDebuff(Obj.guid, "Agony","","PLAYER") and agonytbl[Obj.guid] then 
 					print("AGONY DELETE", print(Obj:spec())) 
 				agonytbl[Obj.guid]=nil end
-				if unstabletbl[Obj.guid]~=nil and not UnitDebuff(Obj.guid, "Unstable Affliction","","PLAYER") and unstabletbl[Obj.guid] then 
+				if unstabletbl[Obj.guid]~=nil and not _A.UnitDebuff(Obj.guid, "Unstable Affliction","","PLAYER") and unstabletbl[Obj.guid] then 
 					print("UNSTABLE DELETE", print(Obj:spec())) 
 				unstabletbl[Obj.guid]=nil end
 				--]]
@@ -1977,7 +1982,7 @@ affliction.rot = {
 					end
 				end, 1)
 			end
-			if _A.temptabletbl[1] and _A.temptabletbl[1].isplayer==1 then 
+			if _A.temptabletbl[1] and _A.temptabletbl[1].obj and _A.temptabletbl[1].isplayer==1 then 
 				return _A.temptabletbl[1].obj:Cast("Haunt")
 			end
 		end
@@ -2097,7 +2102,7 @@ affliction.rot = {
 				end, 1)
 				
 			end
-			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj:Cast(86213)
+			return _A.temptabletblexhale[1] and _A.temptabletblexhale[1].obj and _A.temptabletblexhale[1].obj:Cast(86213)
 		end
 	end,
 	
@@ -2135,7 +2140,7 @@ affliction.rot = {
 				end
 			end
 		end
-		if _A.temptabletbl[1] and _A.enoughmana(172)  then 
+		if _A.temptabletbl[1] and _A.temptabletbl[1].obj and _A.enoughmana(172)  then 
 			if _A.myscore()>_A.temptabletbl[1].corruptionscore then return _A.temptabletbl[1].obj:Cast("Corruption")
 			end
 		end
@@ -2174,7 +2179,7 @@ affliction.rot = {
 				end
 			end
 		end
-		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not UnitBuff("player", "Soulburn") 
+		if _A.temptabletbl[1] and _A.temptabletbl[1].obj and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not UnitBuff("player", "Soulburn") 
 			-- and not _A.temptabletbl[1].obj:debuff("Seed of Corruption") 
 			then
 			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not _A.IsCurrentSpell(108508) then player:cast(108508) end
@@ -2215,7 +2220,7 @@ affliction.rot = {
 				end
 			end
 		end
-		if _A.temptabletbl[1] and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not UnitBuff("player", "Soulburn") 
+		if _A.temptabletbl[1] and _A.temptabletbl[1].obj and not _Y.seedtarget[_A.temptabletbl[1].obj.guid] and _A.enoughmana(27243) and not UnitBuff("player", "Soulburn") 
 			and player:buff("Mannoroth's Fury") and _A.castdelay(27243, 12)
 			then
 			if player:talent("Mannoroth's Fury") and player:spellcooldown("Mannoroth's Fury")==0 and not _A.IsCurrentSpell(108508) then player:cast(108508) end
@@ -2240,7 +2245,7 @@ affliction.rot = {
 				end
 			end, 1)
 		end
-		if _A.temptabletbl[1] and _A.enoughmana(172)  then 
+		if _A.temptabletbl[1] and _A.temptabletbl[1].obj and _A.enoughmana(172)  then 
 			if _A.myscore()>_A.temptabletbl[1].corruptionscore then return _A.temptabletbl[1].obj:Cast("Corruption")
 			end
 		end
@@ -2262,7 +2267,7 @@ affliction.rot = {
 				end
 			end, 1)
 		end
-		if _A.temptabletbl[1] and _A.myscore()>_A.temptabletbl[1].agonyscore and _A.enoughmana(980) 
+		if _A.temptabletbl[1] and _A.temptabletbl[1].obj and _A.myscore()>_A.temptabletbl[1].agonyscore and _A.enoughmana(980) 
 			then return _A.temptabletbl[1].obj:Cast("Agony")
 		end
 	end,
@@ -2281,7 +2286,7 @@ affliction.rot = {
 				end
 			end, 1)
 		end
-		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore and player:SpellCooldown("Unstable Affliction")<.3 then 
+		if _A.temptabletbl[1] and _A.temptabletbl[1].obj and  _A.myscore()> _A.temptabletbl[1].unstablescore and player:SpellCooldown("Unstable Affliction")<.3 then 
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -2322,7 +2327,7 @@ affliction.rot = {
 				end
 			end, 1)
 		end
-		if _A.temptabletbl[1] and  _A.myscore()> _A.temptabletbl[1].unstablescore 
+		if _A.temptabletbl[1] and _A.temptabletbl[1].obj and  _A.myscore()> _A.temptabletbl[1].unstablescore 
 		-- and player:SpellCooldown("Unstable Affliction")<.3 
 		then 
 			for i=1, #usableitems do
@@ -2366,7 +2371,7 @@ affliction.rot = {
 				end
 			end, 1)
 		end
-		if _A.temptabletbl[1] and not UnitBuff("player", "Soulburn") and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
+		if _A.temptabletbl[1] and _A.temptabletbl[1].obj and not UnitBuff("player", "Soulburn") and _A.myscore()>_A.temptabletbl[1].unstablescore  then 
 			if not player:moving() and not player:Iscasting("Unstable Affliction") and not _A.IsCurrentSpell(30108) and not player:isCastingAny()
 				-- and _A.shards==0 
 				then
