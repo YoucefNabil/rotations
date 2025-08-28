@@ -472,12 +472,6 @@ local exeOnLoad = function()
 		icon = select(3,GetSpellInfo("Icy Touch")),
 	})
 	_A.Interface:AddToggle({
-		key = "Festering_Strikes", 
-		name = "Use Festering Strike", 
-		text = "ON = Use Festering Strike (faster death runes) | OFF = Use Icy Touch + Blood Boil (slower death runes but maybe more dps?)",
-		icon = select(3,GetSpellInfo("Festering Strike")),
-	})
-	_A.Interface:AddToggle({
 		key = "grab_hunt", 
 		name = "Use grab on h unts", 
 		text = "ON = | OFF",
@@ -1930,13 +1924,6 @@ unholy.rot = {
 		end
 	end,
 	
-	festeringstrikev2 = function()
-		local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-		if lowestmelee then
-			return lowestmelee:Cast("Festering Strike")
-		end
-	end,
-	
 	Deathcoil = function()
 		if player:SpellCooldown("Death Coil")<cdcd and (player:buff("Sudden Doom") or player:RunicPower()>=32)
 			and not player:BuffAny("Runic Corruption")  
@@ -2093,7 +2080,6 @@ local inCombat = function()
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
 		if toggle("dispell_hots") and (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1) and unholy.rot.icytouchdispellv2() then return true end
-		if toggle("Festering_Strikes") and player:RuneCount("Blood") >= 1 and player:RuneCount("Frost")>= 1 and unholy.rot.festeringstrikev2() then return true end
 		if player:RuneCount("Blood")>= 2 and unholy.rot.bloodboil_blood() then return true end
 		if player:RuneCount("Frost")>=2 and unholy.rot.icytouch() then return true end
 		if player:RuneCount("Unholy")>=2 and mylevel>=58 and unholy.rot.scourgestrike() then return true end

@@ -11,6 +11,7 @@ local hooksecurefunc =_A.hooksecurefunc
 local Listener = _A.Listener
 local enteredworldat
 local proccing
+local playerguidguid = UnitGUID("player")
 function pullbuffme(unit, aura)
     local isNumber = type(aura) == "number"
     for i = 1, 40 do
@@ -18,20 +19,20 @@ function pullbuffme(unit, aura)
         if name then
             if (isNumber and aura == id) or (not isNumber and aura == name) then
                 return true
-            end
-        else break
-        end
-    end
+			end
+			else break
+		end
+	end
     
     for i = 1, 40 do
         local name, _, _, _, _, _, _, _, _, _, id = UnitBuff(unit, i, "PLAYER")
         if name then
             if (isNumber and aura == id) or (not isNumber and aura == name) then
                 return true
-            end
-        else break
-        end
-    end
+			end
+			else break
+		end
+	end
     return false
 end
 function pullbuff(unit, aura)
@@ -41,20 +42,20 @@ function pullbuff(unit, aura)
         if name then
             if (isNumber and aura == id) or (not isNumber and aura == name) then
                 return true
-            end
-        else break
-        end
-    end
+			end
+			else break
+		end
+	end
     
     for i = 1, 40 do
         local name, _, _, _, _, _, _, _, _, _, id = UnitBuff(unit, i)
         if name then
             if (isNumber and aura == id) or (not isNumber and aura == name) then
                 return true
-            end
-        else break
-        end
-    end
+			end
+			else break
+		end
+	end
     return false
 end
 local function table_sortoptimized(arr, comp, k)
@@ -813,54 +814,75 @@ local exeOnLoad = function()
 	Listener:Add("seedtargets", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd,_,_,amount)
 		-- C_Timer.After(.2, function()
 		if not _A.Cache.Utils.PlayerInGame then return true end
-			if guiddest == UnitGUID("player") then
-				if subevent == "SPELL_AURA_APPLIED" then
-					if spell_name(idd)=="Soul Swap" then
-						_Y.imIswapping = true
-						if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
-						inbetweentimer = C_Timer.NewTimer(player:gcd()+.3, function() _Y.imIswapping = false end)
-					end
-				end
-				if subevent == "SPELL_AURA_REMOVED" then
-					if spell_name(idd)=="Soul Swap" then
-						_Y.imIswapping = false
-						_Y.swap_intercasts = 0
-						if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
-					end
+		if guiddest == UnitGUID("player") then
+			if subevent == "SPELL_AURA_APPLIED" then
+				if spell_name(idd)=="Soul Swap" then
+					_Y.imIswapping = true
+					if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
+					inbetweentimer = C_Timer.NewTimer(player:gcd()+.3, function() _Y.imIswapping = false end)
 				end
 			end
-			if guidsrc == UnitGUID("player") then
-				if (subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START") and _Y.imIswapping == true and validintercasts[spell_name(idd)]
-					then
-					_Y.swap_intercasts = _Y.swap_intercasts + 1
-					-- print("INTERCASTED", spell_name(idd))
+			if subevent == "SPELL_AURA_REMOVED" then
+				if spell_name(idd)=="Soul Swap" then
+					_Y.imIswapping = false
+					_Y.swap_intercasts = 0
+					if inbetweentimer then inbetweentimer:Cancel() inbetweentimer = nil end
 				end
 			end
-			if guidsrc == UnitGUID("player") then
-				if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
-					----------------------------------- exhale counter
-					-----------------------------------
-					if spell_name(idd) == "Seed of Corruption"  then
-						-- print(subevent, guiddest)
-						if not _Y.seedtarget[guiddest] then _Y.seedtarget[guiddest]=true end
-						C_Timer.After(5, function()
-							if _Y.seedtarget[guiddest] then
-								-- print("DELETE")
-								_Y.seedtarget[guiddest]=nil
-							end
-						end)
-					end
-				end
-				if subevent == "SPELL_AURA_APPLIED" then 
-					if spell_name(idd) == "Seed of Corruption" then
+		end
+		if guidsrc == UnitGUID("player") then
+			if (subevent == "SPELL_CAST_SUCCESS" or subevent == "SPELL_CAST_START") and _Y.imIswapping == true and validintercasts[spell_name(idd)]
+				then
+				_Y.swap_intercasts = _Y.swap_intercasts + 1
+				-- print("INTERCASTED", spell_name(idd))
+			end
+		end
+		if guidsrc == UnitGUID("player") then
+			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
+				----------------------------------- exhale counter
+				-----------------------------------
+				if spell_name(idd) == "Seed of Corruption"  then
+					-- print(subevent, guiddest)
+					if not _Y.seedtarget[guiddest] then _Y.seedtarget[guiddest]=true end
+					C_Timer.After(5, function()
 						if _Y.seedtarget[guiddest] then
 							-- print("DELETE")
 							_Y.seedtarget[guiddest]=nil
 						end
+					end)
+				end
+			end
+			if subevent == "SPELL_AURA_APPLIED" then 
+				if spell_name(idd) == "Seed of Corruption" then
+					if _Y.seedtarget[guiddest] then
+						-- print("DELETE")
+						_Y.seedtarget[guiddest]=nil
 					end
 				end
 			end
+		end
 		-- end)
+	end)
+	local kickspells = {
+		["Shadowstep"]          = true,
+		["Kick"]                = true,
+		["Earth Shock"]         = true,
+		["Pummel"]              = true,
+		["Rebuke"]              = true,
+		["Shield Bash"]         = true,
+		["Spell Lock"]          = true,
+		["Wind Shear"]          = true,
+		["Counterspell"]        = true,
+		["Feral Charge - Bear"] = true,
+		["Deadly Throw"]        = true
+	}
+	Listener:Add("SENT_TEST", "COMBAT_LOG_EVENT_UNFILTERED", function(_, _, subevent, _, _, _, _, _, guiddest, _, _, _, _,name)
+		-- print(name)
+		if guiddest==playerguidguid and kickspells[name] then
+			_A.CallWowApi("RunMacroText", "/stopcasting") 
+			_A.CallWowApi("RunMacroText", "/stopcasting")
+			return
+		end
 	end)
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
@@ -1077,7 +1099,7 @@ local exeOnLoad = function()
 	_Y.internalcooldown = (GetTime() - 50)
 	_Y.chantarget = nil
 	_A.Listener:Add("dotstables", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd) -- CAN BREAK WITH INVIS
-	if not _A.Cache.Utils.PlayerInGame then return true end
+		if not _A.Cache.Utils.PlayerInGame then return true end
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			-------------- internal cooldown part
 			if subevent == "SPELL_AURA_APPLIED" and spell_name(idd)=="Surge of Dominance" then _Y.internalcooldown = _A.GetTime() end -- 50 sec from the moment it procced
@@ -1187,7 +1209,7 @@ local exeOnLoad = function()
 	local soulswaptimer = nil
 	-- Soul Swap
 	_A.Listener:Add("soulswaprelated", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-	if not _A.Cache.Utils.PlayerInGame then return true end
+		if not _A.Cache.Utils.PlayerInGame then return true end
 		if guidsrc == UnitGUID("player") then -- only filter by me
 			if subevent =="SPELL_CAST_SUCCESS" then -- accuracy needs to improve
 				if idd==86121 then -- Soul Swap 86213
@@ -1217,7 +1239,7 @@ local exeOnLoad = function()
 	end)
 	_A.casttimers = {} -- doesnt work with channeled spells
 	_A.Listener:Add("delaycasts", "COMBAT_LOG_EVENT_UNFILTERED", function(event, _, subevent, _, guidsrc, _, _, _, guiddest, _, _, _, idd)
-	if not _A.Cache.Utils.PlayerInGame then return true end
+		if not _A.Cache.Utils.PlayerInGame then return true end
 		if guidsrc == UnitGUID("player") then
 			-- print(subevent.." "..idd)
 			if subevent == "SPELL_CAST_SUCCESS" then -- doesnt work with channeled spells
@@ -1505,7 +1527,7 @@ local exeOnLoad = function()
 		if not player then return true end
 		if _A.DSL:Get("toggle")(_,"MasterToggle")~=true then return true end
 		if player:mounted() then return true end
-		if UnitInVehicle(player.guid) and UnitInVehicle(player.guid)==1 then return true end
+		if UnitInVehicle("player") and UnitInVehicle("player")==1 then return true end
 		_Y.Existscheck = _A.UnitExists("pet") or false
 		if not _Y.Existscheck or _A.UnitIsDeadOrGhost("pet") or not _A.HasPetUI() then if _A.PetGUID then _A.PetGUID = nil end return true end
 		_A.PetGUID = _Y.Existscheck and (_A.PetGUID or _A.UnitGUID("pet")) or nil
@@ -1551,51 +1573,51 @@ affliction.rot = {
 				then
 				--
 				if toggle("exhaleplayers") or (Obj.name~="Army of the Dead") then
-				-- backup cleaning, for when spell aura remove event doesnt fire for some reason
-				if corruptiontbl[Obj.guid]~=nil and not _A.UnitDebuff(Obj.guid, "Corruption","","PLAYER") and corruptiontbl[Obj.guid] then print("CORRUPTION DELETE", print(Obj:spec())) 
-				corruptiontbl[Obj.guid]=nil end
-				if agonytbl[Obj.guid]~=nil and not _A.UnitDebuff(Obj.guid, "Agony","","PLAYER") and agonytbl[Obj.guid] then 
-					print("AGONY DELETE", print(Obj:spec())) 
-				agonytbl[Obj.guid]=nil end
-				if unstabletbl[Obj.guid]~=nil and not _A.UnitDebuff(Obj.guid, "Unstable Affliction","","PLAYER") and unstabletbl[Obj.guid] then 
-					print("UNSTABLE DELETE", print(Obj:spec())) 
-				unstabletbl[Obj.guid]=nil end
-				--]]
-				-- if seeds[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
-				local unstabledur, corruptiondur, agonydur, seedsdur, range_cache, healthraww =  Obj:DebuffDuration("Unstable Affliction"), Obj:DebuffDuration("Corruption"), Obj:DebuffDuration("Agony"), Obj:DebuffDuration("Seed of Corruption"), Obj:range(2) or 40, Obj:HealthActual() or 0
-				--
-				_A.temptabletbl[#_A.temptabletbl+1] = {
-					obj = Obj,
-					score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0), -- ALWAYS ORDER THIS BY SCORE FIRST
-					agonyscore = (agonytbl[Obj.guid] or 0),
-					unstablescore = (unstabletbl[Obj.guid] or 0),
-					corruptionscore = (corruptiontbl[Obj.guid] or 0),
-					seedscore = (seeds[Obj.guid] or 0),
-					range = range_cache,
-					health = healthraww,
-					front = Obj:InConeOf(player, 170) and 1 or 0,
-					isplayer = Obj.isplayer and 1 or 0
-				}
-				if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
-					_A.temptabletblexhale[#_A.temptabletblexhale+1] = {
+					-- backup cleaning, for when spell aura remove event doesnt fire for some reason
+					if corruptiontbl[Obj.guid]~=nil and not _A.UnitDebuff(Obj.guid, "Corruption","","PLAYER") and corruptiontbl[Obj.guid] then print("CORRUPTION DELETE", print(Obj:spec())) 
+					corruptiontbl[Obj.guid]=nil end
+					if agonytbl[Obj.guid]~=nil and not _A.UnitDebuff(Obj.guid, "Agony","","PLAYER") and agonytbl[Obj.guid] then 
+						print("AGONY DELETE", print(Obj:spec())) 
+					agonytbl[Obj.guid]=nil end
+					if unstabletbl[Obj.guid]~=nil and not _A.UnitDebuff(Obj.guid, "Unstable Affliction","","PLAYER") and unstabletbl[Obj.guid] then 
+						print("UNSTABLE DELETE", print(Obj:spec())) 
+					unstabletbl[Obj.guid]=nil end
+					--]]
+					-- if seeds[Obj.guid]~=nil and not Obj:Debuff("Seed of Corruption") and seeds[Obj.guid] then seeds[Obj.guid]=nil end
+					local unstabledur, corruptiondur, agonydur, seedsdur, range_cache, healthraww =  Obj:DebuffDuration("Unstable Affliction"), Obj:DebuffDuration("Corruption"), Obj:DebuffDuration("Agony"), Obj:DebuffDuration("Seed of Corruption"), Obj:range(2) or 40, Obj:HealthActual() or 0
+					--
+					_A.temptabletbl[#_A.temptabletbl+1] = {
 						obj = Obj,
-						rangedis = range_cache,
-						isplayer = Obj.isplayer and 1 or 0,
+						score = (unstabletbl[Obj.guid] or 0) + (corruptiontbl[Obj.guid] or 0) + (agonytbl[Obj.guid] or 0), -- ALWAYS ORDER THIS BY SCORE FIRST
+						agonyscore = (agonytbl[Obj.guid] or 0),
+						unstablescore = (unstabletbl[Obj.guid] or 0),
+						corruptionscore = (corruptiontbl[Obj.guid] or 0),
+						seedscore = (seeds[Obj.guid] or 0),
+						range = range_cache,
 						health = healthraww,
-						duration = unstabledur or 0, -- duration for unstable only, best solution to spread it to as many units as possible, always order by this first -- AGONYDUR IS NEW
-						durationSEED = seedsdur or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
+						front = Obj:InConeOf(player, 170) and 1 or 0,
+						isplayer = Obj.isplayer and 1 or 0
 					}
+					if Obj.guid ~= soulswaporigin then -- can't exhale on the soulswap
+						_A.temptabletblexhale[#_A.temptabletblexhale+1] = {
+							obj = Obj,
+							rangedis = range_cache,
+							isplayer = Obj.isplayer and 1 or 0,
+							health = healthraww,
+							duration = unstabledur or 0, -- duration for unstable only, best solution to spread it to as many units as possible, always order by this first -- AGONYDUR IS NEW
+							durationSEED = seedsdur or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
+						}
+					end
+					_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = { -- dictates who to copy dots from, doing all dots duration in a cascade like this is important (keeps soul swapping even if unstable affli drops)
+						obj = Obj,
+						isplayer = Obj.isplayer and 1 or 0,
+						duration = unstabledur or agonydur or corruptiondur or 0, -- DEFAULT 
+						durationSEED = seedsdur or 0, -- DEFAULT 
+					}
+				end -- end of enemy filter
+				if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==playerguidguid then
+					_A.reflectcheck = true
 				end
-				_A.temptabletblsoulswap[#_A.temptabletblsoulswap+1] = { -- dictates who to copy dots from, doing all dots duration in a cascade like this is important (keeps soul swapping even if unstable affli drops)
-					obj = Obj,
-					isplayer = Obj.isplayer and 1 or 0,
-					duration = unstabledur or agonydur or corruptiondur or 0, -- DEFAULT 
-					durationSEED = seedsdur or 0, -- DEFAULT 
-				}
-			end -- end of enemy filter
-			if player:talent("Blood Horror") and warriorspecs[_A.UnitSpec(Obj.guid)] and Obj:range()<20 and _A.UnitTarget(Obj.guid)==player.guid then
-				_A.reflectcheck = true
-			end
 			end
 		end -- end of iteration
 		-- table_sortoptimized( _A.temptabletbl, function(a,b) return ( a.score > b.score ) end , 1)
@@ -1767,7 +1789,7 @@ affliction.rot = {
 					return player:cast(112866)
 				end	
 				-- if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
-					-- return player:cast(112866)
+				-- return player:cast(112866)
 				-- end
 			end
 		end
@@ -1787,7 +1809,7 @@ affliction.rot = {
 					return player:cast(112869)
 				end	
 				-- if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
-					-- return player:cast(112869)
+				-- return player:cast(112869)
 				-- end
 			end
 		end
@@ -1807,7 +1829,7 @@ affliction.rot = {
 					return player:cast(112867)
 				end	
 				-- if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
-					-- return player:cast(112867)
+				-- return player:cast(112867)
 				-- end
 			end
 		end
@@ -1823,8 +1845,8 @@ affliction.rot = {
 				or (petobj and petobj~="Fel Imp")
 				then 
 				-- if (not UnitBuff("player", "Soulburn") and not _A.IsCurrentSpell(74434) and _A.shards>=1 )
-					-- then player:cast(74434) -- shadowburn
-					-- return player:cast(112866)
+				-- then player:cast(74434) -- shadowburn
+				-- return player:cast(112866)
 				-- end	
 				if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
 					return player:cast(112866)
@@ -1843,8 +1865,8 @@ affliction.rot = {
 				or (petobj and petobj~="Observer")
 				then 
 				-- if (not UnitBuff("player", "Soulburn") and not _A.IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
-					-- then player:cast(74434) -- shadowburn
-					-- return player:cast(112869)
+				-- then player:cast(74434) -- shadowburn
+				-- return player:cast(112869)
 				-- end	
 				if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
 					return player:cast(112869)
@@ -1863,8 +1885,8 @@ affliction.rot = {
 				or (petobj and petobj~="Voidlord")
 				then 
 				-- if (not UnitBuff("player", "Soulburn") and not _A.IsCurrentSpell(74434) and _A.shards>=1 ) --or player:buff("Shadow Trance") 
-					-- then player:cast(74434) -- shadowburn
-					-- return player:cast(112867)
+				-- then player:cast(74434) -- shadowburn
+				-- return player:cast(112867)
 				-- end	
 				if UnitBuff("player", "Soulburn") or ( not player:moving() ) then
 					return player:cast(112867)
@@ -1891,7 +1913,7 @@ affliction.rot = {
 			end
 		end
 	end,
-
+	
 	CauterizeMaster = function()
 		if player:health() <= 85 then
 			if player:SpellUsable("Cauterize Master") and player:SpellCooldown("Cauterize Master") == 0  then
@@ -2308,7 +2330,7 @@ affliction.rot = {
 				return _A.temptabletbl[1].obj:Cast(119678)
 			end
 			-- if UnitBuff("player", "Soulburn") then
-				-- return _A.temptabletbl[1].obj:Cast(119678)
+			-- return _A.temptabletbl[1].obj:Cast(119678)
 			-- end
 		end -- improved soul swap (dots instead)
 	end,
@@ -2328,8 +2350,8 @@ affliction.rot = {
 			end, 1)
 		end
 		if _A.temptabletbl[1] and _A.temptabletbl[1].obj and  _A.myscore()> _A.temptabletbl[1].unstablescore 
-		-- and player:SpellCooldown("Unstable Affliction")<.3 
-		then 
+			-- and player:SpellCooldown("Unstable Affliction")<.3 
+			then 
 			for i=1, #usableitems do
 				if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~= nil then
 					if GetItemSpell(select(1, GetInventoryItemID("player", usableitems[i])))~="PvP Trinket" then
@@ -2347,8 +2369,8 @@ affliction.rot = {
 			end
 			--
 			-- if  _A.shards>=1 and not UnitBuff("player", "Soulburn") and player:SpellCooldown(74434)==0  and not _A.IsCurrentSpell(74434)--or player:buff("Shadow Trance")
-				-- then player:cast(74434) -- shadowburn
-				-- return _A.temptabletbl[1].obj:Cast(119678)
+			-- then player:cast(74434) -- shadowburn
+			-- return _A.temptabletbl[1].obj:Cast(119678)
 			-- end
 			-- SHARD
 			if UnitBuff("player", "Soulburn") then
@@ -2509,6 +2531,7 @@ local inCombat = function()
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
 	if not _A.Cache.Utils.PlayerInGame then return true end
+	if not playerguidguid then playerguidguid = UnitGUID("player") return true end
 	player = Object("player")
 	if not player then return end
 	if player:Mounted() then return true end
@@ -2559,7 +2582,7 @@ local inCombat = function()
 	if _Y.imIswapping == true and _Y.swap_intercasts ==0 and (toggle("inbetweencasts") or _A.modifier_shift()) then
 		-- SHIFT MODE (HAUNTS)
 		-- if _A.modifier_shift() then
-			-- if affliction.rot.haunt_between()  then return true end
+		-- if affliction.rot.haunt_between()  then return true end
 		-- end
 		if affliction.rot.lifetap_delayed() then return true end
 		if affliction.rot.CauterizeMaster()  then return true end
@@ -2596,7 +2619,7 @@ local inCombat = function()
 	if affliction.rot.soulswapopti()  then return true end
 	----------------------------------------------------------
 	-- if _A.modifier_shift() then
-		-- if affliction.rot.haunt_between()  then return true end
+	-- if affliction.rot.haunt_between()  then return true end
 	-- end
 	if affliction.rot.CauterizeMaster()  then return true end
 	if affliction.rot.MortalCoil()  then return true end
