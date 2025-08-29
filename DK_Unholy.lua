@@ -1868,7 +1868,6 @@ unholy.rot = {
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Icy Touch")
 					and Obj:BuffAny("Hand of Protection || Fear Ward || Master's Call")
-					-- and Obj:BuffAny("Hand of Protection")
 					and Obj:los() then
 					return Obj:Cast("Icy Touch")
 				end
@@ -2010,10 +2009,10 @@ local inCombat = function()
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
 	player = Object("player")
 	if not player then return true end
-	local mylevel = player:level()
-	_Y.petengine()
+	local mylevel = mylevel or player:level()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .2 + _A.latency
+	_Y.petengine()
 	if not _A.latency and not _A.interrupttreshhold then return true end
 	if not _A.pull_location then return true end
 	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
