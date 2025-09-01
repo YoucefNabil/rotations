@@ -7,6 +7,7 @@ local spell_name = function(idd) return _A.Core:GetSpellName(idd) end
 local spell_ID = function(idd) return _A.Core:GetSpellID(idd) end
 local toggle = function(key) return _A.DSL:Get("toggle")(_, key) end
 local cdcd
+_Y.bloodrune, _Y.frostrune, _Y.unholyrune, _Y.deathrune = 0,0,0,0
 _A.FaceAlways = true
 -- top of the CR
 local player
@@ -644,7 +645,7 @@ local exeOnLoad = function()
 				if unit_event and unit_event.isplayer and unit_event:enemy() and rootthisfuck[spell_name(idd)] then
 					-- print("HEY IM WORKING")
 					C_Timer.NewTicker(.1, function()
-						if player and (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
+						if player and (_Y.frostrune>=1 or _Y.deathrune>=1)
 							then 
 							if unit_event:SpellRange("Chains of Ice") 
 								and not unit_event:state("stun || incapacitate || fear || disorient || charm || misc || sleep || root") 
@@ -1462,7 +1463,7 @@ unholy.rot = {
 	end,
 	
 	strangulatesnipe = function()
-		if (player:RuneCount("Blood")>=1 or player:RuneCount("Death")>=1)  then
+		if (_Y.bloodrune>=1 or _Y.deathrune>=1)  then
 			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 and _Y.someoneisuperlow() then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and _A.isthisahealer(obj) and obj:SpellRange("Strangulate")  
@@ -1479,7 +1480,7 @@ unholy.rot = {
 	end,
 	
 	strangulatesnipe_burst = function()
-		if (player:RuneCount("Blood")>=1 or player:RuneCount("Death")>=1)  then
+		if (_Y.bloodrune>=1 or _Y.deathrune>=1)  then
 			if not player:talent("Asphyxiate") and player:SpellCooldown("Strangulate")==0 then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
 					if obj.isplayer  and highdamagespecs[obj:spec()] and obj:SpellRange("Strangulate")  
@@ -1571,7 +1572,7 @@ unholy.rot = {
 	end,
 	
 	root_buff = function()
-		if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1)
+		if player:SpellCooldown("Chains of Ice")<.3
 			and _A.castdelay(49576 ,1.5)
 			and not IsCurrentSpell(49576) 
 			then 
@@ -1598,7 +1599,7 @@ unholy.rot = {
 	end,
 	
 	root = function()
-		if (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1) and _A.castdelay(49576 ,1.5) and not IsCurrentSpell(49576) then
+		if player:SpellCooldown("Chains of Ice")<.3 and _A.castdelay(49576 ,1.5) and not IsCurrentSpell(49576) then
 			local target = Object("target")
 			if target  
 				and target.isplayer
@@ -1643,7 +1644,7 @@ unholy.rot = {
 	
 	dotsnapshotPS = function()
 		local target = Object("target")
-		if player:RuneCount("Death")>=1 or player:RuneCount("Unholy")>=1 then 
+		if _Y.deathrune>=1 or _Y.unholyrune>=1 then 
 			if target and target:exists()
 				and target:enemy()
 				and target:SpellRange("Plague Strike")
@@ -1705,7 +1706,7 @@ unholy.rot = {
 	
 	dkuhaoe = function()
 		local pestcheck = false
-		if player:RuneCount("Blood")>=1 or player:RuneCount("Death")>=1 then
+		if player:SpellCooldown("Blood Boil")<.3 then
 			if player:Talent("Roiling Blood") then
 				for _, Obj in pairs(_A.OM:Get('Enemy')) do
 					if Obj:range()<=10 then
@@ -1738,7 +1739,7 @@ unholy.rot = {
 	
 	pathoffrost = function()
 		if _A.pull_location~="arena" and not player:combat() and not player:buffany("Path of Frost") then
-			if player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1 then
+			if _Y.frostrune>=1 or _Y.deathrune>=1 then
 				player:cast("path of frost")
 			end
 		end
@@ -1773,7 +1774,7 @@ unholy.rot = {
 	end,
 	
 	dotapplication = function()
-		if (player:RuneCount("Unholy")>=1 or player:RuneCount("Death")>=1)
+		if (_Y.unholyrune>=1 or _Y.deathrune>=1)
 			then 
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
@@ -1807,7 +1808,7 @@ unholy.rot = {
 	
 	pettransform = function()
 		if player:BuffStack("Shadow Infusion")==5
-			and (player:RuneCount("Unholy")>=1 or player:RuneCount("Death")>=1) -- default just unholy check
+			and (_Y.unholyrune>=1 or _Y.deathrune>=1) -- default just unholy check
 			and HasPetUI()
 			then
 			local pet = Object("pet")
@@ -1842,7 +1843,7 @@ unholy.rot = {
 	end,
 	
 	SoulReaper = function()
-		if (player:RuneCount("Death")>=1 or player:RuneCount("Unholy")>=1) and player:SpellCooldown("Soul Reaper")<cdcd
+		if (_Y.deathrune>=1 or _Y.unholyrune>=1) and player:SpellCooldown("Soul Reaper")<cdcd
 			then
 			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Soul Reaper)")
 			if lowestmelee then
@@ -1854,7 +1855,7 @@ unholy.rot = {
 	end,
 	
     NecroStrike = function()
-        if  player:RuneCount("Death")>=1
+        if  _Y.deathrune>=1
             then
             local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
             if lowestmelee then
@@ -1864,7 +1865,7 @@ unholy.rot = {
 	end,
 	
 	icytouch_hop = function()
-		if player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1 then
+		if _Y.frostrune>=1 or _Y.deathrune>=1 then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
 				if Obj.isplayer and Obj:spellRange("Icy Touch")
 					and Obj:BuffAny("Hand of Protection || Fear Ward || Master's Call")
@@ -1876,7 +1877,7 @@ unholy.rot = {
 	end,
 	
 	icytouchdispell = function() -- BAD IDEA
-		if player:RuneCount("Frost")>=1 then
+		if _Y.frostrune>=1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
 			if lowestmelee and lowestmelee:exists() and lowestmelee:bufftype("Magic") then
 				return lowestmelee:Cast("Icy Touch")
@@ -1894,7 +1895,7 @@ unholy.rot = {
 	end,
 	
 	icytouch = function()
-		if player:RuneCount("Frost")>=1 then
+		if _Y.frostrune>=1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
 			if lowestmelee  then
 				return lowestmelee:Cast("Icy Touch")
@@ -1903,7 +1904,7 @@ unholy.rot = {
 	end,
 	
 	bloodboil_blood = function()
-		if player:RuneCount("Blood")>=1
+		if _Y.bloodrune>=1
 			then
 			local lowestmelee = Object("lowestEnemyInRangeNOTARNOFACE(9)")
 			if lowestmelee then
@@ -1913,7 +1914,7 @@ unholy.rot = {
 	end,
 	
 	festeringstrike = function()
-		if player:RuneCount("Blood") >= 1 and player:RuneCount("Frost")>= 1 then
+		if _Y.bloodrune >= 1 and _Y.frostrune>= 1 then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
 			if lowestmelee then
 				if not lowestmelee.isplayer then
@@ -1959,7 +1960,7 @@ unholy.rot = {
 	end,
 	
     scourgestrike = function()
-        if player:RuneCount("Unholy")>=1 then
+        if _Y.unholyrune>=1 then
             local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Strike)")
             if lowestmelee then
 				if (lowestmelee:health()>35 or player:level()<87 or player:SpellCooldown("Soul Reaper") > player:gcd()+1)
@@ -1971,7 +1972,7 @@ unholy.rot = {
 	end,
 	
     plaguestrike = function()
-        if player:RuneCount("Unholy")>=1 then
+        if _Y.unholyrune>=1 then
             local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Strike)")
             if lowestmelee then
 				if (lowestmelee:health()>35 or player:level()<87 or player:SpellCooldown("Soul Reaper") > player:gcd()+1)
@@ -2009,6 +2010,7 @@ local inCombat = function()
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
 	player = Object("player")
 	if not player then return true end
+	_Y.bloodrune, _Y.frostrune, _Y.unholyrune, _Y.deathrune = player:RuneCount("Blood"), player:RuneCount("Frost"), player:RuneCount("Unholy"), player:RuneCount("Death")
 	local mylevel = mylevel or player:level()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .2 + _A.latency
@@ -2078,10 +2080,10 @@ local inCombat = function()
 	end
 	----pvp part
 	if _A.pull_location ~= "party" and _A.pull_location ~= "raid" then
-		if toggle("dispell_hots") and (player:RuneCount("Frost")>=1 or player:RuneCount("Death")>=1) and unholy.rot.icytouchdispellv2() then return true end
-		if player:RuneCount("Blood")>= 2 and unholy.rot.bloodboil_blood() then return true end
-		if player:RuneCount("Frost")>=2 and unholy.rot.icytouch() then return true end
-		if player:RuneCount("Unholy")>=2 and mylevel>=58 and unholy.rot.scourgestrike() then return true end
+		if toggle("dispell_hots") and (_Y.frostrune>=1 or _Y.deathrune>=1) and unholy.rot.icytouchdispellv2() then return true end
+		if _Y.bloodrune>= 2 and unholy.rot.bloodboil_blood() then return true end
+		if _Y.frostrune>=2 and unholy.rot.icytouch() then return true end
+		if _Y.unholyrune>=2 and mylevel>=58 and unholy.rot.scourgestrike() then return true end
 		--
 		if unholy.rot.bloodboil_blood() then return true end
 		if unholy.rot.icytouch() then return true end
