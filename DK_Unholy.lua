@@ -270,6 +270,7 @@ local spelltable = {
 	["Cyclone"] = 2,   -- Shackle Undead
 	["Shackle Undead"] = 2,   -- Shackle Undead
 	["Hex"] = 2,   -- Shackle Undead
+	["Revive"] = 2,   -- Revive
 }
 
 local function kickcheck(unit)
@@ -1621,7 +1622,7 @@ unholy.rot = {
 				and not target:buffany(45524)
 				and not target:buffany(48707)
 				and not target:buffany("Bladestorm")
-				and not target:Debuff("Chains of Ice") -- remove this
+				-- and not target:Debuff("Chains of Ice") -- remove this
 				and not target:state("root")
 				and _Y.notimmune(target)
 				then if target:los()
