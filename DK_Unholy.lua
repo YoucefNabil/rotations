@@ -276,7 +276,7 @@ local function kickcheck(unit)
 	if unit then
 		for k,_ in pairs(spelltable) do
 			if _A.Core:GetSpellName(k)~=nil then
-				if unit:iscasting(k) or unit:channeling(k) then
+				if unit:iscasting(k) or unit:channeling(k) then --113656
 					return true
 				end
 			end
@@ -331,6 +331,15 @@ local SPELL_SHIELD_FULL   = GetSpellInfo(142865)
 
 local function modifier_shift()
 	local modkeyb = IsShiftKeyDown()
+	if modkeyb then
+		return true
+		else
+		return false
+	end
+end
+
+local function modifier_ctrl()
+	local modkeyb = IsControlKeyDown()
 	if modkeyb then
 		return true
 		else
@@ -1199,6 +1208,7 @@ local exeOnLoad = function()
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
 				if obj.isplayer and obj:range()<=40 
 					and not _A.isthisahealer(obj)
+					-- and (obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance") or obj:iscasting(113656) or obj:channeling(113656))
 					and obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance")
 					and not obj:buffany("Bear Form")
 					and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
@@ -1773,6 +1783,15 @@ unholy.rot = {
 		end
 	end,
 	
+	DeathStrikeSurvive = function()
+		if player:SpellCooldown("Death Strike")<1 then
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
+			if lowestmelee then
+				return lowestmelee:Cast("Death Strike")
+			end
+		end
+	end,
+	
 	dotapplication = function()
 		if (_Y.unholyrune>=1 or _Y.deathrune>=1)
 			then 
@@ -1822,7 +1841,7 @@ unholy.rot = {
 		if player:RunicPower() >= 85 then
 			if player:SpellCooldown("Death Coil")<cdcd
 				and not player:BuffAny("Runic Corruption") then
-				local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
+				local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 				if lowestmelee then
 					if not player:Buff("Lichborne") then
 						return lowestmelee:Cast("Death Coil")
@@ -1886,12 +1905,12 @@ unholy.rot = {
 	end,
 	
 	icytouchdispellv2 = function()
-			local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
-			if lowestmelee then 
-				if lowestmelee:BuffAny("Earth Shield || Riptide || Eternal Flame || Enveloping Mist") then
-					return lowestmelee:Cast("Icy Touch")
-				end
+		local lowestmelee = Object("lowestEnemyInSpellRange(Icy Touch)")
+		if lowestmelee then 
+			if lowestmelee:BuffAny("Earth Shield || Riptide || Eternal Flame || Enveloping Mist") then
+				return lowestmelee:Cast("Icy Touch")
 			end
+		end
 	end,
 	
 	icytouch = function()
@@ -1928,7 +1947,7 @@ unholy.rot = {
 		if player:SpellCooldown("Death Coil")<cdcd and (player:buff("Sudden Doom") or player:RunicPower()>=32)
 			and not player:BuffAny("Runic Corruption")  
 			then 
-			local lowestmelee = Object("lowestEnemyInSpellRangeNOTAR(Death Coil)")
+			local lowestmelee = Object("lowestEnemyInSpellRange(Death Coil)")
 			if lowestmelee then
 				return lowestmelee:Cast("Death Coil")
 			end
@@ -2050,6 +2069,7 @@ local inCombat = function()
 	if player:keybind("T") and unholy.rot.massgrip() then return true end
 	if player:keybind("X") and unholy.rot.root() then return true end
 	if player:keybind("R") and unholy.rot.manual_deathgrip() then return true end
+	if modifier_ctrl() and unholy.rot.DeathStrikeSurvive() then return true end
 	-- if not player:IsCurrentSpell(47476) and not player:IsCurrentSpell(47481) and unholy.rot.strangulatesnipe() then return true end
 	--
 	if mylevel>=74 and unholy.rot.gargoyle() then return true end

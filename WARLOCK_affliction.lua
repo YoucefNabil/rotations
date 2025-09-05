@@ -1626,7 +1626,7 @@ affliction.rot = {
 	
 	everyman = function()
 		if _A.pull_location ~= "arena" and not player:debuffany("Solar Beam") then
-			if player:BuffAny(86211) and player:state("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") then
+			if player:BuffAny(86211) and player:state("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") and not player:debuffany("Unstable Affliction") then
 				if player:health()>=60 and player:talent("Unbound Will") and player:SpellCooldown("Unbound Will") == 0 and not _A.IsCurrentSpell(108482)  then 
 					return player:cast("Unbound Will")
 				end
