@@ -1372,14 +1372,12 @@ unholy.rot = {
 	end,
 	
 	bloodtap = function()
-		if player:combat() and player:buff("Call of Victory") then
+		if player:combat() and player:buffstack("Blood Tap")>=5 and not IsCurrentSpell(45529) then
 			local lowestmelee = Object("lowestEnemyInSpellRange(Death Strike)")
-			if lowestmelee
-				and lowestmelee:health()>=65
+			if lowestmelee and
+				player:buff("Call of Victory")
 				then 
-				if player:SpellCooldown("Unholy Frenzy")==0 then 
-					player:Cast("Unholy Frenzy")
-				end
+				player:Cast("Blood Tap")
 			end
 		end
 	end,
@@ -2064,6 +2062,7 @@ local inCombat = function()
 	unholy.rot.antimagicshell()
 	unholy.rot.deathpact()
 	unholy.rot.Lichborne()
+	unholy.rot.bloodtap()
 	---------------------- GCD SPELLS
 	-- BINDS
 	if player:keybind("T") and unholy.rot.massgrip() then return true end
