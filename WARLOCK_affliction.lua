@@ -2493,13 +2493,14 @@ affliction.rot = {
 		if soulswaporigin ~= nil then
 			if #_A.temptabletblexhale > 1 then
 				table_sortoptimized(_A.temptabletblexhale, function(a,b)
-					if 	
+					if 	-- THESE 2 ALWAYS STAY THE SAME
 						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- Never change these
 						elseif
 						a.duration ~= b.duration then return a.duration < b.duration
 						-- add stuff here
 						elseif
 						a.ishighprio_healer ~= b.ishighprio_healer then return a.ishighprio_healer > b.ishighprio_healer -- Never change these
+						-- AlWAYS KEEP HEALTH LAST
 						else return
 						a.health > b.health
 					end
