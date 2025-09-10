@@ -95,6 +95,26 @@ local rootthisfuck = {
 	["Roll"]=true,
 	["Disengage"]=true,
 }
+	local healerspecid = {
+		-- [265]="Lock Affli",
+		-- [266]="Lock Demono",
+		-- [267]="Lock Destro",
+		[105]="Druid Resto",
+		-- [102]="Druid Balance",
+		[270]="monk mistweaver",
+		[65]="Paladin Holy",
+		-- [66]="Paladin prot",
+		-- [70]="Paladin retri",
+		[257]="Priest Holy",
+		[256]="Priest discipline",
+		-- [258]="Priest shadow",
+		[264]="Sham Resto",
+		-- [262]="Sham Elem",
+		-- [263]="Sham enh",
+		-- [62]="Mage Arcane",
+		-- [63]="Mage Fire",
+		-- [64]="Mage Frost",
+	}
 local spelltable = {
 	[5782] = 2,     -- Fear
 	[1120] = 1,     -- Drain Soul
@@ -314,26 +334,6 @@ local IjustTriple = false
 local GUI = {
 }
 local exeOnLoad = function()
-	local healerspecid = {
-		-- [265]="Lock Affli",
-		-- [266]="Lock Demono",
-		-- [267]="Lock Destro",
-		[105]="Druid Resto",
-		-- [102]="Druid Balance",
-		[270]="monk mistweaver",
-		[65]="Paladin Holy",
-		-- [66]="Paladin prot",
-		-- [70]="Paladin retri",
-		[257]="Priest Holy",
-		[256]="Priest discipline",
-		-- [258]="Priest shadow",
-		[264]="Sham Resto",
-		-- [262]="Sham Elem",
-		-- [263]="Sham enh",
-		-- [62]="Mage Arcane",
-		-- [63]="Mage Fire",
-		-- [64]="Mage Frost",
-	}
 	_A.Interface:AddToggle({
 		key = "inbetweencasts", 
 		name = "Cast once inbetween soulswap and exhale", 
@@ -408,7 +408,7 @@ local exeOnLoad = function()
 	end
 	function _Y.someoneisuperlow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer and Obj:range()<40  then
+			if Obj.isplayer and Obj:exists() and Obj:range()<40  then
 				if Obj:Health()<15 or (_A.pull_location=="pvp" and Obj:Health()<35) then
 					return true
 				end
@@ -418,7 +418,7 @@ local exeOnLoad = function()
 	end
 	function _Y.someoneislow()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer and Obj:range()<40  then
+			if Obj.isplayer and Obj:exists() and Obj:range()<40  then
 				if Obj:Health()<80 then
 					return true
 				end
@@ -769,7 +769,7 @@ local exeOnLoad = function()
 	
 	function _A.istereahealer()
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:range()<=40 then
+			if Obj:exists() and Obj:range()<=40 then
 				if healerspecid[_A.UnitSpec(Obj.guid)] then
 					return true
 				end
@@ -781,7 +781,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('EnemyHealer', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj.isplayer  and Obj:spellRange(spell) and Obj:InConeOf(player, 170)  and _A.isthisahealer(Obj) and _A.notimmune(Obj) 
+			if Obj.isplayer  and Obj:exists() and Obj:spellRange(spell) and Obj:InConeOf(player, 170)  and _A.isthisahealer(Obj) and _A.notimmune(Obj) 
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -894,7 +894,7 @@ local exeOnLoad = function()
 			return target and target.guid
 		end
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and Obj:InConeOf(player, 170)  and _A.notimmune(Obj) 
+			if Obj:exists() and Obj:spellRange(spell) and Obj:InConeOf(player, 170)  and _A.notimmune(Obj) 
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -913,7 +913,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTAR', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and Obj:InConeOf(player, 170)  and  _A.notimmune(Obj) 
+			if Obj:exists() and Obj:spellRange(spell) and Obj:InConeOf(player, 170)  and  _A.notimmune(Obj) 
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() then
 				tempTable[#tempTable+1] = {
@@ -932,7 +932,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('lowestEnemyInSpellRangeNOTARNOFACE', function(num, spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if (Obj.isplayer or (_A.pull_location~="pvp" and _A.pull_location~="arena"))
+			if Obj:exists() and (Obj.isplayer or (_A.pull_location~="pvp" and _A.pull_location~="arena"))
 				and Obj:spellRange(spell) and _A.notimmune(Obj) 
 				and (not toggle("dontdps_ccdhealer") or (toggle("dontdps_ccdhealer") and not healerspecid[Obj:spec()]) or not Obj:state("incapacitate || fear || disorient || charm || misc || sleep"))
 				and Obj:los() then
@@ -965,7 +965,7 @@ local exeOnLoad = function()
 		range = tonumber(range) or 10
 		threshhold = tonumber(threshhold) or 1
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
-			if Obj:spellRange(spell) and  Obj:InConeOf(player, 170)  and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
+			if Obj:exists() and Obj:spellRange(spell) and  Obj:InConeOf(player, 170)  and _A.attackable(Obj) and _A.notimmune(Obj) and Obj:los() then
 				tempTable[Obj.guid] = 1
 				for _, Obj2 in pairs(_A.OM:Get('Enemy')) do
 					if Obj.guid~=Obj2.guid and Obj:rangefrom(Obj2)<=range and _A.attackable(Obj2) and _A.notimmune(Obj2)  and Obj2:los() then
@@ -1277,6 +1277,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('HealingStreamTotem', function(num)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:exists() then
 			for _,totems in ipairs(badtotems) do
 				if Obj.name==totems then
 					tempTable[#tempTable+1] = {
@@ -1285,6 +1286,7 @@ local exeOnLoad = function()
 					}
 				end
 			end
+		end
 		end
 		if #tempTable>1 then
 			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end , 1)
@@ -1296,6 +1298,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('HealingStreamTotemNOLOS', function(num)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+			if Obj:exists() then
 			for _,totems in ipairs(badtotems) do
 				if Obj.name==totems then
 					tempTable[#tempTable+1] = {
@@ -1303,6 +1306,7 @@ local exeOnLoad = function()
 						range = Obj:range(),
 					}
 				end
+			end
 			end
 		end
 		if #tempTable>1 then
@@ -1315,6 +1319,7 @@ local exeOnLoad = function()
 	_A.FakeUnits:Add('HealingStreamTotemPLAYER', function(num,spell)
 		local tempTable = {}
 		for _, Obj in pairs(_A.OM:Get('Enemy')) do
+		if Obj:exists() then
 			for _,totems in ipairs(badtotems) do
 				if Obj.name==totems then
 					if 	Obj:spellRange(spell) and  Obj:InConeOf(player, 170) and Obj:los() then
@@ -1325,6 +1330,7 @@ local exeOnLoad = function()
 					end
 				end
 			end
+		end
 		end
 		if #tempTable>1 then
 			table_sortoptimized( tempTable, function(a,b) return a.range < b.range end , 1)
@@ -1406,7 +1412,7 @@ local exeOnLoad = function()
 			if player:SpellCooldown("Optical Blast(Special Ability)")==0 and UnitPower("pet")>=20
 				then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj.isplayer and obj:range()<=80
+					if obj.isplayer and obj:exists() and obj:range()<=80
 						and _A.isthisahealer(obj)
 						and not obj:buffany("Bear Form")
 						and not obj:state("incapacitate || fear || disorient || charm || misc || sleep")
@@ -1457,7 +1463,7 @@ local exeOnLoad = function()
 			if player:SpellCooldown("Disarm(Special Ability)")==0 and UnitPower("pet")>=30
 				then
 				for _, obj in pairs(_A.OM:Get('Enemy')) do
-					if obj.isplayer and obj:range()<=80
+					if obj.isplayer and obj:exists() and obj:range()<=80
 						and not _A.isthisahealer(obj)
 						and not obj:buffany("Bear Form")
 						and obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance")
@@ -1603,6 +1609,9 @@ affliction.rot = {
 							obj = Obj,
 							rangedis = range_cache,
 							isplayer = Obj.isplayer and 1 or 0,
+							ishighprio = (Obj.name == "Battleground Demolisher") and 1 or 0,
+							ishighprio_healer = (Obj.isplayer and healerspecid[Obj:spec()]) and 1 or 0,
+							-- ishighprio_orbs = Obj:DebuffAny("Orb of Power") and 1 or 0,
 							health = healthraww,
 							duration = unstabledur or 0, -- duration for unstable only, best solution to spread it to as many units as possible, always order by this first -- AGONYDUR IS NEW
 							durationSEED = seedsdur or 0, -- duration, best solution to spread it to as many units as possible, always order by this first
@@ -1968,7 +1977,7 @@ affliction.rot = {
 		local flagcarry = nil
 		if _A.pull_location == "pvp" and not UnitBuff("player", "Soulburn") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj:spellRange(172) and _A.attackable(Obj) and (Obj:BuffAny("Alliance Flag") or Obj:BuffAny("Horde Flag")) and not Obj:Debuff("Curse of Exhaustion") and not Obj:immune("snare") 
+				if Obj:exists() and Obj:spellRange(172) and _A.attackable(Obj) and (Obj:BuffAny("Alliance Flag") or Obj:BuffAny("Horde Flag")) and not Obj:Debuff("Curse of Exhaustion") and not Obj:immune("snare") 
 					and not Obj:state("snare") and _A.notimmune(Obj) and Obj:los() then
 					flagcarry = Obj
 				end
@@ -1981,7 +1990,7 @@ affliction.rot = {
 		local target = Object("target")
 		if _A.pull_location == "pvp" and not UnitBuff("player", "Soulburn") then
 			for _, Obj in pairs(_A.OM:Get('Enemy')) do
-				if Obj.isplayer and target and Obj:is(target) and Obj:spellRange(172) and _A.attackable(Obj) and not Obj:Debuff("Curse of Exhaustion") and not Obj:immune("snare") and not Obj:state("snare") and _A.notimmune(Obj) and Obj:los() then
+				if Obj.isplayer and Obj:exists() and target and Obj:is(target) and Obj:spellRange(172) and _A.attackable(Obj) and not Obj:Debuff("Curse of Exhaustion") and not Obj:immune("snare") and not Obj:state("snare") and _A.notimmune(Obj) and Obj:los() then
 					return Obj:cast("Curse of Exhaustion")
 				end
 			end
@@ -2041,7 +2050,7 @@ affliction.rot = {
 	ccstun = function()
 		if player:talent("Shadowfury") and player:SpellCooldown("Shadowfury") < cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:range()<=30
+				if obj.isplayer and obj:exists() and obj:range()<=30
 					and obj:InConeOf(player, 170) 
 					and (not toggle("ccheals") or (toggle("ccheals") and _A.isthisahealer(obj) and _Y.someoneislow()))
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
@@ -2058,7 +2067,7 @@ affliction.rot = {
 	ccfear = function()
 		if player:SpellCooldown("Howl of Terror") < cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:range()<=10
+				if obj.isplayer and obj:exists() and obj:range()<=10
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
 					and (obj:drState("Howl of Terror") == 1 or obj:drState("Howl of Terror") == -1)
 					and _A.notimmune(obj)
@@ -2073,7 +2082,7 @@ affliction.rot = {
 	fearkeybind = function()
 		if not player:moving() and not player:isCastingAny() then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:range()<=30
+				if obj.isplayer and obj:exists() and obj:range()<=30
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
 					and (obj:drState("Fear") == 1 or obj:drState("Fear") == -1)
 					and _A.notimmune(obj)
@@ -2087,7 +2096,7 @@ affliction.rot = {
 	ccstun_def = function()
 		if player:talent("Shadowfury") and player:SpellCooldown("Shadowfury") < cdcd then
 			for _, obj in pairs(_A.OM:Get('Enemy')) do
-				if obj.isplayer and obj:range()<=30
+				if obj.isplayer and obj:exists() and obj:range()<=30
 					and obj:Stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
 					and (obj:BuffAny("Call of Victory || Call of Conquest || Call of Dominance") or obj:isCastingAny())
 					and (obj:drState("Shadowfury") == 1 or obj:drState("Shadowfury") == -1)
@@ -2488,6 +2497,9 @@ affliction.rot = {
 						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- Never change these
 						elseif
 						a.duration ~= b.duration then return a.duration < b.duration
+						-- add stuff here
+						elseif
+						a.ishighprio_healer ~= b.ishighprio_healer then return a.ishighprio_healer > b.ishighprio_healer -- Never change these
 						else return
 						a.health > b.health
 					end

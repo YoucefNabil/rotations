@@ -1975,7 +1975,8 @@ local mw_rot = {
 					end
 				end
 			end
-			if enemycount >= 2 or (enemycount >= 1 and _A.modifier_alt()) then return player:cast("Leg Sweep") end
+			-- if enemycount >= 2 or (enemycount >= 1 and _A.modifier_alt()) then return player:cast("Leg Sweep") end
+			if enemycount >= 1 then return player:cast("Leg Sweep") end
 		end
 	end,
 	kick_chargingox = function()
