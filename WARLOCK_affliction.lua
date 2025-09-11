@@ -1609,8 +1609,8 @@ affliction.rot = {
 							obj = Obj,
 							rangedis = range_cache,
 							isplayer = Obj.isplayer and 1 or 0,
-							ishighprio = (Obj.name == "Battleground Demolisher") and 1 or 0,
-							ishighprio_healer = (Obj.isplayer and healerspecid[Obj:spec()]) and 1 or 0,
+							ishighprio = ((Obj.name == "Battleground Demolisher") and not Obj:debuff("Unstable Affliction")) and 1 or 0,
+							ishighprio_healer = (Obj.isplayer and healerspecid[Obj:spec()] and not Obj:debuff("Unstable Affliction")) and 1 or 0,
 							-- ishighprio_orbs = Obj:DebuffAny("Orb of Power") and 1 or 0,
 							health = healthraww,
 							duration = unstabledur or 0, -- duration for unstable only, best solution to spread it to as many units as possible, always order by this first -- AGONYDUR IS NEW
