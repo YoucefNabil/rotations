@@ -2026,7 +2026,8 @@ local mw_rot = {
 						if obj:stateduration("silence || incapacitate || fear || disorient || charm || misc || sleep || stun") < 1.5
 							and obj:InConeOf(player, 170)
 							-- and obj:infront()
-							and (obj:drState("Paralysis") == -1 or obj:drState("Paralysis") == 1)
+							-- and (obj:drState("Paralysis") == -1 or obj:drState("Paralysis") == 1)
+							and (obj:drState("Paralysis") ~= 0)
 							and _A.notimmune(obj)
 							and obj:los() then
 							return obj:FaceCast("Paralysis")
@@ -3243,14 +3244,11 @@ local inCombat = function()
 	if mw_rot.ctrl_modev2() then return true end -- ctrl
 	-- GCD CDS
 	if mylevel >= 50 and mw_rot.lifecocoon() then return true end
-	if mylevel >= 68 and mw_rot.burstdisarm() then
-		-- print("DISARMING")
-		return true
-	end
+	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
+	if mylevel >= 68 and mw_rot.burstdisarm() then return true end
 	if mylevel >= 56 and player:mana()<=60 and mw_rot.manatea() then return true end
 	--old spot
 	if _A.manaengine_RJW_highprio() and (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.rushingjadewind() then return true end
-	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
 	if mw_rot.root_buff() then return true end
 	if mw_rot.root_buff2() then return true end
 	if mw_rot.root_buff3() then return true end
@@ -3262,13 +3260,15 @@ local inCombat = function()
 		-- if mw_rot.dispellunSLOW() then return end
 	end
 	if mw_rot.tigerslust() then return true end
+	if mylevel >= 56 and mw_rot.manatea() then return true end
+	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
+	if mylevel >= 34 and mw_rot.surgingmist() then return true end
+	if mylevel >= 64 and mw_rot.healingsphere() then return true end
 	--------------------- high prio
 	if mw_rot.Xuen() then return true end
 	if mylevel >= 26 and player:health()<=80 and mw_rot.expelharm() then return true end
 	if (not player:ui("use_blackout") or toggle("NO_CHI")) and mw_rot.tigerpalm_mm() then return true end
 	if player:ui("use_blackout") and not player:buff("Muscle Memory") and mw_rot.tp_buff() then return true end
-	if mylevel >= 34 and mw_rot.surgingmist() then return true end
-	if mylevel >= 42 and mw_rot.renewingmist() then return true end -- KEEP THESE OFF CD
 	if mw_rot.chi_wave() then return true end -- KEEP THESE OFF CD
 	if (player:ui("use_blackout") or _A.pull_location=="arena") and player:buffany("Muscle Memory") and not toggle("NO_CHI") and mw_rot.blackoutkick_always() then return true end    -- really important
 	if  mylevel >= 62 and mw_rot.uplift_prio() then return true end    -- really important
@@ -3286,8 +3286,8 @@ local inCombat = function()
 		if mw_rot.sapsextendcc() then return true end
 	end
 	------------------ Rotation Proper
-	if mylevel >= 56 and mw_rot.manatea() then return true end
-	if mylevel >= 64 and mw_rot.healingsphere() then return true end
+	-- if mylevel >= 56 and mw_rot.manatea() then return true end
+	-- if mylevel >= 64 and mw_rot.healingsphere() then return true end
 	if _A.manaengine_RJW() and (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.rushingjadewind() then return true end
 	if mw_rot.spin_rjw() then return true end
 	if mylevel >= 70 and mw_rot.healstatue() then return true end
