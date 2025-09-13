@@ -2036,25 +2036,25 @@ unholy.rot = {
 ---========================
 local inCombat = function()
 	if not _A.Cache.Utils.PlayerInGame then return true end
-	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	if not enteredworldat then return true end
 	if enteredworldat and ((GetTime()-enteredworldat)<(3)) then return true end
 	player = Object("player")
 	if not player then return true end
+	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	_Y.bloodrune, _Y.frostrune, _Y.unholyrune, _Y.deathrune = player:RuneCount("Blood"), player:RuneCount("Frost"), player:RuneCount("Unholy"), player:RuneCount("Death")
 	local mylevel = mylevel or player:level()
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
-	_A.interrupttreshhold = .2 + _A.latency
+	_A.interrupttreshhold = .3 + _A.latency
 	_Y.petengine()
 	if not _A.latency and not _A.interrupttreshhold then return true end
 	if not _A.pull_location then return true end
 	if not _A.BUTTONHOOK_RELATED and _A.buttondelayfunc() then return true end -- pausing for manual casts
-	if  player:isCastingAny() then return true end
+	-- if player:isCastingAny() then return true end
 	if player:mounted() then
 		-- if unholy.rot.pathoffrost() then return true end
 		return true
 	end
-	if UnitInVehicle("player") then return true end
+	-- if UnitInVehicle("player") then return true end
 	---------------------- NON GCD SPELLS
 	-- Grabs
 	if toggle("enable_kicks") then unholy.rot.GrabGrab() end

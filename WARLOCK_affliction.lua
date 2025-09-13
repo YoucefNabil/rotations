@@ -2500,6 +2500,9 @@ affliction.rot = {
 						-- add stuff here
 						elseif
 						a.ishighprio_healer ~= b.ishighprio_healer then return a.ishighprio_healer > b.ishighprio_healer -- Never change these
+						-- a.ishighprio ~= b.ishighprio then return a.ishighprio > b.ishighprio -- Never change these
+						-- elseif
+						
 						-- AlWAYS KEEP HEALTH LAST
 						else return
 						a.health > b.health
@@ -2547,7 +2550,7 @@ local inCombat = function()
 	if not playerguidguid then playerguidguid = UnitGUID("player") return true end
 	player = Object("player")
 	if not player then return end
-	if player:Mounted() then return true end
+	-- if player:Mounted() then return true end
 	cdcd = _A.Parser.frequency and _A.Parser.frequency*3 or .3
 	proccing = _Y.proc_check()
 	--
