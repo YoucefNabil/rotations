@@ -3232,6 +3232,12 @@ local inCombat = function()
 	-- OH SHIT ORBS
 	-- if player then return _A.clickcast(player, "Healing Sphere") end
 	if mylevel >= 64 and player:keybind("E") and mw_rot.healingsphere_keybind() then return true end -- SUPER PRIO
+	-- GCD CDS
+	if mylevel >= 50 and mw_rot.lifecocoon() then return true end
+	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
+	if mylevel >= 68 and mw_rot.burstdisarm() then return true end
+	-- if mylevel >= 56 and player:mana()<=60 and mw_rot.manatea() then return true end
+	--
 	if mylevel >= 64 and mw_rot.tsulongHealing() then return true end -- SUPER PRIO
 	if player:keybind("R") or player:ui("leveling") then
 		if mylevel >= 56 and mw_rot.manatea() then return true end
@@ -3242,11 +3248,6 @@ local inCombat = function()
 	end
 	if mylevel >= 28 and player:keybind("X") and mw_rot.pvp_disable_keybind() then return true end
 	if mw_rot.ctrl_modev2() then return true end -- ctrl
-	-- GCD CDS
-	if mylevel >= 50 and mw_rot.lifecocoon() then return true end
-	if mylevel >= 64 and (_A.modifier_shift() or _A.manaengine_highprio()) and mw_rot.healingsphere() then return true end
-	if mylevel >= 68 and mw_rot.burstdisarm() then return true end
-	if mylevel >= 56 and player:mana()<=60 and mw_rot.manatea() then return true end
 	--old spot
 	if _A.manaengine_RJW_highprio() and (_A.pull_location=="arena" or _A.pull_location=="pvp") and mw_rot.rushingjadewind() then return true end
 	if mw_rot.root_buff() then return true end
