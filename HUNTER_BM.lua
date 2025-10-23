@@ -1430,9 +1430,16 @@ local exeOnLoad = function()
 		if _A.PetGUID == nil then return true end
 		-------- PET ROTATION
 		if petpassive() then return true end
-		if attacktotem() then return true end
-		if attacklowest() then return true end
+		if (not player:keybind("v")) 
+		and (not (player:health()<=75 and UnitCreatureFamily("pet")~=nil and UnitCreatureFamily("pet")=="Spirit Beast" and player:SpellCooldown("Spirit Mend(Exotic Ability)")==0))
+		and UnitHealth("pet")>100000
+		and _A.UnitBuff("pet", "Mend Pet")~=nil
+		then
+			if attacktotem() then return true end
+			if attacklowest() then return true end
+		end
 		if petfollow() then return true end
+		_A.CallWowApi("RunMacroText", "/petfollow")
 	end
 	-- C_Timer.NewTicker(.1, _Y.petengine, false, "petengineengineBM")
 end
@@ -1745,6 +1752,18 @@ survival.rot = {
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
 				if not player:isCastingAny() then
 					return _A.clickcast(player, "Explosive Trap")			
+				end 
+			end 
+		end
+	end,
+	traps_FREEZING_X = function()
+		if player:buff("Trap Launcher")
+			and player:spellusable("Freezing Trap") then
+			if player:Spellcooldown("Freezing Trap")<cdcd
+				then
+				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting") end
+				if not player:isCastingAny() then
+					return _A.clickcast(player, "Freezing Trap")			
 				end 
 			end 
 		end
@@ -2338,6 +2357,7 @@ local inCombat = function()
 	if _A.modifier_alt() and survival.rot.traps_ICE_ALT() then return true end -- make a complete aoe check function
 	if _A.modifier_alt() and survival.rot.traps_SNAKE_ALT() then return true end -- make a complete aoe check function
 	if _A.modifier_alt() and survival.rot.traps_FIRE_ALT() then return true end -- make a complete aoe check function
+	if player:keybind("X") and survival.rot.traps_FREEZING_X() then return true end -- make a complete aoe check function
 	-- if AOEcheck() and survival.rot.multishot() then return true end -- make a complete aoe check function
 	survival.rot.killshot()
 	survival.rot.mendpet()
