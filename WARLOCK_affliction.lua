@@ -340,12 +340,14 @@ local exeOnLoad = function()
 		text = "ON : slower soul swap exhale || OFF: faster soulswap exhale",
 		icon = select(3,GetSpellInfo(1490)),
 	})
+	--[[
 	_A.Interface:AddToggle({
 		key = "aoetoggle", 
 		name = "AOE Seed of corruption swaps mode", 
 		text = "ON : Seed of corruption swapping || OFF: 3 dot swapping (agony unstable affli corrpution)",
 		icon = select(3,GetSpellInfo(27243)),
 	})
+	--]]
 	_A.Interface:AddToggle({
 		key = "eye_demon", 
 		name = "Observer pet", 
@@ -876,14 +878,6 @@ local exeOnLoad = function()
 		["Feral Charge - Bear"] = true,
 		["Deadly Throw"]        = true
 	}
-	Listener:Add("SENT_TEST", "COMBAT_LOG_EVENT_UNFILTERED", function(_, _, subevent, _, _, _, _, _, guiddest, _, _, _, _,name)
-		-- print(name)
-		if guiddest==playerguidguid and kickspells[name] then
-			_A.CallWowApi("RunMacroText", "/stopcasting") 
-			_A.CallWowApi("RunMacroText", "/stopcasting")
-			return
-		end
-	end)
 	
 	_A.FakeUnits:Add('lowestEnemyInSpellRange', function(num, spell)
 		local tempTable = {}
@@ -2495,17 +2489,14 @@ affliction.rot = {
 				table_sortoptimized(_A.temptabletblexhale, function(a,b)
 					if 	-- THESE 2 ALWAYS STAY THE SAME
 						toggle("exhaleplayers") and a.isplayer ~= b.isplayer then return a.isplayer > b.isplayer -- Never change these
-						elseif
-						a.duration ~= b.duration then return a.duration < b.duration
+						elseif -- Never change these
+						a.duration ~= b.duration then return a.duration < b.duration -- Never change these
 						-- add stuff here
 						elseif
-						a.ishighprio_healer ~= b.ishighprio_healer then return a.ishighprio_healer > b.ishighprio_healer -- Never change these
-						-- a.ishighprio ~= b.ishighprio then return a.ishighprio > b.ishighprio -- Never change these
-						-- elseif
-						
+						a.ishighprio_healer ~= b.ishighprio_healer then return a.ishighprio_healer > b.ishighprio_healer
 						-- AlWAYS KEEP HEALTH LAST
 						else return
-						a.health > b.health
+						a.health > b.health -- Never change these
 					end
 				end, 1)
 				
