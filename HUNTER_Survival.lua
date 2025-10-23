@@ -2221,9 +2221,6 @@ local inCombat = function()
 	-- if player:alive() then
 	-- print(player:stateYOUCEF("snare || root"))
 	-- end
-	if player:keybindUp("F7") and player:timeout("F7", 1) then
-		_A.texplore(_A.Cache.Tooltip)
-	end
 	_A.latency = (select(3, GetNetStats())) and math.ceil(((select(3, GetNetStats()))/100))/10 or 0
 	_A.interrupttreshhold = .3 + _A.latency
 	_A.totemtar = Object("HealingStreamTotemPLAYER(Arcane Shot)")
