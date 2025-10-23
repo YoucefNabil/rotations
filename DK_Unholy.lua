@@ -1,3 +1,5 @@
+local _,class = UnitClass("player")
+if class~="DEATHKNIGHT" then return end
 local HarmonyMedia, _A, _Y = ...
 local DSL = function(api) return _A.DSL:Get(api) end
 local Listener = _A.Listener
