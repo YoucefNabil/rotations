@@ -70,8 +70,8 @@ local healerspecid = {
 	[256]="Priest discipline",
 	[264]="Sham Resto",
 	--DRUIDS
-	-- [102]="Druid Balance",
-	-- [103]="Druid Balance",
+	[102]="Druid Balance",
+	[103]="Druid Balance",
 	-- LOCKS
 	-- [265]="Lock Affli",
 	-- [266]="Lock Demono",
@@ -1804,7 +1804,7 @@ survival.rot = {
 		local focus = Object("focus")
 		if player:SpellCooldown("Freezing Trap")<cdcd and player:buff("Trap Launcher") and player:spellusable("Freezing Trap") then
 			if focus and focus:enemy() and focus:alive() and focus.isplayer and focus:spellRange("Arcane Shot") 
-				and (focus:debuff("Scatter Shot") or Obj:DebuffAny("Cyclone") or (focus:stateduration("disorient || charm || sleep || stun")>1 and focus:stateduration("disorient || charm || sleep || stun")<4)) 
+				and (focus:debuff("Scatter Shot") or focus:DebuffAny("Cyclone") or (focus:stateduration("disorient || charm || sleep || stun")>1 and focus:stateduration("disorient || charm || sleep || stun")<4)) 
 				and (focus:drstate("Freezing Trap")==1 or focus:drstate("Freezing Trap")==-1) 
 				and not focus:debuffany("Wyvern Sting") and _A.notimmune(focus) and focus:los() then
 				if player:isCastingAny() then _A.CallWowApi("RunMacroText", "/stopcasting") _A.CallWowApi("RunMacroText", "/stopcasting")  end
